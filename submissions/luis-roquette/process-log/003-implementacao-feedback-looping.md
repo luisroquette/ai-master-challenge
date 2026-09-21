@@ -163,3 +163,17 @@ Um patch digitou `submissions/luisroquette/` sem hífen e criou um `test_panel.p
 O commit de testes `142ebf6` foi publicado para executar o vermelho no Codespace. Duas tentativas sequenciais foram recusadas pelo gerenciador porque outra sessão reiniciou o mesmo ambiente durante a transição para `ShuttingDown`. A inspeção mostrou um processo externo consultando `uv`, `mise`, `pyenv` e `asdf`; não o interrompemos.
 
 **Resultado:** Fase 3 bloqueada antes do teste vermelho. `panel.py` não foi criado e nenhuma etapa posterior começou. O desbloqueio exige que a outra sessão libere `codex-preflight-657v7q4ggx7f5557` ou autorização para liberar outra vaga de Codespace.
+
+### Bypass autorizado e teste — ciclo 2
+
+Luis autorizou explicitamente ignorar o Codespace e seguir direto. Registramos a exceção e mantivemos os mesmos gates no Mac. Como Python 3.12 não existia localmente, `uv` instalou CPython 3.12.13 isolado e criou `.venv`; nenhuma versão do sistema foi substituída.
+
+O teste vermelho local confirmou `ModuleNotFoundError: ravenstack_churn.panel`. Após a implementação mínima:
+
+- oito testes específicos do painel passaram;
+- a regressão completa passou com 13 testes;
+- Ruff permaneceu verde;
+- o smoke com dados reais gerou 199 contas em `observed` e 199 em `strict` no cutoff `2024-05-31`, sem duplicidade da chave;
+- o gate foi local por autorização explícita, não prova de Codespace.
+
+O painel foi versionado no commit `7d29f55`. **Resultado:** Fase 3 validada e encerrada.

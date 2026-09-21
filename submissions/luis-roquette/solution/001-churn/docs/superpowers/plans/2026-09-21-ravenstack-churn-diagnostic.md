@@ -422,7 +422,7 @@ def test_incomplete_observation_window_is_null_not_zero(mini_tables):
     assert not bool(recent["usage_coverage_30d"])
 ```
 
-- [ ] **Step 3: Run the panel tests and verify failure**
+- [x] **Step 3: Run the panel tests and verify failure**
 
 ```bash
 .venv/bin/python -m pytest tests/test_panel.py -v
@@ -430,23 +430,23 @@ def test_incomplete_observation_window_is_null_not_zero(mini_tables):
 
 Expected: FAIL because `panel.py` does not exist.
 
-- [ ] **Step 4: Add derived panel fixtures**
+- [x] **Step 4: Add derived panel fixtures**
 
 Extend `tests/conftest.py` with `observed_panel` and `strict_panel`, both built from `mini_tables` at fixed cutoffs. These are the only panel fixtures used by later tests.
 
-- [ ] **Step 5: Implement account and subscription state at cutoff**
+- [x] **Step 5: Implement account and subscription state at cutoff**
 
 Include accounts with `signup_date <= cutoff` and no terminal churn on or before cutoff. Define active subscriptions as `start_date <= cutoff` and `end_date` null or `end_date > cutoff`; sum MRR and seats once per `subscription_id`. If no active subscription exists, set MRR to zero and emit `has_active_subscription=False`; do not backfill from a future subscription. Derive `plan_tier` and `billing_frequency` as the sole active value or `mixed` when active subscriptions disagree. For every active annual subscription, compute the smallest anniversary `start_date + DateOffset(years=n)` strictly after cutoff; account-level renewal is the minimum such date. Accounts with no annual subscription receive null renewal fields.
 
-- [ ] **Step 6: Implement time-window aggregation**
+- [x] **Step 6: Implement time-window aggregation**
 
 For each window `w`, select events in `(cutoff - w days, cutoff]`. Map usage to account through `subscription_id`. A support window is covered only when `signup_date <= cutoff - w days`; a usage window is covered only when that condition holds and at least one mapped subscription spans the full window. For covered windows, captured-event counts may be zero. For uncovered windows, count and aggregate metrics are null and their coverage flags are false. Response, resolution and satisfaction means are additionally null when no ticket carries the measured field; record the non-null response count and field coverage as `non_null_measured_tickets / tickets_in_window`, with null when there are no tickets. Create `usage_count_{w}d`, `usage_duration_{w}d`, `errors_{w}d`, `feature_breadth_{w}d`, `beta_share_{w}d`, `tickets_{w}d`, `escalations_{w}d`, `mean_first_response_{w}d`, `mean_resolution_{w}d`, `mean_satisfaction_{w}d`, `satisfaction_responses_{w}d`, structural coverage flags and measured-field coverage. In `strict`, also require event time on or after account signup and usage time on or after subscription start.
 
-- [ ] **Step 7: Implement trends and labels**
+- [x] **Step 7: Implement trends and labels**
 
 Add `usage_change_7_vs_30`, `usage_change_30_vs_90`, `error_rate_30d`, `ticket_change_30_vs_90`, `downgrade_90d`, `upgrade_90d`, `auto_renew_off`, `tenure_days`, and `churn_next_30d`. Compare non-overlapping daily rates: last 7 days versus the preceding 23, and last 30 versus the preceding 60; calculate change as `recent_rate / prior_rate - 1`. Use the same last-30-versus-prior-60 rule for ticket change. Define `error_rate_30d = errors_30d / usage_count_30d`; define `auto_renew_off=True` when any active annual subscription has auto-renew disabled. Safe division returns null when the prior denominator is zero, with a companion availability flag instead of coercing null to zero. At `SCORING_CUTOFF`, force `churn_next_30d` to null and `is_scoring_row=True`; never infer a December outcome not present in the data.
 
-- [ ] **Step 8: Verify panel shape, uniqueness and leakage**
+- [x] **Step 8: Verify panel shape, uniqueness and leakage**
 
 ```bash
 .venv/bin/python -m pytest tests/test_panel.py -v
@@ -454,7 +454,7 @@ Add `usage_change_7_vs_30`, `usage_change_30_vs_90`, `error_rate_30d`, `ticket_c
 
 Expected: PASS, with unique `(account_id, cutoff, chronology)`.
 
-- [ ] **Step 9: Commit the temporal panel**
+- [x] **Step 9: Commit the temporal panel**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn/panel.py submissions/luis-roquette/solution/001-churn/tests/test_panel.py submissions/luis-roquette/solution/001-churn/tests/conftest.py
