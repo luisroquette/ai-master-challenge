@@ -181,7 +181,7 @@ Como devemos provar que a fila melhora a receita por vendedor?
 
 A entrega atual deverá comparar retrospectivamente o ranking com resultados reais sem leakage. Como o dataset não prova adoção nem impacto causal em produção, a validação definitiva ficará para um piloto posterior com vendedores, ações e receita observadas.
 
-### Síntese da Onda 1 — aguardando aprovação
+### Síntese da Onda 1 — aprovada
 
 - **Experiência principal:** fila única com prioridade, risco, valor e próxima ação.
 - **Usuários:** vendedor e manager; o manager visualiza, orienta, reprioriza e redistribui.
@@ -190,3 +190,15 @@ A entrega atual deverá comparar retrospectivamente o ranking com resultados rea
 - **Prova:** backtest sem leakage na entrega; piloto operacional como validação posterior.
 
 Continuam abertos: definição da probabilidade, fluxo comercial real, auditoria das ações do manager e desenho da interface.
+
+#### Aprovação de Luis
+
+Onda 1 aprovada sem alterações em 21 de setembro de 2026. O gate de resultado e usuários foi concluído.
+
+### Onda 2 — Fluxo comercial
+
+#### Pergunta 1
+
+Qual falha do fluxo atual deve ser eliminada primeiro?
+
+**Resposta:** aguardando Luis.
