@@ -24,7 +24,6 @@ def test_streamlit_form_persists_edited_response_and_exposes_download(
 
     assert not app.exception
     assert app.title[0].value == "Prova mínima do ambiente"
-    assert len(app.get("page_link")) == 2
 
     app.text_area[0].input("Resposta sintética editada")
     app.button[0].click().run()
@@ -37,6 +36,10 @@ def test_streamlit_form_persists_edited_response_and_exposes_download(
         "Resposta sintética editada",
         1,
     )
+
+    app.switch_page("pages/limits.py").run()
+    assert not app.exception
+    assert app.title[0].value == "Limites da prova"
 
 
 def test_fresh_connection_and_download_match_persisted_file(tmp_path: Path) -> None:

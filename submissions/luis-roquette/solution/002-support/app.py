@@ -117,19 +117,11 @@ def render_proof() -> None:
     )
 
 
-def render_limits() -> None:
-    st.title("Limites da prova")
-    st.write(
-        "Este checkpoint valida navegação, formulário, SQLite e download; "
-        "não implementa domínio."
-    )
-
-
 def main() -> None:
     navigation = st.navigation(
         [
             st.Page(render_proof, title="Prova sintética", default=True),
-            st.Page(render_limits, title="Limites"),
+            st.Page("pages/limits.py", title="Limites"),
         ]
     )
     navigation.run()
