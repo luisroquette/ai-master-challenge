@@ -634,4 +634,23 @@ Como o gestor deve fazer a repriorização manual temporária já aprovada?
 
 **Recomendação da IA:** **B**. Entrega a intervenção necessária com uma regra simples, auditável e sem confundir decisão humana com previsão do modelo.
 
+#### Resposta de Luis
+
+**B:** usar a ação “Priorizar temporariamente”, fixando o deal no topo até a próxima recalculação.
+
+#### Decisão registrada
+
+A intervenção manual não mudará probabilidade, faixa ou receita esperada. O deal será destacado e fixado no topo da respectiva fila, com autor e horário visíveis. Ao recarregar ou recalcular o conjunto de dados, a intervenção expira e a ordenação calculada volta a valer.
+
+#### Pergunta 6
+
+Como tratar um deal ativo cujos dados não permitem score confiável, por exemplo uma categoria realmente desconhecida e sem fallback validado?
+
+- **A.** Aplicar silenciosamente o valor médio e manter um score numérico.
+- **B.** Manter o deal na fila com estado “Dados insuficientes”, sem score enganoso, e indicar quais campos precisam de correção.
+- **C.** Remover o deal da interface.
+- **D.** Colocá-lo automaticamente no fim, sem explicar o motivo.
+
+**Recomendação da IA:** **B**. Nenhuma oportunidade desaparece, e a interface transforma incerteza em uma ação concreta de qualidade de dados.
+
 **Resposta:** aguardando Luis.
