@@ -83,3 +83,28 @@ A solução deverá mostrar as dimensões separadamente e explicar qualquer sín
 ### Ponto ainda aberto
 
 Precisamos definir o horizonte da recomendação: resposta imediata, correção estrutural ou sequência das duas.
+
+### Pergunta 4
+
+Qual horizonte deve orientar a recomendação principal?
+
+- A. Ação emergencial executável em até uma semana.
+- B. Correção estrutural para os próximos 30–90 dias.
+- C. Sequência das duas: contenção imediata seguida da correção estrutural.
+- D. Estratégia anual de retenção.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+A recomendação deverá operar em duas velocidades. Primeiro, uma contenção que reduza exposição imediata; depois, uma correção estrutural que remova ou reduza a causa sistêmica.
+
+### Consequência para o desenho
+
+Cada causa prioritária precisará de duas ações conectadas: uma medida de curto prazo, executável em até uma semana, e uma iniciativa de 30–90 dias com responsável, métrica e resultado esperado. A contenção não poderá ser apresentada como solução definitiva.
+
+### Ponto ainda aberto
+
+Precisamos escolher qual artefato apresentará essa decisão ao CEO primeiro, antes dos detalhes analíticos e operacionais.
