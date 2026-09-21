@@ -108,3 +108,34 @@ O diferencial inicialmente considerado é um alerta para Customer Success com ri
 ## Próxima etapa
 
 Pesquisar ferramentas, repositórios e abordagens já testadas para diagnóstico de churn SaaS com múltiplas tabelas. Nenhum modelo ou dashboard será criado antes dessa triagem.
+
+## Decisão metodológica: leitura em loop
+
+Luis definiu um segundo gate antes da pesquisa e da construção: reler o briefing por lentes diferentes até completar pelo menos duas passadas consecutivas sem qualquer novo achado. A ideia é simples e útil. Se uma nova leitura ainda muda nossa compreensão do problema, começamos a construir cedo demais.
+
+O critério foi aplicado ao README do Challenge 001 em 21 de setembro de 2026. Primeiro confirmamos que o fork e o upstream apontavam para o mesmo commit, `4aed364`, e que o arquivo avaliado tinha SHA-256 `08586c0a5fd2b75a96426fe2557b84d1d30d5f6a2ad47fae8a19c6d40d0a21e9`.
+
+### Ledger das passadas
+
+| Passada | Lente | Novos achados |
+|---|---|---|
+| 1 | leitura literal | contexto, cinco tabelas, três perguntas obrigatórias, formato livre, diferencial opcional e critérios de qualidade |
+| 2 | topologia dos dados | granularidades distintas, risco de multiplicar linhas nos joins, várias assinaturas por conta e possível repetição de eventos de churn |
+| 3 | critérios de decisão | cruzar as cinco tabelas é obrigatório; o resultado precisa ser verificável, priorizado, estimado financeiramente e legível pelo CEO |
+| 4 | leitura adversarial | precedência temporal, médias agregadas escondendo segmentos, motivo declarado não equivalendo a causa raiz e necessidade de validar dataset e licença fora do briefing |
+| 5 | conferência linha a linha, do início ao fim | nenhum |
+| 6 | conferência em ordem reversa contra o ledger | nenhum |
+
+**Resultado:** duas passadas consecutivas sem descoberta nova. Goal de absorção atingido.
+
+### Compreensão consolidada
+
+O briefing não pede apenas uma taxa de churn ou um ranking de correlações. Ele exige explicar a aparente contradição entre satisfação, uso e perda de clientes, conectando comportamento, suporte, assinatura, perfil da conta e evento de churn.
+
+As tabelas não compartilham a mesma granularidade. Contas são a entidade de negócio; assinaturas introduzem histórico ou multiplicidade; uso é diário e ligado à assinatura; tickets e churn voltam ao nível da conta. Qualquer junção ingênua pode supercontar receita, tickets ou eventos. A estrutura real e as cardinalidades precisam ser medidas antes de definir a unidade analítica.
+
+Também há uma exigência temporal implícita. Uso, erros, tickets, satisfação, upgrades e downgrades só servem como sinais explicativos ou preditivos quando ocorreram antes do churn. `reason code` e feedback podem descrever o motivo percebido, mas não provam sozinhos a causa raiz.
+
+Por fim, impacto não pode ser medido somente por quantidade de contas. O próprio texto diferencia uma perda de `$50/mês` de outra de `$5K/mês`. A análise terá de mostrar churn por contas e por receita, além de identificar contas específicas para uma ação operacional.
+
+Esta técnica de leitura em loop foi uma decisão criativa de Luis, não uma sugestão da IA. Ela passa a integrar o diário como evidência de decomposição e julgamento humano antes do uso de ferramentas.
