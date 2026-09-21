@@ -415,4 +415,35 @@ Como devemos usar `reason_code` e o texto de feedback dos eventos de churn?
 
 ### Estado da pergunta 4
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+`reason_code` e feedback textual serão usados para explicar churn já ocorrido e triangular hipóteses com sinais anteriores. Eles serão proibidos na construção de atributos, escores ou rankings destinados a prever quais contas ainda ativas podem cancelar.
+
+### Consequência para o desenho
+
+O pipeline deverá separar explicitamente conjuntos de campos retrospectivos e preditivos. Testes de contrato verificarão que colunas geradas no evento ou após o cancelamento não entram na matriz de atributos anterior ao corte.
+
+### Ponto ainda aberto
+
+Além das colunas, a divisão entre treino e avaliação também pode vazar contas ou padrões futuros. Precisamos definir uma validação compatível com o uso real.
+
+### Pergunta 5
+
+Como devemos validar um eventual modelo de risco?
+
+- A. Divisão aleatória entre linhas do painel, permitindo que datas da mesma conta apareçam em treino e teste.
+- B. Divisão aleatória por conta, ignorando a ordem temporal.
+- C. Avaliação fora do tempo, mantendo contas agrupadas e usando backtests temporais adicionais se houver cortes suficientes.
+- D. Treinar com todos os dados e apresentar somente o desempenho dentro da própria amostra.
+
+**Recomendação técnica preliminar do agente:** C, porque reproduz a previsão do futuro e impede que a mesma conta ensine ao modelo padrões que depois reaparecem no teste.
+
+### Estado da pergunta 5
+
 Aguardando resposta de Luis.
