@@ -239,4 +239,20 @@ A atualização dos dados pode ser contínua, mas uma alteração pequena não d
 
 Como o limite de mudança relevante deve ser definido?
 
+#### Recomendação da IA
+
+Combinar **B + D**: medir a mudança pela variação percentual da receita esperada e calibrar o percentual com dados reais, mantendo-o configurável. No protótipo estático, recalcular toda a fila quando os dados forem atualizados; no produto integrado, aplicar o limite calibrado.
+
+#### Decisão de Luis
+
+Recomendação aprovada sem alterações.
+
+#### Decisão registrada
+
+O protótipo fará recálculo completo após nova carga de dados. O produto real usará variação percentual da receita esperada, com limite configurável e calibrado durante o piloto. Nenhum percentual será inventado com o dataset estático, que não contém snapshots sucessivos suficientes para validar instabilidade da fila.
+
+#### Pergunta 5
+
+Como uma repriorização manual feita pelo manager deve conviver com o recálculo automático?
+
 **Resposta:** aguardando Luis.
