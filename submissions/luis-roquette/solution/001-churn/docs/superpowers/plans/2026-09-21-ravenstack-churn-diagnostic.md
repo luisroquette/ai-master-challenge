@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12, pandas 3.0.6, NumPy 2.5.3, SciPy 1.18.1, statsmodels 0.15.0, scikit-learn 1.9.1, Streamlit 1.64.0, Plotly 7.1.0, pytest 9.1.1 e Ruff 0.16.8.
 
-**Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md`
+**Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/in-progress/implement-churn-diagnostic.feature.md`
 
 ## Global Constraints
 

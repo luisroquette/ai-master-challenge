@@ -1,5 +1,6 @@
 ---
 title: Implementar diagnóstico acionável de churn da RavenStack
+status: in-progress
 ---
 
 ## Initial User Prompt

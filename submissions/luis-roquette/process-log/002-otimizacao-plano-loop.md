@@ -4,7 +4,7 @@
 - **Skill:** `superpowers:writing-plans` 6.2.0
 - **Goal:** encerrar somente após duas passadas consecutivas sem melhoria ou otimização substancial
 - **Plano-alvo:** `solution/001-churn/docs/superpowers/plans/2026-09-21-ravenstack-churn-diagnostic.md`
-- **SPEC de referência:** `solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md`
+- **SPEC de referência:** `solution/001-churn/.specs/tasks/in-progress/implement-churn-diagnostic.feature.md` (promovida após o fechamento do plano)
 - **Estado:** concluído; goal atingido em 20 passadas
 
 ## Protocolo
