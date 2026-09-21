@@ -186,3 +186,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) regras estatísticas determinísticas, com evidência, benchmark e justificativa reproduzível; B) API de IA generativa; C) modelo local de IA.
 - **Resposta de Luis:** **A — regras estatísticas determinísticas**.
 - **Implicação:** recomendações deverão resultar de cálculos e regras auditáveis. Nenhuma API paga, modelo generativo ou dependência de inferência será necessária para operar o MVP.
+
+### Onda 17 — comunicação da incerteza
+
+- **Pergunta:** como cada alerta deve demonstrar sua confiabilidade?
+- **Opções:** A) mostrar benchmark, tamanho da amostra, diferença observada e nível de confiança; B) usar apenas um semáforo; C) apresentar somente uma explicação textual.
+- **Resposta de Luis:** **A — evidência quantitativa e nível de confiança**.
+- **Implicação:** todo alerta deverá expor os elementos mínimos para auditoria. Grupos insuficientes deverão ser sinalizados, e uma recomendação não poderá aparentar certeza maior que a sustentada pelos dados.
