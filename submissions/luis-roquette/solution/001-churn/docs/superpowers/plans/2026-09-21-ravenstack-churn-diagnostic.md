@@ -120,7 +120,7 @@ submissions/luis-roquette/solution/001-churn/
 - Produces: `SCORING_CUTOFF = pandas.Timestamp("2024-12-31")` para a fila corrente sem alvo futuro.
 - Produces: um ambiente instalável sem compilação nativa com `python -m pip install --only-binary=:all: -e '.[dev]'`.
 
-- [ ] **Step 1: Write the failing raw-file checksum test**
+- [x] **Step 1: Write the failing raw-file checksum test**
 
 ```python
 from pathlib import Path
@@ -134,7 +134,7 @@ def test_raw_files_match_published_checksums() -> None:
     assert actual == RAW_FILE_SHA256
 ```
 
-- [ ] **Step 2: Run the checksum test and verify the import fails**
+- [x] **Step 2: Run the checksum test and verify the import fails**
 
 Run from `submissions/luis-roquette/solution/001-churn`:
 
@@ -144,7 +144,7 @@ python -m pytest tests/test_contracts.py::test_raw_files_match_published_checksu
 
 Expected: FAIL with `ModuleNotFoundError: No module named 'ravenstack_churn'`.
 
-- [ ] **Step 3: Create the pinned Python project**
+- [x] **Step 3: Create the pinned Python project**
 
 Create `pyproject.toml` with Python `==3.12.*`, package directory `src`, and these exact dependencies:
 
@@ -181,7 +181,7 @@ line-length = 100
 target-version = "py312"
 ```
 
-- [ ] **Step 4: Add immutable input constants and checksum helper**
+- [x] **Step 4: Add immutable input constants and checksum helper**
 
 ```python
 from hashlib import sha256
@@ -209,7 +209,7 @@ def sha256_file(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 ```
 
-- [ ] **Step 5: Download and vendor the five public CSVs**
+- [x] **Step 5: Download and vendor the five public CSVs**
 
 ```bash
 work_dir=$(mktemp -d /tmp/ravenstack-data.XXXXXX)
@@ -220,7 +220,7 @@ cp "$work_dir"/data/ravenstack_*.csv data/raw/
 
 Do not commit the downloaded archive. Add `data/README.md` with source URL, retrieval date `2026-09-21`, synthetic/no-PII status, credit `River @ Rivalytics`, license wording, five SHA-256 values, and the exact download command above.
 
-- [ ] **Step 6: Install and run the checksum test**
+- [x] **Step 6: Install and run the checksum test**
 
 ```bash
 python3.12 -m venv .venv
@@ -230,7 +230,7 @@ python3.12 -m venv .venv
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit the reproducible foundation**
+- [x] **Step 7: Commit the reproducible foundation**
 
 ```bash
 git add -f \

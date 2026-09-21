@@ -110,3 +110,21 @@ O feedback looping identificou três bloqueios operacionais:
 Após três falhas, interrompemos a estratégia conforme a regra operacional. A suposição duvidosa é que um diff local com arquivos binários ou volumosos pode ser validado de forma confiável em um Codespace sem uma branch remota. A correção recomendada é publicar a branch intermediária e fazer o Codespace validar exatamente o commit, mas push é mudança externa e exige autorização de Luis.
 
 Até essa decisão, os arquivos da Task 1 permanecem locais e sem commit de implementação. A fase não avançará para a Task 2 sem instalação, Ruff e teste de checksum verdes no Codespace.
+
+### Execução e teste — ciclo 4
+
+**Resultado:** Fase 1 validada e encerrada.
+
+Luis autorizou o push intermediário necessário para sincronização. Antes do push, verificamos que o repositório não possui workflows em `.github/workflows/`. O gate de whitespace revelou que os CSVs originais usam CRLF; normalizá-los quebraria os checksums. Adicionamos `data/raw/*.csv binary` em `.gitattributes`, preservando os bytes e deixando `git diff --check` verde.
+
+O commit `ccf0d13` foi publicado na branch `submission/luis-roquette`, sem PR ou deploy. A primeira prova remota parou antes da instalação porque o SHA completo havia sido digitado incorretamente no comando. Repetimos usando o SHA obtido por `git rev-parse HEAD`.
+
+No Codespace gerenciado, para o SHA exato `ccf0d13d5cbb2937d441215b5a0023229c140de3`:
+
+- Python 3.12.3 e pytest 9.1.1;
+- instalação concluída com `--only-binary=:all:`;
+- teste de checksum: `1 passed`;
+- Ruff: `All checks passed!`;
+- worktree remota limpa.
+
+A Task 1 atende seu critério de aceite. A próxima fase autorizada é a Task 2, contratos de dados e evidências de qualidade.
