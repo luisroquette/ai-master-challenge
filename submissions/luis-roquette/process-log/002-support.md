@@ -264,3 +264,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Automação indevida.
 
 **Interpretação para a próxima onda:** os thresholds serão conservadores e avaliados por risco seletivo, não apenas por cobertura. Abstinência é comportamento correto quando a confiança ou as regras não sustentam automação. A próxima escolha deve definir como transformar cobertura segura em horas e custo sem fabricar ROI.
+
+### Onda 15 — Estimativa de economia
+
+**Pergunta:** como estimar economia sem fabricar ROI?
+
+- **A — Calculadora de cenários:** mostra horas observáveis e permite ajustar tempo por tarefa e custo por hora; separa cenários conservador, base e otimista.
+- **B — Somente horas:** quantifica tempo recuperável, sem converter para dinheiro.
+- **C — Um valor executivo:** apresenta uma única estimativa mensal de economia baseada em premissas fixas.
+
+**Resposta de Luis:** A — Calculadora de cenários.
+
+**Interpretação para a próxima onda:** horas derivadas dos dados permanecerão separadas de parâmetros fornecidos pelo usuário. Valores financeiros serão cenários, nunca fatos observados. A próxima escolha deve definir se as decisões humanas e sua trilha de auditoria sobrevivem ao encerramento da aplicação local.
