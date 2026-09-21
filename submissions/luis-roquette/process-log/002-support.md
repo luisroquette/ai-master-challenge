@@ -240,3 +240,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Aplicação web local e autocontida.
 
 **Interpretação para a próxima onda:** a solução deve ser reproduzível sem credenciais, serviços externos ou custo variável. A pesquisa escolherá a menor tecnologia capaz de entregar a experiência. A próxima decisão deve definir a filosofia de seleção do classificador sem fixar prematuramente um algoritmo.
+
+### Onda 13 — Seleção do classificador
+
+**Pergunta:** como o classificador deve ser escolhido?
+
+- **A — Baseline primeiro:** comparar regras simples e modelo textual leve; só adotar embeddings ou modelo maior se houver ganho mensurável.
+- **B — Semântico primeiro:** começar com embeddings para capturar significado além de palavras-chave.
+- **C — Zero-shot primeiro:** usar um modelo pronto sem treinamento específico e medir sua aderência às oito categorias.
+
+**Resposta de Luis:** A — Baseline primeiro.
+
+**Interpretação para a próxima onda:** o algoritmo não será escolhido por novidade. A pesquisa reproduzirá candidatos e o baseline mais simples permanecerá se alternativas mais complexas não melhorarem métricas relevantes. A próxima decisão deve explicitar qual erro operacional é mais caro, orientando calibração e abstinência.
