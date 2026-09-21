@@ -51,13 +51,15 @@ data:
 	@mkdir -p data/raw
 	@if test ! -s "$(CUSTOMER_CSV)"; then \
 		tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT INT TERM; \
-		curl -fL "$(CUSTOMER_URL)" -o "$$tmp/customer.zip"; \
-		unzip -j "$$tmp/customer.zip" 'customer_support_tickets.csv' -d data/raw; \
+		curl -fL "$(CUSTOMER_URL)" -o "$$tmp/customer.zip" && \
+		unzip -j "$$tmp/customer.zip" 'customer_support_tickets.csv' -d data/raw || \
+		{ echo "ERRO: baixe $(CUSTOMER_URL) e salve customer_support_tickets.csv em data/raw/."; exit 2; }; \
 	fi
 	@if test ! -s "$(IT_CSV)"; then \
 		tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT INT TERM; \
-		curl -fL "$(IT_URL)" -o "$$tmp/it.zip"; \
-		unzip -j "$$tmp/it.zip" 'all_tickets_processed_improved_v3.csv' -d data/raw; \
+		curl -fL "$(IT_URL)" -o "$$tmp/it.zip" && \
+		unzip -j "$$tmp/it.zip" 'all_tickets_processed_improved_v3.csv' -d data/raw || \
+		{ echo "ERRO: baixe $(IT_URL) e salve all_tickets_processed_improved_v3.csv em data/raw/."; exit 2; }; \
 	fi
 	@test -s "$(CUSTOMER_CSV)" && test -s "$(IT_CSV)" || { echo "ERRO: CSV esperado ausente ou vazio em data/raw."; exit 2; }
 
@@ -68,8 +70,7 @@ lint:
 	"$(BIN)/ruff" check .
 
 reproduce:
-	@test -f scripts/reproduce.py || { echo "ERRO: scripts/reproduce.py ainda não existe; o gate de reprodução será implementado em step posterior."; exit 2; }
-	"$(BIN)/python" scripts/reproduce.py
+	"$(BIN)/python" scripts/reproduce.py --customer "$(CUSTOMER_CSV)" --it "$(IT_CSV)" --output artifacts
 
 app:
 	"$(BIN)/streamlit" run app.py
