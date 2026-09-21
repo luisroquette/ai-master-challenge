@@ -91,7 +91,16 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         return None, [_error(exc.start, None, "invalid_encoding", "UTF-8 ou UTF-8-BOM")]
 
     try:
-        rows = list(csv.reader(io.StringIO(text), strict=True))
+        reader = csv.reader(io.StringIO(text), strict=True)
+        rows = []
+        physical_lines = []
+        while True:
+            start_line = reader.line_num + 1
+            record = next(reader, None)
+            if record is None:
+                break
+            rows.append(record)
+            physical_lines.append(start_line)
     except csv.Error as exc:
         return None, [_error(None, None, "malformed_csv", str(exc))]
     if not rows or not rows[0]:
@@ -193,7 +202,7 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         post_date=pd.Series(parsed_dates, index=frame.index),
         source_hash=source_hash,
         source_row_id=source_hash + ":" + frame["id"].astype(str),
-        source_line=frame.index + 2,
+        source_line=physical_lines[1:],
     )
     return frame, []
 
@@ -547,6 +556,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "metric": "ERv e volume por post",
                 "priority": score,
                 "priority_components": components,
+                "priority_values": alert["values"],
                 "normalization": platform_denominators[platform],
                 "delta_erv_pp": alert["delta_erv_pp"],
                 "representative_date": alert["post_date"],
@@ -606,6 +616,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "metric": "ERv, views e interações por post",
                 "priority": score,
                 "priority_components": components,
+                "priority_values": values,
                 "normalization": aggregate_denominators[(kind, platform)],
                 "delta_erv_pp": item["delta_erv_pp"],
                 "representative_date": representative.isoformat(),
@@ -660,6 +671,9 @@ EXPORT_COLUMNS = (
     "formula",
     "source_row_id", "source_line", "decision_id", "status", "owner",
     "execution_window", "review_window",
+    "rank", "recommendation_key", "priority", "impact", "strength", "recency",
+    "priority_values", "normalization", "delta_erv_pp", "representative_date",
+    "action", "action_type", "topic", "metric",
 )
 
 
@@ -717,7 +731,14 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         source_row_ids = item.get("source_row_ids", [])
         if source_row_ids:
             compact_ids = [str(source_row_id).split(":", 1)[-1] for source_row_id in source_row_ids]
-            yield row("source_ref", evidence_id, source_row_id=compact_ids)
+            source_lines = [result["row_references"][str(source_row_id)] for source_row_id in source_row_ids]
+            yield row("source_ref", evidence_id, source_row_id=compact_ids, source_line=source_lines)
+
+    for rank, item in enumerate(result.get("recommendations", []), start=1):
+        yield row("recommendation", str(item["evidence_id"]), rank=rank,
+                  **{name: item.get(name) for name in ("recommendation_key", "priority", "priority_values", "normalization", "delta_erv_pp", "representative_date", "context", "action", "action_type", "topic", "metric", "owner", "execution_window", "review_window")},
+                  **item.get("priority_components", {}),
+                  formula="100 * mean(min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1)) * strength * 2**(-age_days/7)")
 
     for decision in decisions:
         evidence_id = str(decision.get("evidence_id", ""))
@@ -734,6 +755,30 @@ def export_evidence(result: dict[str, object], decisions: list[dict[str, object]
     return output.getvalue().encode("utf-8")
 
 
+RECENCY_NOTE = (
+    "Atualidade = 2^(−idade em dias/7), ancorada na data de referência do dataset. "
+    "Em grupos agregados, a data representativa é a mediana das datas do grupo-alvo "
+    "(posts patrocinados na comparação de patrocínio). Um escopo de dois anos pode "
+    "produzir scores muito pequenos: isso preserva a regra de recência e não demonstra "
+    "uma oportunidade atual. A ordem é prioridade decrescente, |ΔERv| decrescente, "
+    "data representativa decrescente e evidence_id crescente, após deduplicação contextual."
+)
+
+
+def _recommendation_text(item: dict[str, object]) -> str:
+    context = " / ".join(str(value) for value in item.get("context", {}).values())
+    components = item.get("priority_components", {})
+    return (
+        f"{context}: {item.get('action', item.get('reason', 'Coletar evidência'))}. "
+        f"Prioridade {item.get('priority', 0):.6g}; impacto {components.get('impact', 0):.6g}; "
+        f"força {components.get('strength', 0):.6g}; atualidade {components.get('recency', 0):.6g}; "
+        f"ΔERv {item.get('delta_erv_pp', 0):+.6g} p.p.; data representativa {item.get('representative_date', 'não definida')}. "
+        f"Responsável: {item.get('owner', 'Gestor de Social Media')}; execução: {item.get('execution_window', 'coletar primeiro')}; "
+        f"revisão: {item.get('review_window', 'após coleta')}; métrica: {item.get('metric', 'amostra comparável')}. "
+        f"Evidência: {item.get('evidence_id', '')}"
+    )
+
+
 def executive_summary(result: dict[str, object], decisions: list[dict[str, object]]) -> str:
     source = result.get("source", {})
     metrics = result.get("metrics", {})
@@ -741,7 +786,7 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
     dimensions = [item for items in result.get("dimensions", {}).values() for item in items]
     priority_items = recommendations or result.get("pending", [])
     priorities = "".join(
-        f"<li><strong>{html.escape(str(item.get('owner', 'Gestor de Social Media')))}</strong>: {html.escape(str(item.get('action', item.get('reason', 'Coletar evidência'))))} <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
+        f"<li>{html.escape(_recommendation_text(item))}</li>"
         for item in priority_items[:3]
     )
     findings = "".join(
@@ -749,7 +794,112 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
         for item in sorted(dimensions, key=lambda value: (-int(value.get("posts", 0)), str(value.get("evidence_id", ""))))[:5]
     )
     decisions_html = "".join(f"<li>{html.escape(str(item.get('status', '')))} — {html.escape(str(item.get('text', item.get('action', ''))))}</li>" for item in decisions[:5]) or "<li>Nenhuma decisão registrada.</li>"
-    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}@media print{{body{{font-size:11px}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas · {html.escape(str(source.get('period_start', '')))} a {html.escape(str(source.get('period_end', '')))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><h2>Evidências</h2><ul>{findings}</ul><h2>Decisões</h2><ul>{decisions_html}</ul><p><b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}@media print{{body{{font-size:11px}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas · {html.escape(str(source.get('period_start', '')))} a {html.escape(str(source.get('period_end', '')))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><p><small>{html.escape(RECENCY_NOTE)}</small></p><h2>Evidências</h2><ul>{findings}</ul><h2>Decisões</h2><ul>{decisions_html}</ul><p><b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+
+
+def analysis_report(result: dict[str, object]) -> str:
+    """Render the standalone strategy from the same evidence and queue as HTML/CSV."""
+    source, scope, metrics = result["source"], result["scope"], result["metrics"]
+    summary_id = _stable_id("summary", str(source["source_hash"]), scope)
+    sponsorship = result.get("sponsorship", {})
+    overview_id = sponsorship.get("evidence_id", "")
+
+    def text(value: object) -> str:
+        return html.escape(str(value)).replace("|", "\\|").replace("\n", " ").replace("\r", " ")
+
+    def number(value: object) -> str:
+        return "não definida" if value is None else f"{float(value):.6g}"
+
+    lines = ["# Estratégia Social Media — Challenge 004", "", "## Decisão para segunda-feira", "",
+             "Fila única: as recomendações abaixo vêm de `result[recommendations]`, na mesma ordem do HTML e do CSV. "
+             "São propostas para decisão humana; não executam gasto, publicação ou interrupção.", ""]
+    for rank, item in enumerate(result.get("recommendations") or result.get("pending", []), 1):
+        lines.append(f"{rank}. {text(_recommendation_text(item))}")
+    lines += ["", RECENCY_NOTE, "",
+              "Força limitada (<0,40) exige coleta/teste, sem ampliação de investimento. "
+              "As janelas de execução/revisão são propostas futuras, não datas de performance observada.", "",
+              "## O que os dados permitem afirmar", "",
+              f"Escopo: {text(scope.get('target_start'))} a {text(scope.get('target_end'))}; "
+              f"referência: {text(scope.get('reference_date'))}; filtros: `{text(json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True))}`.", "",
+              f"{metrics.get('posts', 0)} posts; {metrics.get('creators', 0)} creators; "
+              f"{metrics.get('views', 0)} views; {metrics.get('interactions', 0)} interações. "
+              f"Mediana ERv: {number(metrics.get('median_erv'))}%; ERv ponderado: {number(metrics.get('weighted_erv'))}%. "
+              f"Proporção de posts com zero interação: {number(metrics.get('zero_interaction_share'))}; "
+              f"taxas indefinidas: {metrics.get('undefined_rates', 0)}. Evidência: `{summary_id}`.", "",
+              "ERv = 100 × (likes + shares + comments_count) / views; views=0 deixa a taxa indefinida e preserva volume. "
+              "A mediana usa taxas por post; a taxa ponderada usa totais apenas onde views>0. "
+              "Views não são alcance único; interações não são pessoas únicas.", "",
+              "## Plataforma, conteúdo, categoria, creators, audiência e tempo", "",
+              "As tabelas descrevem cada recorte; não criam uma segunda fila de prioridades. "
+              "Diferenças pequenas de taxa, sem comparação controlada, não justificam redistribuir o mix. "
+              "Idade, gênero e localização são rótulos de posts, não percentuais ou personas. "
+              "Estas marginais não identificam qual público vence dentro de cada combinação plataforma/formato/categoria: "
+              "essa pergunta exige filtros comparáveis e amostra suficiente no motor. "
+              "Bilibili e RedNote permanecem no escopo junto a Instagram, TikTok e YouTube.", ""]
+    labels = {"platform": "Plataforma", "content_type": "Formato", "content_category": "Categoria",
+              "creator_band": "Faixa de seguidores", "audience_age": "Idade", "audience_gender": "Gênero",
+              "audience_location": "Localização", "month": "Mês"}
+    for dimension, items in result.get("dimensions", {}).items():
+        lines += [f"### {labels.get(dimension, dimension)}", "",
+                  "| Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |",
+                  "|---|---:|---:|---:|---:|---:|---|"]
+        for item in items:
+            lines.append(f"| {text(item['value'])} | {item.get('posts', 0)} | {item.get('creators', 0)} | "
+                         f"{item.get('views', 0)} | {item.get('interactions', 0)} | "
+                         f"{number(item.get('median_erv'))} | `{item['evidence_id']}` |")
+        lines.append("")
+    lines += ["## Patrocínio e o que não funciona", "",
+              f"{sponsorship.get('eligible_strata', 0)} estratos elegíveis; {sponsorship.get('uncovered_count', 0)} "
+              f"sem amostra/contraparte suficiente; cobertura de {100 * sponsorship.get('coverage', 0):.6g}% dos posts. "
+              f"Evidência: `{overview_id}`.", "",
+              "Controle: mesma plataforma, formato, categoria, faixa de creator e período. "
+              "Cada braço exige 30 taxas definidas e cinco creators; o efeito é a diferença entre "
+              "medianas das medianas de ERv por creator. Patrocínio é associação observacional, não causalidade. "
+              "Custo implícito e retorno financeiro não podem ser calculados: faltam investimento, "
+              "custo de produção, receita/conversão. Nenhum threshold de seguidores justifica desembolso sozinho.", ""]
+    strata = sponsorship.get("strata", [])
+    if strata:
+        for label, item in (("Menor associação de ERv", min(strata, key=lambda item: item["delta_erv_pp"])),
+                            ("Maior associação de ERv", max(strata, key=lambda item: item["delta_erv_pp"]))):
+            organic, sponsored = item["organic"], item["sponsored"]
+            lines += [f"{label}: {text(' / '.join(str(value) for value in item['context'].values()))}; "
+                      f"ΔERv {item['delta_erv_pp']:+.6g} p.p.; força {item['strength']:.6g}; "
+                      f"orgânicos/patrocinados: {organic['posts']}/{sponsored['posts']} posts, "
+                      f"{organic['views']}/{sponsored['views']} views, "
+                      f"{organic['interactions']}/{sponsored['interactions']} interações. "
+                      f"Evidência: `{item['evidence_id']}`.", ""]
+    lines += ["Esses extremos são achados descritivos, não prioridades adicionais nem ordens para suspender renovação. "
+              "Sinal negativo isolado ou força insuficiente exige investigação; interromper investimento requer "
+              "sinais concordantes, evidência forte e decisão humana. Ausência de zeros observados, quando indicada "
+              "acima, limita a avaliação do fracasso: não prova inexistência de posts sem engajamento.", "",
+              "## Estratégia operacional e quick wins", "",
+              "Responsável sugerido: Gestor de Social Media. Executar nos próximos 7 dias; revisar 7 dias "
+              "após cada teste. A estratégia abaixo aplica a fila inicial, sem reordená-la.", "",
+              "| Tema | Ação | Critério de revisão |", "|---|---|---|",
+              "| Esforço e quick win | Preparar briefs dos contextos da fila na ordem exibida; anexar a evidência e registrar aceitar/rejeitar/editar. | Rever ERv, views e interações por post no mesmo contexto. |",
+              "| Público e creators | Preservar rótulos de audiência e faixa de creator do contexto; coletar se faltarem controles. Não inferir uma persona ou threshold de contratação. | Pelo menos 30 taxas e cinco creators por braço; declarar composição e concentração. |",
+              "| Frequência | Testar uma cadência por vez; este relatório não estima uma frequência ótima. | Janelas equivalentes e pelo menos duas semanas completas antes de propor frequência observada. |",
+              "| Patrocínio | Obter custos reais antes de avaliar desembolso; força limitada pede coleta/teste. | ERv e volume concordantes, grupo comparável e dados financeiros. |",
+              "| Parar/revisar | Revisar repetição de padrões negativos; não parar por média global ou sinal isolado. | Interrupção exige a guarda do motor e decisão humana; sem base, coletar. |", "",
+              "## Auditabilidade e limites", "",
+              f"Fonte SHA-256: `{source['source_hash']}`; método `{scope.get('method_version', METHOD_VERSION)}`. "
+              "Cada evidência está em [evidence.csv](./evidence.csv), com escopo, fórmula e referências.", "",
+              "Regeração conjunta: `python3 analysis.py /caminho/social_media_dataset.csv --evidence evidence.csv "
+              "--summary summary.html --report analysis.md`.", "",
+              "Linhas `recommendation` preservam `rank`, score, impacto, força, atualidade, valores originais "
+              "V/I/F, denominadores P95, diferença, data representativa, ação, responsável e janelas. "
+              "Impacto = média de min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1); "
+              "prioridade = 100 × impacto × força × atualidade. Scores são relativos à plataforma/tipo/unidade, "
+              "não monetários. P95=0 usa máximo positivo ou zero se inexistente.", "",
+              "Em `source_ref`, `source_row_id` e `source_line` são arrays JSON de mesmo tamanho e ordem: "
+              "o par de índice i identifica o ID opaco e a primeira linha física (base 1) do registro. "
+              "Reconstituir a chave completa com `source_hash + ':' + source_row_id[i]`. "
+              "Campos multilinha contam todas as linhas físicas; células de texto neutralizam fórmulas de planilha.", "",
+              "A CLI publica todo o histórico, sem alertas post a post. Ausência de período anterior igualmente "
+              "longo pode impedir comparações editoriais; não se inventa tendência. O monitoramento recente "
+              "pode produzir outra fila porque tem outro escopo. Não há unidade confirmada de content_length, "
+              "causalidade, ROI ou resultados futuros inferidos.", ""]
+    return "\n".join(lines)
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:
@@ -769,6 +919,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("input", type=Path)
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--summary", type=Path, required=True)
+    parser.add_argument("--report", type=Path, help="Relatório Markdown da mesma análise")
     args = parser.parse_args(argv)
     try:
         raw = args.input.read_bytes()
@@ -783,6 +934,8 @@ def main(argv: list[str] | None = None) -> int:
     result = analyze(frame, {"target_start": min(frame["post_date"]).isoformat(), "target_end": max(frame["post_date"]).isoformat(), "reference_date": max(frame["post_date"]).isoformat(), "filters": {}, "strict_audience": False, "include_post_alerts": False, "method_version": METHOD_VERSION}, source_hash)
     _atomic_write(args.evidence, export_evidence(result, []))
     _atomic_write(args.summary, executive_summary(result, []).encode("utf-8"))
+    if args.report:
+        _atomic_write(args.report, analysis_report(result).encode("utf-8"))
     return 0
 
 

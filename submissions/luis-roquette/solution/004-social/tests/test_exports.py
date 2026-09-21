@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from analysis import executive_summary, export_evidence
+from analysis import executive_summary, export_evidence, analysis_report, analyze, load_csv
 from tests.helpers import csv_bytes, make_post
 
 
@@ -42,19 +43,69 @@ def sample_decisions() -> list[dict[str, object]]:
     return [{"decision_id": "d-1", "evidence_id": "dimension-1", "status": "accepted", "owner": "Gestor"}]
 
 
-def run_cli(path: Path) -> tuple[int, bytes]:
+def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
     with tempfile.TemporaryDirectory() as directory:
         output_csv = Path(directory) / "evidence.csv"
         output_html = Path(directory) / "summary.html"
+        output_report = Path(directory) / "analysis.md"
         completed = subprocess.run(
-            [sys.executable, str(APP_ROOT / "analysis.py"), str(path), "--evidence", str(output_csv), "--summary", str(output_html)],
+            [sys.executable, str(APP_ROOT / "analysis.py"), str(path), "--evidence", str(output_csv), "--summary", str(output_html), "--report", str(output_report)],
             capture_output=True,
             check=False,
         )
-        return completed.returncode, output_csv.read_bytes() if output_csv.exists() else b""
+        return completed.returncode, tuple(output.read_bytes() if output.exists() else b"" for output in (output_csv, output_html, output_report))
 
 
 class ExportTests(unittest.TestCase):
+    def test_recommendations_reconcile_csv_markdown_and_html_in_engine_order(self):
+        result = sample_result()
+        result["recommendations"] = [
+            {"evidence_id": f"recommendation-{index}", "recommendation_key": f"recommendation-{index}",
+             "context": {"platform": "TikTok", "content_type": "video", "content_category": str(index), "follower_band": "500,000+"},
+             "priority": 100 * 0.5 * 0.8 * recency, "priority_components": {"impact": 0.5, "strength": 0.8, "recency": recency},
+             "priority_values": {"views": 100, "interactions": 20, "followers": 50},
+             "normalization": {"views": 200, "interactions": 40, "followers": 100},
+             "delta_erv_pp": -0.1, "representative_date": "2024-01-01", "action_type": "test", "topic": "sponsorship",
+             "action": f"Teste {index}", "owner": "Gestor", "execution_window": "próximos 7 dias", "review_window": "7 dias após o teste", "metric": "ERv e volume"}
+            for index, recency in [(2, 1e-12), (1, 5e-13), (3, 2e-13)]
+        ]
+        rows = [row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "recommendation"]
+        self.assertEqual([row["evidence_id"] for row in rows], [item["evidence_id"] for item in result["recommendations"]])
+        for rank, (row, item) in enumerate(zip(rows, result["recommendations"], strict=True), 1):
+            self.assertEqual(int(row["rank"]), rank)
+            for key in ("priority", "delta_erv_pp"):
+                self.assertEqual(float(row[key]), item[key])
+            for key, value in item["priority_components"].items():
+                self.assertEqual(float(row[key]), value)
+            for key in ("normalization", "priority_values", "context"):
+                self.assertEqual(json.loads(row[key]), item[key])
+            for key in ("action", "action_type", "owner", "execution_window", "review_window", "representative_date", "metric"):
+                self.assertEqual(row[key], item[key])
+            self.assertAlmostEqual(float(row["priority"]), 100 * float(row["impact"]) * float(row["strength"]) * float(row["recency"]), delta=1e-25)
+        for output in (analysis_report(result), executive_summary(result, [])):
+            positions = [output.index(item["evidence_id"]) for item in result["recommendations"]]
+            self.assertEqual(positions, sorted(positions))
+            for item in result["recommendations"]:
+                self.assertIn(f"{item['priority']:.6g}", output)
+                self.assertIn(item["execution_window"], output)
+                self.assertIn(item["review_window"], output)
+
+    def test_compact_references_round_trip_opaque_ids_and_physical_lines(self):
+        frame, errors = load_csv(csv_bytes([
+            make_post(id="id:one", content_description="first line\nsecond line"),
+            make_post(id="two", content_id="different"),
+        ]))
+        self.assertEqual(errors, [])
+        self.assertEqual(frame["source_line"].tolist(), [2, 4])
+        result = analyze(frame, {"include_post_alerts": False}, str(frame["source_hash"].iloc[0]))
+        references = [row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "source_ref"]
+        self.assertTrue(references)
+        for row in references:
+            ids, lines = json.loads(row["source_row_id"]), json.loads(row["source_line"])
+            self.assertEqual(len(ids), len(lines))
+            for source_id, line in zip(ids, lines, strict=True):
+                self.assertEqual(result["row_references"][f"{row['source_hash']}:{source_id}"], line)
+
     def test_export_csv_keeps_numbers_numeric_and_neutralizes_formula_text(self):
         rows = parse_export(export_evidence(result_with_texts(["=1+1", "+cmd", "-2+3", "@SUM(A1)", "\t=1"]), []))
         evidence = [row for row in rows if row["record_type"] == "evidence" and row["evidence_id"].startswith("text-")]
