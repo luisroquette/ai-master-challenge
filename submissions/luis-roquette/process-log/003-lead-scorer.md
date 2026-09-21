@@ -653,4 +653,20 @@ Como tratar um deal ativo cujos dados não permitem score confiável, por exempl
 
 **Recomendação da IA:** **B**. Nenhuma oportunidade desaparece, e a interface transforma incerteza em uma ação concreta de qualidade de dados.
 
-**Resposta:** aguardando Luis.
+#### Resposta de Luis
+
+**B:** manter o deal na fila com estado “Dados insuficientes”, sem score, indicando os campos que precisam de correção.
+
+#### Decisão registrada
+
+Deals sem suporte de dados permanecerão visíveis, mas não receberão número ou faixa que sugira confiança inexistente. A interface explicará o bloqueio e os dados a corrigir. O fallback sem conta continua válido quando aplicável; “Dados insuficientes” cobre somente casos fora dos caminhos validados.
+
+### Síntese da Onda 5 — aguardando aprovação
+
+- **Estrutura:** uma tela com filas separadas de `Engaging` e `Prospecting`, sem score comum entre estágios.
+- **Papéis:** vendedor abre sua carteira; gestor abre a equipe e pode filtrar por vendedor.
+- **Leitura:** linhas compactas para comparação e painel lateral com explicação, origem, evidência e próxima ação.
+- **Operação:** próxima ação vem de playbook determinístico; gestor pode fixar temporariamente um deal no topo sem alterar o score.
+- **Incerteza:** dados fora dos caminhos validados permanecem visíveis como “Dados insuficientes”, com correção indicada e sem score enganoso.
+
+Permanecem para a Onda 6: arquitetura mínima, fronteira do protótipo, persistência, execução, testes e prova final.
