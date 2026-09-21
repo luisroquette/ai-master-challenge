@@ -502,4 +502,23 @@ Quando duas probabilidades devem ser consideradas “próximas” para permitir 
 
 **Recomendação da IA:** **C**. Evita precisão falsa e deriva o desempate da resolução que os dados realmente sustentam.
 
+#### Resposta de Luis
+
+**C:** probabilidades serão consideradas próximas quando pertencerem à mesma faixa cuja confiabilidade foi confirmada na validação temporal.
+
+#### Decisão registrada
+
+A interface não tratará diferenças menores do que a resolução sustentada pelos dados como precisão real. Dentro da mesma faixa validada, a receita esperada poderá desempatar; entre faixas distintas, prevalecerá a probabilidade. As faixas deverão ser derivadas e reportadas pela validação.
+
+#### Pergunta 7
+
+Como transformar produto, vendedor e conta em uma prioridade explicável para `Prospecting`, sem chamar o resultado de probabilidade?
+
+- **A.** Usar taxas históricas brutas de sucesso para cada combinação.
+- **B.** Usar evidências históricas suavizadas: combinações com poucos casos recuam progressivamente para grupos mais gerais, e a interface informa a força da evidência.
+- **C.** Definir pesos manuais fixos para produto, vendedor e conta.
+- **D.** Reutilizar o modelo de `Engaging`, mas ocultar a probabilidade.
+
+**Recomendação da IA:** **B**. Evita que grupos pequenos pareçam conclusivos, mantém o cálculo auditável e lida com categorias raras ou novas sem inventar certeza.
+
 **Resposta:** aguardando Luis.
