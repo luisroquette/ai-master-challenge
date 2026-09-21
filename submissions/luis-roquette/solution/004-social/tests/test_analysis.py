@@ -96,6 +96,17 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertTrue(str(frame["post_date"].dtype).startswith("datetime64"))
         self.assertEqual(analyze(frame, {}, str(frame.iloc[0]["source_hash"]))["source"]["rows"], 2)
 
+    def test_load_csv_diagnostics_use_physical_line_after_multiline_field(self):
+        raw = csv_bytes([
+            make_post(id="1", content_id="a", content_description="linha 1\nlinha 2"),
+            make_post(id="2", content_id="b", content_description="simples", views=-1, post_date="invalid"),
+        ])
+        frame, errors = load_csv(raw)
+        self.assertIsNone(frame)
+        locations = {(error["column"], error["row"]) for error in errors}
+        self.assertIn(("views", 4), locations)
+        self.assertIn(("post_date", 4), locations)
+
     def test_load_csv_rejects_empty_malformed_and_duplicate_headers(self):
         for raw in (b"", b'"unterminated', b"id,id,platform\n1,2,Instagram\n"):
             with self.subTest(raw=raw[:20]):
@@ -191,6 +202,36 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(pd.Timestamp(evidence["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
         self.assertEqual(pd.Timestamp(recommendation["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
         self.assertEqual(recommendation["priority_components"]["recency"], 1.0)
+
+    def test_aggregate_normalization_includes_large_ineligible_nonempty_group(self):
+        scope = default_scope(target_start="2025-01-01", target_end="2025-01-31", reference_date="2025-01-31")
+        baseline_frame = sponsorship_rows()
+        baseline = analyze(baseline_frame, scope, "hash")
+        evidence_id = baseline["sponsorship"]["strata"][0]["evidence_id"]
+        baseline_item = next(item for item in baseline["recommendations"] if item["evidence_id"] == evidence_id)
+
+        large_group = frame_from_rows([
+            make_post(
+                id=f"large-{index}",
+                content_id=f"large-content-{index}",
+                creator_id=f"large-creator-{index}",
+                content_type="text",
+                post_date="2025-01-31T12:00:00",
+                views=1_000_000,
+                likes=100_000,
+                shares=0,
+                comments_count=0,
+                follower_count=1_000_000,
+                is_sponsored="TRUE",
+            )
+            for index in range(10)
+        ])
+        augmented = analyze(pd.concat([baseline_frame, large_group], ignore_index=True), scope, "hash")
+        augmented_item = next(item for item in augmented["recommendations"] if item["evidence_id"] == evidence_id)
+
+        self.assertGreater(augmented_item["normalization"]["views"], baseline_item["normalization"]["views"])
+        self.assertLess(augmented_item["priority"], baseline_item["priority"])
+        self.assertFalse(any(item["context"]["content_type"] == "text" for item in augmented["recommendations"]))
 
     def test_priority_is_reproducible_and_exposes_components(self):
         reference = make_cohort(20, 5, [2, 4, 6, 8, 10])

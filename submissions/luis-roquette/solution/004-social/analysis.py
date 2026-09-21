@@ -109,9 +109,9 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
     duplicates = sorted({name for name in header if header.count(name) > 1})
     if duplicates:
         return None, [_error(1, name, "duplicate_header", "nomes de colunas únicos") for name in duplicates]
-    malformed_lines = [index for index, row in enumerate(rows[1:], start=2) if len(row) != len(header)]
-    if malformed_lines:
-        return None, [_error(index, None, "malformed_row", f"{len(header)} campos") for index in malformed_lines]
+    malformed_rows = [index for index, row in enumerate(rows[1:], start=1) if len(row) != len(header)]
+    if malformed_rows:
+        return None, [_error(physical_lines[index], None, "malformed_row", f"{len(header)} campos") for index in malformed_rows]
 
     missing = [name for name in REQUIRED_COLUMNS if name not in header]
     if missing:
@@ -123,12 +123,16 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         return None, [_error(None, None, "malformed_csv", str(exc))]
     if frame.empty:
         return None, [_error(None, None, "empty_file", "ao menos uma linha de dados")]
+    data_physical_lines = physical_lines[1:]
+
+    def physical_line(index: object) -> int:
+        return data_physical_lines[int(index)]
 
     errors: list[dict[str, object]] = []
     for column in REQUIRED_COLUMNS:
         empty = frame[column].astype(str).str.strip().eq("")
         errors.extend(
-            _error(int(index) + 2, column, "missing_value", "valor obrigatório")
+            _error(physical_line(index), column, "missing_value", "valor obrigatório")
             for index in frame.index[empty]
         )
 
@@ -139,18 +143,18 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         out_of_range = numeric.gt(MAX_INT64)
         invalid = numeric.isna() | ~numeric.map(math.isfinite) | numeric.lt(0) | numeric.mod(1).ne(0)
         errors.extend(
-            _error(int(index) + 2, column, "invalid_nonnegative_integer", "inteiro finito maior ou igual a zero")
+            _error(physical_line(index), column, "invalid_nonnegative_integer", "inteiro finito maior ou igual a zero")
             for index in frame.index[invalid & ~out_of_range]
         )
         errors.extend(
-            _error(int(index) + 2, column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
+            _error(physical_line(index), column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
             for index in frame.index[out_of_range]
         )
 
     allowed_flags = {"TRUE": True, "FALSE": False, "true": True, "false": False}
     invalid_flags = ~frame["is_sponsored"].isin(allowed_flags)
     errors.extend(
-        _error(int(index) + 2, "is_sponsored", "invalid_boolean", "TRUE/FALSE ou true/false")
+        _error(physical_line(index), "is_sponsored", "invalid_boolean", "TRUE/FALSE ou true/false")
         for index in frame.index[invalid_flags]
     )
 
@@ -172,23 +176,23 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
             parsed_dates.append(parsed)
         except (ValueError, TypeError):
             parsed_dates.append(None)
-            errors.append(_error(int(index) + 2, "post_date", "invalid_date", "ISO-8601 ou %m/%d/%y %I:%M %p"))
+            errors.append(_error(physical_line(index), "post_date", "invalid_date", "ISO-8601 ou %m/%d/%y %I:%M %p"))
     if timezone_offsets:
         expected_offset = timezone_offsets[0][1]
         errors.extend(
-            _error(index + 2, "post_date", "incompatible_timezone_offset", DATE_TIME_POLICY)
+            _error(physical_line(index), "post_date", "incompatible_timezone_offset", DATE_TIME_POLICY)
             for index, offset in timezone_offsets[1:]
             if offset != expected_offset
         )
 
     duplicated_ids = frame["id"].duplicated(keep=False)
     errors.extend(
-        _error(int(index) + 2, "id", "duplicate_identity", "id único no arquivo")
+        _error(physical_line(index), "id", "duplicate_identity", "id único no arquivo")
         for index in frame.index[duplicated_ids]
     )
     duplicated_content = frame.duplicated(["platform", "content_id"], keep=False)
     errors.extend(
-        _error(int(index) + 2, "content_id", "duplicate_identity", "(platform, content_id) único no arquivo")
+        _error(physical_line(index), "content_id", "duplicate_identity", "(platform, content_id) único no arquivo")
         for index in frame.index[duplicated_content]
     )
     if errors:
@@ -430,6 +434,31 @@ def _p95(values: pd.Series) -> float:
     return float(positives.max()) if len(positives) else 0.0
 
 
+def _aggregate_normalization(targets: pd.DataFrame) -> dict[tuple[str, str], dict[str, float]]:
+    pools: dict[tuple[str, str], list[dict[str, float]]] = {}
+    specifications = (
+        ("editorial", targets.loc[~targets["is_sponsored"]], (*GROUP_KEYS, *AUDIENCE_KEYS)),
+        ("sponsorship", targets.loc[targets["is_sponsored"]], GROUP_KEYS),
+    )
+    for kind, rows, keys in specifications:
+        for _, group in rows.groupby(list(keys), dropna=False, sort=True):
+            platform = str(group.iloc[0]["platform"])
+            pools.setdefault((kind, platform), []).append(
+                {
+                    "views": float(group["views"].sum()),
+                    "interactions": float(group["interactions"].sum()),
+                    "followers": float(group.groupby("creator_id")["follower_count"].max().sum()),
+                }
+            )
+    return {
+        key: {
+            name: _p95(pd.Series([values[name] for values in groups]))
+            for name in ("views", "interactions", "followers")
+        }
+        for key, groups in pools.items()
+    }
+
+
 def _priority(values: dict[str, float], denominators: dict[str, float], strength: float, date: pd.Timestamp, reference: pd.Timestamp) -> tuple[float, dict[str, float]]:
     normalized = [min(values[name] / denominators[name], 1.0) if denominators[name] else 0.0 for name in ("views", "interactions", "followers")]
     impact = sum(normalized) / 3
@@ -593,11 +622,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             action_type = "test"
         aggregate_items.append(("sponsorship", item, values, action_type, "sponsorship"))
 
-    aggregate_denominators: dict[tuple[str, str], dict[str, float]] = {}
-    for kind, item, values, _, _ in aggregate_items:
-        platform = str(item["context"]["platform"])
-        bucket = [candidate_values for candidate_kind, candidate, candidate_values, _, _ in aggregate_items if candidate_kind == kind and str(candidate["context"]["platform"]) == platform]
-        aggregate_denominators[(kind, platform)] = {name: _p95(pd.Series([entry[name] for entry in bucket])) for name in values}
+    aggregate_denominators = _aggregate_normalization(targets)
     for kind, item, values, action_type, topic in aggregate_items:
         platform = str(item["context"]["platform"])
         representative = pd.Timestamp(item["representative_date"])

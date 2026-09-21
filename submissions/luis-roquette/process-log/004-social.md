@@ -378,6 +378,17 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Regressão real:** CSV canônico aprovado com 52.214 linhas e cinco plataformas; validação em 1,251 s e análise em 11,828 s. A janela-padrão permaneceu sem estrato patrocinado suficiente, como já documentado, sem relaxar o mínimo.
 - **Limite:** nenhuma alteração foi feita em `analysis.md`, `evidence.csv` ou no formato de exportação de S2.
 
+## I18 — Revisão P1/S1: universo do P95 e linhas físicas — 2026-09-21 20:23 BRT
+
+- **Gaps do Feedback Looping:** o P95 agregado usava somente comparações elegíveis, embora a SPEC exija todos os grupos não vazios do mesmo tipo/plataforma/janela; diagnósticos de `load_csv` ainda usavam `index+2`, incorreto após células multilinha.
+- **Gate vermelho do P95:** um grupo patrocinado grande, sem braço orgânico e portanto inelegível, não alterou o denominador de 3.000 views do grupo elegível.
+- **Correção do P95:** os pools de normalização agora são independentes da fila. Editorial usa todos os grupos orgânicos não vazios do núcleo/audiência; patrocínio usa todos os grupos patrocinados não vazios do núcleo. Elegibilidade continua decidindo recomendações, nunca o universo do denominador.
+- **Gate vermelho de linhas:** um registro inválido após texto com quebra de linha reportou linha lógica 3, em vez da linha física 4.
+- **Correção de linhas:** todos os diagnósticos por registro reutilizam o mapa físico criado pelo `csv.reader`, o mesmo contrato persistido em `source_line`; multiline conta cada linha física.
+- **Gates verdes:** a fixture grande aumentou o denominador, reduziu a prioridade e permaneceu fora da fila; o CSV multiline reportou `views` e `post_date` na linha 4. Suíte completa com warnings como erro: 33/33 em 3,565 s; `compileall` e `git diff --check` passaram.
+- **CSV real:** 52.214 linhas e cinco plataformas passaram; load em 1,268 s e dois escopos analisados em 26,422 s. A fila recente permaneceu idêntica. A fila histórica manteve os mesmos três IDs e a mesma ordem, mas os scores mudaram de `4,567965e-09 / 3,950288e-11 / 5,079782e-12` para `6,532899e-09 / 5,863452e-11 / 6,169594e-12`.
+- **Handoff S2:** como a fila histórica mudou numericamente, `analysis.md`, `evidence.csv` e HTML precisam ser regenerados pelo responsável de S2. Nenhum desses artefatos foi alterado neste fix S1.
+
 ## I18 — Revisão P1/S2: contrato único de prioridades — 2026-09-21 20:09 BRT
 
 - **Planejamento:** corrigir os três achados de S2: exportar a fila e seus componentes, gerar o relatório com a ordem do motor corrigido em `81b18fd` e preservar o vínculo compacto entre ID e linha da fonte.
