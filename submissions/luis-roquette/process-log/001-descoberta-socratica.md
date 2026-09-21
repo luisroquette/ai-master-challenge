@@ -782,4 +782,35 @@ Como devemos tratar segmentos ou causas com evidência insuficiente?
 
 ### Estado da pergunta 4
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+Quando amostra, cobertura, estabilidade ou convergência de evidências forem insuficientes, a solução deverá declarar a conclusão como inconclusiva ou de baixa confiança. Rankings instáveis serão suprimidos em vez de apresentados como decisão segura.
+
+### Consequência para o desenho
+
+Tabelas e visuais deverão exibir tamanho da amostra, cobertura e nível de confiança. A matriz de rastreabilidade registrará o motivo de cada abstenção. A IA não poderá preencher lacunas com padrões gerais de mercado.
+
+### Ponto ainda aberto
+
+Resta definir o conjunto completo e verificável de condições que encerra a implementação e autoriza a submissão.
+
+### Pergunta 5
+
+Quando o Challenge 001 poderá ser marcado como pronto?
+
+- A. Quando o pipeline executar e o dashboard abrir localmente.
+- B. Quando as três perguntas do desafio estiverem respondidas com evidências das cinco tabelas; findings rastreáveis; recomendações priorizadas; relatório, dashboard e CSV consistentes; gates verdes; setup reproduzível; limitações e process log completos; e revisão executiva de cinco minutos aprovada.
+- C. Quando a demonstração pública estiver visualmente convincente, mesmo com testes ou documentação pendentes.
+- D. Quando o tempo planejado acabar, registrando o restante como trabalho futuro.
+
+**Recomendação técnica preliminar do agente:** B, porque cobre os requisitos oficiais, as decisões das cinco ondas e a prova técnica sem tornar a hospedagem opcional um bloqueador.
+
+### Estado da pergunta 5
+
 Aguardando resposta de Luis.
