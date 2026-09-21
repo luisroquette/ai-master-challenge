@@ -44,3 +44,11 @@ O diferencial deve transformar os achados em decisão recorrente sem aumentar o 
 - **Limitação:** `npx skills` instala skills, mas não os subagentes do plugin completo. Os artefatos de ferramenta ficam locais e não entrarão no Pull Request, que aceita apenas `submissions/luis-roquette/`.
 
 **Fluxo adotado:** `add-task → plan-task → revisão humana da spec → implement-task`, sempre subordinado às regras de pesquisa, Ponytail, testes e integridade do desafio.
+
+## I03 — Documentação como parte central da entrega — 2026-09-21 14:34 BRT
+
+- **Decisão de Luis:** documentar todo o processo é tão importante quanto — ou mais importante que — o resultado final. Ganha quem documenta.
+- **Forma:** registrar continuamente fragmentos curtos, objetivos e diretos, com destaque para os pontos que Luis sinalizar durante o trabalho.
+- **Regra editorial:** corrigir erros de português antes de incorporar qualquer fala ou decisão ao diário, preservando o sentido original.
+- **Princípio:** como dizia Silvio Santos: “Sabe por que o ovo de galinha vende mais que o de pata? Porque a galinha canta quando bota!”
+- **Aplicação:** cada decisão, hipótese, correção, evidência, limitação e contribuição humana relevante será registrada no momento em que ocorrer, sem reconstrução retroativa.
