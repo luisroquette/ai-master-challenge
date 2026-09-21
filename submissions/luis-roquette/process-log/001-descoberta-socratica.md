@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 5 em andamento
+- **Estado:** Onda 5 aguardando confirmação
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -813,4 +813,28 @@ Quando o Challenge 001 poderá ser marcado como pronto?
 
 ### Estado da pergunta 5
 
-Aguardando resposta de Luis.
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+“Pronto” significa conformidade simultânea com o desafio, evidência analítica, consistência dos artefatos, validação técnica, reprodução e documentação do processo. Execução sem erro ou aparência visual não bastam isoladamente.
+
+### Consequência para o desenho
+
+A SPEC deverá converter cada item da opção B em critério de aceite verificável. A demonstração pública continuará fora do caminho crítico; o modelo preditivo continuará condicionado ao portão definido na Pergunta 3.
+
+## Síntese provisória da Onda 5
+
+- **Aceite de findings:** trilha reproduzível entre fonte, tempo, cálculo, evidência, limitação e recomendação.
+- **Testes bloqueantes:** schemas, chaves, joins, receita, isolamento temporal, consistência dos artefatos e fumaça da interface.
+- **Modelo opcional:** só entra se superar baseline fora do tempo e agregar valor operacional por segmento.
+- **Abstenção:** evidência insuficiente será mostrada como inconclusiva; rankings instáveis serão suprimidos.
+- **Definição de pronto:** requisitos oficiais, cinco tabelas, três respostas, artefatos consistentes, gates verdes, setup, limitações, process log e revisão executiva aprovados.
+
+### Estado da onda
+
+Aguardando confirmação de Luis. A SPEC ainda não foi criada. Após a aprovação, consolidaremos o desenho em seções curtas e validaremos o contrato antes de materializá-lo pela metodologia SDD.
