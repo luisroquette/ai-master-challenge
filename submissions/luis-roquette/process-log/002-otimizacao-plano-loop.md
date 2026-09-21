@@ -201,3 +201,9 @@ Fontes verificadas: [Challenge 001](https://github.com/luisroquette/ai-master-ch
 A primeira consulta em lote ao PyPI falhou porque `zsh` não separou pares escritos com espaço; repetimos com delimitador `@` e obtivemos todos os metadados. Um patch foi rejeitado por conter duas operações para o mesmo arquivo; reaplicamos como uma única operação. Nenhum incidente alterou arquivos fora da submissão.
 
 Uma checagem adicional improvisada do download Kaggle falhou três vezes sem testar o fluxo real: `HEAD` retornou 404, `status` era variável reservada do `zsh` e um template de `mktemp` com sufixo foi inválido. Interrompemos a repetição. O comando planejado usa `GET` e `mktemp -d`, combinação já executada com sucesso na inspeção inicial; além disso, os cinco CSVs verificados serão versionados, então reprodução e avaliação não dependerão da disponibilidade futura do Kaggle.
+
+### Capacidade externa antes da implementação
+
+O semáforo listou cinco Codespaces, todos de outros repositórios, e nenhum reutilizável para este challenge. O candidato mais antigo, `codex-preflight-vr7p79qv66whw4g9`, está limpo, sem commits locais e corresponde ao commit `d73cbea`, já integrado no PR `luisroquette/swen.ia.br-claude#320`. Uma inspeção remota acionou pager, interrompeu o comando e deixou o ambiente ativo; ele foi explicitamente parado, sem exclusão nem alteração de arquivos.
+
+Esse é o único gargalo externo remanescente: antes do primeiro preflight pesado, será necessário obter autorização para excluir esse Codespace já salvo no GitHub ou ampliar temporariamente o teto de cinco. O plano técnico e a stack não possuem lacuna conhecida; a capacidade depende de decisão destrutiva do proprietário e não será presumida.
