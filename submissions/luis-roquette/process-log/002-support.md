@@ -120,3 +120,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Pipeline integrado.
 
 **Interpretação para a próxima onda:** o protótipo será uma fatia vertical demonstrável do processo, não uma coleção de telas. A próxima decisão precisa definir os pontos exatos de autonomia da IA e intervenção humana dentro desse pipeline.
+
+### Onda 3 — Fronteira entre IA e humano
+
+**Pergunta:** qual autonomia a IA deve ter no pipeline?
+
+- **A — Copiloto conservador:** a IA recomenda tudo; o humano confirma categoria, prioridade, rota e resposta.
+- **B — Autonomia por risco:** a IA roteia automaticamente casos seguros e confiáveis; respostas externas continuam como rascunho; baixa confiança ou tema sensível vai para o humano.
+- **C — Automação de casos simples:** a IA também envia respostas automaticamente em FAQs de alta confiança; exceções seguem para o humano.
+
+**Resposta de Luis:** B — Autonomia por risco.
+
+**Interpretação para a próxima onda:** a arquitetura precisa separar decisões internas reversíveis de comunicação externa. Roteamento pode ocorrer automaticamente sob critérios verificáveis; respostas não serão enviadas sem revisão humana. A próxima escolha deve definir como risco e confiança serão combinados no gate.
