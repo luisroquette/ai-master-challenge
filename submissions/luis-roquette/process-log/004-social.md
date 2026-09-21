@@ -137,3 +137,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) cockpit principal para o Gestor, com resumos semanais e mensais exportáveis; B) três áreas separadas; C) interface única com seletor de perfil.
 - **Resposta de Luis:** **A — cockpit principal para o Gestor, com resumos exportáveis para os demais**.
 - **Implicação:** haverá uma única experiência operacional, centrada no Gestor de Social Media. Head e Analista consumirão sínteses derivadas da mesma fonte, evitando três produtos, permissões ou navegações independentes no MVP.
+
+### Onda 10 — benchmark dos alertas
+
+- **Pergunta:** como definir o desempenho esperado de cada post?
+- **Opções:** A) mediana e distribuição de grupos comparáveis por plataforma, formato, categoria, faixa de creator e período; B) média global; C) modelo preditivo desde o MVP.
+- **Resposta de Luis:** **A — grupo comparável**.
+- **Implicação:** alertas serão baseados em referências robustas e contextuais. A granularidade final dependerá do tamanho real das amostras; quando um grupo for pequeno, o sistema deverá recuar para um nível comparável mais amplo e declarar essa limitação.
