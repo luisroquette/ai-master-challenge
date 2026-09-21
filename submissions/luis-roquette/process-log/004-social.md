@@ -309,3 +309,25 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Passada final 1:** após incluir o README obrigatório, nova comparação briefing → critérios → tasks → provas terminou sem lacunas adicionais.
 - **Passada final 2:** auditoria inversa de stack, tempo, imports, dependências, staging, escopo Git e handoff terminou sem novo gargalo de plano; 360 minutos ativos, zero dependência paga e todos os CK/HR cobertos.
 - **Limite de certeza:** o plano cobre integralmente os requisitos conhecidos e a stack não apresenta gargalo-base. Runtime final, achados reais, fluxo de cinco minutos, exports, persistência e setup limpo só podem ser certificados após a implementação e os gates das Tasks 1–6.
+
+## I12 — Autorização de implementação e Feedback Looping — 2026-09-21
+
+- **Decisão humana:** Luis autorizou o início da implementação após a pesquisa, as 24 ondas socráticas, a SPEC, o plano otimizado e a auditoria final. As perguntas, alternativas e respostas das 24 ondas permanecem registradas integralmente em I05; este marco não as resume nem substitui.
+- **Metodologia obrigatória:** manter SDD como autoridade e executar em fases cronológicas, uma após a outra, pelo ciclo `Planejamento → Revisão → Execução → Teste`.
+- **Feedback Looping:** cada resultado de execução e teste produz um report objetivo para a própria IA. Com base nele, a IA decide entre reforçar/corrigir o trabalho na mesma fase ou avançar para a fase seguinte.
+- **Gate de avanço:** uma fase só termina quando seus critérios e testes aplicáveis estiverem validados. Se algum teste falhar, o ciclo reinicia na própria fase; nenhuma falha é transferida silenciosamente para a seguinte.
+- **Cascata de loops:** cada passo do plano usa seu loop local; as revisões de fase consolidam os passos concluídos. O Definition of Done recebe um loop final independente de verificação, correção e nova verificação.
+- **Reports:** registrar durante a execução, com baixa latência, o plano da fase, a revisão, os comandos realmente executados, resultados, falhas, correções, evidências e julgamento humano. Documentar é parte central da entrega, não um apêndice.
+- **Mapeamento SDD:** S1 cobre Tasks 1–2 do plano; S2 cobre Task 3; S3 cobre Tasks 4–5; S4 cobre Task 6. A ordem é estritamente sequencial e preserva a prioridade da análise e da estratégia antes do cockpit.
+- **Limites de autorização:** implementação local e commits da branch estão autorizados. APIs pagas, push, PR, merge, deploy, publicação, investimento ou execução externa continuam fora do escopo até autorização explícita.
+
+## I13 — S1/Task 1: fronteira do CSV e métricas — 2026-09-21 19:16 BRT
+
+- **Planejamento:** implementar primeiro a fronteira atômica do CSV e as fórmulas puras, sem Streamlit, SQLite, serviço ou dependência além dos pins já reproduzidos.
+- **Revisão:** o contrato preservou subconjuntos válidos, zeros, hash/linhas de origem, faixas de creators e diagnósticos acionáveis; o CSV bruto permaneceu fora do repositório.
+- **Execução:** foram criados `requirements.txt`, `analysis.py`, fixtures determinísticas e testes `unittest`. O primeiro run ficou vermelho pelo motivo esperado: `ModuleNotFoundError: analysis`.
+- **Feedback loop:** o primeiro run verde parcial teve 13/14 testes aprovados; o único erro era um `creator_id` fornecido duas vezes no builder. A correção foi feita no helper. Warnings do Pandas revelaram dtypes `object`; a normalização passou a criar dtypes numéricos/booleanos reais e o gate foi repetido com warnings tratados como erro.
+- **Teste sintético:** `PYTHONWARNINGS=error python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_analysis.py' -v` terminou com 14/14 testes aprovados em 0,515 s.
+- **Teste real:** ambiente isolado em `/tmp`, Python 3.14.2, Streamlit 1.64.0 e Pandas 2.3.3; `pip check` sem dependências quebradas. O CSV público de 23.290.049 bytes reconciliou 52.214 linhas e as cinco plataformas.
+- **Medição:** validação real em 1,242 s; análise inicial em 10,999 s; total 12,241 s. O caminho cabe no objetivo de decisão em cinco minutos; não foi adicionada otimização preventiva.
+- **Limitação:** o teste real encontrou cobertura zero para comparação de patrocínio na janela-padrão recente, estado válido de insuficiência — não uma licença para relaxar os mínimos. Exports e CLI pertencem à S2/Task 3.
