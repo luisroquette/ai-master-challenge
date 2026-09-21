@@ -11,6 +11,7 @@ from tests.helpers import (
     concentrated_reference,
     csv_bytes,
     default_scope,
+    frame_from_rows,
     frame_with_target,
     make_cohort,
     make_post,
@@ -94,6 +95,15 @@ class CsvBoundaryTests(unittest.TestCase):
 
 
 class ContextEvidenceTests(unittest.TestCase):
+    def test_analysis_exposes_auditable_required_dimensions(self):
+        frame = frame_from_rows([
+            make_post(id="a", content_id="a", platform="Instagram", content_type="video"),
+            make_post(id="b", content_id="b", platform="TikTok", content_type="image"),
+        ])
+        result = analyze(frame, default_scope(target_start="2025-01-15", target_end="2025-01-15"), str(frame.iloc[0]["source_hash"]))
+        self.assertEqual(set(result["dimensions"]), {"platform", "content_type", "content_category", "creator_band", "audience_age", "audience_gender", "audience_location", "month"})
+        self.assertTrue(all(item["evidence_id"] and item["source_row_ids"] for items in result["dimensions"].values() for item in items))
+
     def test_post_alert_uses_post_distribution_not_creator_medians(self):
         frame = make_cohort(erv_values=[2, 4, 6, 8, 10, 12] * 5)
         ordinary = analyze(frame_with_target(frame, 8), default_scope(), "hash")

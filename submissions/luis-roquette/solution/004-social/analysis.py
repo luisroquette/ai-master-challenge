@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import csv
+import argparse
 import hashlib
+import html
 import io
 import json
 import math
+import os
+import sys
+import tempfile
 from collections.abc import Iterable
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -55,6 +61,16 @@ AUDIENCE_KEYS = (
     "audience_gender_distribution",
     "audience_location",
 )
+DIMENSION_KEYS = {
+    "platform": "platform",
+    "content_type": "content_type",
+    "content_category": "content_category",
+    "creator_band": "follower_band",
+    "audience_age": "audience_age_distribution",
+    "audience_gender": "audience_gender_distribution",
+    "audience_location": "audience_location",
+    "month": "period_month",
+}
 
 
 def _error(row: int | None, column: str | None, problem: str, expected: str) -> dict[str, object]:
@@ -177,6 +193,7 @@ def derive_metrics(df: pd.DataFrame) -> pd.DataFrame:
         erv=(100 * interactions / views).where(views > 0),
         erf=(100 * interactions / followers).where(followers > 0),
         follower_band=df["follower_count"].map(lambda value: follower_band(int(value))),
+        period_month=df["post_date"].dt.strftime("%Y-%m"),
     )
 
 
@@ -221,6 +238,24 @@ def _summary(rows: pd.DataFrame) -> dict[str, object]:
         "q3_erv": float(rates.quantile(0.75)) if len(rates) else None,
         "weighted_erv": float(100 * eligible["interactions"].sum() / eligible["views"].sum()) if int(eligible["views"].sum()) else None,
     }
+
+
+def _dimensions(rows: pd.DataFrame, source_hash: str) -> dict[str, list[dict[str, object]]]:
+    dimensions: dict[str, list[dict[str, object]]] = {}
+    for name, column in DIMENSION_KEYS.items():
+        items: list[dict[str, object]] = []
+        for value, group in rows.groupby(column, dropna=False, sort=True):
+            items.append(
+                {
+                    "evidence_id": _stable_id("dimension", source_hash, {"dimension": name, "value": value}),
+                    "dimension": name,
+                    "value": str(value),
+                    **_summary(group),
+                    "source_row_ids": sorted(group["source_row_id"].astype(str)),
+                }
+            )
+        dimensions[name] = items
+    return dimensions
 
 
 def _scope_dates(frame: pd.DataFrame, scope: dict[str, object]) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
@@ -337,10 +372,15 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
             }
         )
     return {
+        "evidence_id": _stable_id("sponsorship-overview", source_hash, {"posts": len(targets), "strata": len(strata), "uncovered": len(uncovered)}),
+        "posts": int(len(targets)),
+        "eligible_strata": len(strata),
+        "uncovered_count": len(uncovered),
         "strata": strata,
         "uncovered_strata": uncovered,
         "coverage": comparable_posts / len(targets) if len(targets) else 0.0,
         "required_financial_data": ["investment", "production_cost", "revenue_or_conversion_value"],
+        "source_row_ids": sorted(targets["source_row_id"].astype(str)),
     }
 
 
@@ -414,7 +454,8 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             targets = targets.loc[targets[key].isin(accepted)]
 
     alerts: list[dict[str, object]] = []
-    for _, target in targets.sort_values(["post_date", "id"]).iterrows():
+    alert_targets = targets if bool(scope.get("include_post_alerts", True)) else targets.iloc[0:0]
+    for _, target in alert_targets.sort_values(["post_date", "id"]).iterrows():
         if pd.isna(target["erv"]):
             continue
         benchmark = _benchmark(frame, target, start, bool(scope.get("strict_audience", False)))
@@ -577,6 +618,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             "benchmark_levels_attempted": attempted,
         },
         "metrics": _summary(targets),
+        "dimensions": _dimensions(targets, source_hash),
         "cohorts": {"editorial": editorial},
         "alerts": alerts,
         "sponsorship": sponsorship,
@@ -584,3 +626,139 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         "pending": pending,
         "row_references": {str(row["source_row_id"]): int(row["source_line"]) for _, row in frame.iterrows()},
     }
+
+
+EXPORT_COLUMNS = (
+    "record_type", "evidence_id", "source_hash", "method_version", "text",
+    "metric_name", "metric_value", "unit", "context", "scope",
+    "formula",
+    "source_row_id", "source_line", "decision_id", "status", "owner",
+    "execution_window", "review_window",
+)
+
+
+def _cell(value: object) -> str | int | float:
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, (int, float)):
+        return value
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str) if isinstance(value, (dict, list, tuple)) else str(value)
+    return f"'{text}" if text.startswith(("=", "+", "-", "@", "\t", "\r")) else text
+
+
+def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
+    source = result.get("source", {})
+    scope = result.get("scope", {})
+    source_hash = source.get("source_hash", "")
+    method = scope.get("method_version", METHOD_VERSION)
+
+    def row(record_type: str, evidence_id: str = "", **values: object) -> dict[str, object]:
+        return {name: _cell({"record_type": record_type, "evidence_id": evidence_id, "source_hash": source_hash, "method_version": method, "scope": scope, **values}.get(name, "")) for name in EXPORT_COLUMNS}
+
+    yield row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
+    summary_id = _stable_id("summary", str(source_hash), scope)
+    evidence: list[dict[str, object]] = [{
+        "evidence_id": summary_id,
+        "dimension": "overall",
+        "value": "Escopo completo",
+        **result.get("metrics", {}),
+        "source_row_ids": list(result.get("row_references", {})),
+    }]
+    for items in result.get("dimensions", {}).values():
+        evidence.extend(items)
+    evidence.extend(result.get("alerts", []))
+    evidence.extend(result.get("cohorts", {}).get("editorial", []))
+    if result.get("sponsorship", {}).get("evidence_id"):
+        evidence.append(result["sponsorship"])
+    evidence.extend(result.get("sponsorship", {}).get("strata", []))
+    evidence.extend(result.get("pending", []))
+
+    emitted: set[str] = set()
+    for item in evidence:
+        evidence_id = str(item.get("evidence_id", ""))
+        if not evidence_id or evidence_id in emitted:
+            continue
+        emitted.add(evidence_id)
+        metric_name = "metric_value" if item.get("metric_value") is not None else "median_erv" if item.get("median_erv") is not None else "delta_erv_pp" if item.get("delta_erv_pp") is not None else "coverage" if item.get("coverage") is not None else "posts"
+        metric_value = item.get(metric_name, item.get("metric_value", item.get("posts", "")))
+        text = item.get("value", item.get("action", item.get("reason", item.get("claim", item.get("direction", item.get("dimension", "evidence"))))))
+        context = dict(item.get("context") or {"dimension": item.get("dimension"), "value": item.get("value")})
+        context.update({name: item[name] for name in ("posts", "creators", "n_rate", "views", "interactions", "creator_exposure", "undefined_rates", "zero_interaction_share", "weighted_erv", "q1_erv", "q3_erv", "strength", "organic", "sponsored", "creator_overlap", "eligible_strata", "uncovered_count", "coverage", "required_financial_data") if name in item})
+        formula = "eligible controlled posts / scoped posts" if evidence_id.startswith("sponsorship-overview-") else "median_by_creator(sponsored ERv) - median_by_creator(organic ERv)" if evidence_id.startswith("sponsorship-") else "median(100 * (likes + shares + comments_count) / views)" if evidence_id.startswith(("dimension-", "summary-")) else "method_version contract"
+        yield row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name == "delta_erv_pp" else "percent" if "erv" in metric_name else "count", context=context, formula=formula)
+        source_row_ids = item.get("source_row_ids", [])
+        if source_row_ids:
+            compact_ids = [str(source_row_id).split(":", 1)[-1] for source_row_id in source_row_ids]
+            yield row("source_ref", evidence_id, source_row_id=compact_ids)
+
+    for decision in decisions:
+        evidence_id = str(decision.get("evidence_id", ""))
+        yield row("decision", evidence_id, text=decision.get("text", decision.get("action", "")), decision_id=decision.get("decision_id", ""), status=decision.get("status", ""), owner=decision.get("owner", ""), execution_window=decision.get("execution_window", ""), review_window=decision.get("review_window", ""))
+        for outcome in decision.get("outcomes", []):
+            yield row("outcome", evidence_id, text=outcome.get("text", ""), decision_id=decision.get("decision_id", ""), status=outcome.get("status", ""), metric_name=outcome.get("metric_name", ""), metric_value=outcome.get("metric_value", ""), unit=outcome.get("unit", ""))
+
+
+def export_evidence(result: dict[str, object], decisions: list[dict[str, object]]) -> bytes:
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=EXPORT_COLUMNS, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(iter_export_rows(result, decisions))
+    return output.getvalue().encode("utf-8")
+
+
+def executive_summary(result: dict[str, object], decisions: list[dict[str, object]]) -> str:
+    source = result.get("source", {})
+    metrics = result.get("metrics", {})
+    recommendations = result.get("recommendations", [])
+    dimensions = [item for items in result.get("dimensions", {}).values() for item in items]
+    priority_items = recommendations or result.get("pending", [])
+    priorities = "".join(
+        f"<li><strong>{html.escape(str(item.get('owner', 'Gestor de Social Media')))}</strong>: {html.escape(str(item.get('action', item.get('reason', 'Coletar evidência'))))} <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
+        for item in priority_items[:3]
+    )
+    findings = "".join(
+        f"<li>{html.escape(str(item.get('dimension', 'segmento')))} = {html.escape(str(item.get('value', '')))}: {int(item.get('posts', 0))} posts; mediana ERv {float(item.get('median_erv') or 0):.2f}% <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
+        for item in sorted(dimensions, key=lambda value: (-int(value.get("posts", 0)), str(value.get("evidence_id", ""))))[:5]
+    )
+    decisions_html = "".join(f"<li>{html.escape(str(item.get('status', '')))} — {html.escape(str(item.get('text', item.get('action', ''))))}</li>" for item in decisions[:5]) or "<li>Nenhuma decisão registrada.</li>"
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}@media print{{body{{font-size:11px}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas · {html.escape(str(source.get('period_start', '')))} a {html.escape(str(source.get('period_end', '')))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><h2>Evidências</h2><ul>{findings}</ul><h2>Decisões</h2><ul>{decisions_html}</ul><p><b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+
+
+def _atomic_write(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(payload)
+        Path(temporary).replace(path)
+    except BaseException:
+        Path(temporary).unlink(missing_ok=True)
+        raise
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Gera evidências sociais reproduzíveis")
+    parser.add_argument("input", type=Path)
+    parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--summary", type=Path, required=True)
+    args = parser.parse_args(argv)
+    try:
+        raw = args.input.read_bytes()
+    except OSError as exc:
+        print(f"input_error: {exc}", file=sys.stderr)
+        return 2
+    frame, errors = load_csv(raw)
+    if errors or frame is None:
+        print(json.dumps(errors, ensure_ascii=False), file=sys.stderr)
+        return 2
+    source_hash = hashlib.sha256(raw).hexdigest()
+    result = analyze(frame, {"target_start": min(frame["post_date"]).isoformat(), "target_end": max(frame["post_date"]).isoformat(), "reference_date": max(frame["post_date"]).isoformat(), "filters": {}, "strict_audience": False, "include_post_alerts": False, "method_version": METHOD_VERSION}, source_hash)
+    _atomic_write(args.evidence, export_evidence(result, []))
+    _atomic_write(args.summary, executive_summary(result, []).encode("utf-8"))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
