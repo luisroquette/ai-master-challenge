@@ -62,3 +62,20 @@ O diferencial deve transformar os achados em decisão recorrente sem aumentar o 
 - **Gate:** somente após encerrar as ondas, comparar abordagens, validar a arquitetura em blocos e obter concordância de Luis será criada a SPEC SDD.
 - **Correção de processo:** o placeholder criado prematuramente foi removido sem entrar no Git. Nenhuma SPEC existe neste momento.
 - **Formato definido por Luis:** todas as perguntas serão de múltipla escolha, com opções claras, mutuamente distintas e recomendação explícita quando houver base para recomendá-la.
+
+## I05 — Ledger da descoberta socrática — 2026-09-21 14:49 BRT
+
+Este ledger registra todas as perguntas, respostas, correções e decisões da descoberta nesta sessão.
+
+### Tentativa anterior à Onda 1 — descartada
+
+- **Pergunta:** se a entrega estivesse pronta amanhã, qual seria a única decisão de maior valor que o Head de Marketing deveria conseguir tomar com confiança?
+- **Resposta de Luis:** a pergunta deveria ser de múltipla escolha.
+- **Efeito:** pergunta descartada sem resposta de conteúdo; todas as ondas passaram a usar múltipla escolha.
+
+### Onda 1 — decisão central
+
+- **Pergunta:** qual decisão principal a solução deve permitir?
+- **Opções:** A) realocar esforço e patrocínio; B) definir o calendário editorial; C) criar um sistema operacional recorrente para planejar, acompanhar e corrigir a estratégia.
+- **Resposta de Luis:** **C — criar um sistema operacional recorrente**.
+- **Implicação:** a solução não será apenas uma análise estática. Ela deverá sustentar um ciclo repetível de decisão, acompanhamento e correção; o escopo desse ciclo será definido nas próximas ondas.
