@@ -59,3 +59,18 @@ No primeiro verificador local, a variável de shell `path` sobrescreveu o `PATH`
 ### Erro e correção desta etapa
 
 O comando publicado pela página do recurso falhou com `No matching skills found for: sdd`: o CLI encontrou 68 skills individuais, mas `sdd` é um plugin composto, não uma skill isolada. A instalação oficial do próprio repositório foi conferida; `sdd@context-engineering-kit` já estava instalado e habilitado, então apenas o atualizamos e validamos em vez de duplicá-lo.
+
+## I03 — Documentar é parte central da entrega — 2026-09-21 14:39 BRT
+
+- **Objetivo:** preservar decisões, correções, evidências e contribuições humanas enquanto o trabalho acontece.
+- **Decisão de Luis:** o diário é tão importante quanto — ou até mais importante que — o resultado final. Ganha quem documenta.
+- **Formato:** fragmentos curtos, objetivos e diretos são suficientes, desde que registrem os destaques apontados por Luis e os marcos relevantes do processo.
+- **Regra editorial:** corrigir ortografia, gramática e clareza antes de registrar, sem alterar a intenção original.
+- **Disciplina:** registrar continuamente; não depender da memória nem reconstruir retroativamente prompts, horários, erros ou decisões.
+- **Julgamento humano:** esta prioridade e a obsessão pelo registro foram definidas por Luis, não pela IA.
+
+Luis resumiu o princípio com uma frase atribuída a Silvio Santos:
+
+> “Sabe por que o ovo da galinha vende mais que o da pata? Porque a galinha canta quando bota!”
+
+**Princípio permanente:** fazer um bom trabalho não basta; o processo precisa deixar evidência clara, fiel e útil. O diário é parte do produto.
