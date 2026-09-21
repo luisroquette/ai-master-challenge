@@ -213,3 +213,14 @@ Esse era o único gargalo externo remanescente. Solicitamos autorização explí
 Excluímos exclusivamente o Codespace `codex-preflight-vr7p79qv66whw4g9`, que estava parado e limpo. O disco efêmero do ambiente não é recuperável, mas o código permanece preservado no commit `d73cbea`, já integrado no PR `luisroquette/swen.ia.br-claude#320`.
 
 Após a exclusão, `codespace-manager list` confirmou quatro ambientes, todos em estado `Shutdown`. O teto global voltou a ter uma vaga disponível para criar ou reutilizar um Codespace do Challenge 001. Não há gargalo conhecido de capacidade antes da implementação; a validação real da stack continua sendo um gate da fase de execução, pois a solução ainda não foi implementada.
+
+## Epílogo — confronto do plano com a implementação
+
+**Data:** 21 de setembro de 2026
+**Resultado:** o plano foi executado até a documentação e sofreu três correções operacionais, sem mudança de arquitetura.
+
+- O exemplo do `AppTest` resolvia `app.py` a partir de `tests/`; a implementação passou a usar caminho absoluto e manteve um smoke iniciado pela raiz.
+- O `Makefile` previa `cli compare`, mas o subcomando ainda não estava implementado. A lacuna foi detectada antes do fechamento, coberta por teste e validada com duas execuções equivalentes.
+- A `.venv` criada por `uv` não continha `pip`; `make setup` agora aciona `ensurepip` somente quando necessário.
+
+O contrato final local, autorizado por bypass explícito do Codespace, concluiu `make setup`, `make reproduce` e `make check`. Foram 29 testes, Ruff verde, 8 artefatos protegidos e comparação `artifact_sets=equal`. O diário `003-implementacao-feedback-looping.md` contém o relato cronológico integral da execução.

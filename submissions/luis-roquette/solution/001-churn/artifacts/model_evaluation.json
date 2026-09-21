@@ -1,0 +1,59 @@
+{
+  "average_precision": 0.2562991692008118,
+  "average_precision_gain": 0.06003748695782116,
+  "baseline_average_precision": 0.19626168224299065,
+  "baseline_brier_score": 0.17255703376873266,
+  "brier_score": 0.2529776014507586,
+  "failure_reasons": [
+    "lift_at_20pct",
+    "brier_score",
+    "non_converged"
+  ],
+  "lift_at_20pct": 0.9264069264069265,
+  "publish_model": false,
+  "recall_at_20pct": 0.19047619047619047,
+  "segment_metrics": [
+    {
+      "average_precision": 0.2115008293301515,
+      "brier_score": 0.2521918933473036,
+      "dimension": "plan_tier",
+      "lift_at_20pct": 0.96,
+      "recall_at_20pct": 0.2,
+      "sample_size": 96,
+      "segment": "mixed",
+      "status": "ok"
+    },
+    {
+      "average_precision": 0.16774437113955037,
+      "brier_score": 0.2565506988156853,
+      "dimension": "billing_frequency",
+      "lift_at_20pct": 0.7449392712550608,
+      "recall_at_20pct": 0.15384615384615385,
+      "sample_size": 92,
+      "segment": "mixed",
+      "status": "ok"
+    },
+    {
+      "average_precision": 0.22993921647402937,
+      "brier_score": 0.2516812293744418,
+      "dimension": "mrr_band",
+      "lift_at_20pct": 0.7142857142857142,
+      "recall_at_20pct": 0.14285714285714285,
+      "sample_size": 90,
+      "segment": "high",
+      "status": "ok"
+    }
+  ],
+  "segment_metrics_complete": true,
+  "test_cutoff_end": "2024-11-30",
+  "test_cutoff_start": "2024-09-30",
+  "test_rows": 107,
+  "thresholds": {
+    "average_precision_gain": 0.05,
+    "brier_not_worse_than_baseline": true,
+    "lift_at_20pct": 1.25,
+    "segment_metrics_complete": true
+  },
+  "train_cutoff_end": "2024-08-31",
+  "train_rows": 2106
+}

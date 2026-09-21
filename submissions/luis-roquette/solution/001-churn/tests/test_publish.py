@@ -5,6 +5,7 @@ import pytest
 
 from ravenstack_churn.publish import (
     ArtifactConsistencyError,
+    compare_artifact_sets,
     publish_artifacts,
     validate_artifact_set,
 )
@@ -40,3 +41,11 @@ def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_p
     paths = publish_artifacts(result, tmp_path)
     assert pd.read_csv(paths["account_queue"]).empty
     assert "Evidência insuficiente para priorizar uma causa" in paths["report"].read_text()
+
+
+def test_equivalent_runs_compare_equal(analysis_result, tmp_path) -> None:
+    reference = tmp_path / "reference"
+    candidate = tmp_path / "candidate"
+    publish_artifacts(analysis_result, reference)
+    publish_artifacts(analysis_result, candidate)
+    compare_artifact_sets(reference, candidate)

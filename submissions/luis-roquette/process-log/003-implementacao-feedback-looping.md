@@ -260,3 +260,26 @@ Os quatro smokes passaram na primeira execução funcional. Ruff bloqueou apenas
 - app permanece somente leitura e exporta a fila filtrada em UTF-8.
 
 O dashboard foi versionado e publicado no commit `8c6eb03`. **Resultado:** Fase 7 validada e encerrada.
+
+## Fase 8 — reprodução de um comando e documentação
+
+### Planejamento e revisão
+
+Confrontamos o `Makefile` planejado com as interfaces implementadas antes de escrever a documentação. A revisão encontrou uma lacuna: `make check` chamava `ravenstack_churn.cli compare`, mas a CLI oferecia apenas `reproduce`. Adicionamos o subcomando na camada existente e um teste de equivalência entre execuções, sem criar nova abstração.
+
+### Execução e feedback looping
+
+O primeiro contrato executou quatro testes de publicação, 29 testes totais, reprodução real e Ruff. O passo final reproduziu em `/tmp` e retornou `artifact_sets=equal`.
+
+Em seguida, `make setup` falhou em `.venv/bin/python`: `No module named pip`. A causa foi a criação anterior da `.venv` pelo `uv`, que não instala pip por padrão. O alvo agora preserva ambientes existentes e chama `ensurepip` somente quando necessário. A segunda execução de `make setup` terminou com todas as versões fixadas instaladas.
+
+### Evidências e julgamento
+
+- 500 contas, 5.000 assinaturas, 25.000 usos, 2.000 tickets e 600 eventos foram cruzados;
+- 21 grupos de uso duplicados, 19.142 usos pré-assinatura, 13.198 usos pré-cadastro e 1.077 tickets pré-cadastro foram preservados;
+- os seis findings permaneceram inconclusivos; desligamento de renovação automática tinha maior exposição máxima, US$ 2.096.221 em 97 contas, mas falhou no gate entre tabelas;
+- uso apresentou tendência de alta nas três coortes; satisfação permaneceu `concern` nas três;
+- o modelo não publicou scores por lift, Brier e não convergência;
+- nenhum dado frágil foi convertido em causa raiz, conta prioritária ou receita recuperável.
+
+Criamos README técnico, README executivo, links para quatro diários e artefatos canônicos. A pesquisa pública confirmou o perfil profissional usado no cabeçalho. **Estado:** aguardando somente commit do pacote documental e dos artefatos finais.

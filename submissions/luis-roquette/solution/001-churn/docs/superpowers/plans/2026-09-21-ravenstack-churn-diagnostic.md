@@ -952,7 +952,7 @@ git commit -m "feat(churn): add decision-focused Streamlit dashboard"
 - `make reproduce` runs tests before generating and validating artifacts.
 - `make check` runs Ruff, the full pytest suite, reproduction and artifact validation.
 
-- [ ] **Step 1: Write the Makefile with explicit targets**
+- [x] **Step 1: Write the Makefile with explicit targets**
 
 ```makefile
 PYTHON := .venv/bin/python
@@ -980,7 +980,7 @@ check:
 	$(PYTHON) -m ravenstack_churn.cli compare --reference-dir artifacts --candidate-dir "$$run_dir"
 ```
 
-- [ ] **Step 2: Run the full clean-environment contract**
+- [x] **Step 2: Run the full clean-environment contract**
 
 ```bash
 make setup
@@ -992,19 +992,19 @@ Expected: all commands exit `0`; `artifacts/run_manifest.json` reports a complet
 
 Run this block through the managed Codespace described in the execution convention; it documents what an evaluator can reproduce locally, not permission to install or run the full suite on the Mac host.
 
-- [ ] **Step 3: Write the solution README**
+- [x] **Step 3: Write the solution README**
 
 Document purpose, executive output, architecture, exact setup commands, file structure, data source and credit, artifact definitions, model gate, known contradictions, limitations, troubleshooting and local dashboard command. State that public hosting is optional and local reproduction is authoritative.
 
-- [ ] **Step 4: Complete the submission README**
+- [x] **Step 4: Complete the submission README**
 
 Fill every field from `templates/submission-template.md`: name, LinkedIn, chosen challenge, 3–5 sentence executive summary, approach, findings, recommendations, limitations, AI-tools table, numbered workflow, where AI erred, human additions, evidence checklist and submission date. Link the report, dashboard instructions, CSV, Git history and all process logs (`000`, `001`, `002`); leave no bracketed template placeholder.
 
-- [ ] **Step 5: Record actual findings and corrections in the process log**
+- [x] **Step 5: Record actual findings and corrections in the process log**
 
 Append the commands executed, tool/version choices, dataset contradictions, failed hypotheses, model gate result, changes caused by human judgment and exact validation evidence. Preserve outputs and numbers; do not reconstruct the story after completion.
 
-- [ ] **Step 6: Commit documentation and generated artifacts**
+- [x] **Step 6: Commit documentation and generated artifacts**
 
 ```bash
 git add -f \

@@ -10,7 +10,12 @@ from .contracts import load_raw_tables, validate_contracts
 from .diagnosis import build_claim_checks, evaluate_candidates
 from .modeling import evaluate_model
 from .panel import build_account_panel
-from .publish import AnalysisResult, publish_artifacts, validate_artifact_set
+from .publish import (
+    AnalysisResult,
+    compare_artifact_sets,
+    publish_artifacts,
+    validate_artifact_set,
+)
 from .quality import build_quality_report
 
 
@@ -51,9 +56,15 @@ def main() -> None:
     reproduce_parser = commands.add_parser("reproduce")
     reproduce_parser.add_argument("--raw-dir", type=Path, default=Path("data/raw"))
     reproduce_parser.add_argument("--output-dir", type=Path, default=Path("artifacts"))
+    compare_parser = commands.add_parser("compare")
+    compare_parser.add_argument("--reference-dir", type=Path, required=True)
+    compare_parser.add_argument("--candidate-dir", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "reproduce":
         reproduce(args.raw_dir, args.output_dir)
+    elif args.command == "compare":
+        compare_artifact_sets(args.reference_dir, args.candidate_dir)
+        print("artifact_sets=equal")
 
 
 if __name__ == "__main__":

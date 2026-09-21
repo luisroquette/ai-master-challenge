@@ -1,0 +1,53 @@
+{
+  "artifact_checksums": {
+    "account_panel.csv": "d38be9ba3716c6f4fa7fba35630f8ea396cdb490ab48da37152ead384afe2897",
+    "account_queue.csv": "27516a5480c06f5b5dfe3be827adf412f1141c6b4c03a0a399e494fb17dacf3d",
+    "claim_checks.csv": "dc7bb31d4d86296afc3ce6ffd4e3ce7d5b4099cd431de152f280b7265c818401",
+    "findings.csv": "de92f158c7c7cb7fcd93ac8f88eddad90c89313eaf5dd45f37b40fa45c3e1f2b",
+    "model_evaluation.json": "17dd73794e8a69d069acb95c0eadc9ec1dc92921c41b0096f92cd0f5bd03bd1c",
+    "quality_report.json": "a533f7989d40f61bc764cbe0ba1e8c649be3da0b1405251ac83710f97096860f",
+    "report.md": "c38fe445135985e364f54ea6313aebd05737b672109aae75d920ff54c5c2bfa3",
+    "segment_metrics.csv": "00fc66d91762ab08dee2cca2c82414cef5941d5a5dab7e5f91dfd886abe34042"
+  },
+  "generated_at_utc": "2026-09-21T23:37:51.759074+00:00",
+  "input_checksums": {
+    "ravenstack_accounts.csv": "348d8ba906b7776894b5236b2e7aa91a503d41670dbc9aad30c37b503c9abef5",
+    "ravenstack_churn_events.csv": "6391c41d8291b7b4845ec9a84d3837c2ed230a33a32a854ec33d4e66dc150940",
+    "ravenstack_feature_usage.csv": "c081da2be8caf987d07f0f79ceb0619aba523d819529230ed6df77984fa21d4e",
+    "ravenstack_subscriptions.csv": "dcf1d93ca9a35e0dcba0ab686d255f0e9ec26512970bbf0944cf19cbef2d751a",
+    "ravenstack_support_tickets.csv": "ba0006951479771ee9f93c98789c96bc5fec892cf11f867afb28194f0b76d220"
+  },
+  "parameters": {
+    "chronology_modes": [
+      "observed",
+      "strict"
+    ],
+    "cutoffs": [
+      "2023-04-30",
+      "2024-11-30"
+    ],
+    "min_coverage": 0.7,
+    "min_segment_accounts": 30,
+    "min_segment_churns": 10,
+    "scoring_cutoff": "2024-12-31",
+    "windows_days": [
+      7,
+      30,
+      90
+    ]
+  },
+  "publish_model": false,
+  "runtime": {
+    "dependencies": {
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0",
+      "streamlit": "1.64.0"
+    },
+    "python": "3.12.13"
+  },
+  "source_git_sha": "203c11922f19b6abb4a72c08b21813637180d5e8",
+  "test_status": "passed"
+}
