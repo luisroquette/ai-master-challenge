@@ -93,3 +93,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) ciclo diário, com consolidações semanais e mensais automáticas; B) ciclo semanal, com dados diários usados apenas como entrada; C) ciclo mensal, orientado principalmente à revisão estratégica.
 - **Resposta de Luis:** **A — ciclo diário, com consolidações semanais e mensais automáticas**.
 - **Implicação:** o produto deverá gerar utilidade operacional todos os dias e agregar os mesmos dados em visões semanais e mensais, sem criar três fluxos independentes.
+
+### Onda 4 — entrega diária principal
+
+- **Pergunta:** qual deve ser a primeira entrega que o Gestor de Social Media vê diariamente?
+- **Opções:** A) fila priorizada de ações; B) painel de monitoramento com desempenho recente, alertas e desvios; C) quadro de experimentos.
+- **Resposta de Luis:** **B — painel de monitoramento**.
+- **Implicação:** a experiência principal começa pela observação objetiva do desempenho e das mudanças relevantes. Recomendações e experimentos poderão derivar do painel, mas não substituirão a leitura dos dados como porta de entrada.
