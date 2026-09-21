@@ -529,7 +529,7 @@ Como transformar produto, vendedor e conta em uma prioridade explicável para `P
 
 A prioridade de `Prospecting` não usará taxas brutas de grupos pequenos nem pesos arbitrários. O cálculo deverá reduzir o efeito de amostras escassas, recorrer a evidências mais gerais quando necessário e declarar a sustentação disponível. O resultado continuará sendo faixa de prioridade, não probabilidade calibrada.
 
-### Síntese da Onda 4 — aguardando aprovação
+### Síntese da Onda 4 — aprovada
 
 - **Ordem de `Engaging`:** probabilidade primeiro; receita esperada desempata somente dentro da mesma faixa validada.
 - **Explicação:** fatores favoráveis e desfavoráveis derivados do cálculo real, com evidência observada, efeito simples e sem alegação causal indevida.
@@ -538,3 +538,24 @@ A prioridade de `Prospecting` não usará taxas brutas de grupos pequenos nem pe
 - **`Prospecting`:** prioridade por evidências históricas suavizadas, com recuo para grupos gerais e força da evidência visível; nunca apresentada como probabilidade.
 
 Permanecem para as ondas seguintes: interação e estados da interface, tratamento operacional de dados fora do domínio, arquitetura executável e critérios finais de prova.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo.”
+
+**Gate concluído:** a Onda 4 está aprovada integralmente e passa a orientar a arquitetura e a futura SPEC.
+
+### Onda 5 — Experiência e operação
+
+#### Pergunta 1
+
+Como a experiência deve permanecer unificada sem misturar a probabilidade calibrada de `Engaging` com a faixa heurística de `Prospecting`?
+
+- **A.** Uma única lista intercalada, ordenando os dois tipos por um score comum.
+- **B.** Uma única tela com duas filas ou abas: `Engaging` e `Prospecting`, cada uma com sua própria ordenação e linguagem.
+- **C.** Uma única lista agrupada primeiro por estágio e depois pelo score de cada estágio.
+- **D.** Exibir apenas `Engaging` na fila principal e deixar `Prospecting` em uma tela secundária.
+
+**Recomendação da IA:** **B**. Mantém um ponto operacional único sem fabricar equivalência entre probabilidade e heurística.
+
+**Resposta:** aguardando Luis.
