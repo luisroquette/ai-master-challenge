@@ -228,3 +228,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Duas camadas separadas.
 
 **Interpretação para a próxima onda:** o painel diferenciará fatos, resultados de teste e cenários. Nenhuma projeção de horas ou custo poderá parecer observação real. A próxima escolha deve definir o formato executável da entrega sem antecipar o framework antes da pesquisa técnica.
+
+### Onda 12 — Formato executável
+
+**Pergunta:** qual deve ser o formato executável da entrega?
+
+- **A — Aplicação web local e autocontida:** roda com um comando, sem API paga; o framework será decidido após pesquisa e reprodução de candidatos.
+- **B — Notebook interativo:** combina análise, modelo e demonstração no mesmo arquivo.
+- **C — Aplicação hospedada:** acesso por URL pública, com infraestrutura e deploy incluídos no escopo.
+
+**Resposta de Luis:** A — Aplicação web local e autocontida.
+
+**Interpretação para a próxima onda:** a solução deve ser reproduzível sem credenciais, serviços externos ou custo variável. A pesquisa escolherá a menor tecnologia capaz de entregar a experiência. A próxima decisão deve definir a filosofia de seleção do classificador sem fixar prematuramente um algoritmo.
