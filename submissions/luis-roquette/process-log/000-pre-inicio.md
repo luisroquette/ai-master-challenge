@@ -150,14 +150,15 @@ Usaremos o módulo `sdd` do [Context Engineering Kit](https://github.com/NeoLabH
 
 ```mermaid
 flowchart LR
-    A[Briefing absorvido] --> B[Pesquisa externa]
-    B --> C[Spec em draft]
-    C --> D[Planejamento e critérios]
-    D --> E{Revisão humana aprovada?}
-    E -- não --> C
-    E -- sim --> F[Implementação mínima]
-    F --> G[Validação contra a spec]
-    G --> H[Done]
+    A[Briefing absorvido] --> B[Descoberta socrática]
+    B --> C[Pesquisa externa orientada]
+    C --> D[Arquitetura consolidada]
+    D --> E[Spec em draft]
+    E --> F{Revisão humana aprovada?}
+    F -- não --> B
+    F -- sim --> G[Implementação mínima]
+    G --> H[Validação contra a spec]
+    H --> I[Done]
 ```
 
 O ciclo de arquivos seguirá `draft → todo → in-progress → done`. Para respeitar a regra do repositório, a pasta `.specs` ficará dentro de `submissions/luis-roquette/solution/001-churn/`, nunca na raiz.
@@ -193,3 +194,33 @@ Luis trouxe a frase atribuindo-a a Silvio Santos. A busca não encontrou uma fon
 A aplicação prática é clara: tornar decisões e evidências visíveis enquanto acontecem. Registrar hipóteses, fontes, erros, correções, testes, limitações e contribuições humanas. Sem criar volume artificial.
 
 **Regra operacional:** ser obsessivo no registro e econômico no texto. O trabalho só está completo quando outra pessoa consegue entender o caminho, verificar as evidências e agir sobre o resultado.
+
+## Decisão metodológica: descoberta socrática em ondas adaptativas
+
+Luis corrigiu o estado do projeto: ainda não existe uma SPEC para revisar. Também não discutimos produto, usuário, experiência, arquitetura ou fronteiras da solução em profundidade suficiente para criar uma.
+
+Antes do `add-task`, conduziremos uma descoberta socrática com pelo menos cinco ondas. Será feita uma pergunta por vez. Cada pergunta nova usará as respostas anteriores, as evidências do briefing e a pesquisa externa; não haverá questionário fixo preenchido mecanicamente.
+
+| Onda | Foco inicial | Como se adapta |
+|---|---|---|
+| 1 | problema, decisão e usuário | identifica o que realmente precisa ser resolvido e por quem |
+| 2 | sucesso, evidência e prioridades | converte a intenção declarada na primeira onda em resultados observáveis |
+| 3 | alternativas e experiência de uso | explora caminhos diferentes a partir das prioridades escolhidas |
+| 4 | dados, arquitetura, riscos e operação | testa se o caminho preferido se sustenta tecnicamente |
+| 5 | trade-offs, limites e definição de pronto | fecha decisões restantes e determina o contrato da SPEC |
+
+Cinco ondas são o mínimo. Se uma resposta abrir uma decisão material, criaremos ondas adicionais. Cada onda só fecha quando estiver claro o que foi decidido, por que foi decidido, o que permanece em aberto e qual evidência sustenta o avanço.
+
+Ao fim de cada onda, o diário guardará fragmentos objetivos: pergunta determinante, resposta de Luis, consequência para o desenho, hipótese descartada e nova dúvida gerada. O texto será revisado em português antes do registro.
+
+### Gate para criar a SPEC
+
+A SPEC só poderá ser criada quando:
+
+1. as cinco ondas mínimas estiverem concluídas;
+2. problema, usuário, decisão e resultado esperado estiverem explícitos;
+3. alternativas relevantes e seus trade-offs tiverem sido comparados;
+4. arquitetura, riscos, limites e testes tiverem direção definida;
+5. Luis aprovar a síntese do desenho produzido pelas ondas.
+
+Esta metodologia foi proposta por Luis. Ela combina o método socrático com SDD para impedir que uma especificação prematura apenas formalize suposições ainda não discutidas.
