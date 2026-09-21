@@ -157,4 +157,35 @@ Qual nível mínimo de evidência devemos exigir antes de apresentar um fator co
 
 ### Estado da pergunta
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+Um fator somente poderá ser apresentado como provável causa raiz quando três tipos de evidência convergirem: associação que resista aos principais controles disponíveis, precedência temporal compatível e confirmação por sinais de tabelas diferentes.
+
+### Consequência para o desenho
+
+O relatório separará fato, associação e hipótese causal. Cada conclusão principal deverá exibir os controles aplicados, a sequência temporal observada e as fontes que a sustentam. Como os dados são observacionais, a linguagem não poderá afirmar causalidade comprovada; recomendações estruturais deverão incluir uma forma posterior de validação experimental ou quase experimental.
+
+### Ponto ainda aberto
+
+Precisamos definir qual resultado de negócio terá precedência ao medir risco, priorizar intervenções e avaliar sucesso.
+
+### Pergunta 2
+
+Qual deve ser a métrica principal de sucesso da estratégia de retenção?
+
+- A. Redução da quantidade de contas canceladas, independentemente do valor.
+- B. Redução do MRR perdido por churn, independentemente da quantidade de contas.
+- C. MRR perdido como métrica principal, com quantidade de contas e concentração por segmento como métricas de proteção.
+- D. Acurácia do modelo preditivo, mesmo sem comprovação de impacto financeiro.
+
+**Recomendação técnica preliminar do agente:** C, porque protege receita sem esconder um problema disseminado entre contas menores ou concentrado em um segmento específico.
+
+### Estado da pergunta 2
+
 Aguardando resposta de Luis.
