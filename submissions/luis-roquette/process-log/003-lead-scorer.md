@@ -379,7 +379,7 @@ Como devemos tratar os deals ativos sem conta associada?
 
 O roteamento será determinado pela disponibilidade da conta. O fallback será treinado deliberadamente sem atributos de conta, não com valores médios inventados. Os dois caminhos precisarão de validação temporal própria e a interface deverá informar qual deles produziu o score.
 
-### Síntese da Onda 3 — aguardando aprovação
+### Síntese da Onda 3 — aprovada
 
 - **Universo operacional:** somente `Prospecting` e `Engaging`; encerrados servem para aprendizado e validação temporal.
 - **Prospecting:** heurística própria; exibe prioridade e receita potencial, não probabilidade calibrada.
@@ -388,3 +388,17 @@ O roteamento será determinado pela disponibilidade da conta. O fallback será t
 - **Dados incompletos:** modelo completo com conta e fallback sem conta; normalização explícita de `GTXPro` para `GTX Pro`.
 
 Permanecem abertos: features exatas, algoritmo, calibração da probabilidade, desempenho mínimo aceitável e tratamento de categorias novas.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo.”
+
+**Gate concluído:** a Onda 3 está aprovada integralmente e passa a orientar a arquitetura e a futura SPEC.
+
+### Onda 4 — Score e explicação
+
+#### Pergunta 1
+
+Qual componente deve comandar a prioridade dos deals em `Engaging`?
+
+**Resposta:** aguardando Luis.
