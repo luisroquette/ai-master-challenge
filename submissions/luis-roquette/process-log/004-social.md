@@ -37,13 +37,13 @@ O diferencial deve transformar os achados em decisão recorrente sem aumentar o 
 - **Objetivo:** transformar o desafio em especificação verificável antes de implementar análise ou ferramenta.
 - **IA/ferramenta:** skills `add-task`, `plan-task` e `implement-task` do Context Engineering Kit, instaladas para Claude Code via `npx skills`.
 - **Ação ou prompt:** Luis decidiu usar Spec-Driven Development e indicou a skill SDD do repositório `NeoLabHQ/context-engineering-kit`.
-- **Resultado:** a versão atual não expõe uma skill única chamada `sdd`; o fluxo foi instalado pelos três componentes publicados e iniciado com a spec local `.specs/tasks/draft/implement-challenge-004-social-media.feature.md`.
-- **Julgamento humano:** adotar SDD foi decisão de Luis. O planejamento deve passar por revisão humana antes de qualquer implementação; a spec não substitui a Regra zero de pesquisa e evidência.
-- **Verificação:** o instalador confirmou as três skills para Claude Code e classificou todas como seguras; a spec inicial preserva o prompt original e permanece em `draft`.
-- **Evidência:** este registro, `skills-lock.json`, diretórios locais `.claude/skills/` e a spec em `.specs/tasks/draft/`.
+- **Resultado:** a versão atual não expõe uma skill única chamada `sdd`; o fluxo foi instalado pelos três componentes publicados. Nenhuma SPEC foi criada: ela dependerá da descoberta socrática e da arquitetura aprovadas por Luis.
+- **Julgamento humano:** adotar SDD foi decisão de Luis. O planejamento deve passar por revisão humana antes de qualquer implementação; a SPEC não substitui a Regra zero de pesquisa e evidência.
+- **Verificação:** o instalador confirmou as três skills para Claude Code e classificou todas como seguras.
+- **Evidência:** este registro, `skills-lock.json` e os diretórios locais `.claude/skills/`.
 - **Limitação:** `npx skills` instala skills, mas não os subagentes do plugin completo. Os artefatos de ferramenta ficam locais e não entrarão no Pull Request, que aceita apenas `submissions/luis-roquette/`.
 
-**Fluxo adotado:** `add-task → plan-task → revisão humana da spec → implement-task`, sempre subordinado às regras de pesquisa, Ponytail, testes e integridade do desafio.
+**Fluxo adotado:** `descoberta socrática → arquitetura aprovada → add-task → plan-task → revisão humana da SPEC → implement-task`, sempre subordinado às regras de pesquisa, Ponytail, testes e integridade do desafio.
 
 ## I03 — Documentação como parte central da entrega — 2026-09-21 14:34 BRT
 
@@ -52,3 +52,12 @@ O diferencial deve transformar os achados em decisão recorrente sem aumentar o 
 - **Regra editorial:** corrigir erros de português antes de incorporar qualquer fala ou decisão ao diário, preservando o sentido original.
 - **Princípio:** como dizia Silvio Santos: “Sabe por que o ovo de galinha vende mais que o de pata? Porque a galinha canta quando bota!”
 - **Aplicação:** cada decisão, hipótese, correção, evidência, limitação e contribuição humana relevante será registrada no momento em que ocorrer, sem reconstrução retroativa.
+
+## I04 — Descoberta socrática em ondas adaptativas — 2026-09-21 14:41 BRT
+
+- **Decisão de Luis:** a SPEC não será presumida nem escrita antes de discutirmos exaustivamente o projeto e arquitetarmos a solução sobre bases sólidas.
+- **Método:** conduzir pelo menos cinco ondas socráticas de perguntas, com uma pergunta central por vez. Cada onda posterior dependerá das respostas e descobertas das ondas anteriores.
+- **Objetivo:** explicitar problema, decisão de negócio, usuários, restrições, hipóteses, alternativas, riscos, dados, arquitetura, critérios de sucesso e definição de pronto antes da especificação.
+- **Adaptação:** não existe roteiro rígido. As respostas de Luis determinam a próxima pergunta, e ondas adicionais serão abertas se permanecer qualquer ambiguidade material.
+- **Gate:** somente após encerrar as ondas, comparar abordagens, validar a arquitetura em blocos e obter concordância de Luis será criada a SPEC SDD.
+- **Correção de processo:** o placeholder criado prematuramente foi removido sem entrar no Git. Nenhuma SPEC existe neste momento.
