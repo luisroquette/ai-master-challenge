@@ -851,4 +851,26 @@ O que a aplicação deve fazer se nenhum modelo de `Engaging` passar pelo gate d
 
 **Recomendação da IA:** **B**. Mantém a ferramenta útil sem apresentar como probabilidade um número que a validação rejeitou.
 
-**Resposta:** aguardando Luis.
+#### Resposta de Luis
+
+**B:** remover a probabilidade e exibir apenas prioridade relativa, com aviso e métricas da falha.
+
+#### Decisão registrada
+
+Probabilidade só será publicada se sustentada pela validação temporal. Caso todos os candidatos falhem no gate, `Engaging` continuará operacional com faixas relativas claramente rotuladas, sem receita esperada probabilística, e a falha será documentada.
+
+#### Diretriz de condução registrada
+
+Luis determinou: “Você deve trazer questões relevantes para o entendimento do produto e de suas nuances. Tem autonomia, dentro do que o desafio exige, para decidir e avançar. Evite trazer decisões irrelevantes.”
+
+Daqui em diante, perguntas ao usuário ficam restritas a escolhas que alterem produto, risco ou aderência ao challenge. Decisões técnicas proporcionais serão tomadas autonomamente e registradas com sua justificativa.
+
+### Síntese da Onda 6 — aguardando aprovação
+
+- **Arquitetura:** aplicação Python 3.11 + Streamlit, autocontida e sem API separada.
+- **Dados e modelo:** CSVs reais versionados, recuperação externa validada por checksum e treino temporal determinístico com cache.
+- **Estado e falhas:** intervenção manual apenas na sessão; nenhuma probabilidade é exibida se a calibração falhar.
+- **Prova:** testes dos contratos críticos, smoke test e evidência visual executada com os dados reais.
+- **Entrega:** setup local obrigatório e demo pública adicional no Streamlit Community Cloud após todos os gates.
+
+Com esta síntese, as seis ondas adaptativas mínimas foram concluídas. O próximo estágio, após aprovação, é consolidar o design em seções curtas e validá-lo antes de transformar o draft na SPEC.
