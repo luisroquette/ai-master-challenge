@@ -144,3 +144,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) mediana e distribuição de grupos comparáveis por plataforma, formato, categoria, faixa de creator e período; B) média global; C) modelo preditivo desde o MVP.
 - **Resposta de Luis:** **A — grupo comparável**.
 - **Implicação:** alertas serão baseados em referências robustas e contextuais. A granularidade final dependerá do tamanho real das amostras; quando um grupo for pequeno, o sistema deverá recuar para um nível comparável mais amplo e declarar essa limitação.
+
+### Onda 11 — avaliação de patrocínios
+
+- **Pergunta:** como o MVP deve avaliar posts patrocinados?
+- **Opções:** A) comparação controlada de alcance e engajamento contra orgânicos comparáveis, sem alegar ROI financeiro sem custo; B) comparação direta de médias gerais; C) ROI calculado com custos hipotéticos.
+- **Resposta de Luis:** **A — comparação controlada, sem alegação indevida de ROI financeiro**.
+- **Implicação:** patrocínio será avaliado como diferença observacional de desempenho dentro de contextos comparáveis. O sistema deverá separar associação de causalidade, mostrar incerteza e declarar que retorno financeiro exige dados reais de investimento e receita.
