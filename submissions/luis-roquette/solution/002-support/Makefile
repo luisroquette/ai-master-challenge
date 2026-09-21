@@ -42,6 +42,7 @@ bootstrap-lock:
 
 setup:
 	@test -f requirements.lock || { echo "ERRO: requirements.lock ausente; execute make bootstrap-lock."; exit 2; }
+	@"$(PYTHON)" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' || { echo "ERRO: setup exige Python 3.12."; exit 2; }
 	"$(PYTHON)" -m venv "$(VENV)"
 	"$(BIN)/python" -m pip install -r requirements.lock
 	"$(BIN)/python" -m pip install --no-deps -e .

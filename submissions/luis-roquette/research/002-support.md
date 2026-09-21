@@ -58,6 +58,16 @@ Essas limitações alteram o plano: o diagnóstico não atribuirá causalidade, 
 - Reddit, Streamlit for an internal dashboard: https://www.reddit.com/r/ExperiencedDevs/comments/16k3x6e/streamlit_instead_of_real_frontend/
 - Reddit, Streamlit limitations: https://www.reddit.com/r/dataengineering/comments/1bu341y/what_do_you_not_like_about_streamlit/
 
-## Gate ainda aberto
+## Prova mínima reproduzida
 
-Antes da implementação, executar uma prova mínima do Streamlit com navegação, formulário, gravação SQLite e exportação CSV. Se a prova falhar, revisar esta escolha e o plano; não contornar o gate.
+O gate foi reproduzido em Codespace gerenciado com Python 3.12. O lock comprovado contém
+Streamlit 1.64.0, pandas 2.3.3, scikit-learn 1.9.1, joblib 1.6.0, pytest 8.4.2 e
+Ruff 0.16.8. A prova sintética executou duas páginas, edição em formulário, transação
+SQLite, releitura por uma nova conexão e disponibilização dos mesmos bytes do CSV
+persistido no botão de download.
+
+`make doctor`, Ruff e os três testes focais concluíram com status 0; o servidor respondeu
+`ok` no endpoint de saúde e encerrou deliberadamente com status 0. `make reproduce`
+retornou status 2 com correção explícita porque esse pipeline pertence a step posterior.
+A prova não usa dados pessoais, não chama API paga e não sustenta alegação de desempenho
+operacional.

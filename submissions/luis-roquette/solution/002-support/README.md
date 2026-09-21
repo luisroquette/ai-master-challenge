@@ -9,13 +9,15 @@ dados pessoais, inferência, métrica real, API paga ou serviço externo no uso 
 Requer Python 3.12, `make`, `curl` e `unzip`.
 
 ```bash
-make doctor
-make setup
-make demo
+make PYTHON=python3.12 doctor
+make PYTHON=python3.12 setup
+make PYTHON=python3.12 demo
 ```
 
 O lock é gerado uma única vez no ambiente gerenciado com `make bootstrap-lock`. Depois,
 `make setup` instala as versões bloqueadas e o pacote local sem resolver dependências.
+O ambiente reproduzido usou Python 3.12, Streamlit 1.64.0, pandas 2.3.3,
+scikit-learn 1.9.1, joblib 1.6.0, pytest 8.4.2 e Ruff 0.16.8.
 
 ## Comandos atuais
 
