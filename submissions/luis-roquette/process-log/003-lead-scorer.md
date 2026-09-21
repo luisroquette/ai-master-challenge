@@ -275,7 +275,7 @@ Mesmo sendo temporária, a intervenção do manager deve deixar qual evidência?
 
 A auditoria mínima da repriorização guardará identidade do manager e horário. Justificativa, comparação antes/depois e resultado posterior do deal não serão obrigatórios na primeira versão.
 
-### Síntese da Onda 2 — aguardando aprovação
+### Síntese da Onda 2 — aprovada
 
 - **Problema primário:** substituir priorização subjetiva; depois reduzir o volume analisado.
 - **Atualização:** recalcular continuamente quando os dados mudarem, mas reordenar apenas após mudança material.
@@ -284,3 +284,15 @@ A auditoria mínima da repriorização guardará identidade do manager e horári
 - **Intervenção do manager:** repriorização temporária até o próximo recálculo, auditando apenas quem e quando.
 
 Permanecem para ondas posteriores: persistência de redistribuições, definição da probabilidade, eventos disponíveis no tempo, interface e limites operacionais.
+
+#### Aprovação de Luis
+
+Onda 2 aprovada sem alterações em 21 de setembro de 2026. O gate de fluxo comercial foi concluído.
+
+### Onda 3 — Dados e verdade temporal
+
+#### Pergunta 1
+
+Quais oportunidades devem receber score e aparecer na fila operacional?
+
+**Resposta:** aguardando Luis.
