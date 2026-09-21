@@ -255,4 +255,16 @@ O protótipo fará recálculo completo após nova carga de dados. O produto real
 
 Como uma repriorização manual feita pelo manager deve conviver com o recálculo automático?
 
+#### Resposta de Luis
+
+**A:** a repriorização manual desaparece no próximo recálculo.
+
+#### Decisão registrada
+
+A intervenção do manager será temporária e não modificará score, pesos ou fórmula. O próximo recálculo restabelece integralmente a ordem derivada dos dados. Essa escolha mantém uma única fonte de verdade para o ranking, mas exige comunicar claramente ao manager que a mudança não é persistente.
+
+#### Pergunta 6
+
+Mesmo sendo temporária, a intervenção do manager deve deixar qual evidência?
+
 **Resposta:** aguardando Luis.
