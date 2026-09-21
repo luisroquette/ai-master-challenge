@@ -92,3 +92,21 @@ A pesquisa externa anterior já havia identificado soluções de churn com pipel
 ### Incidente operacional
 
 Uma busca `rg` usou backticks dentro de uma string com aspas duplas. O `zsh` tentou executar `draft` como comando e retornou `command not found`. Nenhum arquivo foi alterado. A correção é usar aspas simples para padrões que contenham backticks.
+
+### Execução e teste — ciclos 1 a 3
+
+**Resultado da etapa:** permanece em andamento; não promovida.
+
+Criamos no Mac somente os arquivos da Task 1 e baixamos os cinco CSVs públicos pelo endpoint oficial do Kaggle. Os cinco SHA-256 locais coincidiram com os valores publicados no plano. Nenhuma suíte ou instalação pesada foi executada no Mac.
+
+No Codespace gerenciado `codex-preflight-657v7q4ggx7f5557`, confirmamos Python 3.12.3. O primeiro teste TDD produziu o vermelho esperado: `ModuleNotFoundError: No module named 'ravenstack_churn'` com pytest 9.1.1.
+
+O feedback looping identificou três bloqueios operacionais:
+
+1. O ambiente não possuía `python3.12-venv`; a criação da `.venv` falhou antes do teste.
+2. Após instalar `python3.12-venv`, o shell suspendeu o job concluído; encerramos somente o wrapper local e paramos o Codespace, preservando seu disco.
+3. Como a branch da submissão ainda não existe no GitHub, tentamos transportar o diff local por payload. O comando longo não foi escapado corretamente pelo wrapper e abriu um prompt `>`; encerramos a sessão sem executar o payload.
+
+Após três falhas, interrompemos a estratégia conforme a regra operacional. A suposição duvidosa é que um diff local com arquivos binários ou volumosos pode ser validado de forma confiável em um Codespace sem uma branch remota. A correção recomendada é publicar a branch intermediária e fazer o Codespace validar exatamente o commit, mas push é mudança externa e exige autorização de Luis.
+
+Até essa decisão, os arquivos da Task 1 permanecem locais e sem commit de implementação. A fase não avançará para a Task 2 sem instalação, Ruff e teste de checksum verdes no Codespace.
