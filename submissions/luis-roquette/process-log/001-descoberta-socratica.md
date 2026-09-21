@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 2 em andamento
+- **Estado:** Onda 2 aguardando confirmação
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -281,4 +281,28 @@ Como esse valor deve aparecer na entrega?
 
 ### Estado da pergunta 5
 
-Aguardando resposta de Luis.
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+O valor financeiro será apresentado como **“MRR exposto — oportunidade máxima”**. Ele representará o limite superior de receita associado ao fator de risco, não uma previsão de recuperação.
+
+### Consequência para o desenho
+
+O rótulo, a definição e as limitações acompanharão o valor no resumo executivo e no dashboard. A entrega não usará “MRR recuperável” nem “impacto esperado” para esse cálculo. Esta decisão refina a resposta anterior: o ranking usará exposição financeira bruta com nome honesto, e não recuperação estimada.
+
+## Síntese provisória da Onda 2
+
+- **Padrão de evidência:** associação controlada, coerência temporal e confirmação entre tabelas; sem alegar causalidade comprovada.
+- **Métrica principal:** redução do MRR perdido, protegida por churn de contas e concentração por segmento.
+- **Regra de prioridade:** portão mínimo de confiança; depois, MRR exposto, alcance e possibilidade de ação, com análise de sensibilidade.
+- **Estimativa financeira:** 100% do MRR exposto entra como oportunidade bruta, sem taxa presumida de recuperação.
+- **Comunicação:** o valor será chamado de “MRR exposto — oportunidade máxima”, nunca de impacto esperado.
+
+### Estado da onda
+
+Aguardando confirmação de Luis. Após a aprovação, a Onda 3 investigará dados, recortes temporais, unidade de análise e prevenção de vazamentos.
