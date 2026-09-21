@@ -33,3 +33,28 @@ Precisaremos comparar problemas concorrentes por evidência, receita exposta, qu
 ### Ponto ainda aberto
 
 Ainda não sabemos se devemos começar com uma hipótese sobre a área responsável ou deixar os dados escolherem entre produto, suporte e fatores comerciais.
+
+### Pergunta 2
+
+Devemos iniciar sem uma área culpada e deixar os dados escolherem?
+
+- A. Sim: produto, suporte, cobrança/plano e aquisição competem igualmente.
+- B. Produto deve ser a hipótese principal.
+- C. Suporte deve ser a hipótese principal.
+- D. Cobrança, plano ou contrato deve ser a hipótese principal.
+
+### Resposta de Luis
+
+> A
+
+### Interpretação
+
+A investigação começa com tese zero. Nenhuma área será favorecida antes da análise; produto, suporte, cobrança/plano e aquisição competirão pela força da evidência.
+
+### Consequência para o desenho
+
+A solução precisará aplicar critérios comparáveis às causas candidatas e mostrar evidências contrárias, não somente as que confirmam a narrativa vencedora. Isso reduz o risco de adaptar os dados a uma hipótese escolhida cedo demais.
+
+### Ponto ainda aberto
+
+Precisamos definir como priorizar uma causa quando quantidade de contas afetadas e receita exposta apontarem para direções diferentes.
