@@ -130,3 +130,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) dashboard web local; B) planilha enriquecida; C) notebook analítico.
 - **Resposta de Luis:** **A — dashboard web local**.
 - **Implicação:** o MVP deverá permitir importar o CSV e navegar visualmente por monitoramento, desvios contextuais, rankings e recomendações. A ferramenta deverá funcionar localmente e ser demonstrável sem infraestrutura remota obrigatória.
+
+### Onda 9 — experiência dos três perfis
+
+- **Pergunta:** como o dashboard deve atender Gestor, Head e Analista?
+- **Opções:** A) cockpit principal para o Gestor, com resumos semanais e mensais exportáveis; B) três áreas separadas; C) interface única com seletor de perfil.
+- **Resposta de Luis:** **A — cockpit principal para o Gestor, com resumos exportáveis para os demais**.
+- **Implicação:** haverá uma única experiência operacional, centrada no Gestor de Social Media. Head e Analista consumirão sínteses derivadas da mesma fonte, evitando três produtos, permissões ou navegações independentes no MVP.
