@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 4 aguardando confirmação
+- **Estado:** Onda 5 em andamento
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -664,4 +664,21 @@ O README funcionará mesmo sem o link público. A aplicação hospedada consumir
 
 ### Estado da onda
 
-Aguardando confirmação de Luis. Após a aprovação, a Onda 5 investigará critérios de aceite, testes, limites e definição de pronto antes da criação da SPEC.
+Síntese confirmada por Luis sem ajustes. A Onda 4 está encerrada.
+
+## Onda 5: critérios de aceite, testes, limites e definição de pronto
+
+### Pergunta 1
+
+Qual deve ser o critério principal para aceitar uma conclusão como finding final?
+
+- A. O pipeline executou sem erro e gerou um gráfico plausível.
+- B. Existe uma trilha reproduzível ligando finding, tabelas de origem, recorte temporal, números, evidência contrária ou limitação e recomendação correspondente.
+- C. O finding aparece entre as variáveis mais importantes do modelo preditivo.
+- D. O finding parece convincente para um leitor executivo.
+
+**Recomendação técnica preliminar do agente:** B, porque transforma cada afirmação importante em algo verificável e reduz o risco de uma narrativa visualmente forte, mas estatisticamente frágil.
+
+### Estado da pergunta 1
+
+Aguardando resposta de Luis.
