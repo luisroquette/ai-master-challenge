@@ -322,4 +322,35 @@ Qual deve ser a unidade principal da análise de risco e causa raiz?
 
 ### Estado da pergunta 1
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+A base analítica será estruturada como um painel de **conta × data de corte**. Em cada corte, atributos de assinatura, uso e suporte serão agregados no nível da conta usando somente informações que já existiam naquele momento.
+
+### Consequência para o desenho
+
+Junções e atributos deverão respeitar o tempo. Eventos de churn, feedback posterior ao cancelamento e qualquer dado gerado após a data de corte não poderão entrar como preditores. Múltiplas assinaturas serão consolidadas de forma documentada, preservando métricas como MRR total, plano e frequência de cobrança.
+
+### Ponto ainda aberto
+
+Assinaturas mensais e anuais possuem ritmos diferentes de decisão. Precisamos definir um horizonte operacional comparável sem ignorar as janelas de renovação.
+
+### Pergunta 2
+
+Como devemos definir o horizonte de risco para assinaturas mensais e anuais?
+
+- A. Prever churn nos próximos 30 dias para todas as contas.
+- B. Prever churn nos próximos 90 dias para todas as contas.
+- C. Usar 30 dias como horizonte operacional comum e acrescentar uma visão específica da janela de renovação para contratos anuais.
+- D. Usar 30 dias para mensais e 365 dias para anuais, comparando os riscos diretamente.
+
+**Recomendação técnica preliminar do agente:** C, porque mantém uma fila operacional comparável e, ao mesmo tempo, evita tratar uma conta anual distante da renovação como se tivesse a mesma oportunidade imediata de churn.
+
+### Estado da pergunta 2
+
 Aguardando resposta de Luis.
