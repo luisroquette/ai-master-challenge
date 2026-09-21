@@ -79,3 +79,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) realocar esforço e patrocínio; B) definir o calendário editorial; C) criar um sistema operacional recorrente para planejar, acompanhar e corrigir a estratégia.
 - **Resposta de Luis:** **C — criar um sistema operacional recorrente**.
 - **Implicação:** a solução não será apenas uma análise estática. Ela deverá sustentar um ciclo repetível de decisão, acompanhamento e correção; o escopo desse ciclo será definido nas próximas ondas.
+
+### Onda 2 — operador principal
+
+- **Pergunta:** quem deve operar o sistema recorrente no cotidiano?
+- **Opções:** A) Gestor de Social Media, no planejamento e acompanhamento diário; B) Head de Marketing, na revisão semanal de estratégia e investimento; C) Analista de Marketing, no diagnóstico mensal e preparação das recomendações.
+- **Resposta de Luis:** **A, B e C**, tendo o **Gestor de Social Media como operador principal**.
+- **Implicação:** a arquitetura deverá atender três níveis de uso sem confundir responsabilidades: operação diária pelo Gestor de Social Media, decisão executiva pelo Head de Marketing e análise periódica pelo Analista de Marketing. O fluxo principal será desenhado para o gestor; os demais receberão visões derivadas.
