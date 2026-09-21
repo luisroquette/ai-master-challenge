@@ -801,4 +801,27 @@ Qual contrato de ambiente deve ser oferecido ao avaliador?
 
 **Recomendação da IA:** **A**. Usa ferramentas amplamente disponíveis e reduz pré-requisitos; Docker ou outro gerenciador não resolve requisito adicional do brief.
 
+#### Pergunta de Luis
+
+“O que manda o desafio?”
+
+#### Resposta verificada
+
+O challenge declara que a tecnologia não importa, desde que a solução rode, use dados reais, aplique scoring e explique o resultado. Na documentação, exige setup com dependências e comandos. Não impõe Docker, `uv`, Conda nem uma versão de Python.
+
+#### Decisão técnica
+
+Adotar **A**: Python 3.11, `venv`, `requirements.txt` com versões fixadas e comandos curtos de instalação, teste e execução. É a opção com menos pré-requisitos que atende integralmente ao brief.
+
+#### Pergunta 7
+
+Qual deve ser o alcance de disponibilização da aplicação?
+
+- **A.** Execução local reproduzível como única entrega.
+- **B.** Execução local obrigatória e, após todos os gates, demo pública em Streamlit Community Cloud como conveniência adicional.
+- **C.** Apenas demo pública, sem garantir execução local.
+- **D.** Deploy obrigatório em infraestrutura própria com Docker.
+
+**Recomendação da IA:** **B**. A prova local continua independente de terceiros, enquanto a demo pública reduz o atrito para o avaliador; publicação só ocorrerá após validação e autorização explícita.
+
 **Resposta:** aguardando Luis.
