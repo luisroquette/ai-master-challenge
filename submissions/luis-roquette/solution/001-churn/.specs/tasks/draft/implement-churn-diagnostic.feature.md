@@ -31,6 +31,16 @@ title: Implementar diagnóstico acionável de churn da RavenStack
 - Tratar evidência insuficiente como inconclusiva e suprimir rankings instáveis.
 - Exibir MRR perdido como métrica principal e “MRR exposto — oportunidade máxima” como teto teórico.
 
+#### Contradições reais dos dados que o plano deve tratar
+
+- O dataset público foi inspecionado antes do planejamento detalhado; os cinco arquivos somam 33.100 registros.
+- Existem 21 grupos de `usage_id` duplicados com linhas conflitantes; preservar as linhas com chave técnica derivada e registrar a anomalia, sem deduplicação silenciosa.
+- Existem 19.142 eventos de uso anteriores ao `start_date` da assinatura, dos quais 13.198 também antecedem o `signup_date` da conta.
+- Existem 1.077 tickets anteriores ao `signup_date`; datas de ciclo de vida não podem ser aceitas como verdade temporal sem análise de sensibilidade.
+- `accounts.churn_flag`, `subscriptions.churn_flag` e os eventos não concordam; usar o primeiro churn não reativação como rótulo temporal primário e tratar os flags como fontes de reconciliação e sensibilidade.
+- Manter uma visão com timestamps observados e outra restrita à cronologia válida; rebaixar ou suprimir findings que mudem materialmente entre as duas.
+- Creditar River @ Rivalytics conforme o README do dataset e verificar os checksums das entradas.
+
 #### Solução aprovada
 
 - Implementar um pipeline Python único que valide dados e gere artefatos canônicos.
@@ -55,4 +65,17 @@ title: Implementar diagnóstico acionável de churn da RavenStack
 
 ## Description
 
-// Will be filled in future stages by business analyst
+Implementar uma solução local e reproduzível para o Challenge 001, limitada a `submissions/luis-roquette/`. Um pipeline Python validará e reconciliará os cinco CSVs, construirá painéis temporais `observed` e `strict`, avaliará causas e segmentos com gates explícitos e publicará artefatos canônicos. O relatório executivo, o dashboard Streamlit e a fila CSV consumirão esses mesmos artefatos.
+
+O plano executável, com arquivos, interfaces, testes TDD, comandos, commits, timebox e preflight, está em:
+
+`docs/superpowers/plans/2026-09-21-ravenstack-churn-diagnostic.md`
+
+### Critérios de aceite desta task
+
+- As cinco tabelas são cruzadas com contratos, checksums e reconciliação de cardinalidade e receita.
+- Nenhum atributo usa informação posterior ao cutoff; o modelo opcional usa somente a cronologia `strict`.
+- Findings frágeis ou instáveis ficam inconclusivos e sem ranking; nenhuma causa é fabricada.
+- Relatório, dashboard e fila compartilham IDs, métricas e manifesto da mesma execução.
+- `make reproduce` funciona em ambiente Python 3.12 limpo e `make check` confirma equivalência sem sujar o worktree.
+- O diário registra decisões, erros, correções, rodadas, uso de IA e a revisão executiva cronometrada.
