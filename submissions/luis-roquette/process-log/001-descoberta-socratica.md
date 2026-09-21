@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 4 em andamento
+- **Estado:** Onda 4 aguardando confirmação
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -626,4 +626,42 @@ Como devemos disponibilizar a solução final?
 
 ### Estado da pergunta 5
 
-Aguardando resposta de Luis.
+Respondida por delegação explícita ao agente.
+
+### Resposta literal de Luis
+
+> Você quem deve me dizer, avaliando o que diz a regra do desafio. Você não pode errar nessa avaliação: revise novamente o repositório onde consultou o desafio proposto e responda com absoluta certeza.
+
+### Verificação realizada
+
+Relemos no GitHub o `README.md`, `submission-guide.md`, o README do Challenge 001, `templates/submission-template.md` e `CONTRIBUTING.md`. O fork de Luis e o repositório oficial estavam idênticos no commit `4aed364d572fabe0f1fff1f0c6f32960b30fe575` no momento da consulta.
+
+As regras confirmam:
+
+- relatório de diagnóstico e process log são obrigatórios;
+- a submissão é exclusivamente por Pull Request;
+- código funcional precisa incluir instruções de setup;
+- dashboard e automação são diferenciais não obrigatórios;
+- hospedagem pública não aparece como requisito.
+
+### Decisão técnica do agente
+
+> B
+
+Adotaremos execução local reproduzível **e** uma demonstração Streamlit pública, somente leitura, sem segredos nem APIs pagas. A reprodução local será o critério obrigatório de aceite. A demonstração pública será um diferencial de baixo atrito e não poderá bloquear nem atrasar a submissão caso o provedor externo falhe.
+
+### Consequência para o desenho
+
+O README funcionará mesmo sem o link público. A aplicação hospedada consumirá somente artefatos derivados permitidos e terá a mesma versão do código validado localmente. Não serão adicionados login, banco ou serviços externos apenas para sustentar a demonstração.
+
+## Síntese provisória da Onda 4
+
+- **Arquitetura:** pipeline Python único → tabelas → relatório Markdown, dashboard Streamlit e fila CSV.
+- **Reprodução:** `make reproduce` regenera e valida; `make app` abre a interface.
+- **Experiência:** decisão executiva, evidências e fila operacional, com metodologia recolhível.
+- **Automação:** CSV baixável para o CS; sem CRM ou contato automático.
+- **Disponibilização:** local reproduzível como requisito e Streamlit público como diferencial não bloqueante.
+
+### Estado da onda
+
+Aguardando confirmação de Luis. Após a aprovação, a Onda 5 investigará critérios de aceite, testes, limites e definição de pronto antes da criação da SPEC.
