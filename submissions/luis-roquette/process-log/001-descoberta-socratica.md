@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 2 aguardando confirmação
+- **Estado:** Onda 3 em andamento
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -305,4 +305,21 @@ O rótulo, a definição e as limitações acompanharão o valor no resumo execu
 
 ### Estado da onda
 
-Aguardando confirmação de Luis. Após a aprovação, a Onda 3 investigará dados, recortes temporais, unidade de análise e prevenção de vazamentos.
+Síntese confirmada por Luis sem ajustes. A Onda 2 está encerrada.
+
+## Onda 3: dados, tempo, unidade de análise e prevenção de vazamentos
+
+### Pergunta 1
+
+Qual deve ser a unidade principal da análise de risco e causa raiz?
+
+- A. Uma linha por conta, resumindo toda a história disponível.
+- B. Uma linha por assinatura, mesmo quando uma conta possui várias assinaturas.
+- C. Uma linha por conta em cada data de corte, agregando apenas assinaturas, uso e suporte conhecidos até aquele momento.
+- D. Uma linha por evento de uso, deixando o modelo combinar os eventos diretamente.
+
+**Recomendação técnica preliminar do agente:** C, porque preserva a decisão no nível da conta, permite observar mudanças ao longo do tempo e impede que informações posteriores ao corte contaminem a análise.
+
+### Estado da pergunta 1
+
+Aguardando resposta de Luis.
