@@ -447,3 +447,17 @@ O recuperador só sugere resposta quando o histórico sanitizado, a similaridade
 A persistência local deverá gravar cada decisão de modo atômico e manter o registro anterior se ocorrer falha. A interface distinguirá estado carregando, função indisponível e artefato desatualizado. Cada exportação carregará versão dos dados, modelo, threshold e regras usadas. Não haverá credenciais ou chamadas externas. Se o Dataset 1 ou o Dataset 2 não sustentar uma função planejada, a função será removida ou rebaixada a hipótese, e a limitação será registrada em vez de ser simulada.
 
 **Pergunta de validação:** esta política de segurança e falhas está correta para avançar?
+
+**Validação de Luis:** A — Seção 3 aprovada sem ajustes.
+
+### Seção 4 — Validação, testes e evidências — proposta
+
+A validação começará antes dos modelos. Checks de dados confirmarão schema, tipos, unicidade, ausências, duplicidades, faixas, cardinalidades e remoção de PII. Cada exclusão ou coerção terá contagem. O diagnóstico operacional terá testes de denominador e reconciliação: totais por canal, prioridade e tipo precisam retornar ao universo correto; comparações de satisfação e tempo deverão informar amostra, dispersão e dados ausentes, não apenas médias.
+
+Cada classificador será comparado com baselines simples. A seleção usará validação cruzada somente no conjunto de desenvolvimento. O teste estratificado permanecerá congelado até modelo, calibração, regras e thresholds estarem definidos. A avaliação reportará macro-F1, precisão e recall por classe, matriz de confusão, qualidade da calibração e curva de risco versus cobertura. O gate terá testes diretos de fronteira: regra sensível vence confiança alta; confiança insuficiente gera revisão; entrada inválida nunca autoriza automação.
+
+A recuperação de respostas será avaliada em tickets não vistos, sem resoluções do teste dentro do índice. Uma rubrica humana medirá relevância, correção, segurança e esforço de edição. Casos sem precedente adequado testarão explicitamente a abstinência. Exemplos bons e ruins serão preservados como evidência, sem substituir as métricas agregadas.
+
+O fluxo ponta a ponta validará fila, explicação, decisão humana, persistência, exportação e scorecard usando uma amostra definida antes de observar resultados. Os artefatos incluirão relatório de qualidade, tabelas analíticas, métricas versionadas, decisões do gate, avaliação da recuperação, log exportado e screenshot real da aplicação. Comandos documentados regenerarão tudo. Uma lógica não trivial só será considerada pronta com teste reproduzível; qualquer falha conhecida bloqueia a alegação correspondente.
+
+**Pergunta de validação:** esta estratégia de testes e evidências está correta para avançar?
