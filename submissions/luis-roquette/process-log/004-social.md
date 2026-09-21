@@ -179,3 +179,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) decisões, resultados e metadados do arquivo, mantendo o CSV bruto fora do banco; B) toda a base importada; C) uma cópia completa de cada CSV enviado.
 - **Resposta de Luis:** **A — persistir decisões, resultados e metadados; não copiar o CSV bruto**.
 - **Implicação:** o banco manterá o estado operacional mínimo. Cada importação poderá ser identificada por metadados e hash, enquanto análises serão recalculadas a partir do arquivo fornecido pelo usuário, reduzindo duplicação e exposição de dados.
+
+### Onda 16 — motor de recomendações
+
+- **Pergunta:** como o MVP deve produzir recomendações?
+- **Opções:** A) regras estatísticas determinísticas, com evidência, benchmark e justificativa reproduzível; B) API de IA generativa; C) modelo local de IA.
+- **Resposta de Luis:** **A — regras estatísticas determinísticas**.
+- **Implicação:** recomendações deverão resultar de cálculos e regras auditáveis. Nenhuma API paga, modelo generativo ou dependência de inferência será necessária para operar o MVP.
