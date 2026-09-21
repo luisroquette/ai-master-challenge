@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 3 em andamento
+- **Estado:** Onda 3 aguardando confirmação
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -446,4 +446,28 @@ Como devemos validar um eventual modelo de risco?
 
 ### Estado da pergunta 5
 
-Aguardando resposta de Luis.
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+O desempenho será medido em períodos posteriores aos usados no treinamento. As contas permanecerão agrupadas para impedir que observações da mesma empresa atravessem indevidamente treino e teste. Se a quantidade de datas de corte permitir, backtests temporais adicionais testarão a estabilidade.
+
+### Consequência para o desenho
+
+Divisões aleatórias entre linhas e métricas calculadas na amostra de treino serão proibidas como evidência de desempenho. A avaliação deverá registrar datas, contas, prevalência de churn e métricas operacionais, sempre no conjunto fora do tempo.
+
+## Síntese provisória da Onda 3
+
+- **Unidade:** painel de conta × data de corte, usando apenas informação conhecida naquele momento.
+- **Horizonte:** risco operacional em 30 dias, com visão adicional da janela de renovação anual.
+- **Observação:** janelas de 7, 30 e 90 dias para nível, tendência e volatilidade, condicionadas à cobertura real.
+- **Campos pós-churn:** `reason_code` e feedback somente no diagnóstico retrospectivo, nunca como preditores.
+- **Validação:** avaliação fora do tempo, contas agrupadas e backtests temporais quando a amostra permitir.
+
+### Estado da onda
+
+Aguardando confirmação de Luis. Após a aprovação, a Onda 4 investigará arquitetura mínima, artefatos, automação e experiência de uso.
