@@ -521,4 +521,20 @@ Como transformar produto, vendedor e conta em uma prioridade explicável para `P
 
 **Recomendação da IA:** **B**. Evita que grupos pequenos pareçam conclusivos, mantém o cálculo auditável e lida com categorias raras ou novas sem inventar certeza.
 
-**Resposta:** aguardando Luis.
+#### Resposta de Luis
+
+**B:** usar evidências históricas suavizadas, com recuo progressivo para grupos mais gerais e indicação da força da evidência.
+
+#### Decisão registrada
+
+A prioridade de `Prospecting` não usará taxas brutas de grupos pequenos nem pesos arbitrários. O cálculo deverá reduzir o efeito de amostras escassas, recorrer a evidências mais gerais quando necessário e declarar a sustentação disponível. O resultado continuará sendo faixa de prioridade, não probabilidade calibrada.
+
+### Síntese da Onda 4 — aguardando aprovação
+
+- **Ordem de `Engaging`:** probabilidade primeiro; receita esperada desempata somente dentro da mesma faixa validada.
+- **Explicação:** fatores favoráveis e desfavoráveis derivados do cálculo real, com evidência observada, efeito simples e sem alegação causal indevida.
+- **Modelos:** regressão logística como baseline e gradient boosting como concorrente; complexidade só entra com ganho relevante e explicação fiel.
+- **Seleção:** calibração é gate; depois são avaliadas ordenação e concentração de resultado financeiro; empate favorece simplicidade.
+- **`Prospecting`:** prioridade por evidências históricas suavizadas, com recuo para grupos gerais e força da evidência visível; nunca apresentada como probabilidade.
+
+Permanecem para as ondas seguintes: interação e estados da interface, tratamento operacional de dados fora do domínio, arquitetura executável e critérios finais de prova.
