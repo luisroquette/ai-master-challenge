@@ -25,17 +25,18 @@ def mini_tables() -> dict[str, pd.DataFrame]:
         ),
         "feature_usage": pd.DataFrame(
             [
-                ["U-before", "S-1", "2023-01-05", "feature_1", 1, 60, 0, False],
-                ["U-duplicate", "S-1", "2024-05-15", "feature_1", 3, 120, 0, False],
-                ["U-duplicate", "S-1", "2024-05-16", "feature_2", 5, 180, 1, False],
+                ["U-before", "S-2", "2024-03-15", "feature_1", 2, 60, 0, False],
+                ["U-duplicate", "S-1", "2024-05-15", "feature_1", 1, 120, 0, False],
+                ["U-duplicate", "S-1", "2024-05-16", "feature_2", 3, 180, 1, False],
                 ["U-future", "S-2", "2024-06-10", "feature_3", 2, 90, 0, True],
             ],
             columns=SCHEMAS["feature_usage"],
         ),
         "support_tickets": pd.DataFrame(
             [
-                ["T-before", "A-1", "2022-12-20", "2022-12-21", 24.0, "high", 30, 2.0, False],
-                ["T-future", "A-2", "2024-06-10", "2024-06-11", 24.0, "low", 10, 5.0, False],
+                ["T-before", "A-2", "2024-05-10", "2024-05-11", 24.0, "high", 30, 2.0, False],
+                ["T-recent", "A-1", "2024-05-20", "2024-05-21", 24.0, "medium", 20, 4.0, False],
+                ["T-future", "A-1", "2024-06-10", "2024-06-11", 24.0, "low", 10, 5.0, False],
             ],
             columns=SCHEMAS["support_tickets"],
         ),
@@ -49,3 +50,17 @@ def mini_tables() -> dict[str, pd.DataFrame]:
     }
     assert set(tables) == set(RAW_TABLE_NAMES)
     return tables
+
+
+@pytest.fixture
+def observed_panel(mini_tables) -> pd.DataFrame:
+    from ravenstack_churn.panel import build_account_panel
+
+    return build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "observed")
+
+
+@pytest.fixture
+def strict_panel(mini_tables) -> pd.DataFrame:
+    from ravenstack_churn.panel import build_account_panel
+
+    return build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
