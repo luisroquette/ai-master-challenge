@@ -180,3 +180,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Fila diária priorizada.
 
 **Interpretação para a próxima onda:** o protótipo deve provar utilidade em uma sequência de trabalho, não apenas em uma inferência isolada. A fila usará dados separados da construção e permitirá rastrear decisão e resultado por ticket. A próxima escolha deve definir o princípio de ordenação da atenção humana.
+
+### Onda 8 — Ordenação da fila humana
+
+**Pergunta:** o que coloca um ticket no topo da fila humana?
+
+- **A — Risco:** temas sensíveis, prioridade crítica e baixa confiança aparecem primeiro.
+- **B — Urgência operacional:** maior risco de atraso e descumprimento do atendimento aparece primeiro.
+- **C — Prioridade composta e explicável:** combina risco, urgência e incerteza usando somente campos validados nos dados; mostra os motivos do ranking.
+
+**Resposta de Luis:** C — Prioridade composta e explicável.
+
+**Interpretação para a próxima onda:** o ranking não será uma caixa-preta nem dependerá de campos presumidos. Cada ticket exibirá os fatores que elevaram sua posição; a fórmula final dependerá da auditoria dos datasets. A próxima escolha deve definir a origem e o nível de automação da resposta sugerida.
