@@ -824,4 +824,12 @@ Qual deve ser o alcance de disponibilização da aplicação?
 
 **Recomendação da IA:** **B**. A prova local continua independente de terceiros, enquanto a demo pública reduz o atrito para o avaliador; publicação só ocorrerá após validação e autorização explícita.
 
+#### Pergunta de esclarecimento de Luis
+
+“O que é Streamlit Cloud?”
+
+#### Explicação registrada
+
+Streamlit Community Cloud é o serviço de hospedagem da Streamlit: conecta-se a um repositório GitHub, instala as dependências e executa o arquivo principal do app, gerando uma URL que o avaliador pode abrir sem instalar nada. Ele facilita a demonstração, mas não substitui o setup local: depende de um serviço externo, pode ter inicialização fria e limites de recursos. Como o projeto não usa segredos nem APIs pagas, é compatível com esse tipo de publicação.
+
 **Resposta:** aguardando Luis.
