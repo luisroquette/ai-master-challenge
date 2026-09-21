@@ -426,4 +426,23 @@ Na fila ordenada por probabilidade, qual deve ser o papel da receita esperada?
 
 **Recomendação da IA:** **B**. Respeita `B > A`, mantém uma única fila objetiva e ainda conecta a ordenação à métrica financeira aprovada.
 
+#### Resposta de Luis
+
+**B:** a receita esperada será o segundo critério para oportunidades com probabilidades equivalentes ou próximas.
+
+#### Decisão registrada
+
+A fila de `Engaging` será ordenada primeiro pela probabilidade de fechamento. A receita esperada será usada como desempate controlado, sem substituir o critério principal. O significado mensurável de “probabilidades próximas” ainda deverá ser definido e validado, sem tolerância arbitrária.
+
+#### Pergunta 3
+
+Como cada probabilidade de fechamento deve ser explicada ao vendedor?
+
+- **A.** Mostrar os principais fatores favoráveis e desfavoráveis, com o valor observado e seu efeito em linguagem simples.
+- **B.** Mostrar somente fatores favoráveis para tornar a orientação mais positiva.
+- **C.** Gerar uma justificativa narrativa livre por IA.
+- **D.** Exibir somente os coeficientes e detalhes técnicos completos do modelo.
+
+**Recomendação da IA:** **A**. É fiel ao cálculo, acionável e auditável; evita esconder sinais negativos ou inventar causalidade em uma narrativa livre.
+
 **Resposta:** aguardando Luis.
