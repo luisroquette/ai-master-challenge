@@ -31,3 +31,16 @@ O desafio pede uma análise controlada, não médias gerais. A comparação entr
 A estratégia deve dizer onde concentrar esforço, o que produzir, para quem, quando, com qual faixa de creator e qual evidência sustenta a decisão. Também precisa apontar o que parar, ordenar prioridades e propor quick wins executáveis na mesma semana.
 
 O diferencial deve transformar os achados em decisão recorrente sem aumentar o escopo antes da evidência. A escolha entre dashboard, recomendador ou outra ferramenta será feita somente após pesquisa de soluções existentes e inspeção dos dados.
+
+## I02 — SDD adotado antes da construção — 2026-09-21 14:31 BRT
+
+- **Objetivo:** transformar o desafio em especificação verificável antes de implementar análise ou ferramenta.
+- **IA/ferramenta:** skills `add-task`, `plan-task` e `implement-task` do Context Engineering Kit, instaladas para Claude Code via `npx skills`.
+- **Ação ou prompt:** Luis decidiu usar Spec-Driven Development e indicou a skill SDD do repositório `NeoLabHQ/context-engineering-kit`.
+- **Resultado:** a versão atual não expõe uma skill única chamada `sdd`; o fluxo foi instalado pelos três componentes publicados e iniciado com a spec local `.specs/tasks/draft/implement-challenge-004-social-media.feature.md`.
+- **Julgamento humano:** adotar SDD foi decisão de Luis. O planejamento deve passar por revisão humana antes de qualquer implementação; a spec não substitui a Regra zero de pesquisa e evidência.
+- **Verificação:** o instalador confirmou as três skills para Claude Code e classificou todas como seguras; a spec inicial preserva o prompt original e permanece em `draft`.
+- **Evidência:** este registro, `skills-lock.json`, diretórios locais `.claude/skills/` e a spec em `.specs/tasks/draft/`.
+- **Limitação:** `npx skills` instala skills, mas não os subagentes do plugin completo. Os artefatos de ferramenta ficam locais e não entrarão no Pull Request, que aceita apenas `submissions/luis-roquette/`.
+
+**Fluxo adotado:** `add-task → plan-task → revisão humana da spec → implement-task`, sempre subordinado às regras de pesquisa, Ponytail, testes e integridade do desafio.
