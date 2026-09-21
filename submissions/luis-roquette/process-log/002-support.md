@@ -276,3 +276,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Calculadora de cenários.
 
 **Interpretação para a próxima onda:** horas derivadas dos dados permanecerão separadas de parâmetros fornecidos pelo usuário. Valores financeiros serão cenários, nunca fatos observados. A próxima escolha deve definir se as decisões humanas e sua trilha de auditoria sobrevivem ao encerramento da aplicação local.
+
+### Onda 16 — Persistência do feedback
+
+**Pergunta:** como preservar o feedback humano?
+
+- **A — Persistência local auditável:** salva decisões, edições e motivos em armazenamento local simples; permite exportar o histórico.
+- **B — Somente durante a sessão:** mantém o feedback em memória e permite baixar um arquivo antes de fechar.
+- **C — Banco externo:** persiste tudo em serviço remoto, exigindo configuração e credenciais.
+
+**Resposta de Luis:** A — Persistência local auditável.
+
+**Interpretação para a próxima onda:** a trilha de auditoria será persistida localmente com tecnologia nativa ou já instalada, escolhida após a pesquisa. Nenhuma credencial ou infraestrutura remota será necessária. PII deverá ser removida antes da persistência. A próxima escolha deve limitar o painel gerencial ao conjunto mínimo de decisões úteis.
