@@ -901,7 +901,7 @@ O gestor poderá “Priorizar temporariamente” um deal. A ação fixa o item n
 
 **Resposta:** “Aprovo a seção 1.”
 
-### Seção 2 — Arquitetura e fluxo de dados — aguardando aprovação
+### Seção 2 — Arquitetura e fluxo de dados — aprovada
 
 A solução terá três unidades de código: `app.py` cuida somente da apresentação e do estado da sessão; `data.py` carrega, valida, normaliza e relaciona os quatro CSVs; `scoring.py` concentra preparação de features, treino, validação, priorização, explicações e playbook. Essa fronteira permite testar toda a lógica sem iniciar o Streamlit, sem criar camadas, interfaces ou serviços que o protótipo não necessita.
 
@@ -910,3 +910,17 @@ Na primeira execução, `data.py` confirma arquivos e colunas obrigatórias, cal
 `scoring.py` separa oportunidades encerradas das ativas. Somente `Won` e `Lost` alimentam treino e validação, ordenados por `close_date`: período antigo treina; período recente simula o futuro. `close_date`, `close_value`, estágio final e qualquer derivado ficam fora da matriz de features. O pipeline gera dois candidatos para `Engaging` — regressão logística e gradient boosting — e dois caminhos por candidato: completo, quando há conta, e fallback deliberadamente sem atributos de conta. Cada caminho recebe validação própria.
 
 O vencedor e seus diagnósticos são armazenados em cache pelo fingerprint dos dados e da configuração. Depois, os deals ativos percorrem exatamente o mesmo pré-processamento aprendido no treino. O resultado entregue ao `app.py` já contém faixa, probabilidade quando aprovada, valores, motivos, força da evidência, próxima ação e motivo de eventual bloqueio. Assim, a interface apenas filtra, apresenta e aplica a prioridade temporária da sessão.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo a seção 2.”
+
+### Seção 3 — Score, calibração e explicação — aguardando aprovação
+
+Para `Engaging`, o histórico será dividido cronologicamente em treino, calibração e teste final. O treino ajusta os candidatos; a fatia intermediária calibra probabilidades e define faixas; o período mais recente permanece intocado até a comparação final. Um modelo só poderá publicar probabilidade se superar o baseline de taxa histórica em Brier score e log loss no teste e se suas faixas mantiverem relação coerente entre previsão e frequência observada. Entre candidatos aprovados, vencem ordenação e concentração de resultado financeiro no topo; sem ganho consistente, permanece a regressão logística.
+
+As features serão limitadas ao que existe no momento da decisão: produto, série, preço e atributos cadastrais da conta no caminho completo. Datas finais, valor fechado e estágio final são proibidos. `sales_agent` não entra diretamente no modelo de `Engaging`: dentro da carteira ele não ajuda a ordenar e, na visão da equipe, poderia confundir habilidade histórica do vendedor com qualidade do deal. Vendedor, manager e região serão usados para filtros e diagnóstico de desempenho por segmento, não para alterar a probabilidade.
+
+A explicação da regressão logística virá das contribuições dos próprios coeficientes; se o gradient boosting vencer, usará contribuição local compatível com árvores. O painel traduzirá os fatores de maior impacto favorável e desfavorável, mostrando valor observado e direção, nunca causalidade. Receita esperada será calculada somente quando a probabilidade passar no gate.
+
+Para `Prospecting`, produto, vendedor e conta alimentarão taxas históricas suavizadas. Combinações escassas recuam para grupos mais gerais e, por fim, para a base global. O app mostrará faixa de prioridade, receita potencial, tamanho da amostra efetiva e nível de evidência. O playbook mapeará estágio e principal fator acionável para uma recomendação versionada; se nenhum fator sustentado existir, declarará “Sem ação recomendada com os dados atuais”.
