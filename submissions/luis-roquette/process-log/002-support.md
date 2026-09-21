@@ -216,3 +216,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Feedback auditável.
 
 **Interpretação para a próxima onda:** o protótipo preservará a trilha entre recomendação, intervenção humana e resultado, mas não fará aprendizado online. Isso evita mudanças não validadas e cria dados para melhoria posterior. A próxima escolha deve impedir que o painel confunda métricas históricas observadas com resultados simulados ou projetados do protótipo.
+
+### Onda 11 — Separação das evidências
+
+**Pergunta:** como o painel deve apresentar evidências?
+
+- **A — Duas camadas separadas:** diagnóstico histórico observado e avaliação ou projeção do protótipo aparecem em blocos distintos, com premissas visíveis.
+- **B — Somente histórico:** mostra gargalos e satisfação do Dataset 1; métricas do protótipo ficam fora do painel.
+- **C — Visão unificada:** mistura histórico, simulação e projeções em uma única sequência operacional.
+
+**Resposta de Luis:** A — Duas camadas separadas.
+
+**Interpretação para a próxima onda:** o painel diferenciará fatos, resultados de teste e cenários. Nenhuma projeção de horas ou custo poderá parecer observação real. A próxima escolha deve definir o formato executável da entrega sem antecipar o framework antes da pesquisa técnica.
