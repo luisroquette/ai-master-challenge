@@ -144,3 +144,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Confiança + regras de risco.
 
 **Interpretação para a próxima onda:** o gate será híbrido e auditável. Um score alto não poderá superar bloqueios explícitos de segurança; a confiança deverá ser calibrada e o motivo da decisão ficará visível. A próxima escolha deve definir como provar, com métricas, que esse equilíbrio produz valor sem esconder risco.
+
+### Onda 5 — Evidência prioritária
+
+**Pergunta:** o que a demonstração precisa provar prioritariamente?
+
+- **A — Segurança:** nenhum caso sensível ou crítico é roteado automaticamente de forma indevida; cobertura vem depois.
+- **B — Eficiência:** redução mensurável de trabalho manual e horas recuperáveis; risco aparece como limite.
+- **C — Evidência equilibrada:** qualidade e calibração do classificador, cobertura segura da automação e economia operacional rastreável.
+
+**Resposta de Luis:** C — Evidência equilibrada.
+
+**Interpretação para a próxima onda:** a validação não poderá ser resumida a acurácia. Ela deverá conectar desempenho preditivo, confiabilidade das probabilidades, proporção de tickets elegíveis à automação segura e impacto operacional calculado com premissas visíveis. O mínimo de cinco ondas foi cumprido, mas a descoberta continua porque ainda existem decisões materiais de usuário, interface, dados e arquitetura.
