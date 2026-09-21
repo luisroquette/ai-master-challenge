@@ -596,4 +596,23 @@ Como equilibrar leitura rápida e explicação detalhada em cada fila?
 
 **Recomendação da IA:** **B**. Permite percorrer a fila rapidamente e mantém a justificativa acessível sem poluir a comparação.
 
+#### Resposta de Luis
+
+**B:** linha compacta com prioridade, valor e principal motivo; painel lateral com explicação completa e próxima ação.
+
+#### Decisão registrada
+
+A fila otimizará varredura visual. A linha exibirá apenas os elementos necessários à comparação; o painel lateral preservará contexto, fatores favoráveis e desfavoráveis, origem do score, força da evidência e próxima ação. A abertura do detalhe não mudará de página.
+
+#### Pergunta 4
+
+Como a ferramenta deve produzir a próxima ação recomendada?
+
+- **A.** Texto livre gerado por IA para cada deal.
+- **B.** Playbook determinístico: regras explícitas combinam estágio e principal fator acionável, mostrando por que a ação foi sugerida.
+- **C.** Campo preenchido manualmente pelo gestor.
+- **D.** Não recomendar ação; mostrar apenas o score.
+
+**Recomendação da IA:** **B**. É auditável, funciona sem API paga e evita recomendações inventadas; o playbook mínimo pode ser validado por testes diretos.
+
 **Resposta:** aguardando Luis.
