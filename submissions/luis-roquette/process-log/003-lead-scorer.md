@@ -408,4 +408,22 @@ Qual componente deve comandar a prioridade dos deals em `Engaging`?
 
 **Recomendação da IA:** **D**. Preserva a métrica norteadora já aprovada sem deixar oportunidades valiosas e urgentes perderem prioridade. Os pesos não serão inventados agora: deverão ser simples, visíveis e validados com o histórico disponível.
 
+#### Resposta de Luis
+
+**Preferência:** **B > A >>> C** — probabilidade de fechamento acima da receita esperada, ambas muito acima de urgência ou risco de esfriamento. A opção D não foi incluída.
+
+#### Interpretação provisória
+
+A probabilidade deve comandar a prioridade. Ainda é necessário definir se a receita esperada será apenas informativa ou se funcionará como segundo critério, pois a decisão anterior adotou receita esperada por vendedor como métrica norteadora.
+
+#### Pergunta 2
+
+Na fila ordenada por probabilidade, qual deve ser o papel da receita esperada?
+
+- **A.** Apenas exibição; nunca altera a ordem.
+- **B.** Segundo critério: desempata probabilidades equivalentes ou muito próximas.
+- **C.** Controle alternável: o usuário escolhe ordenar por probabilidade ou receita esperada.
+
+**Recomendação da IA:** **B**. Respeita `B > A`, mantém uma única fila objetiva e ainda conecta a ordenação à métrica financeira aprovada.
+
 **Resposta:** aguardando Luis.
