@@ -169,3 +169,55 @@ def claim_panel() -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+@pytest.fixture
+def model_panel() -> pd.DataFrame:
+    from hashlib import sha256
+
+    rows = []
+    cutoffs = pd.to_datetime(
+        ["2024-08-31", "2024-09-30", "2024-10-31", "2024-11-30", "2024-12-31"]
+    )
+    for account_number in range(30):
+        account_id = f"M-{account_number:03d}"
+        for month, cutoff in enumerate(cutoffs):
+            is_scoring = cutoff == pd.Timestamp("2024-12-31")
+            positive = (account_number + month) % 5 == 0
+            churn = pd.NA if is_scoring else int(positive)
+            rows.append(
+                {
+                    "account_id": account_id,
+                    "cutoff": cutoff,
+                    "chronology": "strict",
+                    "churn_next_30d": churn,
+                    "mrr_active": 100 + account_number * 10,
+                    "seats": 5 + account_number % 10,
+                    "tenure_days": 300 + month * 30,
+                    "days_to_annual_renewal": 60 - month * 5,
+                    "usage_count_30d": 80 if positive else 100,
+                    "usage_change_30_vs_90": -0.4 if positive else 0.1,
+                    "error_rate_30d": 0.2 if positive else 0.02,
+                    "feature_breadth_30d": 5,
+                    "tickets_30d": 3 if positive else 1,
+                    "ticket_change_30_vs_90": 0.5 if positive else -0.1,
+                    "escalations_90d": 2 if positive else 0,
+                    "mean_satisfaction_90d": 3.0 if positive else 4.5,
+                    "downgrade_90d": positive,
+                    "auto_renew_off": positive,
+                    "industry": "FinTech" if account_number % 2 else "EdTech",
+                    "country": "BR" if account_number % 3 else "US",
+                    "referral_source": "organic",
+                    "plan_tier": "Pro",
+                    "billing_frequency": "monthly",
+                    "is_trial": False,
+                }
+            )
+    panel = pd.DataFrame(rows)
+    buckets = {
+        account_id: int(sha256(f"42:{account_id}".encode()).hexdigest()[:8], 16) % 100
+        for account_id in panel.account_id.unique()
+    }
+    assert any(bucket < 80 for bucket in buckets.values())
+    assert any(bucket >= 80 for bucket in buckets.values())
+    return panel
