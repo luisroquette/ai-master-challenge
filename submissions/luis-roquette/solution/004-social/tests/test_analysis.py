@@ -15,6 +15,7 @@ from tests.helpers import (
     frame_with_target,
     make_cohort,
     make_post,
+    sponsorship_frequency_rows,
     sponsorship_rows,
 )
 
@@ -94,7 +95,15 @@ class CsvBoundaryTests(unittest.TestCase):
         frame, errors = load_csv(raw)
         self.assertEqual(errors, [])
         self.assertTrue(str(frame["post_date"].dtype).startswith("datetime64"))
-        self.assertEqual(analyze(frame, {}, str(frame.iloc[0]["source_hash"]))["source"]["rows"], 2)
+        explicit_scope = {
+            "target_start": "2025-01-01",
+            "target_end": "2025-01-02",
+            "reference_date": "2025-01-02",
+            "filters": {},
+        }
+        result = analyze(frame, explicit_scope, str(frame.iloc[0]["source_hash"]))
+        self.assertEqual(result["source"]["rows"], 2)
+        self.assertTrue(str(result["scope"]["target_start"]).endswith("+02:00"))
 
     def test_load_csv_diagnostics_use_physical_line_after_multiline_field(self):
         raw = csv_bytes([
@@ -232,6 +241,33 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertGreater(augmented_item["normalization"]["views"], baseline_item["normalization"]["views"])
         self.assertLess(augmented_item["priority"], baseline_item["priority"])
         self.assertFalse(any(item["context"]["content_type"] == "text" for item in augmented["recommendations"]))
+
+    def test_frequency_hypothesis_uses_creator_weeks_from_two_complete_iso_weeks(self):
+        result = analyze(
+            sponsorship_frequency_rows(2),
+            default_scope(target_start="2025-01-06", target_end="2025-01-19", reference_date="2025-01-19"),
+            "hash",
+        )
+        frequency = result["recommendations"][0]["frequency_hypothesis"]
+        self.assertEqual(frequency["status"], "test")
+        self.assertEqual(frequency["value"], 3.0)
+        self.assertEqual(frequency["unit"], "posts_per_creator_per_complete_iso_week")
+        self.assertEqual(frequency["sample_creator_weeks"], 10)
+        self.assertEqual(frequency["observed_complete_weeks"], 2)
+        self.assertEqual(frequency["window_start"], "2025-01-06T00:00:00")
+        self.assertEqual(frequency["window_end"], "2025-01-19T00:00:00")
+
+    def test_frequency_hypothesis_collects_before_suggesting_one_week_cadence(self):
+        result = analyze(
+            sponsorship_frequency_rows(1),
+            default_scope(target_start="2025-01-06", target_end="2025-01-12", reference_date="2025-01-12"),
+            "hash",
+        )
+        frequency = result["recommendations"][0]["frequency_hypothesis"]
+        self.assertEqual(frequency["status"], "collect")
+        self.assertIsNone(frequency["value"])
+        self.assertEqual(frequency["observed_complete_weeks"], 1)
+        self.assertEqual(frequency["action_type"], "collect_two_complete_weeks")
 
     def test_priority_is_reproducible_and_exposes_components(self):
         reference = make_cohort(20, 5, [2, 4, 6, 8, 10])

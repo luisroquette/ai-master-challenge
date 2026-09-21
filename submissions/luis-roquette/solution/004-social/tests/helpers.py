@@ -164,3 +164,31 @@ def aggregate_effect_rows(
                 )
             )
     return frame_from_rows(rows)
+
+
+def sponsorship_frequency_rows(weeks: int) -> pd.DataFrame:
+    if weeks not in (1, 2):
+        raise ValueError("weeks must be 1 or 2")
+    rows: list[dict[str, object]] = []
+    started = datetime(2025, 1, 6, 12)
+    for sponsored in (False, True):
+        for creator in range(5):
+            for post in range(6):
+                if weeks == 2:
+                    week, day = post % 2, (post // 2) * 3
+                else:
+                    week, day = 0, (0, 1, 2, 3, 4, 6)[post]
+                marker = f"{'s' if sponsored else 'o'}-{creator}-{post}"
+                rows.append(
+                    make_post(
+                        id=marker,
+                        content_id=f"content-{marker}",
+                        creator_id=f"creator-{creator}",
+                        post_date=(started + timedelta(days=week * 7 + day)).isoformat(),
+                        likes=8 if sponsored else 4,
+                        shares=0,
+                        comments_count=0,
+                        is_sponsored=str(sponsored).upper(),
+                    )
+                )
+    return frame_from_rows(rows)

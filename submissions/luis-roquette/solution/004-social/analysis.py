@@ -298,9 +298,17 @@ def _dimensions(rows: pd.DataFrame, source_hash: str) -> dict[str, list[dict[str
 
 
 def _scope_dates(frame: pd.DataFrame, scope: dict[str, object]) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
-    reference = pd.Timestamp(scope.get("reference_date") or max(frame["post_date"]))
-    end = pd.Timestamp(scope.get("target_end") or reference).normalize() + timedelta(days=1) - timedelta(microseconds=1)
-    start = pd.Timestamp(scope.get("target_start") or (reference - timedelta(days=6))).normalize()
+    dataset_timezone = frame["post_date"].dt.tz
+
+    def align(value: object) -> pd.Timestamp:
+        timestamp = pd.Timestamp(value)
+        if dataset_timezone is None:
+            return timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
+        return timestamp.tz_localize(dataset_timezone) if timestamp.tzinfo is None else timestamp.tz_convert(dataset_timezone)
+
+    reference = align(scope.get("reference_date") or max(frame["post_date"]))
+    end = align(scope.get("target_end") or reference).normalize() + timedelta(days=1) - timedelta(microseconds=1)
+    start = align(scope.get("target_start") or (reference - timedelta(days=6))).normalize()
     return start, end, reference
 
 
@@ -468,6 +476,53 @@ def _priority(values: dict[str, float], denominators: dict[str, float], strength
     return score, {"impact": impact, "strength": strength, "recency": recency}
 
 
+def _frequency_hypothesis(
+    rows: pd.DataFrame, coverage_start: pd.Timestamp, coverage_end: pd.Timestamp
+) -> dict[str, object]:
+    first_monday = coverage_start.normalize() + timedelta(days=(-coverage_start.weekday()) % 7)
+    last_sunday = coverage_end.normalize() - timedelta(days=(coverage_end.weekday() + 1) % 7)
+    week_starts: list[pd.Timestamp] = []
+    cursor = first_monday
+    while cursor + timedelta(days=6) <= last_sunday:
+        week_starts.append(cursor)
+        cursor += timedelta(days=7)
+
+    observed = rows.assign(
+        week_start=rows["post_date"].map(
+            lambda value: value.normalize() - timedelta(days=value.weekday())
+        )
+    )
+    observed = observed.loc[observed["week_start"].isin(week_starts)]
+    counts = observed.groupby(["creator_id", "week_start"], sort=True).size()
+    observed_weeks = int(observed["week_start"].nunique())
+    sufficient = observed_weeks >= 2
+    return {
+        "status": "test" if sufficient else "collect",
+        "value": float(counts.median()) if sufficient else None,
+        "unit": "posts_per_creator_per_complete_iso_week",
+        "method": "median_observed_posts_per_creator_week",
+        "sample_creator_weeks": int(len(counts)),
+        "sample_creators": int(observed["creator_id"].nunique()),
+        "complete_weeks_available": len(week_starts),
+        "observed_complete_weeks": observed_weeks,
+        "window_start": week_starts[0].isoformat() if week_starts else None,
+        "window_end": (week_starts[-1] + timedelta(days=6)).isoformat() if week_starts else None,
+        "action_type": "test_observed_cadence" if sufficient else "collect_two_complete_weeks",
+        "collection_requirement_weeks": 2,
+        "limitation": "frequência observada é hipótese de teste, não efeito causal",
+    }
+
+
+def _context_rows(rows: pd.DataFrame, context: dict[str, object], sponsored: bool | None = None) -> pd.DataFrame:
+    selected = rows
+    for key, value in context.items():
+        if key in selected.columns:
+            selected = selected.loc[selected[key] == value]
+    if sponsored is not None:
+        selected = selected.loc[selected["is_sponsored"] == sponsored]
+    return selected
+
+
 def _editorial(frame: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, source_hash: str) -> list[dict[str, object]]:
     duration = int((end.normalize() - start.normalize()).days) + 1
     previous_end = start - timedelta(microseconds=1)
@@ -517,6 +572,8 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         if key in targets.columns and value not in (None, "", []):
             accepted = value if isinstance(value, (list, tuple, set)) else [value]
             targets = targets.loc[targets[key].isin(accepted)]
+    frequency_coverage_start = max(start.normalize(), min(frame["post_date"]).normalize())
+    frequency_coverage_end = min(end.normalize(), max(frame["post_date"]).normalize())
 
     alerts: list[dict[str, object]] = []
     alert_targets = targets if bool(scope.get("include_post_alerts", True)) else targets.iloc[0:0]
@@ -591,6 +648,11 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "representative_date": alert["post_date"],
                 "context": alert["context"],
                 "supporting_topics": ["audience", "creator", "frequency"],
+                "frequency_hypothesis": _frequency_hypothesis(
+                    _context_rows(targets, alert["context"]),
+                    frequency_coverage_start,
+                    frequency_coverage_end,
+                ),
             }
         )
 
@@ -647,6 +709,15 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "representative_date": representative.isoformat(),
                 "context": item["context"],
                 "supporting_topics": ["audience", "creator", "frequency", "quick_win"],
+                "frequency_hypothesis": _frequency_hypothesis(
+                    _context_rows(
+                        targets,
+                        item["context"],
+                        sponsored=False if kind == "editorial" else True,
+                    ),
+                    frequency_coverage_start,
+                    frequency_coverage_end,
+                ),
             }
         )
 
