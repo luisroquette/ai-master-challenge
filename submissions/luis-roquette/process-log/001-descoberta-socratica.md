@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 5 aguardando confirmação
+- **Estado:** cinco ondas concluídas; desenho em validação
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -837,4 +837,20 @@ A SPEC deverá converter cada item da opção B em critério de aceite verificá
 
 ### Estado da onda
 
-Aguardando confirmação de Luis. A SPEC ainda não foi criada. Após a aprovação, consolidaremos o desenho em seções curtas e validaremos o contrato antes de materializá-lo pela metodologia SDD.
+Síntese confirmada por Luis sem ajustes. A Onda 5 e a descoberta socrática estão encerradas. A SPEC ainda não foi criada.
+
+## Transição para o SDD
+
+A releitura da skill SDD instalada confirmou o fluxo `brainstorm → add-task → plan-task → implement-task`. Antes do `add-task`, o desenho será apresentado e validado em seções curtas. Só depois da aprovação integral ele será materializado como SPEC em estado `draft`.
+
+## Consolidação do desenho — Seção 1: arquitetura e fluxo de dados
+
+A solução terá um único pipeline Python reproduzível. Os cinco CSVs originais serão tratados como entradas imutáveis. A primeira etapa validará schemas, tipos, chaves, duplicidades, cobertura temporal e cardinalidades. A segunda construirá um painel de **conta × data de corte**, agregando assinaturas, uso e suporte conhecidos até cada corte. Campos produzidos no churn, como `reason_code` e feedback, permanecerão em uma trilha retrospectiva separada e nunca entrarão na previsão anterior ao cancelamento.
+
+Sobre esse painel, a camada analítica calculará sinais de 7, 30 e 90 dias, condicionados à cobertura real, e cruzará produto, suporte, contrato, aquisição e churn. Findings aceitos serão gravados com identificador, métricas, fontes, recorte temporal, confiança, limitações e recomendação. A etapa preditiva será opcional: só publicará escores se superar um baseline simples fora do tempo e demonstrar utilidade operacional por segmento.
+
+O pipeline produzirá arquivos tabulares versionáveis como fonte única do relatório executivo em Markdown, das três visões do Streamlit e da fila CSV de CS. Assim, números, prioridades e filtros não serão recalculados independentemente em cada interface. `make reproduce` executará validações, testes e geração; `make app` abrirá o dashboard. Não haverá API, banco, autenticação ou chamada paga de IA. A demonstração pública usará os mesmos artefatos e não bloqueará a entrega local.
+
+### Estado da seção 1
+
+Aguardando validação de Luis antes da seção sobre componentes, experiência e artefatos.
