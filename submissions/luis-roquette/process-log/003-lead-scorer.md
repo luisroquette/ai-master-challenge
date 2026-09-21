@@ -464,4 +464,23 @@ Qual estratégia deve decidir o modelo probabilístico de `Engaging`?
 
 **Recomendação da IA:** **D**, com a regressão logística como padrão em caso de desempenho equivalente. Isso mede se a complexidade se paga antes de adotá-la.
 
+#### Resposta de Luis
+
+**D:** comparar regressão logística e gradient boosting na validação temporal; adotar o modelo complexo somente com ganho comprovado.
+
+#### Decisão registrada
+
+A regressão logística será o baseline obrigatório. O gradient boosting será apenas um concorrente. Complexidade, SHAP e dependências adicionais só entram se o concorrente superar o baseline nos critérios aprovados, mantiver calibração adequada e produzir explicações fiéis. Em desempenho equivalente, vence o modelo simples.
+
+#### Pergunta 5
+
+Qual critério deve selecionar o vencedor entre os modelos?
+
+- **A.** Melhor separação entre `Won` e `Lost`, independentemente da calibração.
+- **B.** Menor erro das probabilidades, independentemente da qualidade da ordenação.
+- **C.** Maior resultado financeiro no topo da fila histórica, mesmo com probabilidades mal calibradas.
+- **D.** Gate em duas etapas: primeiro exigir probabilidades calibradas; depois comparar a qualidade da ordenação e o resultado financeiro no topo da fila. Sem ganho relevante, vence o modelo simples.
+
+**Recomendação da IA:** **D**. A fila precisa ordenar bem, mas o número exibido como probabilidade também precisa ser confiável.
+
 **Resposta:** aguardando Luis.
