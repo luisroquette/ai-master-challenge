@@ -156,3 +156,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** C — Evidência equilibrada.
 
 **Interpretação para a próxima onda:** a validação não poderá ser resumida a acurácia. Ela deverá conectar desempenho preditivo, confiabilidade das probabilidades, proporção de tickets elegíveis à automação segura e impacto operacional calculado com premissas visíveis. O mínimo de cinco ondas foi cumprido, mas a descoberta continua porque ainda existem decisões materiais de usuário, interface, dados e arquitetura.
+
+### Onda 6 — Usuário principal
+
+**Pergunta:** para quem a experiência principal deve ser desenhada?
+
+- **A — Agente de suporte:** workspace diário com ticket, classificação, risco, resposta sugerida e decisão humana; painel gerencial compacto.
+- **B — Gestor de operações:** central de gargalos, métricas e economia; ticket individual como demonstração secundária.
+- **C — Duas experiências equivalentes:** cockpit completo do agente e painel completo do gestor, conectados pelo mesmo pipeline.
+
+**Resposta de Luis:** A — Agente de suporte.
+
+**Interpretação para a próxima onda:** a unidade central da interface será o ticket em trabalho. Métricas gerenciais devem nascer das decisões registradas nesse fluxo, sem criar um segundo produto do mesmo tamanho. A próxima escolha deve definir como o agente entra e percorre esse workspace na demonstração.
