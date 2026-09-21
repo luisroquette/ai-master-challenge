@@ -929,7 +929,7 @@ Para `Prospecting`, produto, vendedor e conta alimentarão taxas históricas sua
 
 **Resposta:** “Aprovo a seção 3.”
 
-### Seção 4 — Falhas, testes e evidências — aguardando aprovação
+### Seção 4 — Falhas, testes e evidências — aprovada
 
 O sistema distinguirá falhas globais de problemas por oportunidade. Arquivo ausente, schema incompatível, chave duplicada crítica ou conjunto histórico incapaz de produzir as divisões temporais interrompem a aplicação com mensagem que identifica arquivo, causa e correção. Conta ausente segue o fallback validado; produto sem correspondência, preço inválido ou categoria sem caminho seguro mantém o deal visível como “Dados insuficientes”. Nenhuma exceção será convertida silenciosamente em zero, média ou score padrão.
 
@@ -938,3 +938,17 @@ Se um candidato falhar durante treino, o outro ainda poderá ser avaliado. Se ne
 Os testes automatizados cobrirão os contratos que poderiam invalidar a decisão: schema e joins; normalização `GTXPro`; proibição de leakage; ordem cronológica das divisões; ausência deliberada de conta no fallback; roteamento de deals; estabilidade da ordenação; expiração da prioridade manual; cálculo de receita; explicações compatíveis com o score; playbook; e supressão da probabilidade quando o gate falhar. Fixtures sintéticas pequenas testarão bordas; ao menos um teste de integração percorrerá os quatro CSVs reais.
 
 O preflight canônico executará testes, verificação de imports, treino completo e smoke test do Streamlit no Codespace gerenciado. Depois, o fluxo vendedor e gestor será inspecionado no navegador: troca de abas, filtros, painel lateral, estado de dados insuficientes e prioridade temporária. Screenshots e métricas finais serão registradas como evidência. Qualquer falha determinística bloqueia push, deploy e alegação de conclusão.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo a seção 4.”
+
+### Seção 5 — Entrega, documentação e limites — aguardando aprovação
+
+Toda a entrega permanecerá em `submissions/luis-roquette/`. A solução conterá código, testes, `requirements.txt` fixado, os quatro CSVs em `data/raw/`, manifesto com origem, licença e checksums, além de um comando explícito de recuperação que valida o conteúdo antes de substituir qualquer arquivo. O README da solução fornecerá comandos copiáveis para criar o ambiente Python 3.11, instalar dependências, executar o preflight e iniciar o Streamlit. O README principal da submissão seguirá o template oficial e conduzirá o avaliador ao app, às evidências e ao process log.
+
+A documentação explicará o problema de negócio, a diferença entre as filas, features permitidas e proibidas, divisão temporal, critérios de calibração, seleção do modelo, heurística de `Prospecting`, explicações e playbook. Um quadro de resultados registrará contagens reais, modelos avaliados, métricas por rota, modelo escolhido e fallback acionado. Screenshots mostrarão os fluxos de vendedor e gestor. O histórico de commits e este diário preservarão perguntas, respostas, correções e decisões humanas relevantes.
+
+A execução local será a fonte de verdade. Somente após o preflight verde e a inspeção visual, a mesma revisão versionada poderá ser publicada no Streamlit Community Cloud; a URL será adicionada à documentação após verificação ao vivo. Nenhum segredo ou API paga será necessário.
+
+As limitações serão explícitas: o dataset é um recorte estático; não contém desfechos de leads que nunca chegaram a `Engaging`; associações não provam causalidade; prioridade manual não persiste; não há autenticação, escrita no CRM, monitoramento de drift nem retreino agendado. A evolução recomendada será um piloto com vendedores, captura de intervenções e resultados, auditoria de desempenho por segmento e recalibração periódica antes de qualquer uso operacional em escala.
