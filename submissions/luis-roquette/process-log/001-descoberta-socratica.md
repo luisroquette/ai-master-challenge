@@ -188,4 +188,35 @@ Qual deve ser a métrica principal de sucesso da estratégia de retenção?
 
 ### Estado da pergunta 2
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+A estratégia será avaliada principalmente pela redução do MRR perdido por churn. A quantidade de contas afetadas e a concentração do resultado por segmento funcionarão como métricas de proteção para evitar que a otimização financeira esconda deterioração ampla ou desigual.
+
+### Consequência para o desenho
+
+Resumo executivo, dashboard e fila operacional usarão a mesma hierarquia de métricas: MRR perdido como resultado principal; churn de contas e distribuição por segmento como proteções obrigatórias. Acurácia preditiva será uma métrica técnica auxiliar, nunca substituta do impacto de negócio.
+
+### Ponto ainda aberto
+
+Precisamos transformar impacto, alcance, confiança e possibilidade de ação em uma regra de prioridade verificável, sem produzir uma pontuação arbitrária com aparência científica.
+
+### Pergunta 3
+
+Como devemos ordenar as causas candidatas e as intervenções?
+
+- A. Soma ponderada fixa das quatro dimensões, usando pesos definidos antecipadamente.
+- B. Ordenação apenas pelo MRR total exposto, depois de atingido um nível mínimo de evidência.
+- C. Portão mínimo de confiança; depois, ordenação pelo MRR realisticamente recuperável, com alcance e possibilidade de ação como desempate e análise de sensibilidade.
+- D. Ranking produzido por IA sem fórmula fixa, acompanhado de uma justificativa em texto.
+
+**Recomendação técnica preliminar do agente:** C, porque elimina hipóteses frágeis antes do ranking e prioriza valor recuperável, não apenas exposição bruta, mantendo os critérios auditáveis.
+
+### Estado da pergunta 3
+
 Aguardando resposta de Luis.
