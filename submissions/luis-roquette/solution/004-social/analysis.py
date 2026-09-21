@@ -393,6 +393,7 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
                 "relative_difference_pct": (100 * delta / organic) if organic > 0 else None,
                 "strength": min(strength_org, strength_spon),
                 "creator_overlap": int(len(set(creator_medians[False].index) & set(creator_medians[True].index))),
+                "representative_date": arms[True]["post_date"].median(),
                 "source_row_ids": sorted(group["source_row_id"].astype(str)),
                 "claim": "observational_association_not_causal_or_financial_roi",
             }
@@ -589,8 +590,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         aggregate_denominators[(kind, platform)] = {name: _p95(pd.Series([entry[name] for entry in bucket])) for name in values}
     for kind, item, values, action_type, topic in aggregate_items:
         platform = str(item["context"]["platform"])
-        dates = targets.loc[targets["platform"] == platform, "post_date"].sort_values()
-        representative = pd.Timestamp(item.get("representative_date") or dates.iloc[len(dates) // 2])
+        representative = pd.Timestamp(item["representative_date"])
         score, components = _priority(values, aggregate_denominators[(kind, platform)], float(item["strength"]), representative, reference)
         candidates.append(
             {

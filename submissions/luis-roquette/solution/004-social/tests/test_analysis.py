@@ -173,6 +173,25 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertLess(result["sponsorship"]["coverage"], 1.0)
         self.assertEqual(result["sponsorship"]["strata"][0]["delta_erv_pp"], 4.0)
 
+    def test_sponsorship_recency_uses_sponsored_target_group_median_date(self):
+        frame = sponsorship_rows()
+        sponsored_target = frame["is_sponsored"] & frame["content_type"].eq("video")
+        frame.loc[:, "post_date"] = pd.Timestamp("2025-01-01T12:00:00")
+        frame.loc[sponsored_target, "post_date"] = pd.Timestamp("2025-01-31T12:00:00")
+        result = analyze(
+            frame,
+            default_scope(target_start="2025-01-01", target_end="2025-01-31", reference_date="2025-01-31"),
+            "hash",
+        )
+        evidence = result["sponsorship"]["strata"][0]
+        recommendation = next(
+            item for item in result["recommendations"]
+            if item["evidence_id"] == evidence["evidence_id"]
+        )
+        self.assertEqual(pd.Timestamp(evidence["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
+        self.assertEqual(pd.Timestamp(recommendation["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
+        self.assertEqual(recommendation["priority_components"]["recency"], 1.0)
+
     def test_priority_is_reproducible_and_exposes_components(self):
         reference = make_cohort(20, 5, [2, 4, 6, 8, 10])
         frame = frame_with_target(reference, 30)

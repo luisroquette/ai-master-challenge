@@ -367,3 +367,13 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Gate verde:** suíte completa com warnings como erro: 27/27 testes aprovados em 2,332 s. `compileall` e `git diff --check` passaram; não existe lint configurado no repositório.
 - **Regressão real:** CSV canônico aprovado com 52.214 linhas e cinco plataformas; validação em 1,270 s e análise em 11,545 s.
 - **Resultado:** a importação continua atômica e nenhum dos três valores hostis pode alcançar o motor após um retorno de sucesso.
+
+## I17 — Revisão P1/S1: recência do agregado patrocinado — 2026-09-21 20:07 BRT
+
+- **Novo achado do Feedback Looping:** a evidência de patrocínio não carregava `representative_date`; a fila usava como fallback a mediana de todas as datas da plataforma, inclusive outros estratos.
+- **Impacto:** a atualidade e a prioridade podiam ser reduzidas ou elevadas por posts alheios ao braço patrocinado avaliado, contrariando o contrato de recência do agregado.
+- **Gate vermelho:** fixture com o estrato patrocinado em 31/01 e todo o restante da plataforma em 01/01 falhou por ausência de `representative_date`.
+- **Correção:** cada estrato patrocinado elegível agora registra a mediana de `post_date` dos posts do braço patrocinado. A recomendação exige essa data diretamente; o fallback global por plataforma foi removido da fila agregada.
+- **Gate verde:** a regressão confirmou data de evidência/recomendação em 31/01 e recência `1,0`. A suíte completa passou com 28/28 testes em 2,647 s, warnings tratados como erro; `compileall` e `git diff --check` passaram.
+- **Regressão real:** CSV canônico aprovado com 52.214 linhas e cinco plataformas; validação em 1,251 s e análise em 11,828 s. A janela-padrão permaneceu sem estrato patrocinado suficiente, como já documentado, sem relaxar o mínimo.
+- **Limite:** nenhuma alteração foi feita em `analysis.md`, `evidence.csv` ou no formato de exportação de S2.
