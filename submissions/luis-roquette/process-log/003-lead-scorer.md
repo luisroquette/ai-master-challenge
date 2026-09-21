@@ -694,4 +694,27 @@ Qual arquitetura deve sustentar o protótipo funcional?
 
 **Recomendação da IA:** **A**. Entrega interface interativa, filtros, modelo e explicações com o menor número de partes, sem sacrificar nenhum requisito obrigatório.
 
+#### Resposta de Luis
+
+**A:** aplicação Python em Streamlit, com preparação de dados, scoring e interface no mesmo projeto.
+
+#### Decisão registrada
+
+O protótipo será uma aplicação Streamlit autocontida dentro da pasta da submissão. A separação interna será apenas a necessária para manter ingestão, scoring, interface e testes compreensíveis; não haverá frontend e API independentes.
+
+#### Evidência das regras de submissão
+
+O guia exige código-fonte, setup reproduzível e todos os arquivos da entrega dentro de `submissions/luis-roquette/`. Não há proibição de versionar o dataset CC0 dentro dessa pasta.
+
+#### Pergunta 2
+
+Como garantir que o avaliador rode a solução com os dados reais sem depender de credenciais externas?
+
+- **A.** Versionar uma cópia dos quatro CSVs na solução, acompanhada de fonte, licença e checksums.
+- **B.** Baixar os dados pela API do Kaggle durante o setup, exigindo credenciais do avaliador.
+- **C.** Baixar automaticamente de uma URL externa não controlada na primeira execução.
+- **D.** Pedir que o avaliador obtenha e copie os arquivos manualmente.
+
+**Recomendação da IA:** **A**. O conjunto é pequeno, CC0 e fica reproduzível mesmo se Kaggle ou credenciais estiverem indisponíveis.
+
 **Resposta:** aguardando Luis.
