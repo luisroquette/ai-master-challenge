@@ -179,3 +179,17 @@ A página indicada sugeria `npx skills add NeoLabHQ/context-engineering-kit --sk
 O downloader padrão do instalador Codex também encontrou um erro de certificado SSL local. Repetimos pelo método `git`, sem desativar TLS, e verificamos os cinco arquivos `SKILL.md` instalados.
 
 Esta decisão é de Luis. A IA verificou origem, licença GPL-3.0, versão, inventário e limitações antes de alterar o ambiente.
+
+## Princípio permanente: quem documenta, ganha
+
+Luis definiu que o diário tem importância igual ou superior ao resultado final. Uma boa solução sem trajetória verificável mostra apenas o produto; o processo seletivo também avalia como o candidato pensa, decide, testa, erra e corrige.
+
+O registro pode ser feito em fragmentos curtos, objetivos e diretos. Os destaques indicados por Luis durante o trabalho têm prioridade. Antes de entrar no diário, o texto será revisado em português, sem alterar a ideia original.
+
+> “Sabe por que o ovo de galinha vende mais que o de pata? Porque a galinha canta quando bota.”
+
+Luis trouxe a frase atribuindo-a a Silvio Santos. A busca não encontrou uma fonte primária que confirme a autoria, por isso a atribuição permanece marcada como não verificada.
+
+A aplicação prática é clara: tornar decisões e evidências visíveis enquanto acontecem. Registrar hipóteses, fontes, erros, correções, testes, limitações e contribuições humanas. Sem criar volume artificial.
+
+**Regra operacional:** ser obsessivo no registro e econômico no texto. O trabalho só está completo quando outra pessoa consegue entender o caminho, verificar as evidências e agir sobre o resultado.
