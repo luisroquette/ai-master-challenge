@@ -681,4 +681,35 @@ Qual deve ser o critério principal para aceitar uma conclusão como finding fin
 
 ### Estado da pergunta 1
 
+Respondida por Luis.
+
+### Resposta literal de Luis
+
+> B, sem dúvidas.
+
+### Interpretação
+
+A opção **B** é um critério obrigatório, não apenas uma preferência. Nenhuma conclusão principal entrará no relatório sem uma trilha reproduzível que conecte fontes, tempo, cálculo, resultado, contraprova ou limitação e ação recomendada.
+
+### Consequência para o desenho
+
+Os findings terão identificadores estáveis compartilhados pelo relatório, tabelas derivadas e dashboard. Uma matriz de rastreabilidade permitirá reconstruir cada número e localizar as limitações sem depender da narrativa do autor.
+
+### Ponto ainda aberto
+
+Precisamos definir a menor suíte de testes capaz de proteger essa trilha, o recorte temporal e a consistência entre artefatos.
+
+### Pergunta 2
+
+Qual conjunto mínimo de testes deve bloquear a entrega?
+
+- A. Apenas um teste de fumaça confirmando que o pipeline termina.
+- B. Contratos de schema e chaves, invariantes de junção e receita, bloqueio de vazamento temporal, consistência entre artefatos e teste de fumaça do dashboard.
+- C. Cobertura unitária próxima de 100% para todas as funções e componentes visuais.
+- D. Somente revisão manual do relatório e do dashboard.
+
+**Recomendação técnica preliminar do agente:** B, porque cobre os modos de falha que poderiam alterar uma conclusão sem criar testes sobre código trivial.
+
+### Estado da pergunta 2
+
 Aguardando resposta de Luis.
