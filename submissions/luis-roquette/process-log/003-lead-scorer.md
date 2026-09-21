@@ -323,4 +323,16 @@ O arquivo real possui 8.800 oportunidades: 500 `Prospecting`, 1.589 `Engaging`, 
 
 Como devemos estimar a probabilidade dos `Prospecting`, já que o histórico encerrado contém apenas deals que chegaram ao engajamento?
 
+#### Resposta de Luis
+
+**B:** usar uma heurística baseada em produto, vendedor e conta, com o objetivo de eliminar viés.
+
+#### Decisão registrada
+
+`Prospecting` não usará diretamente o modelo probabilístico dos deals que já chegaram a `Engaging`. Terá uma heurística própria baseada apenas em atributos disponíveis nesse estágio. Essa separação reduz o viés de seleção, mas não autoriza afirmar que o eliminou: sem resultados históricos de oportunidades que não chegaram ao engajamento, a heurística não pode ser tratada como probabilidade calibrada.
+
+#### Pergunta 4
+
+Como a ferramenta deve apresentar o resultado dessa heurística de `Prospecting` sem prometer uma probabilidade que os dados não sustentam?
+
 **Resposta:** aguardando Luis.
