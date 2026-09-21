@@ -380,3 +380,24 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Operação principal + laboratório IT.
 
 **Interpretação para a próxima onda:** o workspace do agente permanece coeso e orientado ao Dataset 1. O laboratório IT prova a capacidade de classificação no segundo dataset sem simular continuidade operacional inexistente. A próxima onda confrontará seis arquiteturas completas antes da síntese incremental do desenho.
+
+### Onda 24 — Arquitetura completa
+
+**Pergunta:** qual das seis arquiteturas deve seguir para a síntese?
+
+- **A — Support Decision Copilot:** fila do agente, gate de risco, resposta recuperada, feedback auditável, scorecard e laboratório IT.
+- **B — Plataforma modular por domínio:** Customer Support e IT como módulos equivalentes sobre um motor compartilhado.
+- **C — Control Tower operacional:** diagnóstico e ROI como núcleo; atendimento individual como função secundária.
+- **D — Analytics + classificador separado:** dashboard e ferramenta de classificação sem fluxo integrado.
+- **E — Agente autônomo generativo:** automatiza respostas e roteamento com mínima intervenção humana.
+- **F — Plataforma enterprise integrada:** helpdesk, autenticação, APIs e multiempresa no MVP.
+
+**Pedido de Luis:** o Codex deve confrontar as opções com o desafio oficial e decidir com segurança, sem devolver a escolha ao usuário.
+
+**Decisão do Codex:** A — Support Decision Copilot.
+
+**Verificação:** reconsulta do Challenge 002 no blob `6c873eb7dd1955ebccfb730bcd98143373cbaab2`, no commit `4aed364d572fabe0f1fff1f0c6f32960b30fe575` da `main`.
+
+**Fundamento:** A é a única arquitetura que cobre simultaneamente o diagnóstico obrigatório, a proposta realista de automação, a demonstração funcional, os dois datasets, o trabalho diário do agente, a fronteira humano/IA e a estimativa de horas ou ROI. B dilui o caso de uso principal; C rebaixa o protótipo operacional; D fragmenta a proposta; E viola o alerta contra automação total; F excede o orçamento de 4–6 horas com infraestrutura não solicitada.
+
+**Resultado:** arquitetura escolhida para a síntese incremental do desenho e futura SPEC.
