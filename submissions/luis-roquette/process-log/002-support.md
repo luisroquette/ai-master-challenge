@@ -332,3 +332,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Teste congelado + validação cruzada.
 
 **Interpretação para a próxima onda:** seleção de algoritmo e threshold ocorrerá sem consultar o teste final. O resultado reportará métricas globais e por classe, confiabilidade das probabilidades e trade-off entre cobertura e erro seletivo. A próxima escolha deve definir uma avaliação igualmente séria para a recuperação de respostas.
+
+### Onda 20 — Validação das respostas recuperadas
+
+**Pergunta:** como validar as respostas recuperadas?
+
+- **A — Rubrica humana em tickets não vistos:** avalia relevância, correção, segurança e necessidade de edição; registra concordância e falhas reais.
+- **B — Similaridade automática:** considera o score de similaridade como medida principal de qualidade.
+- **C — Casos ilustrativos:** apresenta exemplos bons e ruins sem avaliação estruturada.
+
+**Resposta de Luis:** A — Rubrica humana em tickets não vistos.
+
+**Interpretação para a próxima onda:** similaridade será apenas um sinal de recuperação, não prova de resposta adequada. A avaliação preservará exemplos de falha e esforço de edição. A próxima escolha deve definir o comportamento seguro quando nenhum caso histórico satisfizer a rubrica ou o threshold mínimo.
