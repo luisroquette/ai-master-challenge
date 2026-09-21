@@ -881,4 +881,18 @@ Se o modelo falhar no portão fora do tempo, o pipeline publicará diagnóstico 
 
 ### Estado da seção 3
 
-Aguardando validação de Luis antes da seção final sobre testes, aceite e definição de pronto.
+Seção aprovada por Luis sem ajustes.
+
+## Consolidação do desenho — Seção 4: testes, aceite e definição de pronto
+
+Os testes serão organizados pelos riscos da decisão, não pela quantidade de funções. Contratos verificarão presença e tipos das colunas, unicidade e integridade das chaves e relações entre as cinco tabelas. Invariantes de transformação confirmarão que joins não multiplicam contas, tickets ou receita, que agregações preservam totais reconciliados e que ausência de cobertura não vira zero. Testes temporais usarão casos-sentinela para provar que nenhum evento posterior ao corte entra nos atributos.
+
+Testes de publicação compararão identificadores e métricas do registro de findings, relatório, dashboard e fila CSV. O manifesto deverá corresponder às entradas e parâmetros da execução. Um teste de fumaça iniciará o Streamlit e verificará as três visões e o download. Se houver modelo, o gate exigirá avaliação fora do tempo, comparação com baseline simples, métricas adequadas ao desbalanceamento e recortes por segmento; falha removerá o modelo, não o diagnóstico.
+
+`make reproduce` executará os contratos, o pipeline, os testes e a geração dos artefatos. Antes do Pull Request, o mesmo comando será provado em ambiente limpo, seguindo o fluxo obrigatório de Codespaces quando o gate for pesado. O resultado só poderá ser declarado verde para o mesmo commit e conjunto de dados da submissão.
+
+A entrega estará pronta quando responder às três perguntas oficiais usando as cinco tabelas; possuir findings rastreáveis, recomendações imediatas e estruturais, contas específicas e MRR exposto corretamente rotulado; manter relatório, dashboard e CSV consistentes; documentar setup, limitações e processo de IA; passar todos os gates; e permitir que um leitor não técnico identifique decisão, evidência e próxima ação em cinco minutos. O link público será desejável, mas nunca substituirá nem bloqueará a reprodução local.
+
+### Estado da seção 4
+
+Aguardando validação final de Luis. Com a aprovação, o desenho estará fechado e poderá ser convertido em SPEC `draft` pelo estágio `add-task` do SDD.
