@@ -867,4 +867,18 @@ O README da submissão será a porta de entrada: executive summary, comandos, es
 
 ### Estado da seção 2
 
-Aguardando validação de Luis antes da seção sobre erros, incerteza e abstenção.
+Seção aprovada por Luis sem ajustes.
+
+## Consolidação do desenho — Seção 3: erros, incerteza e abstenção
+
+O pipeline falhará cedo quando uma condição puder invalidar a análise: arquivo ausente, coluna obrigatória ausente, tipo incompatível, chave inválida, duplicidade inesperada, data impossível, cardinalidade divergente ou valor financeiro incoerente. A mensagem identificará arquivo, regra violada, quantidade de registros afetados e ação esperada. Nenhum erro estrutural será convertido silenciosamente em valor nulo ou linha descartada.
+
+Cada junção produzirá reconciliação de linhas, entidades e valores antes e depois. Ausência de evento será diferente de ausência de cobertura: “nenhum ticket” não poderá ser inferido quando a conta simplesmente não estiver observada. Limites para amostra e cobertura serão definidos após o profiling e ficarão visíveis na configuração e no relatório. Um manifesto registrará hashes ou metadados equivalentes das entradas, parâmetros e artefatos, impedindo que dashboard e relatório misturem execuções diferentes.
+
+As conclusões usarão três rótulos: **fato observado**, **associação controlada** e **hipótese causal**. Uma hipótese só avançará quando associação, coerência temporal e sinais de tabelas diferentes convergirem. Evidência contrária será exibida junto da favorável. Segmentos pequenos, resultados instáveis ou cobertura insuficiente serão marcados como inconclusivos; não receberão ranking executivo. O “MRR exposto — oportunidade máxima” será sempre identificado como teto teórico, nunca previsão de recuperação.
+
+Se o modelo falhar no portão fora do tempo, o pipeline publicará diagnóstico e fila baseados em evidência sem escores preditivos. Se os artefatos estiverem ausentes ou incompatíveis, o Streamlit interromperá a leitura e instruirá a executar `make reproduce`; ele não recalculará resultados nem exibirá dados parciais.
+
+### Estado da seção 3
+
+Aguardando validação de Luis antes da seção final sobre testes, aceite e definição de pronto.
