@@ -751,4 +751,35 @@ A recomendação permanece **B, sem dúvida**. A opção C mede o desempenho nos
 
 ### Estado da pergunta 3
 
+Respondida por Luis após o esclarecimento.
+
+### Resposta de Luis
+
+> B então.
+
+### Interpretação
+
+O modelo só fará parte da entrega se demonstrar ganho sobre um baseline simples em dados futuros, contribuir para uma fila operacional útil e expor desempenho e limitações por segmento. A decisão de removê-lo será considerada sinal de rigor, não falha do projeto.
+
+### Consequência para o desenho
+
+O pipeline terá um caminho de diagnóstico que funciona sem modelo. A etapa preditiva será desacoplada e condicionada a um relatório de avaliação fora do tempo. SHAP ou outra explicação local só será incluída após o modelo passar nesse portão.
+
+### Ponto ainda aberto
+
+Mesmo sem um modelo, amostras pequenas, dados ausentes ou evidências conflitantes podem não sustentar uma conclusão. Precisamos definir como a solução deve declarar incerteza.
+
+### Pergunta 4
+
+Como devemos tratar segmentos ou causas com evidência insuficiente?
+
+- A. Mantê-los no ranking para que nenhuma oportunidade seja perdida.
+- B. Marcar como inconclusivos ou baixa confiança, suprimir rankings instáveis e mostrar amostra, cobertura e motivo da abstenção.
+- C. Agrupá-los automaticamente até surgir uma diferença estatística.
+- D. Pedir que a IA complete a conclusão usando conhecimento geral de SaaS.
+
+**Recomendação técnica preliminar do agente:** B, porque reconhecer que os dados não sustentam uma resposta é mais confiável do que fabricar prioridade ou precisão.
+
+### Estado da pergunta 4
+
 Aguardando resposta de Luis.
