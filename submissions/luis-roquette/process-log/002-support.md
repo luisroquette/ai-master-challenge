@@ -489,3 +489,17 @@ O desafio estará pronto somente quando os dois datasets forem usados dentro de 
 Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação, multiempresa, deploy obrigatório, aprendizado online, taxonomia unificada e afirmações causais não sustentadas. Se os dados invalidarem classificação, resposta assistida ou ROI, a função será reduzida e a evidência da invalidação terá prioridade sobre o plano. Após esta seção ser aprovada, `add-task` criará a primeira SPEC; nenhuma implementação começará antes de `plan-task` e da revisão humana dessa SPEC.
 
 **Pergunta de validação:** estes entregáveis, limites e critérios de pronto estão corretos para encerrar o desenho e criar a SPEC?
+
+**Validação de Luis:** A — Seção 6 aprovada; autorizado encerrar a exploração e criar a SPEC.
+
+## I08 — Fechamento da exploração e autorização da SPEC — 2026-09-21 16:49 BRT
+
+- **Objetivo:** encerrar formalmente a descoberta antes de transformar decisões em especificação.
+- **Método executado:** 24 ondas socráticas adaptativas, comparação de seis arquiteturas e síntese incremental em seis seções de 200–300 palavras.
+- **Resultado:** arquitetura **Support Decision Copilot** escolhida; arquitetura, componentes, fluxo de dados, segurança, falhas, testes, interface, entregáveis, limites e definição de pronto foram aprovados sem ajustes.
+- **Julgamento humano:** Luis aprovou cada seção e autorizou explicitamente a criação da SPEC somente após o fechamento completo da exploração.
+- **Verificação:** ledger das Ondas 1–24 e Seções 1–6 preservado neste diário; worktree limpo antes da criação do artefato SDD.
+- **Evidência:** `.specs/tasks/draft/implement-support-decision-copilot.feature.md` dentro do diretório permitido do Challenge 002.
+- **Limitação:** a SPEC criada por `add-task` ainda é um rascunho; pesquisa, análise e refinamento por `plan-task` continuam obrigatórios antes de qualquer implementação.
+
+**Decisão:** exploração encerrada e SPEC inicial autorizada.
