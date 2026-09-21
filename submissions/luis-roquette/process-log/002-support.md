@@ -108,3 +108,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A + B + C.
 
 **Interpretação para a próxima onda:** a solução precisa integrar diagnóstico, decisão operacional e assistência ao agente. A próxima escolha deve definir como esses três resultados formam um único produto demonstrável, sem virar três protótipos desconectados.
+
+### Onda 2 — Forma do produto integrado
+
+**Pergunta:** como triagem inteligente, controle de gargalos e resposta assistida devem formar um único produto?
+
+- **A — Pipeline integrado:** ticket entra, a IA classifica e prioriza, sugere uma resposta, o humano aprova ou assume e o resultado alimenta o painel.
+- **B — Três módulos independentes:** triagem, respostas e dashboard funcionam separadamente sobre os mesmos dados.
+- **C — Central de comando:** o dashboard é a interface principal; triagem e respostas aparecem como ações dentro dele.
+
+**Resposta de Luis:** A — Pipeline integrado.
+
+**Interpretação para a próxima onda:** o protótipo será uma fatia vertical demonstrável do processo, não uma coleção de telas. A próxima decisão precisa definir os pontos exatos de autonomia da IA e intervenção humana dentro desse pipeline.
