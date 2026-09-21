@@ -714,3 +714,24 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Sequência sem gap material:** 2 de 2 — meta atingida.
 
 **Decisão:** auditoria encerrada. O plano cobre 100% dos requisitos publicados e não mantém gargalo conhecido de arquitetura, stack ou execução; prontidão funcional permanece condicionada à implementação e aos gates previstos.
+
+## I36 — Fechamento da construção socrática e auditoria pré-implementação — 2026-09-21 20:20 BRT
+
+- **Construção preservada:** o ledger I06 registra integralmente as 24 ondas adaptativas, sempre com pergunta, alternativas de múltipla escolha, resposta, interpretação e dependência da onda seguinte.
+- **Síntese preservada:** I07 registra as seis seções incrementais da arquitetura; I08 registra a aprovação humana que autorizou a SPEC.
+- **Última etapa:** I29–I35 registram a reauditoria do repositório canônico, os gaps encontrados, as correções e duas passadas consecutivas finais sem novo gap material.
+- **Resultado:** 18 de 18 exigências publicadas possuem entrega e gate explícitos; stack, comandos, ciclo de Codespaces e SHA final foram reconciliados.
+
+**Decisão:** encerrar formalmente descoberta, síntese, SPEC e planejamento; iniciar implementação somente pelo workflow SDD validado.
+
+## I37 — Metodologia obrigatória de implementação: Feedback Looping — 2026-09-21 20:21 BRT
+
+- **Autoria:** metodologia definida por Luis; o registro é parte obrigatória e tão importante quanto o resultado final.
+- **Fluxo cronológico:** `Planejamento → Revisão → Execução → Teste`.
+- **Loop:** cada fase produz reports quase em tempo real para a própria IA; os achados determinam se o trabalho é reforçado no mesmo estágio ou se pode avançar.
+- **Gate:** uma fase somente termina quando validada. Falha em revisão ou teste retorna ao planejamento da própria fase, seguido de nova revisão, execução e teste.
+- **Cascata:** os loops menores validam passos; os loops maiores validam fases; o `/goal` permanece ativo até todos os critérios de pronto passarem.
+- **SDD:** `plan-task` refina e decompõe a SPEC; `implement-task` executa uma etapa por agente, revisa cada fase e verifica a definição de pronto ao final.
+- **Limitação técnica registrada:** os `SKILL.md` de SDD estão instalados no Codex, mas os scripts, prompts e agentes nomeados do pacote Claude não estão presentes. O Codex seguirá o mesmo contrato com os agentes e ferramentas disponíveis, sem simular artefatos ausentes.
+
+**Decisão:** avançar automaticamente fase a fase; repetir qualquer etapa reprovada e nunca promover trabalho não validado.
