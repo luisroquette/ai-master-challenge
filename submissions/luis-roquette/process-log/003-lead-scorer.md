@@ -887,7 +887,7 @@ O plugin `sdd@context-engineering-kit` 3.6.0 permanece instalado e habilitado no
 
 ## Design consolidado
 
-### Seção 1 — Produto e experiência operacional — aguardando aprovação
+### Seção 1 — Produto e experiência operacional — aprovada
 
 O produto será uma aplicação Streamlit para a rotina de priorização comercial. Ao abrir, o usuário escolhe o perfil demonstrado. O vendedor entra diretamente em sua carteira; o gestor entra na visão da equipe e pode filtrar por vendedor. A experiência ocupa uma única tela, mas separa `Engaging` e `Prospecting` em abas porque os dois estágios não compartilham a mesma natureza de score.
 
@@ -896,3 +896,17 @@ Em `Engaging`, a fila é ordenada primeiro por faixa validada de probabilidade d
 Cada linha será compacta: posição, oportunidade, conta quando disponível, vendedor, produto, prioridade, valor e principal motivo. A seleção abre um painel lateral com fatores favoráveis e desfavoráveis, origem do score, força da evidência e próxima ação produzida por playbook determinístico. Dados fora dos caminhos validados permanecem visíveis como “Dados insuficientes”, com o campo a corrigir.
 
 O gestor poderá “Priorizar temporariamente” um deal. A ação fixa o item no topo, exibe gestor e horário, não altera o score e expira com a sessão ou recalculação. O protótipo não promete autenticação, gravação no CRM nem auditoria persistente; esses limites serão declarados explicitamente.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo a seção 1.”
+
+### Seção 2 — Arquitetura e fluxo de dados — aguardando aprovação
+
+A solução terá três unidades de código: `app.py` cuida somente da apresentação e do estado da sessão; `data.py` carrega, valida, normaliza e relaciona os quatro CSVs; `scoring.py` concentra preparação de features, treino, validação, priorização, explicações e playbook. Essa fronteira permite testar toda a lógica sem iniciar o Streamlit, sem criar camadas, interfaces ou serviços que o protótipo não necessita.
+
+Na primeira execução, `data.py` confirma arquivos e colunas obrigatórias, calcula o fingerprint do conjunto e normaliza chaves conhecidas — inclusive `GTXPro` para `GTX Pro` — antes dos joins com produtos, contas e equipe. Linhas não serão descartadas silenciosamente: problemas de integridade produzirão erro global quando impedirem o pipeline ou estado “Dados insuficientes” quando afetarem apenas um deal.
+
+`scoring.py` separa oportunidades encerradas das ativas. Somente `Won` e `Lost` alimentam treino e validação, ordenados por `close_date`: período antigo treina; período recente simula o futuro. `close_date`, `close_value`, estágio final e qualquer derivado ficam fora da matriz de features. O pipeline gera dois candidatos para `Engaging` — regressão logística e gradient boosting — e dois caminhos por candidato: completo, quando há conta, e fallback deliberadamente sem atributos de conta. Cada caminho recebe validação própria.
+
+O vencedor e seus diagnósticos são armazenados em cache pelo fingerprint dos dados e da configuração. Depois, os deals ativos percorrem exatamente o mesmo pré-processamento aprendido no treino. O resultado entregue ao `app.py` já contém faixa, probabilidade quando aprovada, valores, motivos, força da evidência, próxima ação e motivo de eventual bloqueio. Assim, a interface apenas filtra, apresenta e aplica a prioridade temporária da sessão.
