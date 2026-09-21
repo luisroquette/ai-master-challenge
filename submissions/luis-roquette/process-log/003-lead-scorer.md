@@ -445,4 +445,23 @@ Como cada probabilidade de fechamento deve ser explicada ao vendedor?
 
 **Recomendação da IA:** **A**. É fiel ao cálculo, acionável e auditável; evita esconder sinais negativos ou inventar causalidade em uma narrativa livre.
 
+#### Resposta de Luis
+
+**A:** mostrar os principais fatores favoráveis e desfavoráveis, com o valor observado e seu efeito em linguagem simples.
+
+#### Decisão registrada
+
+A explicação será derivada do cálculo real do score, não gerada livremente. Ela deverá mostrar evidências dos dois sentidos e evitar linguagem causal quando os dados sustentarem apenas associação.
+
+#### Pergunta 4
+
+Qual estratégia deve decidir o modelo probabilístico de `Engaging`?
+
+- **A.** Regressão logística como escolha fixa: máxima transparência e menor complexidade.
+- **B.** Árvore de decisão rasa: regras visuais, mas divisões potencialmente instáveis.
+- **C.** Gradient boosting com explicações SHAP: maior capacidade não linear, porém mais complexidade.
+- **D.** Comparar regressão logística e gradient boosting na validação temporal; usar o modelo complexo somente se entregar ganho relevante, probabilidade bem calibrada e explicações fiéis.
+
+**Recomendação da IA:** **D**, com a regressão logística como padrão em caso de desempenho equivalente. Isso mede se a complexidade se paga antes de adotá-la.
+
 **Resposta:** aguardando Luis.
