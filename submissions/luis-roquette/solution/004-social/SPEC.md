@@ -365,6 +365,7 @@ Todos os caminhos da tabela partem de `submissions/luis-roquette/`; são contrat
 | Criar nesta fase documental | `solution/004-social/SPEC.md` | Cópia canônica revisável do resultado SDD. |
 | Criar na implementação | `solution/004-social/app.py`, `solution/004-social/analysis.py`, `solution/004-social/storage.py` | Os três componentes definidos acima, com exports no motor puro. |
 | Criar na implementação | `solution/004-social/requirements.txt`, `solution/004-social/README.md` | Pins testados, aquisição/licença do CSV, setup, comandos reais, limitações e roteiro de demonstração. |
+| Criar na entrega | `README.md` | Entrada da submissão baseada no template oficial, com resumo, findings, recomendações, limitações e process log navegável. |
 | Criar na implementação | `solution/004-social/tests/helpers.py`, `test_analysis.py`, `test_exports.py`, `test_storage.py`, `test_app.py` | Suite stdlib dividida por responsabilidade; todos os arquivos entram no mesmo gate `unittest discover`. |
 | Criar na implementação | `solution/004-social/analysis.md`, `solution/004-social/evidence.csv` | Achados reais, estratégia priorizada e evidência gerada pelo mesmo motor. |
 | Atualizar | `process-log/004-social.md`, `research/004-social.md` | Decisões/erros/verificações e correções de fatos confirmados; sem inventar resultados. |

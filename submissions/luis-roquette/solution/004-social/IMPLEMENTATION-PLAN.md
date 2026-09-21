@@ -44,7 +44,8 @@
 | `tests/test_app.py` | Streamlit `AppTest` smoke and state/error behavior. |
 | `analysis.md` | Standalone findings and strategy backed by evidence IDs. |
 | `evidence.csv` | Generated evidence/decision export, not the raw dataset. |
-| `README.md` | Setup, commands, data acquisition, five-minute demo and limitations. |
+| `solution/004-social/README.md` | Technical setup, commands, data acquisition, five-minute demo and limitations. |
+| `submissions/luis-roquette/README.md` | Submission entrypoint following the repository template: summary, findings, recommendations, limitations and process evidence. |
 
 ## Acceptance Coverage
 
@@ -56,6 +57,28 @@
 | CK-08–09 | Task 4 | SQLite transaction, idempotency, revision and temporal-comparison tests. |
 | CK-10 UI portion; CK-11 | Task 5 | Streamlit `AppTest` plus real-browser state and download flow. |
 | HR-01, HR-03–04; all final CK/HR | Task 6 | Timed human scenario, evidence matrix, clean setup and Git-scope audit. |
+
+## Evaluator Coverage
+
+| Repository requirement | Plan coverage | Final evidence |
+|---|---|---|
+| Performance analysis: engagement by platform, content, category and creator size; sponsorship; audience; failures | Tasks 1–3 | `analysis.md` claims linked to generated `evidence.csv`; unavailable financial cost is stated, never fabricated. |
+| Recommended strategy: effort, frequency hypothesis, creator band, sponsorship policy, stop list and quick wins | Tasks 2–3 | Deterministic, prioritized actions with owner, window, metric and review criterion. |
+| Differentiator that supports recurring decisions | Tasks 4–5 | Local cockpit, evidence drill-down, durable human decision and later comparable outcome. |
+| Fair organic-versus-sponsored comparison and non-superficial analysis | Task 2 | Controlled strata, overlap/coverage, creator-aware evidence strength and abstention regressions. |
+| Executive clarity and action within five minutes | Tasks 3, 5–6 | Priorities-first report/UI, one-page summary and timed human scenario. |
+| Mandatory process log showing tools, decomposition, AI errors, human judgment and iterations | Every task; final assembly in Task 6 | Narrative diary, framework spike, Git history and linked visual evidence. |
+| Submission format and PR rules | Task 6 | Root template README, technical README, setup, allowed paths, target branch and exact PR title. |
+
+## Verified Stack Baseline
+
+Pre-plan verification on 21/09/2026 used the reproduced isolated environment:
+
+- Python 3.14.2, Streamlit 1.64.0, Pandas 2.3.3 and SQLite 3.50.4 imported together; `python -m pip check` returned no broken requirements.
+- `streamlit.testing.v1.AppTest` and `FileUploader.set_value` exist in the pinned Streamlit installation.
+- The 52,214-row CSV loaded with Pandas in 0.17 s; derivation plus a representative four-key groupby took 0.01 s.
+- The probe completed in 0.65 s wall time, about 218 MB maximum resident set size and zero swap.
+- This proves stack compatibility and baseline capacity, not final-engine performance. Tasks 1, 3 and 6 still measure the exact validation, cohort, export and UI paths before acceptance.
 
 ---
 
@@ -209,7 +232,7 @@ git commit -m "feat(004): validate social dataset metrics"
 
 ### Task 2: Implement contextual evidence and deterministic actions
 
-**Estimated active time:** 85 minutes.
+**Estimated active time:** 80 minutes.
 
 **Files:**
 - Modify: `submissions/luis-roquette/solution/004-social/analysis.py`
@@ -566,9 +589,10 @@ git commit -m "feat(004): add local social decision cockpit"
 
 ### Task 6: Prove the acceptance contract and hand off
 
-**Estimated active time:** 45 minutes. Total planned active time: 360 minutes; external waiting is recorded separately.
+**Estimated active time:** 50 minutes. Total planned active time: 360 minutes; external waiting is recorded separately.
 
 **Files:**
+- Create: `submissions/luis-roquette/README.md`
 - Create: `submissions/luis-roquette/solution/004-social/README.md`
 - Create: `submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png`
 - Modify: `submissions/luis-roquette/solution/004-social/analysis.md`
@@ -579,32 +603,37 @@ git commit -m "feat(004): add local social decision cockpit"
 - Consumes: the complete local application and every CK/HR from the SPEC.
 - Produces: reproducible setup, final evidence, CK/HR matrix and explicit remaining human gate.
 
-- [ ] **Step 1: Write the README from commands already proven**
+- [ ] **Step 1: Write the technical README from commands already proven**
 
 Document Python version, venv creation, pinned install, Kaggle source/license, test command, CLI command, app command, database location, five-minute demo and limitations. Do not describe an unexecuted command as passing.
 
-- [ ] **Step 2: Reproduce from a clean temporary environment**
+- [ ] **Step 2: Write the submission README from the official template**
+
+Create `submissions/luis-roquette/README.md` with Luis Roquette, Challenge 004, executive summary, approach, actual findings, prioritized recommendations and limitations. Add the required process-log sections: tools and purposes, workflow, AI errors/corrections, human contribution, iterations and evidence links. Link the technical README, `analysis.md`, dashboard screenshot, research, diary and Git history. If LinkedIn is not confirmed by the user, write `Não informado` instead of inventing a URL.
+
+- [ ] **Step 3: Reproduce from a clean temporary environment**
 
 Create a fresh venv outside the repository, install `requirements.txt`, run full test discovery, CLI against the real CSV and the Streamlit health/UI flow. Record exact commands, exit codes, runtime and peak memory.
 
-- [ ] **Step 3: Verify exports as artifacts**
+- [ ] **Step 4: Verify exports as artifacts**
 
 Open the HTML, print/save it to A4 and confirm one page with essential limitations. Download the CSV through the UI, parse it, reconcile selected evidence IDs and confirm dangerous formula text is neutralized.
 
-- [ ] **Step 4: Run the human five-minute scenario**
+- [ ] **Step 5: Run the human five-minute scenario**
 
 With installation and CSV ready, time: upload → identify deviation → explain benchmark/context → register action. Record duration and observer. If no human performs it, mark HR-01 pending and do not declare Definition of Done.
 
-- [ ] **Step 5: Fill the final CK/HR and rubric matrix**
+- [ ] **Step 6: Fill the final CK/HR and rubric matrix**
 
 For CK-01–11 and HR-01–04, record `pass/pending/fail`, command or visual evidence and file/line reference. Score R-01–R-05 with excerpts from the actual deliverable. A score never overrides a failed hard criterion.
 
-- [ ] **Step 6: Run final repository gates**
+- [ ] **Step 7: Run final repository gates**
 
 Run:
 
 ```bash
 test -d submissions/luis-roquette/solution/004-social/tests
+test -f submissions/luis-roquette/README.md
 python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v
 git diff --check
 git diff --name-only main...HEAD
@@ -614,10 +643,12 @@ git ls-files submissions/luis-roquette/solution/004-social
 
 Expected: tests green; every intended commit path begins with `submissions/luis-roquette/`; `.claude/`, `.specs/`, `skills-lock.json`, CSV source, database and venv remain outside the commit.
 
-- [ ] **Step 7: Commit the verified handoff**
+Also record the submission metadata required by the repository: target branch `submission/luis-roquette`, one PR only, and PR title `[Submission] Luis Roquette — Challenge 004`. The current planning branch may differ; rename or create the target branch only when PR publication is explicitly authorized.
+
+- [ ] **Step 8: Commit the verified handoff**
 
 ```bash
-git add -f submissions/luis-roquette/solution/004-social/README.md submissions/luis-roquette/solution/004-social/analysis.md submissions/luis-roquette/solution/004-social/evidence.csv submissions/luis-roquette/process-log/004-social.md submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png
+git add -f submissions/luis-roquette/README.md submissions/luis-roquette/solution/004-social/README.md submissions/luis-roquette/solution/004-social/analysis.md submissions/luis-roquette/solution/004-social/evidence.csv submissions/luis-roquette/process-log/004-social.md submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png
 git commit -m "docs(004): prove cockpit acceptance"
 ```
 

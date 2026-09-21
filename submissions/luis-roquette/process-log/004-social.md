@@ -295,3 +295,17 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Passada limpa 2:** revisão inversa, do handoff à ingestão, sem melhoria substancial; todos os CK-01–11 e HR-01–04 possuem task e prova primária.
 - **Goal atingido:** duas passadas consecutivas sem melhorias ou otimizações substanciais apontadas.
 - **Limite:** o plano foi otimizado e revisado; implementação, push, PR e deploy continuam não autorizados até a revisão humana.
+
+## I11 — Auditoria final contra o repositório e a stack — 2026-09-21
+
+- **Fonte remota:** `main` do fork em `4aed364d572fabe0f1fff1f0c6f32960b30fe575`; o briefing do Challenge 004 permanece no blob `52b10db595fb2a3f50c8a7cc73573fa53f5db087`, idêntico ao já absorvido.
+- **Arquivos relidos:** README raiz, briefing completo, `submission-guide.md`, `CONTRIBUTING.md` e `templates/submission-template.md`.
+- **Gap crítico encontrado e corrigido:** o plano previa somente o README técnico. A entrega exige também `submissions/luis-roquette/README.md` baseado no template oficial; Task 6 agora cria e valida ambos.
+- **Regras de PR incorporadas:** somente caminhos em `submissions/luis-roquette/`, branch-alvo `submission/luis-roquette`, um PR e título `[Submission] Luis Roquette — Challenge 004`. A publicação continua dependente de autorização explícita.
+- **Cobertura do avaliador:** análise obrigatória, estratégia obrigatória, diferencial recorrente, comparação justa, priorização, clareza executiva, process log e formato de submissão estão mapeados a tasks e provas finais no plano.
+- **Stack comprovada:** Python 3.14.2, Streamlit 1.64.0, Pandas 2.3.3, SQLite 3.50.4 e `AppTest` importaram juntos; `pip check` não encontrou dependências quebradas.
+- **Prova de capacidade-base:** 52.214 linhas lidas em 0,17 s; derivação e agrupamento representativo em 0,01 s; probe total em 0,65 s, cerca de 218 MB de memória máxima e zero swap.
+- **Erro operacional registrado:** o primeiro comando `gh api` deixou `?ref=main` sem aspas; o zsh tentou expandir o caractere curinga. A consulta foi repetida com o endpoint entre aspas e passou sem alterar arquivos.
+- **Passada final 1:** após incluir o README obrigatório, nova comparação briefing → critérios → tasks → provas terminou sem lacunas adicionais.
+- **Passada final 2:** auditoria inversa de stack, tempo, imports, dependências, staging, escopo Git e handoff terminou sem novo gargalo de plano; 360 minutos ativos, zero dependência paga e todos os CK/HR cobertos.
+- **Limite de certeza:** o plano cobre integralmente os requisitos conhecidos e a stack não apresenta gargalo-base. Runtime final, achados reais, fluxo de cinco minutos, exports, persistência e setup limpo só podem ser certificados após a implementação e os gates das Tasks 1–6.
