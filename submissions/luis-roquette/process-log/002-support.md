@@ -759,3 +759,13 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Erro e correção:** o primeiro bootstrap selecionou o `python3` padrão 3.14.2 e foi bloqueado como previsto; `/usr/bin/python3.12` foi localizado e passado por `PYTHON`. Na execução seguinte, Ruff encontrou uma linha de 104 caracteres e o `doctor` revelou que seu `echo` final mascarava a falha da sondagem HTTP por `HEAD`. A linha foi quebrada, a sondagem passou a usar GET parcial com redirects e o retorno de erro foi preservado explicitamente.
 - **Erro e correção:** com Ruff e `doctor` verdes, o pytest falhou na coleta porque `pythonpath = ["src"]` corretamente expõe o pacote, mas não transforma `app.py` em módulo importável. O teste passou a carregar esse arquivo explicitamente com `runpy`, preservando o package discovery definido.
 - **Erro e correção:** o AppTest 1.64 não materializou links para páginas definidas por callables, portanto contar `page_link` não provava navegação. A página de limites foi reduzida a `pages/limits.py`, permitindo usar `AppTest.switch_page()` e validar a troca pelo título renderizado.
+
+## I40 — Step 01: ambiente e prova mínima validados — 2026-09-21 23:24 BRT
+
+- **Ambiente reproduzido:** Codespace `codex-preflight-657v7q4ggx7f5557`, Python 3.12, branch `submission/luis-roquette-002-support` e SHA de código `e1c348557b81278ac1894a1dc068b4dd28ed2615`.
+- **Instalação limpa:** `make PYTHON=/usr/bin/python3.12 setup` criou uma nova `.venv` a partir de `requirements.lock`; `import support_copilot` confirmou a versão `0.1.0` sem resolução adicional do pacote local.
+- **Versões centrais comprovadas:** Streamlit 1.64.0, pandas 2.3.3, scikit-learn 1.9.1, joblib 1.6.0, pytest 8.4.2 e Ruff 0.16.8.
+- **Validação:** `make doctor` passou; `make lint` passou; `make test` concluiu `3 passed`; a prova navegou para a página de limites, editou e submeteu o formulário, confirmou a linha SQLite por nova conexão e comparou byte a byte o conteúdo oferecido ao download com o arquivo CSV persistido.
+- **Gate futuro:** `make reproduce` retornou status 2 e explicou que `scripts/reproduce.py` pertence a step posterior; nenhum placeholder retornou sucesso.
+- **Smoke real:** o servidor Streamlit respondeu `ok` em `/_stcore/health` e encerrou deliberadamente com status 0. A prova é identificada como sintética e não usa API paga, credencial nem dado pessoal.
+- **Ciclo do Codespace:** a sessão do step foi interrompida após os gates porque outro `codespace-manager run` passou a usar o mesmo ambiente. O inventário confirmou branch limpa e estado `Available`; o Codespace não foi apagado nem interrompido para preservar a sessão concorrente.
