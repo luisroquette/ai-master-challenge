@@ -168,3 +168,25 @@ Uma mensagem intermediária respondeu apenas “C”, mas Luis a substituiu expl
 #### Decisão registrada
 
 A receita esperada de cada deal será calculada como `probabilidade de fechamento × preço do produto`. O preço vem do catálogo; a probabilidade ainda precisa ser definida, calibrada e validada somente com informação disponível no momento do score. O cálculo deverá mostrar os dois componentes ao usuário.
+
+#### Pergunta 6
+
+Como devemos provar que a fila melhora a receita por vendedor?
+
+#### Resposta de Luis
+
+**D:** duas etapas — backtest agora e piloto operacional depois.
+
+#### Decisão registrada
+
+A entrega atual deverá comparar retrospectivamente o ranking com resultados reais sem leakage. Como o dataset não prova adoção nem impacto causal em produção, a validação definitiva ficará para um piloto posterior com vendedores, ações e receita observadas.
+
+### Síntese da Onda 1 — aguardando aprovação
+
+- **Experiência principal:** fila única com prioridade, risco, valor e próxima ação.
+- **Usuários:** vendedor e manager; o manager visualiza, orienta, reprioriza e redistribui.
+- **Métrica norteadora:** receita esperada por vendedor.
+- **Fórmula-base:** `probabilidade de fechamento × preço do produto`, com componentes visíveis.
+- **Prova:** backtest sem leakage na entrega; piloto operacional como validação posterior.
+
+Continuam abertos: definição da probabilidade, fluxo comercial real, auditoria das ações do manager e desenho da interface.
