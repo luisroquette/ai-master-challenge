@@ -283,3 +283,26 @@ Em seguida, `make setup` falhou em `.venv/bin/python`: `No module named pip`. A 
 - nenhum dado frágil foi convertido em causa raiz, conta prioritária ou receita recuperável.
 
 Criamos README técnico, README executivo, links para quatro diários e artefatos canônicos. A pesquisa pública confirmou o perfil profissional usado no cabeçalho. **Estado:** aguardando somente commit do pacote documental e dos artefatos finais.
+
+O pacote foi versionado e publicado no commit `d571b39`. **Resultado:** Fase 8 validada e encerrada.
+
+## Fase 9 — preflight final e gates externos
+
+### Validação do SHA publicado
+
+Por instrução explícita de Luis, o Codespace foi dispensado nesta etapa. Executamos o preflight local no SHA exato `d571b39dcc65d3a7411b0beb23693ecb0507f86c`, com Python 3.12.13 isolado:
+
+- Ruff verde;
+- 29 testes aprovados;
+- reprodução temporária concluída;
+- `artifact_sets=equal`;
+- worktree limpa ao final;
+- branch `submission/luis-roquette` baseada em `upstream/main`;
+- 100% do diff restrito a `submissions/luis-roquette/`;
+- quatro diários presentes.
+
+### Estado dos gates externos
+
+O dashboard público é opcional e não foi implantado: não houve autorização explícita atual para criar o serviço. O PR também não foi aberto pela mesma fronteira de autorização. A evidência para ambos está preparada.
+
+O gate obrigatório de compreensão em cinco minutos permanece aberto porque exige uma pessoa não técnica diferente do autor da análise. Não simulamos nem fabricamos essa validação. A SPEC continuará `in-progress` até registrar tempo, cinco respostas e eventuais correções.

@@ -1037,7 +1037,7 @@ git commit -m "docs(churn): complete reproducible diagnostic submission"
 - Consumes: committed solution and artifacts from Task 8.
 - Produces: clean Codespace proof for the exact commit and, when available, a read-only Streamlit URL.
 
-- [ ] **Step 1: Inspect the global Codespace semaphore**
+- [x] **Step 1: Inspect the global Codespace semaphore** — dispensado por instrução explícita do proprietário nesta execução.
 
 ```bash
 codespace-manager list
@@ -1045,7 +1045,7 @@ codespace-manager list
 
 Reuse only a stopped, clean Codespace for this repository. Do not start or delete one outside `codespace-manager`.
 
-- [ ] **Step 2: Prove the remote workspace contains the intended commit**
+- [x] **Step 2: Prove the remote workspace contains the intended commit** — substituído por preflight local do SHA exato após bypass explícito.
 
 ```bash
 : "${RAVENSTACK_CODESPACE:?export the clean stopped name returned by codespace-manager list}"
@@ -1054,7 +1054,7 @@ codespace-manager run "$RAVENSTACK_CODESPACE" -- 'git rev-parse HEAD && git stat
 
 Expected: reported SHA equals the local intended SHA, status is clean before and after the gate, every check exits `0`, and the committed artifacts match the fresh temporary reproduction. The shell variable contains external state selected from `codespace-manager list`, not a repository constant.
 
-- [ ] **Step 3: Verify the dashboard behavior against generated artifacts**
+- [x] **Step 3: Verify the dashboard behavior against generated artifacts**
 
 ```bash
 cd submissions/luis-roquette/solution/001-churn
@@ -1080,7 +1080,7 @@ git add -f submissions/luis-roquette/README.md submissions/luis-roquette/solutio
 git commit -m "docs(churn): link verified public dashboard"
 ```
 
-- [ ] **Step 7: Prepare the Pull Request evidence**
+- [x] **Step 7: Prepare the Pull Request evidence**
 
 Run from the repository root:
 
@@ -1114,15 +1114,15 @@ Confirm that process logs `000`, `001` and `002` plus setup evidence are present
 
 ## Final Self-Review Checklist
 
-- [ ] Every requirement in the SPEC maps to at least one task and executable check.
-- [ ] The five CSVs are credited, checksummed and never silently mutated.
-- [ ] Observed and strict chronology variants are both produced and compared.
-- [ ] Findings that fail coverage, stability or evidence gates are visibly inconclusive and unranked.
-- [ ] The model can fail closed without breaking diagnosis, report, queue or dashboard.
-- [ ] Report, dashboard and CSV read the same canonical artifacts and manifest.
-- [ ] `claim_checks.csv`, report and dashboard answer the two contradictory executive claims with the same numbers.
-- [ ] No paid API, secret, external database or production-only dependency exists.
-- [ ] `make reproduce` and `make check` are sufficient from a clean Python 3.12 environment.
-- [ ] The dashboard starts from the repository root with the exact runtime pins in `requirements.txt` and no apt package.
+- [x] Every requirement in the SPEC maps to at least one task and executable check.
+- [x] The five CSVs are credited, checksummed and never silently mutated.
+- [x] Observed and strict chronology variants are both produced and compared.
+- [x] Findings that fail coverage, stability or evidence gates are visibly inconclusive and unranked.
+- [x] The model can fail closed without breaking diagnosis, report, queue or dashboard.
+- [x] Report, dashboard and CSV read the same canonical artifacts and manifest.
+- [x] `claim_checks.csv`, report and dashboard answer the two contradictory executive claims with the same numbers.
+- [x] No paid API, secret, external database or production-only dependency exists.
+- [x] `make reproduce` and `make check` are sufficient from a clean Python 3.12 environment.
+- [x] The dashboard starts from the repository root with the exact runtime pins in `requirements.txt` and no apt package.
 - [ ] Process logs contain actual prompts, mistakes, corrections, commands and validation evidence.
-- [ ] Only files under `submissions/luis-roquette/` are changed.
+- [x] Only files under `submissions/luis-roquette/` are changed.

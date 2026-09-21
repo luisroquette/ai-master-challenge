@@ -74,7 +74,7 @@ O modelo usa split estável por conta, treino até agosto de 2024 e teste de set
 
 ## Dados e limitações
 
-Fonte: [SaaS Subscription & Churn Analytics](https://www.kaggle.com/datasets/rivalytics/saas-subscription-and-churn-analytics-dataset), por Rivalytics, licença MIT. Os cinco arquivos originais são preservados e verificados por SHA-256.
+Fonte: [SaaS Subscription & Churn Analytics](https://www.kaggle.com/datasets/rivalytics/saas-subscription-and-churn-analytics-dataset), por River @ Rivalytics, licença MIT. Os cinco arquivos originais são preservados e verificados por SHA-256.
 
 As datas contraditórias limitam inferência; feedback textual é usado apenas retrospectivamente; MRR exposto é oportunidade máxima, não receita recuperável; e nenhum experimento de intervenção existe para estimar impacto causal. O dataset parece sintético e não deve orientar contato real com clientes.
 
