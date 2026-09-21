@@ -368,3 +368,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Motor comum, modelos separados.
 
 **Interpretação para a próxima onda:** componentes de classificação, calibração, abstinência e auditoria serão reutilizados, mas cada domínio manterá seus próprios dados, rótulos, métricas e limitações. A próxima escolha deve definir como essa separação aparece na navegação sem transformar o produto em duas aplicações.
+
+### Onda 23 — Navegação entre domínios
+
+**Pergunta:** como mostrar os dois domínios na aplicação?
+
+- **A — Operação principal + laboratório IT:** Dataset 1 alimenta o workspace diário; Dataset 2 aparece em uma área de validação do classificador.
+- **B — Seletor de domínio:** o agente alterna entre Customer Support e IT, com filas equivalentes.
+- **C — Operação única:** a aplicação mostra apenas Dataset 1; os resultados do Dataset 2 aparecem somente no relatório técnico.
+
+**Resposta de Luis:** A — Operação principal + laboratório IT.
+
+**Interpretação para a próxima onda:** o workspace do agente permanece coeso e orientado ao Dataset 1. O laboratório IT prova a capacidade de classificação no segundo dataset sem simular continuidade operacional inexistente. A próxima onda confrontará seis arquiteturas completas antes da síntese incremental do desenho.
