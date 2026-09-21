@@ -477,11 +477,11 @@ git commit -m "feat(churn): build leak-free temporal account panel"
 - Produces: `build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame`, an auditable six-month reconciliation of overall versus next-30-day-churn usage and satisfaction.
 - Produces finding columns: `finding_id`, `driver_group`, `claim`, `evidence_level`, `adjusted_odds_ratio`, `ci_low`, `ci_high`, `observed_effect`, `strict_effect`, `sensitivity_delta`, `source_tables`, `affected_accounts`, `mrr_exposed_max`, `confidence`, `counterevidence`, `limitation`, `immediate_action`, `structural_action`, `priority_rank`.
 
-- [ ] **Step 1: Add deterministic diagnosis fixtures**
+- [x] **Step 1: Add deterministic diagnosis fixtures**
 
 Extend `tests/conftest.py` with `candidate_frames`, a tuple of observed panel, strict panel and churn events containing one stable and one direction-reversing candidate; `accepted_findings`, two fully populated passing rows whose MRR/reach order is unambiguous; and `claim_panel`, six monthly cutoffs where overall usage rises while the next-30-day-churn cohort falls and overall satisfaction is at least `4.0` while that cohort remains below `4.0`. Tests must not refer to production artifacts.
 
-- [ ] **Step 2: Write failing finding-gate tests**
+- [x] **Step 2: Write failing finding-gate tests**
 
 ```python
 import pandas as pd
@@ -519,7 +519,7 @@ def test_claim_checks_expose_aggregate_contradictions(claim_panel):
     assert checks.loc[("C-satisfaction-ok", "churn_next_30d"), "status"] == "concern"
 ```
 
-- [ ] **Step 3: Verify diagnosis tests fail**
+- [x] **Step 3: Verify diagnosis tests fail**
 
 ```bash
 .venv/bin/python -m pytest tests/test_diagnosis.py -v
@@ -527,7 +527,7 @@ def test_claim_checks_expose_aggregate_contradictions(claim_panel):
 
 Expected: FAIL because the diagnosis interfaces do not exist.
 
-- [ ] **Step 4: Define the candidate registry**
+- [x] **Step 4: Define the candidate registry**
 
 Use these auditable candidates and source groups:
 
@@ -546,15 +546,15 @@ Tuple fields are `(feature, expected_direction, driver_group, exposure_operator,
 
 Controls: `industry`, `country`, `referral_source`, `plan_tier`, `billing_frequency`, `is_trial`, `log1p(mrr_active)`, `seats`, `tenure_days`, and cutoff calendar quarter.
 
-- [ ] **Step 5: Fit adjusted association models**
+- [x] **Step 5: Fit adjusted association models**
 
 Fit one statsmodels binomial GLM per candidate on the diagnostic snapshot with HC3 robust covariance. Record odds ratio and 95% confidence interval. Do not call the coefficient causal. Mark association evidence as passing only when the expected direction holds and the interval excludes `1.0`. Before fitting, require two outcome classes and nonzero candidate variance. Convert perfect separation, singular matrix, non-convergence or non-finite coefficient/interval into `confidence=inconclusive` with a stable `failure_reason`; never abort the remaining candidates.
 
-- [ ] **Step 6: Add temporal and cross-table gates**
+- [x] **Step 6: Add temporal and cross-table gates**
 
 Require the candidate value to precede churn by construction. Corroborate product candidates with product `reason_code` or a separately passing pre-churn support signal; support candidates with support `reason_code` or a separately passing pre-churn product signal; commercial candidates with price/competitor `reason_code` or a separately passing pre-churn subscription change. A reason code corroborates only with at least `10` terminal churn events and prevalence ratio `>= 1.25` among exposed versus all terminal churn events. Require at least `30` exposed accounts, `10` churn outcomes and candidate coverage `>= 70%`, defined as non-null candidate values divided by eligible diagnostic-snapshot rows. Compare observed and strict effect direction and compute `abs(strict_effect - observed_effect) / max(abs(observed_effect), 1e-9)`; mark inconclusive if directions differ or this delta exceeds `0.25`.
 
-- [ ] **Step 7: Calculate opportunity and priority**
+- [x] **Step 7: Calculate opportunity and priority**
 
 For each accepted finding, identify accounts exposed at `SCORING_CUTOFF`, sum `mrr_active` once per account as `mrr_exposed_max`, count reach, and rank by descending MRR, then descending reach, then actionability order `immediate > structural-only`. Findings may select only from this reviewed mapping, never generate free text:
 
@@ -581,15 +581,15 @@ ACTIONS = {
 }
 ```
 
-- [ ] **Step 8: Reconcile the CEO's two aggregate claims**
+- [x] **Step 8: Reconcile the CEO's two aggregate claims**
 
 Use the last six labeled monthly cutoffs. Define `retained` as `churn_next_30d == 0`, `churn_next_30d` as `churn_next_30d == 1`, and `overall` as both cohorts. For `C-usage-growth`, calculate covered-account daily usage (`usage_count_30d / 30`) and its ordinary least-squares slope over cutoff ordinal; status is `up`, `down` or `flat` using slope tolerance `1e-9`. For `C-satisfaction-ok`, calculate the ticket-response-weighted mean from `mean_satisfaction_90d` and `satisfaction_responses_90d`; status is `ok` only when mean is at least `4.0` and response coverage is at least `70%`, otherwise `concern`, with `insufficient` when either value is unavailable. Emit `claim_id`, `cohort`, `start_value`, `end_value`, `slope`, `status`, `coverage`, `cutoff_start`, `cutoff_end` and `limitation`. These are observed facts, not causal findings.
 
-- [ ] **Step 9: Produce segment metrics**
+- [x] **Step 9: Produce segment metrics**
 
 Generate churn count, churn rate, MRR lost, MRR exposed, sample size and coverage by `industry`, `country`, `referral_source`, derived `plan_tier`, derived `billing_frequency`, `is_trial`, and MRR band. Define MRR lost as `mrr_lost_at_churn`; never use refund or current MRR as a substitute. Suppress executive ranking for groups below the sample gates but retain them with `confidence=inconclusive`.
 
-- [ ] **Step 10: Run diagnosis tests**
+- [x] **Step 10: Run diagnosis tests**
 
 ```bash
 .venv/bin/python -m pytest tests/test_diagnosis.py -v
@@ -597,7 +597,7 @@ Generate churn count, churn rate, MRR lost, MRR exposed, sample size and coverag
 
 Expected: PASS.
 
-- [ ] **Step 11: Commit traceable diagnosis**
+- [x] **Step 11: Commit traceable diagnosis**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn/diagnosis.py submissions/luis-roquette/solution/001-churn/tests/test_diagnosis.py submissions/luis-roquette/solution/001-churn/tests/conftest.py

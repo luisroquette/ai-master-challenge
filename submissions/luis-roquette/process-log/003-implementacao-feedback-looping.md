@@ -177,3 +177,24 @@ O teste vermelho local confirmou `ModuleNotFoundError: ravenstack_churn.panel`. 
 - o gate foi local por autorização explícita, não prova de Codespace.
 
 O painel foi versionado no commit `7d29f55`. **Resultado:** Fase 3 validada e encerrada.
+
+## Fase 4 — diagnóstico, claims e segmentos
+
+### Planejamento e revisão
+
+Mantivemos os seis candidatos definidos antes da inspeção dos outcomes e as ações revisadas por área. O contrato de `evaluate_candidates` recebe painéis e eventos, mas não assinaturas brutas; por isso, a métrica segmentada usa o MRR ativo no último cutoff pré-churn como exposição imediatamente anterior, nunca refund ou MRR posterior.
+
+### Execução e feedback looping
+
+O teste vermelho confirmou a ausência de `diagnosis.py`. A primeira implementação passou nos quatro testes, mas Ruff bloqueou uma captura ampla de `Exception`. Substituímos por falhas numéricas e do statsmodels explicitamente nomeadas e convertemos warnings de separação ou matriz singular em abstenção reproduzível.
+
+### Teste e resultado real
+
+- 4 testes específicos e 17 testes totais aprovados;
+- Ruff verde;
+- 3.305 linhas em cada painel real, 31 segmentos e 6 verificações de claims;
+- uso agregado subiu nas três coortes; satisfação ficou em estado de preocupação nas três;
+- os seis candidatos ficaram inconclusivos pelos gates de modelo, corroboração ou sensibilidade;
+- nenhum ranking causal foi fabricado.
+
+O diagnóstico foi versionado no commit `33ec222`. **Resultado:** Fase 4 validada e encerrada, com abstenção preservada como resultado legítimo.
