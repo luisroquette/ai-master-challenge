@@ -85,6 +85,7 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 - **Verificação:** após pelo menos cinco ondas, o desenho será apresentado em seções curtas para validação incremental. Somente depois a skill `add-task` criará a SPEC inicial; `plan-task` fará o refinamento e `implement-task` só poderá começar com a especificação aprovada.
 - **Evidência:** respostas desta conversa, síntese validada e futura SPEC vinculada neste diário.
 - **Limitação:** cinco ondas são o piso, não o teto. Novas ondas serão abertas enquanto houver decisão material, contradição ou hipótese sem resposta.
+- **Formato corrigido por Luis:** todas as ondas usarão perguntas de múltipla escolha, uma por vez. As alternativas posteriores serão adaptadas às respostas anteriores; Luis poderá complementar a opção escolhida com contexto livre.
 
 ### Sequência SDD acordada
 
