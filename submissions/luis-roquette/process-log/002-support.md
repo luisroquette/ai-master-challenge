@@ -503,3 +503,154 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Limitação:** a SPEC criada por `add-task` ainda é um rascunho; pesquisa, análise e refinamento por `plan-task` continuam obrigatórios antes de qualquer implementação.
 
 **Decisão:** exploração encerrada e SPEC inicial autorizada.
+
+## I09 — Fechamento da SPEC inicial e abertura do plano — 2026-09-21 17:05 BRT
+
+- **Etapa encerrada:** criação da SPEC inicial do Support Decision Copilot com requisitos, limites, critérios de validação e gates de processo aprovados.
+- **Artefato:** `solution/002-support/.specs/tasks/draft/implement-support-decision-copilot.feature.md`.
+- **Estado:** SPEC em `draft`; nenhuma implementação iniciada.
+- **Próximo método:** criar e otimizar o plano de implementação com a skill `writing-plans`, mantendo a SPEC como fonte de verdade.
+- **Loop de qualidade:** revisar o plano em cascata até obter pelo menos duas passadas consecutivas sem melhorias ou otimizações substanciais; qualquer melhoria substancial reinicia a contagem.
+- **Registro:** cada passada documentará foco, achados, alterações e estado da sequência.
+
+**Decisão:** SPEC inicial encerrada como insumo aprovado; planejamento detalhado autorizado, sem autorização para implementar o produto.
+
+## I10 — Loop de otimização do plano — Passada 1 — 2026-09-21 17:28 BRT
+
+- **Foco:** cobertura integral da SPEC e executabilidade do fluxo.
+- **Achados substanciais:** faltavam um comando único de demonstração, features e alvos explícitos por domínio, identificador estável para o Dataset 2 e critérios objetivos para thresholds de classificação e recuperação.
+- **Correções:** incluído `make demo`; fixados textos/alvos por dataset; definido `row_id` por SHA-256; definidos thresholds por erro seletivo e rubrica humana, com falha segura.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I11 — Loop de otimização do plano — Passada 2 — 2026-09-21 17:34 BRT
+
+- **Foco:** falha segura, qualidade mínima dos modelos e completude da auditoria.
+- **Achados substanciais:** o plano ainda poderia automatizar com ganho irrelevante sobre o baseline, aceitar intervalos negativos e exportar decisões sem todas as versões nem diferença de edição.
+- **Correções:** automação desativada quando o ganho de macro-F1 for menor que 0,02; intervalos inválidos passam a ser isolados e contados; trilha ganhou versões de dados/regras e `edit_ratio`.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I12 — Loop de otimização do plano — Passada 3 — 2026-09-21 17:41 BRT
+
+- **Foco:** reprodução a partir de checkout limpo e rastreabilidade das regras.
+- **Achados substanciais:** o comando único ainda pressupunha dados colocados manualmente; regras sensíveis e `rules_version` não tinham artefato explícito.
+- **Correções:** `make demo` passou a encadear setup, download público, reprodução e app; criado `risk-policy.json` com categorias humanas, fórmula, versão e justificativa.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I13 — Loop de otimização do plano — Passada 4 — 2026-09-21 17:49 BRT
+
+- **Foco:** buildabilidade dos comandos e ausência de placeholders.
+- **Achado substancial:** assinaturas abreviadas com reticências contrariavam o gate de plano completo; o smoke test com `timeout` terminaria em código 124 mesmo quando saudável.
+- **Correções:** contratos foram descritos sem corpo fictício; smoke test agora consulta o endpoint de saúde, encerra o processo e valida a saída esperada.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I14 — Loop de otimização do plano — Passada 5 — 2026-09-21 17:56 BRT
+
+- **Foco:** cobertura dos estados de falha, cenários executivos e avaliação final da recuperação.
+- **Achados substanciais:** faltavam tratamento verificável de artefatos ausentes/corrompidos/desatualizados, os três cenários pedidos e uma rubrica separada no teste congelado.
+- **Correções:** adicionados testes e mensagens de recuperação de artefatos; presets conservador/base/otimista; amostras independentes de 50 consultas para calibração e teste da recuperação.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I15 — Loop de otimização do plano — Passada 6 — 2026-09-21 18:03 BRT
+
+- **Foco:** ordem executável da avaliação humana de recuperação.
+- **Achado substancial:** havia dependência circular entre escolher o threshold e gerar a amostra que seria avaliada.
+- **Correção:** pipeline em passagens idempotentes: gera template de calibração com drafts bloqueados, consome a rubrica concluída para travar o threshold, gera template de teste e só então publica métricas finais.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I16 — Loop de otimização do plano — Passada 7 — 2026-09-21 18:11 BRT
+
+- **Foco:** comandos reais do orquestrador de Codespaces.
+- **Achado substancial:** o plano usava `run` com um nome inexistente e tentava validar conteúdo ainda ausente no remoto.
+- **Correção:** comandos agora usam `create-run luisroquette/ai-master-challenge submission/luis-roquette-002-support`; checkpoints intermediários são testados localmente, commitados e enviados antes da validação remota.
+- **Evidência:** `codespace-manager list` confirmou que não existe Codespace reutilizável desse repositório; `--help` confirmou a interface `create-run`.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I17 — Loop de otimização do plano — Passada 8 — 2026-09-21 18:18 BRT
+
+- **Foco:** compatibilidade dos comandos Git com as regras reais do repositório.
+- **Achado substancial:** `.gitignore` raiz ignora `submissions/`; `git add` comum não incluiria arquivos novos do plano.
+- **Correção:** todos os comandos de inclusão pública usam `git add -f` com caminhos explícitos dentro de `submissions/luis-roquette/`; nenhuma regra global foi afrouxada.
+- **Correção editorial:** Passadas 1–8 ordenadas cronologicamente.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I18 — Loop de otimização do plano — Passada 9 — 2026-09-21 18:22 BRT
+
+- **Foco:** validade do primeiro gate local em checkout sem testes.
+- **Achado substancial:** `pytest` sairia com código 5 porque os testes só seriam criados na etapa seguinte.
+- **Correção:** o checkpoint inicial agora usa `python -m compileall -q app.py`; pytest começa somente após existir o primeiro arquivo de teste.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I19 — Loop de otimização do plano — Passada 10 — 2026-09-21 18:28 BRT
+
+- **Foco:** reprodutibilidade do ambiente Python.
+- **Achado substancial:** registrar versões no manifesto não impedia resolução futura de dependências diferentes.
+- **Correção:** primeiro setup gera `requirements.lock` completo; execuções seguintes instalam o lock e o pacote local sem resolver dependências novamente.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I20 — Loop de otimização do plano — Passada 11 — 2026-09-21 18:35 BRT
+
+- **Foco:** compatibilidade entre a versão Python definida e a máquina de trabalho.
+- **Achado substancial:** o Mac expõe Python 3.14, não 3.12; gerar o lock localmente invalidaria o ambiente declarado.
+- **Correção:** o checkpoint inicial sobe sem lock; `bootstrap-lock` roda uma única vez no Codespace com Python 3.12, valida o Streamlit, commita o lock na branch e exige `git pull --ff-only` antes da etapa seguinte.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I21 — Loop de otimização do plano — Passada 12 — 2026-09-21 18:47 BRT
+
+- **Foco:** coerência entre a SPEC-fonte e o plano derivado.
+- **Achado substancial:** a SPEC ainda continha o placeholder de descrição e não referenciava pesquisa nem plano.
+- **Correção:** descrição preenchida com objetivo, público, escopo e exclusões; links relativos adicionados para pesquisa e plano de implementação.
+- **Nota SDD:** o pacote Codex instalado de `plan-task` contém apenas `SKILL.md`; os agentes, prompts e scripts exigidos pelo workflow não foram instalados. O plano atual foi criado com `writing-plans`; a promoção SDD por `plan-task` permanece bloqueada até instalar o pacote completo e continua obrigatória antes de `implement-task`.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I22 — Loop de otimização do plano — Passada 13 — 2026-09-21 18:54 BRT
+
+- **Foco:** cobertura da SPEC, buildabilidade, placeholders, comandos, gates e rastreabilidade.
+- **Resultado:** nenhuma melhoria ou otimização substancial identificada.
+- **Verificação:** `git diff --check` limpo; nove tarefas, dez checkpoints de commit e dez resultados esperados; nenhum marcador `TODO`, `TBD`, `FIXME` ou placeholder residual.
+- **Sequência sem melhoria substancial:** 1 de 2.
+
+## I23 — Loop de otimização do plano — Passada 14 — 2026-09-21 18:59 BRT
+
+- **Foco:** documentação contemporânea durante a futura execução.
+- **Achado substancial:** o plano concentrava a atualização do diário no fechamento, contrariando a regra de que documentar é tão importante quanto o resultado.
+- **Correção:** cada tarefa agora exige entrada curta no diário antes do commit e inclui o process log no mesmo checkpoint.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I24 — Loop de otimização do plano — Passada 15 — 2026-09-21 19:03 BRT
+
+- **Foco:** comandos, links, cobertura, checkpoints Git e registro contemporâneo.
+- **Resultado:** nenhuma melhoria ou otimização substancial identificada.
+- **Verificação:** `git diff --check` limpo; nove comandos `git add -f`; dez referências ao diário; links relativos da SPEC resolvem para arquivos existentes.
+- **Sequência sem melhoria substancial:** 1 de 2.
+
+## I25 — Loop de otimização do plano — Passada 16 — 2026-09-21 19:08 BRT
+
+- **Foco:** ordem TDD da interface.
+- **Achado substancial:** a tarefa de UI implementava páginas antes de criar testes que demonstrassem falha nos fluxos essenciais.
+- **Correção:** `AppTest` passa a cobrir página inicial, artefato desatualizado, motivo obrigatório, persistência e separação de projeções antes da implementação.
+- **Sequência sem melhoria substancial:** 0 de 2.
+
+## I26 — Loop de otimização do plano — Passada 17 — 2026-09-21 19:12 BRT
+
+- **Foco:** completude por tarefa, TDD, validação, commit e diário.
+- **Resultado:** nenhuma melhoria ou otimização substancial identificada.
+- **Verificação:** nove tarefas, nove blocos de arquivos, nove checkpoints de tarefa e referência ao diário em todos os checkpoints aplicáveis; nenhum placeholder residual.
+- **Sequência sem melhoria substancial:** 1 de 2.
+
+## I27 — Loop de otimização do plano — Passada 18 — 2026-09-21 19:16 BRT
+
+- **Foco:** segurança, Ponytail/YAGNI, privacidade, evidência e aderência ao Challenge 002.
+- **Resultado:** nenhuma melhoria ou otimização substancial identificada.
+- **Verificação:** dependências mínimas; nenhum serviço pago; automação limitada ao roteamento elegível; risco prevalece; PII, dados brutos, modelos e banco local excluídos do Git; ambos os datasets preservam fronteiras próprias.
+- **Sequência sem melhoria substancial:** 2 de 2 — meta atingida.
+
+## I28 — Fechamento do planejamento otimizado — 2026-09-21 19:17 BRT
+
+- **Artefato principal:** `solution/002-support/docs/superpowers/plans/2026-09-21-support-decision-copilot.md`.
+- **Método:** skill `writing-plans`, 18 passadas críticas em cascata e reinício da contagem após cada melhoria substancial.
+- **Resultado:** duas passadas consecutivas finais sem novos achados substanciais; plano considerado otimizado para revisão humana.
+- **Pesquisa incorporada:** comparação de interface, modelagem, calibração, recuperação e persistência; inspeção real confirmou 8.469 linhas no Dataset 1 e 47.837 no Dataset 2, além das limitações temporais do Dataset 1.
+- **Estado:** planejamento concluído; implementação não iniciada.
+- **Gate pendente:** o workflow completo de `plan-task` exige assets ausentes da instalação Codex atual e segue obrigatório, junto da aprovação humana, antes de `implement-task`.
+
+**Decisão:** encerrar o loop de otimização em 2/2 passadas consecutivas sem melhorias substanciais.

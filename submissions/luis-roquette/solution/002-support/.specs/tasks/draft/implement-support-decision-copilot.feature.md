@@ -79,4 +79,9 @@ Construir o Challenge 002 como um **Support Decision Copilot** local e autoconti
 
 ## Description
 
-// Will be filled in future stages by business analyst
+Entregar um protótipo local para agentes de suporte e gestores de Operações diagnosticarem gargalos, avaliarem automação segura e demonstrarem o fluxo completo sobre dados reais. A solução prioriza decisões explicáveis e reversíveis: modelos separados sugerem classificação, um gate determinístico limita a automação, precedentes históricos sustentam ou recusam rascunhos, e toda decisão humana fica auditável.
+
+O MVP cobre diagnóstico do Dataset 1, classificação independente nos dois domínios, recuperação sanitizada, fila diária, scorecard, Laboratório IT, cenários editáveis e evidências reproduzíveis. Não cobre envio externo, helpdesk real, autenticação, multiempresa, deploy obrigatório, aprendizado online nem geração livre.
+
+- **Pesquisa técnica:** `../../../../../research/002-support.md`
+- **Plano de implementação:** `../../../docs/superpowers/plans/2026-09-21-support-decision-copilot.md`
