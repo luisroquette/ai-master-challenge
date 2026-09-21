@@ -533,4 +533,35 @@ Como o avaliador deve executar e reproduzir a solução?
 
 ### Estado da pergunta 2
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+O contrato de execução terá duas entradas curtas: `make reproduce` validará os dados e regenerará todos os artefatos; `make app` abrirá o dashboard usando as saídas já produzidas. Os alvos apenas encapsularão comandos Python explícitos.
+
+### Consequência para o desenho
+
+O processo não dependerá da ordem manual de células nem de serviços externos. O README deverá informar pré-requisitos, comandos, entradas, saídas e falhas esperadas. Cada execução deverá produzir resultados determinísticos com os mesmos dados e versões de dependências.
+
+### Ponto ainda aberto
+
+Precisamos definir a navegação do dashboard sem duplicar o relatório ou transformar a solução em uma vitrine técnica extensa.
+
+### Pergunta 3
+
+Como o dashboard deve organizar a leitura?
+
+- A. Uma única página longa com todos os gráficos, tabelas e métricas.
+- B. Três visões: decisão executiva, evidências por causa e segmento, e fila de contas; metodologia fica em um painel recolhível.
+- C. Sete ou mais abas separadas por dataset, algoritmo e métrica técnica.
+- D. Uma interface de chat como navegação principal.
+
+**Recomendação técnica preliminar do agente:** B, porque espelha as três camadas já aprovadas, reduz carga cognitiva e mantém detalhes metodológicos disponíveis sem competir com a decisão.
+
+### Estado da pergunta 3
+
 Aguardando resposta de Luis.
