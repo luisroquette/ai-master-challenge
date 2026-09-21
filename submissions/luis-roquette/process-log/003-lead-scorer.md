@@ -114,3 +114,15 @@ Na segunda-feira de manhã, qual decisão principal o vendedor deve conseguir to
 #### Decisão registrada
 
 A experiência principal será uma fila unificada de trabalho, não quatro relatórios separados. A resposta ainda não define pesos, regras de desempate, público secundário ou forma de cálculo; esses pontos permanecem abertos para as próximas perguntas.
+
+#### Pergunta 2
+
+Quem precisa usar a primeira versão?
+
+#### Resposta de Luis
+
+**B:** vendedor e manager, com visão individual e da equipe.
+
+#### Decisão registrada
+
+A primeira versão terá dois públicos. O vendedor precisa operar a própria fila; o manager precisa enxergar o desempenho e as prioridades da equipe. Permissões de alteração, intervenção e redistribuição ainda não foram definidas.
