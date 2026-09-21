@@ -139,3 +139,43 @@ Também há uma exigência temporal implícita. Uso, erros, tickets, satisfaçã
 Por fim, impacto não pode ser medido somente por quantidade de contas. O próprio texto diferencia uma perda de `$50/mês` de outra de `$5K/mês`. A análise terá de mostrar churn por contas e por receita, além de identificar contas específicas para uma ação operacional.
 
 Esta técnica de leitura em loop foi uma decisão criativa de Luis, não uma sugestão da IA. Ela passa a integrar o diário como evidência de decomposição e julgamento humano antes do uso de ferramentas.
+
+## Decisão metodológica: Spec-Driven Development
+
+Luis definiu que a solução seguirá SDD, Spec-Driven Development. A especificação será o contrato entre problema, pesquisa, implementação e validação. Código ou dashboard só começam depois de critérios de aceitação, riscos, testes e definição de pronto estarem explícitos e revisados.
+
+Usaremos o módulo `sdd` do [Context Engineering Kit](https://github.com/NeoLabHQ/context-engineering-kit), versão `3.6.0`. O plugin completo já estava instalado e habilitado no Claude Code, com cinco skills e oito agentes especializados. Para este terminal Codex, instalamos as cinco skills disponíveis: `add-task`, `brainstorm`, `create-ideas`, `plan-task` e `implement-task`.
+
+### Fluxo adotado
+
+```mermaid
+flowchart LR
+    A[Briefing absorvido] --> B[Pesquisa externa]
+    B --> C[Spec em draft]
+    C --> D[Planejamento e critérios]
+    D --> E{Revisão humana aprovada?}
+    E -- não --> C
+    E -- sim --> F[Implementação mínima]
+    F --> G[Validação contra a spec]
+    G --> H[Done]
+```
+
+O ciclo de arquivos seguirá `draft → todo → in-progress → done`. Para respeitar a regra do repositório, a pasta `.specs` ficará dentro de `submissions/luis-roquette/solution/001-churn/`, nunca na raiz.
+
+### Conteúdo mínimo da spec do Challenge 001
+
+1. problema de negócio, usuário da decisão e perguntas que precisam ser respondidas;
+2. contratos das cinco tabelas, granularidade, cardinalidade e janelas temporais;
+3. hipóteses testáveis, métricas por contas e receita e limites de causalidade;
+4. entregáveis, critérios de aceitação, estratégia de testes e evidências exigidas;
+5. definição de pronto compreensível pelo CEO e acionável pelo time de CS.
+
+SDD e Ponytail cumprem papéis diferentes. SDD fixa o que precisa ser verdadeiro e como provar. Ponytail reduz a solução ao menor artefato capaz de satisfazer essa especificação. A pesquisa de soluções existentes continua vindo antes da implementação e alimenta a spec.
+
+### Verificação da instalação
+
+A página indicada sugeria `npx skills add NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code`. O CLI oficial recusou o comando porque não existe uma skill individual chamada `sdd`; `sdd` é um plugin que agrupa componentes. Seguimos então o método oficial do repositório: mantivemos o plugin Claude Code completo, já atualizado, e instalamos separadamente as cinco skills no Codex.
+
+O downloader padrão do instalador Codex também encontrou um erro de certificado SSL local. Repetimos pelo método `git`, sem desativar TLS, e verificamos os cinco arquivos `SKILL.md` instalados.
+
+Esta decisão é de Luis. A IA verificou origem, licença GPL-3.0, versão, inventário e limitações antes de alterar o ambiente.
