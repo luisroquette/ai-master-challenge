@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 from analysis import executive_summary, export_evidence, analysis_report, analyze, load_csv
-from tests.helpers import csv_bytes, make_post
+from tests.helpers import csv_bytes, make_post, default_scope, sponsorship_frequency_rows
 
 
 APP_ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +57,40 @@ def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
 
 
 class ExportTests(unittest.TestCase):
+    def test_formula_prefix_after_whitespace_and_controls_preserves_original_text(self):
+        unsafe = [prefix + marker + "1" for prefix in ("  ", "\n", " \t\r\n\x00\x7f\ufeff", "\u00a0") for marker in "=+-@"]
+        safe = ["  texto", "\ntexto", "   ", ""]
+        result = result_with_texts(unsafe + safe)
+        rows = parse_export(export_evidence(result, [{"text": value} for value in unsafe + safe]))
+        for record_type in ("evidence", "decision"):
+            actual = [row["text"] for row in rows if row["record_type"] == record_type and (record_type == "decision" or row["evidence_id"].startswith("text-"))]
+            self.assertEqual(actual, ["'" + value for value in unsafe] + safe)
+        result["recommendations"][0]["delta_erv_pp"] = -0.25
+        recommendation = next(row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "recommendation")
+        self.assertEqual(recommendation["delta_erv_pp"], "-0.25")
+
+    def test_frequency_is_reconciled_in_csv_and_reports_for_test_and_collect(self):
+        for weeks, end, expected_status in ((2, "2025-01-19", "test"), (1, "2025-01-12", "collect")):
+            with self.subTest(status=expected_status):
+                result = analyze(sponsorship_frequency_rows(weeks), default_scope(target_start="2025-01-06", target_end=end, reference_date=end), "hash")
+                item = result["recommendations"][0]
+                frequency = item["frequency_hypothesis"]
+                row = next(row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "recommendation")
+                self.assertEqual(json.loads(row["frequency_hypothesis"]), frequency)
+                for report in (analysis_report(result), executive_summary(result, [])):
+                    self.assertIn(item["evidence_id"], report)
+                    self.assertIn(f"status {expected_status}", report)
+                    for key in ("unit", "method", "action_type", "window_start", "window_end", "limitation"):
+                        self.assertIn(str(frequency[key]), report)
+                    for label, key in (("creator-semanas", "sample_creator_weeks"), ("creators", "sample_creators"), ("semanas completas disponíveis", "complete_weeks_available"), ("semanas observadas", "observed_complete_weeks")):
+                        self.assertIn(f"{frequency[key]} {label}", report)
+                    self.assertIn(f"mínimo de {frequency['collection_requirement_weeks']} semanas", report)
+                    self.assertIn("ausência de linha não equivale a zero", report)
+                    if expected_status == "test":
+                        self.assertIn("Testar 3 posts por creator por semana ISO completa", report)
+                    else:
+                        self.assertIn("Coletar antes de sugerir cadência; valor não definido", report)
+
     def test_recommendations_reconcile_csv_markdown_and_html_in_engine_order(self):
         result = sample_result()
         result["recommendations"] = [

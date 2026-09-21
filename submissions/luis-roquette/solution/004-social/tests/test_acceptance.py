@@ -28,6 +28,11 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
             expected = 100 * impact * float(row["strength"]) * float(row["recency"])
             self.assertAlmostEqual(float(row["priority"]), expected, delta=abs(expected) * 1e-12)
             self.assertIn(f"{expected:.6g}", report)
+            frequency = json.loads(row["frequency_hypothesis"])
+            self.assertEqual(frequency["status"], "test")
+            self.assertIn(f"Testar {frequency['value']:g} posts por creator por semana ISO completa", report)
+            self.assertIn(f"{frequency['sample_creator_weeks']} creator-semanas", report)
+            self.assertIn(f"{frequency['observed_complete_weeks']} semanas observadas", report)
 
     def test_every_evidence_id_cited_by_report_exists_in_export(self):
         csv.field_size_limit(sys.maxsize)

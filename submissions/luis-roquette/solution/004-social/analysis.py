@@ -12,6 +12,7 @@ import math
 import os
 import sys
 import tempfile
+import unicodedata
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
@@ -769,7 +770,7 @@ EXPORT_COLUMNS = (
     "execution_window", "review_window",
     "rank", "recommendation_key", "priority", "impact", "strength", "recency",
     "priority_values", "normalization", "delta_erv_pp", "representative_date",
-    "action", "action_type", "topic", "metric",
+    "action", "action_type", "topic", "metric", "frequency_hypothesis",
 )
 
 
@@ -781,7 +782,8 @@ def _cell(value: object) -> str | int | float:
     if isinstance(value, (int, float)):
         return value
     text = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str) if isinstance(value, (dict, list, tuple)) else str(value)
-    return f"'{text}" if text.startswith(("=", "+", "-", "@", "\t", "\r")) else text
+    significant = next((char for char in text if not char.isspace() and unicodedata.category(char) not in ("Cc", "Cf")), "")
+    return f"'{text}" if significant in ("=", "+", "-", "@") else text
 
 
 def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
@@ -832,7 +834,7 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
 
     for rank, item in enumerate(result.get("recommendations", []), start=1):
         yield row("recommendation", str(item["evidence_id"]), rank=rank,
-                  **{name: item.get(name) for name in ("recommendation_key", "priority", "priority_values", "normalization", "delta_erv_pp", "representative_date", "context", "action", "action_type", "topic", "metric", "owner", "execution_window", "review_window")},
+                  **{name: item.get(name) for name in ("recommendation_key", "priority", "priority_values", "normalization", "delta_erv_pp", "representative_date", "context", "action", "action_type", "topic", "metric", "owner", "execution_window", "review_window", "frequency_hypothesis")},
                   **item.get("priority_components", {}),
                   formula="100 * mean(min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1)) * strength * 2**(-age_days/7)")
 
@@ -864,6 +866,19 @@ RECENCY_NOTE = (
 def _recommendation_text(item: dict[str, object]) -> str:
     context = " / ".join(str(value) for value in item.get("context", {}).values())
     components = item.get("priority_components", {})
+    frequency = item.get("frequency_hypothesis")
+    frequency_text = ""
+    if frequency:
+        cadence = (f"Testar {frequency['value']:g} posts por creator por semana ISO completa"
+                   if frequency["value"] is not None else "Coletar antes de sugerir cadência; valor não definido")
+        frequency_text = (
+            f". Frequência: {cadence}; status {frequency['status']}; unidade {frequency['unit']}; "
+            f"método {frequency['method']}; {frequency['sample_creator_weeks']} creator-semanas, "
+            f"{frequency['sample_creators']} creators; {frequency['complete_weeks_available']} semanas completas disponíveis, "
+            f"{frequency['observed_complete_weeks']} semanas observadas; janela {frequency['window_start'] or 'não definida'} a {frequency['window_end'] or 'não definida'}; "
+            f"ação {frequency['action_type']}; mínimo de {frequency['collection_requirement_weeks']} semanas completas observadas. "
+            f"Limite: {frequency['limitation']}; ausência de linha não equivale a zero."
+        )
     return (
         f"{context}: {item.get('action', item.get('reason', 'Coletar evidência'))}. "
         f"Prioridade {item.get('priority', 0):.6g}; impacto {components.get('impact', 0):.6g}; "
@@ -871,7 +886,7 @@ def _recommendation_text(item: dict[str, object]) -> str:
         f"ΔERv {item.get('delta_erv_pp', 0):+.6g} p.p.; data representativa {item.get('representative_date', 'não definida')}. "
         f"Responsável: {item.get('owner', 'Gestor de Social Media')}; execução: {item.get('execution_window', 'coletar primeiro')}; "
         f"revisão: {item.get('review_window', 'após coleta')}; métrica: {item.get('metric', 'amostra comparável')}. "
-        f"Evidência: {item.get('evidence_id', '')}"
+        f"Evidência: {item.get('evidence_id', '')}{frequency_text}"
     )
 
 
@@ -974,7 +989,7 @@ def analysis_report(result: dict[str, object]) -> str:
               "| Tema | Ação | Critério de revisão |", "|---|---|---|",
               "| Esforço e quick win | Preparar briefs dos contextos da fila na ordem exibida; anexar a evidência e registrar aceitar/rejeitar/editar. | Rever ERv, views e interações por post no mesmo contexto. |",
               "| Público e creators | Preservar rótulos de audiência e faixa de creator do contexto; coletar se faltarem controles. Não inferir uma persona ou threshold de contratação. | Pelo menos 30 taxas e cinco creators por braço; declarar composição e concentração. |",
-              "| Frequência | Testar uma cadência por vez; este relatório não estima uma frequência ótima. | Janelas equivalentes e pelo menos duas semanas completas antes de propor frequência observada. |",
+              "| Frequência | Testar a mediana observada de posts/creator/semana completa indicada em cada prioridade; estado collect pede coleta antes de propor cadência. | Comparar janelas equivalentes; hipótese observacional, não frequência ótima ou efeito causal. Ausência de linha não equivale a zero. |",
               "| Patrocínio | Obter custos reais antes de avaliar desembolso; força limitada pede coleta/teste. | ERv e volume concordantes, grupo comparável e dados financeiros. |",
               "| Parar/revisar | Revisar repetição de padrões negativos; não parar por média global ou sinal isolado. | Interrupção exige a guarda do motor e decisão humana; sem base, coletar. |", "",
               "## Auditabilidade e limites", "",
@@ -987,6 +1002,9 @@ def analysis_report(result: dict[str, object]) -> str:
               "Impacto = média de min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1); "
               "prioridade = 100 × impacto × força × atualidade. Scores são relativos à plataforma/tipo/unidade, "
               "não monetários. P95=0 usa máximo positivo ou zero se inexistente.", "",
+              "A coluna JSON `frequency_hypothesis` preserva status, valor/unidade, método, amostra de creator-semanas/creators, "
+              "semanas completas disponíveis/observadas, janela, ação, mínimo de semanas para coleta e limitação. "
+              "O valor é uma hipótese de teste no mesmo contexto da recomendação, não promessa de desempenho.", "",
               "Em `source_ref`, `source_row_id` e `source_line` são arrays JSON de mesmo tamanho e ordem: "
               "o par de índice i identifica o ID opaco e a primeira linha física (base 1) do registro. "
               "Reconstituir a chave completa com `source_hash + ':' + source_row_id[i]`. "
