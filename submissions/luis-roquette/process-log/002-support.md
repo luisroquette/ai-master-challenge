@@ -475,3 +475,17 @@ As ações serão poucas: **aprovar**, **editar e aprovar**, **rejeitar** ou **e
 Uma navegação secundária leva ao **Scorecard**, dividido visualmente em Diagnóstico Observado, Avaliação do Protótipo e Cenários. A calculadora mostra premissas editáveis e nunca mistura projeção com histórico. O **Laboratório IT** exibe métricas, matriz de confusão, calibração e casos do teste congelado em sua própria taxonomia. Uma área de **Evidências** oferece versões, comandos de reprodução e exportações. O desenho será desktop-first, responsivo o suficiente para leitura, com estados de carregamento, indisponibilidade e erro explícitos.
 
 **Pergunta de validação:** esta experiência e hierarquia estão corretas para avançar?
+
+**Validação de Luis:** A — Seção 5 aprovada sem ajustes.
+
+### Seção 6 — Entregáveis, limites e definição de pronto — proposta
+
+A entrega pública ficará inteiramente em `submissions/luis-roquette/`. Ela conterá um README executivo com achados, decisões e instruções; a aplicação e os scripts reproduzíveis em `solution/002-support/`; a pesquisa de soluções existentes em `research/002-support.md`; o diário contemporâneo; e evidências como tabelas, métricas, exportações e screenshot real. Dados brutos, PII, credenciais e artefatos sem licença de redistribuição não entrarão no PR.
+
+Antes de implementar, a Regra Zero pesquisará GitHub, Reddit e documentação oficial, comparará pelo menos três candidatos quando existirem e reproduzirá a menor prova do melhor candidato. A escolha de framework, classificador, calibração, recuperação e persistência ficará registrada. SDD transformará o desenho aprovado em tarefa, análise, arquitetura e passos verificáveis; Ponytail removerá qualquer componente que não sustente um critério do desafio.
+
+O desafio estará pronto somente quando os dois datasets forem usados dentro de seus limites; o diagnóstico gerar números rastreáveis; o pipeline local rodar com um comando; classificação, calibração, gate e recuperação forem avaliados fora dos dados de construção; a fronteira humano/IA aparecer na interface; feedback persistir e exportar; horas e cenários financeiros mostrarem premissas; testes passarem; e a aplicação real estiver documentada por screenshot. Limitações e hipóteses rejeitadas serão entregáveis, não notas escondidas.
+
+Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação, multiempresa, deploy obrigatório, aprendizado online, taxonomia unificada e afirmações causais não sustentadas. Se os dados invalidarem classificação, resposta assistida ou ROI, a função será reduzida e a evidência da invalidação terá prioridade sobre o plano. Após esta seção ser aprovada, `add-task` criará a primeira SPEC; nenhuma implementação começará antes de `plan-task` e da revisão humana dessa SPEC.
+
+**Pergunta de validação:** estes entregáveis, limites e critérios de pronto estão corretos para encerrar o desenho e criar a SPEC?
