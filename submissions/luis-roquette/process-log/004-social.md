@@ -200,3 +200,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) visão geral com alertas prioritários e detalhamento sob demanda; B) páginas separadas por tema; C) página única extensa.
 - **Resposta de Luis:** **A — visão geral com drill-down**.
 - **Implicação:** o dashboard deverá começar pelo que exige atenção e permitir aprofundamento progressivo até os registros e cálculos. A arquitetura de informação evitará tanto fragmentação por excesso de páginas quanto uma tela única sobrecarregada.
+
+### Onda 19 — prioridade dos alertas
+
+- **Pergunta:** como ordenar os alertas na visão geral?
+- **Opções:** A) impacto × confiança × atualidade; B) maior variação percentual; C) ordem cronológica.
+- **Resposta de Luis:** **A — impacto × confiança × atualidade**.
+- **Implicação:** uma anomalia extrema, mas pequena ou pouco sustentada, não dominará automaticamente o painel. A fórmula final deverá ser simples, documentada e testada, sem esconder seus componentes em um score opaco.
