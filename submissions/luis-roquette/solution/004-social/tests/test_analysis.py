@@ -6,7 +6,9 @@ import pandas as pd
 
 from analysis import analyze, derive_metrics, follower_band, load_csv
 from tests.helpers import (
+    aggregate_effect_rows,
     alert_for_target,
+    concentrated_reference,
     csv_bytes,
     default_scope,
     frame_with_target,
@@ -104,20 +106,18 @@ class ContextEvidenceTests(unittest.TestCase):
         target = frame_with_target(base, 8, audience_location="BR")
         alert = alert_for_target(analyze(target, default_scope(), "hash"))
         self.assertIn("audience_location", alert["benchmark"]["removed_controls"])
+        for key in ("platform", "content_type", "content_category", "follower_band", "is_sponsored"):
+            self.assertEqual(alert["benchmark"]["effective_context"][key], alert["context"][key])
         for frame in (make_cohort(4, 10), make_cohort(5, 5)):
             self.assertEqual(analyze(frame, default_scope(target_start="2024-12-01", target_end="2024-12-31"), "hash")["alerts"], [])
 
     def test_target_creator_is_excluded_and_constant_iqr_is_not_strong(self):
         base = make_cohort(6, 6, [4])
-        same_creator = base.iloc[[0]].copy()
-        same_creator["id"] = "same"
-        same_creator["content_id"] = "same"
-        same_creator["source_row_id"] = "hash:same"
-        same_creator["post_date"] = pd.Timestamp("2024-12-20")
-        target = frame_with_target(pd.concat([base, same_creator], ignore_index=True), 20, creator_id="creator-0")
+        excluded_refs = set(base.loc[base["creator_id"] == "creator-0", "source_row_id"])
+        target = frame_with_target(base, 20, creator_id="creator-0")
         result = analyze(target, default_scope(), "hash")
         alert = alert_for_target(result)
-        self.assertNotIn("hash:same", alert["benchmark"]["source_row_ids"])
+        self.assertTrue(excluded_refs.isdisjoint(alert["benchmark"]["source_row_ids"]))
         self.assertEqual(alert["benchmark"]["iqr"], 0)
         self.assertNotEqual(alert["strength_label"], "strong")
 
@@ -140,6 +140,45 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(set(first[0]["priority_components"]), {"impact", "strength", "recency"})
         self.assertEqual(first[0]["action_type"], "test")
+
+    def test_strength_formula_penalizes_creator_concentration(self):
+        balanced = analyze(frame_with_target(make_cohort(20, 5), 20), default_scope(), "hash")
+        concentrated = analyze(frame_with_target(concentrated_reference(), 20), default_scope(), "hash")
+        balanced_strength = alert_for_target(balanced)["strength"]
+        concentrated_strength = alert_for_target(concentrated)["strength"]
+        self.assertAlmostEqual(balanced_strength, 0.95)
+        self.assertAlmostEqual(concentrated_strength, 0.05)
+        self.assertGreater(balanced_strength, concentrated_strength)
+
+    def test_aggregate_recommendation_exists_without_post_outlier(self):
+        result = analyze(
+            aggregate_effect_rows(),
+            default_scope(target_start="2025-01-08", target_end="2025-01-14", reference_date="2025-01-14"),
+            "hash",
+        )
+        self.assertEqual(result["alerts"], [])
+        self.assertEqual(result["recommendations"][0]["evidence_type"], "aggregate")
+        self.assertEqual(result["recommendations"][0]["action_type"], "test")
+        self.assertEqual(result["recommendations"][0]["supporting_topics"], ["audience", "creator", "frequency", "quick_win"])
+
+    def test_strong_aligned_and_conflicting_editorial_signals_map_to_actions(self):
+        scope = default_scope(target_start="2025-01-08", target_end="2025-01-14", reference_date="2025-01-14")
+        positive = analyze(aggregate_effect_rows(creators=20), scope, "hash")
+        negative = analyze(
+            aggregate_effect_rows(creators=20, current_interactions=2), scope, "hash"
+        )
+        conflicting = analyze(
+            aggregate_effect_rows(creators=20, current_views=50, current_interactions=3),
+            scope,
+            "hash",
+        )
+        self.assertEqual(positive["recommendations"][0]["action_type"], "scale_test")
+        self.assertEqual(negative["recommendations"][0]["action_type"], "review_stop")
+        self.assertEqual(conflicting["recommendations"][0]["action_type"], "test")
+        allowed_topics = {"effort", "audience", "frequency", "sponsorship", "creator", "stop", "quick_win"}
+        for result in (positive, negative, conflicting):
+            self.assertTrue(all(item["topic"] in allowed_topics for item in result["recommendations"]))
+            self.assertTrue(all(item["evidence_id"] for item in result["recommendations"]))
 
 
 if __name__ == "__main__":

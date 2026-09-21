@@ -331,3 +331,16 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Teste real:** ambiente isolado em `/tmp`, Python 3.14.2, Streamlit 1.64.0 e Pandas 2.3.3; `pip check` sem dependências quebradas. O CSV público de 23.290.049 bytes reconciliou 52.214 linhas e as cinco plataformas.
 - **Medição:** validação real em 1,242 s; análise inicial em 10,999 s; total 12,241 s. O caminho cabe no objetivo de decisão em cinco minutos; não foi adicionada otimização preventiva.
 - **Limitação:** o teste real encontrou cobertura zero para comparação de patrocínio na janela-padrão recente, estado válido de insuficiência — não uma licença para relaxar os mínimos. Exports e CLI pertencem à S2/Task 3.
+
+## I14 — S1/Task 2: evidência contextual e ações — 2026-09-21 19:21 BRT
+
+- **Planejamento:** manter o núcleo comparável fixo, aplicar os cinco níveis de fallback apenas à audiência e separar alertas post a post, comparação editorial e patrocínio por creator/estrato.
+- **Revisão:** a fórmula de força permaneceu separada de impacto; a prioridade usa P95 da plataforma, força e recência ancorada no dataset. Ações são templates determinísticos e nunca executam publicação ou investimento.
+- **Execução:** foram implementados benchmarks com exclusão do creator-alvo, quartis por post, fallback explícito, concentração, patrocínio estratificado, comparação editorial de janelas iguais, deduplicação contextual e fila de até três prioridades.
+- **Feedback loop 1:** 15/16 testes passaram. A fixture de recomendação agregada tinha 20 creators; excluir um ainda deixava benchmark individual suficiente e o teste não isolava o agregado. A fixture passou a usar cinco creators compartilhados, preservando a elegibilidade editorial e tornando o alerta individual insuficiente.
+- **Feedback loop 2:** testes adicionais fixaram a penalidade de concentração (`0,95` balanceado versus `0,05` concentrado), sinais editoriais positivos/negativos/conflitantes, fallback sem remover controles essenciais e agregado sem outlier.
+- **Feedback loop 3:** o ambiente isolado, com a resolução atual de NumPy, expôs avisos de unidade temporal genérica em `pd.Timedelta`. O motor passou a usar `datetime.timedelta` da biblioteca padrão; a fixture também deixou de fazer uma concatenação redundante.
+- **Gate:** `PYTHONWARNINGS=error python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` terminou com 17/17 testes aprovados em 1,508 s. `py_compile` e `git diff --check` passaram sem saída.
+- **Gate isolado final:** 17/17 testes em 1,470 s, com warnings tratados como erro. O caminho completo do CSV canônico passou em 13,17 s, pico residente de 491.651.072 bytes e zero swap.
+- **Julgamento:** a janela real recente não gerou comparação patrocinada elegível; o motor expõe insuficiência e cobertura, sem reduzir 30 posts/cinco creators para fabricar recomendação.
+- **Limitação:** este marco prova CK-01–07 no motor e a capacidade real. Exportação, CLI, relatório e evidência oficial continuam corretamente reservados para S2/Task 3.

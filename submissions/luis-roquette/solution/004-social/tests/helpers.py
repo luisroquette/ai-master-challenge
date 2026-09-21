@@ -130,3 +130,37 @@ def sponsorship_rows() -> pd.DataFrame:
     frame["content_id"] = [f"sc-{i}" for i in range(len(frame))]
     frame["source_row_id"] = [f"hash:s-{i}" for i in range(len(frame))]
     return frame
+
+
+def concentrated_reference() -> pd.DataFrame:
+    frame = make_cohort(20, 5, [2, 4, 6, 8, 10])
+    frame.loc[:79, "creator_id"] = "dominant"
+    for creator, start in enumerate(range(80, 100, 5), start=1):
+        frame.loc[start : start + 4, "creator_id"] = f"minor-{creator}"
+    return frame
+
+
+def aggregate_effect_rows(
+    *, creators: int = 5, before_views: int = 100, before_interactions: int = 4,
+    current_views: int = 100, current_interactions: int = 8,
+) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    periods = (
+        ("before", datetime(2025, 1, 1, 12), before_views, before_interactions),
+        ("now", datetime(2025, 1, 8, 12), current_views, current_interactions),
+    )
+    for period, started, views, interactions in periods:
+        for index in range(100):
+            rows.append(
+                make_post(
+                    id=f"{period}-{index}",
+                    content_id=f"{period}-content-{index}",
+                    creator_id=f"creator-{index % creators}",
+                    post_date=(started + timedelta(days=index % 7)).isoformat(),
+                    views=views,
+                    likes=interactions,
+                    shares=0,
+                    comments_count=0,
+                )
+            )
+    return frame_from_rows(rows)

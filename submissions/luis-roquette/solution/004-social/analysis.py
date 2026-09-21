@@ -8,6 +8,7 @@ import io
 import json
 import math
 from collections.abc import Iterable
+from datetime import timedelta
 from typing import Any
 
 import pandas as pd
@@ -224,8 +225,8 @@ def _summary(rows: pd.DataFrame) -> dict[str, object]:
 
 def _scope_dates(frame: pd.DataFrame, scope: dict[str, object]) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
     reference = pd.Timestamp(scope.get("reference_date") or max(frame["post_date"]))
-    end = pd.Timestamp(scope.get("target_end") or reference).normalize() + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
-    start = pd.Timestamp(scope.get("target_start") or (reference - pd.Timedelta(days=6))).normalize()
+    end = pd.Timestamp(scope.get("target_end") or reference).normalize() + timedelta(days=1) - timedelta(microseconds=1)
+    start = pd.Timestamp(scope.get("target_start") or (reference - timedelta(days=6))).normalize()
     return start, end, reference
 
 
@@ -250,7 +251,7 @@ def _benchmark(frame: pd.DataFrame, target: pd.Series, target_start: pd.Timestam
     for name, days, audience in levels:
         candidates = frame.loc[
             (frame["post_date"] < target_start)
-            & (frame["post_date"] >= target_start - pd.Timedelta(days=days))
+            & (frame["post_date"] >= target_start - timedelta(days=days))
             & (frame["creator_id"] != target["creator_id"])
         ]
         candidates = _match(candidates, target, (*CORE_KEYS, *audience)).dropna(subset=["erv"])
@@ -364,8 +365,8 @@ def _priority(values: dict[str, float], denominators: dict[str, float], strength
 
 def _editorial(frame: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, source_hash: str) -> list[dict[str, object]]:
     duration = int((end.normalize() - start.normalize()).days) + 1
-    previous_end = start - pd.Timedelta(microseconds=1)
-    previous_start = start.normalize() - pd.Timedelta(days=duration)
+    previous_end = start - timedelta(microseconds=1)
+    previous_start = start.normalize() - timedelta(days=duration)
     current = frame.loc[(frame["post_date"] >= start) & (frame["post_date"] <= end) & ~frame["is_sponsored"]]
     previous = frame.loc[(frame["post_date"] >= previous_start) & (frame["post_date"] <= previous_end) & ~frame["is_sponsored"]]
     evidence: list[dict[str, object]] = []
