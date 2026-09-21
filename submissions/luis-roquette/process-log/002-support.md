@@ -654,3 +654,63 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Gate pendente:** o workflow completo de `plan-task` exige assets ausentes da instalação Codex atual e segue obrigatório, junto da aprovação humana, antes de `implement-task`.
 
 **Decisão:** encerrar o loop de otimização em 2/2 passadas consecutivas sem melhorias substanciais.
+
+## I29 — Reabertura da auditoria contra o repositório canônico — 2026-09-21 19:34 BRT
+
+- **Solicitação:** rever o repositório do desafio e garantir cobertura integral do avaliador e da stack, sem gargalos conhecidos.
+- **Fonte verificada:** `upstream/main` no SHA `4aed364d572fabe0f1fff1f0c6f32960b30fe575`; challenge, README raiz, guia de submissão, CONTRIBUTING e template oficial relidos integralmente.
+- **Gaps encontrados:** README obrigatório estava planejado dentro da solução, não na raiz da submissão; desperdício não tinha fórmula fechada; satisfação não tinha teste multivariado/fallback; Dataset 1 precisava de proteção explícita contra texto fraco; Laboratório IT não recebia texto livre.
+- **Correções adicionais:** matriz de oportunidade entre os datasets sem unir registros; `make doctor`; pisos compatíveis da stack; orçamento de 320 minutos; gate do diff contra `upstream/main`; título oficial do PR.
+- **Evidência:** `solution/002-support/docs/reports/2026-09-21-plan-compliance-audit.md`.
+
+**Decisão:** fechamento anterior reaberto corretamente; nova conclusão depende de duas passadas finais desta auditoria sem gap material.
+
+## I30 — Auditoria de stack e reinício da sequência — 2026-09-21 19:46 BRT
+
+- **Achado:** o piso `streamlit>=1.42` não garantia o `AppTest` multipágina planejado; a documentação dessa versão declara incompatibilidade com `st.navigation` e `st.Page`.
+- **Correção:** piso elevado para `streamlit>=1.64,<2`, versão cuja API documenta `AppTest.switch_page()`; lock exato continua obrigatório no Codespace.
+- **Verificação adjacente:** `scikit-learn>=1.6,<2` cobre `FrozenEstimator`; Python 3.12 permanece suportado.
+- **Sequência sem gap material:** reiniciada em 0 de 2.
+
+**Decisão:** incompatibilidade eliminada antes da implementação; as duas passadas finais serão refeitas desde zero.
+
+## I31 — Auditoria final, passada 1 — Requisitos do avaliador — 2026-09-21 19:51 BRT
+
+- **Escopo relido:** challenge, guia de submissão, CONTRIBUTING e template no SHA canônico registrado.
+- **Verificação:** diagnóstico, satisfação, desperdício, ambos os datasets, automação e limites humanos, fluxo prático, protótipo real, anti-cherry-picking, process log, README oficial, setup, pasta autorizada e título do PR possuem entrega e gate explícitos no plano.
+- **Resultado:** nenhum gap material novo.
+- **Sequência sem gap material:** 1 de 2.
+
+**Decisão:** manter o plano sem expansão; seguir para a passada independente de stack e execução.
+
+## I32 — Auditoria de stack, achados operacionais — 2026-09-21 20:02 BRT
+
+- **Achados:** faltava política explícita de reuso/cota de Codespaces; Task 7 executaria suíte completa no Mac; o smoke do Streamlit ficaria bloqueado; o preflight final antecedia arquivos ainda não criados.
+- **Correções:** reuso e cota viraram pré-condições; teste local foi reduzido ao arquivo focal; smoke ganhou health check e encerramento; evidências e READMEs agora precedem commit, push e preflight do SHA final.
+- **Sequência sem gap material:** reiniciada em 0 de 2.
+
+**Decisão:** os quatro gargalos foram eliminados no plano; reiniciar ambas as passadas finais.
+
+## I33 — Auditoria final reiniciada, gap de comunicação — 2026-09-21 20:07 BRT
+
+- **Achado:** o fluxo prático existia na arquitetura e no app, mas o plano não obrigava o README final a narrá-lo ponta a ponta para o avaliador.
+- **Correção:** Task 9 agora exige a sequência explícita de entrada, validação, modelo, gate, recuperação/abstenção, decisão humana e auditoria.
+- **Sequência sem gap material:** reiniciada em 0 de 2.
+
+**Decisão:** implementação e comunicação passam a provar o mesmo fluxo operacional.
+
+## I34 — Auditoria final, passada 1 — Cobertura do avaliador — 2026-09-21 20:10 BRT
+
+- **Verificação:** matriz automatizada de 18 exigências contra o plano e releitura das quatro fontes canônicas no SHA `4aed364d572fabe0f1fff1f0c6f32960b30fe575`.
+- **Resultado:** 18 de 18 exigências cobertas; nenhum gap material novo.
+- **Sequência sem gap material:** 1 de 2.
+
+**Decisão:** preservar o escopo e executar a passada independente de stack, comandos e ciclo de vida.
+
+## I35 — Auditoria final, passada 2 — Stack e execução — 2026-09-21 20:13 BRT
+
+- **Verificação:** nove tarefas e nove contratos de interface; 45 passos; pisos compatíveis; nenhuma suíte completa local; reuso/cota de Codespaces; dois smokes limitados; gate do SHA final; diff restrito à submissão; `git diff --check` limpo.
+- **Resultado:** nenhum gap material novo.
+- **Sequência sem gap material:** 2 de 2 — meta atingida.
+
+**Decisão:** auditoria encerrada. O plano cobre 100% dos requisitos publicados e não mantém gargalo conhecido de arquitetura, stack ou execução; prontidão funcional permanece condicionada à implementação e aos gates previstos.
