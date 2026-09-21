@@ -564,4 +564,35 @@ Como o dashboard deve organizar a leitura?
 
 ### Estado da pergunta 3
 
+Respondida por Luis.
+
+### Resposta literal de Luis
+
+> b
+
+### Interpretação
+
+A resposta corresponde à opção **B**. O dashboard terá três visões alinhadas ao fluxo de decisão: resumo executivo, evidências por causa e segmento, e fila operacional de contas. Definições, limitações e validações ficarão acessíveis em um painel metodológico recolhível.
+
+### Consequência para o desenho
+
+Cada visual deverá responder a uma pergunta concreta e compartilhar filtros e métricas com as outras visões. Abas por dataset, catálogo de modelos e chat ficam fora do escopo inicial porque não melhoram diretamente a decisão aprovada.
+
+### Ponto ainda aberto
+
+A fila operacional precisa sair da tela e chegar ao trabalho diário do CS, mas ainda não há CRM ou canal externo autorizado no desafio.
+
+### Pergunta 4
+
+Qual deve ser a automação inicial da fila de Customer Success?
+
+- A. Exibir a tabela apenas no dashboard, sem exportação.
+- B. Gerar um CSV baixável com conta, prioridade, MRR exposto, sinais, ação imediata, ação estrutural e campos vazios de responsável e status.
+- C. Integrar diretamente com um CRM e criar tarefas automaticamente.
+- D. Enviar mensagens automáticas aos clientes classificados como alto risco.
+
+**Recomendação técnica preliminar do agente:** B, porque entrega um artefato utilizável amanhã sem pressupor CRM, credenciais ou autorização para contatar clientes.
+
+### Estado da pergunta 4
+
 Aguardando resposta de Luis.
