@@ -221,3 +221,58 @@ def model_panel() -> pd.DataFrame:
     assert any(bucket < 80 for bucket in buckets.values())
     assert any(bucket >= 80 for bucket in buckets.values())
     return panel
+
+
+@pytest.fixture
+def analysis_result(accepted_findings, claim_panel):
+    from ravenstack_churn.diagnosis import build_claim_checks
+    from ravenstack_churn.publish import AnalysisResult
+
+    findings = accepted_findings.assign(
+        driver_group=["commercial", "support"],
+        immediate_action="Ação imediata revisada.",
+        structural_action="Ação estrutural revisada.",
+        owner=["Head de Receita", "Head de Suporte"],
+        counterevidence="Limite do fixture.",
+        limitation="Associação observacional.",
+        failure_reason=pd.NA,
+    )
+    panel = pd.DataFrame(
+        [
+            {
+                "account_id": "A-1",
+                "cutoff": pd.Timestamp("2024-12-31"),
+                "chronology": "strict",
+                "mrr_active": 1_000,
+                "escalations_90d": 2,
+                "auto_renew_off": True,
+            },
+            {
+                "account_id": "A-2",
+                "cutoff": pd.Timestamp("2024-12-31"),
+                "chronology": "strict",
+                "mrr_active": 500,
+                "escalations_90d": 0,
+                "auto_renew_off": True,
+            },
+        ]
+    )
+    return AnalysisResult(
+        quality_report={"rows": {"accounts": 2}},
+        panel=panel,
+        claim_checks=build_claim_checks(claim_panel),
+        findings=findings,
+        segment_metrics=pd.DataFrame(
+            [{"dimension": "industry", "segment": "FinTech", "churn_rate": 0.2}]
+        ),
+        model_evaluation={"publish_model": False, "failure_reasons": ["fixture"]},
+        model_scores=None,
+    )
+
+
+@pytest.fixture
+def generated_artifacts(tmp_path, analysis_result):
+    from ravenstack_churn.publish import publish_artifacts
+
+    publish_artifacts(analysis_result, tmp_path)
+    return tmp_path
