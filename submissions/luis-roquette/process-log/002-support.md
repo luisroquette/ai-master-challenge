@@ -90,3 +90,21 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 ### Sequência SDD acordada
 
 `brainstorm socrático → síntese validada → add-task → plan-task → revisão humana da SPEC → implement-task`
+
+## I06 — Ledger de perguntas e respostas — 2026-09-21 14:50 BRT
+
+- **Objetivo:** preservar as decisões tomadas durante toda a descoberta socrática, não apenas a síntese final.
+- **Regra definida por Luis:** registrar no diário cada pergunta, suas alternativas, a resposta escolhida e a interpretação usada para adaptar a onda seguinte. Corrigir o português sem alterar o sentido da resposta.
+- **Formato:** entradas curtas, cronológicas e contemporâneas à conversa.
+
+### Onda 1 — Foco principal do protótipo
+
+**Pergunta:** qual deve ser o foco principal do protótipo?
+
+- **A — Triagem inteligente:** categoria, prioridade, confiança, roteamento e fallback humano.
+- **B — Controle de gargalos:** painel com atrasos, desperdício recuperável e ações por impacto.
+- **C — Resposta assistida:** sugestões baseadas em tickets semelhantes, com revisão humana.
+
+**Resposta de Luis:** A + B + C.
+
+**Interpretação para a próxima onda:** a solução precisa integrar diagnóstico, decisão operacional e assistência ao agente. A próxima escolha deve definir como esses três resultados formam um único produto demonstrável, sem virar três protótipos desconectados.
