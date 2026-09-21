@@ -58,3 +58,28 @@ A solução precisará aplicar critérios comparáveis às causas candidatas e m
 ### Ponto ainda aberto
 
 Precisamos definir como priorizar uma causa quando quantidade de contas afetadas e receita exposta apontarem para direções diferentes.
+
+### Pergunta 3
+
+Quando quantidade de contas e receita exposta apontarem para causas diferentes, como devemos priorizar?
+
+- A. Maior receita mensal exposta.
+- B. Maior quantidade de contas afetadas.
+- C. Matriz multicritério: receita, contas, confiança da evidência e possibilidade de ação.
+- D. Dois rankings separados, sem prioridade final única.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+A prioridade não será definida por uma única métrica. Cada causa candidata será avaliada por impacto financeiro, alcance entre contas, confiança da evidência e viabilidade de intervenção.
+
+### Consequência para o desenho
+
+A solução deverá mostrar as dimensões separadamente e explicar qualquer síntese de prioridade. Pesos e thresholds não poderão parecer precisão científica se forem escolhas de negócio; precisarão estar visíveis e passar por análise de sensibilidade.
+
+### Ponto ainda aberto
+
+Precisamos definir o horizonte da recomendação: resposta imediata, correção estrutural ou sequência das duas.
