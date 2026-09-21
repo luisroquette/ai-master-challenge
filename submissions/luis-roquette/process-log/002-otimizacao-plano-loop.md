@@ -172,3 +172,32 @@ Uma nova revisão começou do briefing, sem reutilizar a conclusão da rodada an
 ## Fechamento do loop
 
 Foram necessárias 20 passadas. Melhorias materiais apareceram até a Passada 18; as Passadas 19 e 20 foram consecutivas e estáveis. O plano está pronto para o gate SDD seguinte, ainda sem implementação da solução.
+
+## Auditoria final pós-loop — aderência ao avaliador e à stack
+
+**Data:** 21 de setembro de 2026
+**Resultado:** cobertura integral confirmada após correções; implementação ainda não iniciada.
+
+Reconsultamos pela internet o fork e o upstream do desafio. Ambos apontavam para o mesmo `main`, commit `4aed364d572fabe0f1fff1f0c6f32960b30fe575`, e mantinham os mesmos requisitos: relatório diagnóstico, cinco tabelas, causa, segmentos e contas, ações priorizadas com impacto, separação entre correlação e causalidade, leitura executiva e process log obrigatório.
+
+### Gargalos encontrados e eliminados
+
+- A versão atual da skill `writing-plans` exige `Spec` e `Review Focus`; ambos foram adicionados com cinco riscos ligados a testes nomeados.
+- O plano não obrigava uma resposta direta às duas contradições do CEO. Adicionamos `claim_checks.csv`, com uso e satisfação no agregado versus a coorte de churn em 30 dias, além de presença obrigatória no relatório e dashboard.
+- `.streamlit/config.toml` dentro da solução seria ignorado no Community Cloud, que inicializa a aplicação na raiz do repositório. Removemos esse arquivo planejado, migramos layout/estilo para `app.py` e fixamos caminhos a partir de `__file__`.
+- O deploy não possuía o arquivo de dependências recomendado ao lado do entrypoint. Adicionamos `requirements.txt`, teste de igualdade com as dependências runtime do `pyproject.toml` e smoke test executado a partir da raiz do repositório.
+- A instalação agora usa apenas wheels (`--only-binary=:all:`), eliminando compilação nativa e a necessidade de `packages.txt`.
+
+### Stack verificada
+
+Consultamos os metadados oficiais do PyPI para NumPy `2.5.3`, pandas `3.0.6`, SciPy `1.18.1`, statsmodels `0.15.0`, scikit-learn `1.9.1`, Streamlit `1.64.0`, Plotly `7.1.0`, pytest `9.1.1`, Ruff `0.16.8` e setuptools `84.0.0`. Todas as versões existem, não estão revogadas e aceitam Python 3.12; bibliotecas compiladas possuem wheel Linux x86-64 e as demais possuem wheel universal ou próprio de plataforma.
+
+O Streamlit Community Cloud documenta Python 3.12 como padrão atual, recomenda `requirements.txt` ao lado do entrypoint e executa o app a partir da raiz do repositório. O plano agora testa exatamente esse cenário e não depende de segredo, API paga, banco ou pacote apt.
+
+Fontes verificadas: [Challenge 001](https://github.com/luisroquette/ai-master-challenge/tree/main/challenges/data-001-churn), [guia de submissão](https://github.com/luisroquette/ai-master-challenge/blob/main/submission-guide.md), [dependências do Streamlit Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies) e [organização de arquivos no Streamlit Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/file-organization).
+
+### Incidentes da auditoria
+
+A primeira consulta em lote ao PyPI falhou porque `zsh` não separou pares escritos com espaço; repetimos com delimitador `@` e obtivemos todos os metadados. Um patch foi rejeitado por conter duas operações para o mesmo arquivo; reaplicamos como uma única operação. Nenhum incidente alterou arquivos fora da submissão.
+
+Uma checagem adicional improvisada do download Kaggle falhou três vezes sem testar o fluxo real: `HEAD` retornou 404, `status` era variável reservada do `zsh` e um template de `mktemp` com sufixo foi inválido. Interrompemos a repetição. O comando planejado usa `GET` e `mktemp -d`, combinação já executada com sucesso na inspeção inicial; além disso, os cinco CSVs verificados serão versionados, então reprodução e avaliação não dependerão da disponibilidade futura do Kaggle.

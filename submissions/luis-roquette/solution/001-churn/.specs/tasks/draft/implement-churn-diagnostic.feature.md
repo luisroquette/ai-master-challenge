@@ -26,6 +26,7 @@ title: Implementar diagnóstico acionável de churn da RavenStack
 - Construir painel de conta por data de corte sem informação futura.
 - Usar horizonte operacional de 30 dias e visão adicional da renovação anual.
 - Calcular sinais de 7, 30 e 90 dias somente quando houver cobertura suficiente.
+- Confrontar explicitamente as alegações executivas de crescimento de uso e satisfação adequada no agregado versus a coorte que churnará nos 30 dias seguintes.
 - Separar fato observado, associação controlada e hipótese causal.
 - Usar `reason_code` e feedback somente no diagnóstico retrospectivo.
 - Tratar evidência insuficiente como inconclusiva e suprimir rankings instáveis.
@@ -55,6 +56,7 @@ title: Implementar diagnóstico acionável de churn da RavenStack
 - Bloquear a entrega em falhas de schema, chaves, joins, receita, isolamento temporal, consistência de artefatos ou fumaça do dashboard.
 - Incluir modelo preditivo apenas se superar baseline simples fora do tempo e agregar valor operacional por segmento.
 - Manter relatório, dashboard e CSV consistentes e derivados da mesma execução.
+- Preservar as duas verificações das alegações do CEO como artefato canônico, mesmo quando nenhuma hipótese causal passar pelos gates.
 - Documentar setup, limitações, decisões humanas e todo o uso de IA no process log.
 
 #### Fontes de contexto

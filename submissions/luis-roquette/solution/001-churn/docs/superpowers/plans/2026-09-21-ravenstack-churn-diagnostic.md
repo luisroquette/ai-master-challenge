@@ -8,6 +8,8 @@
 
 **Tech Stack:** Python 3.12, pandas 3.0.6, NumPy 2.5.3, SciPy 1.18.1, statsmodels 0.15.0, scikit-learn 1.9.1, Streamlit 1.64.0, Plotly 7.1.0, pytest 9.1.1 e Ruff 0.16.8.
 
+**Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md`
+
 ## Global Constraints
 
 - Alterar somente `submissions/luis-roquette/`.
@@ -21,6 +23,16 @@
 - `make reproduce` deve falhar diante de contrato crítico, teste vermelho ou artefato inconsistente.
 - A demonstração pública é somente leitura e não bloqueia a reprodução local.
 - Executar o preflight final no Codespace gerenciado e provar o mesmo commit e diff antes do Pull Request.
+
+## Review Focus
+
+- `usage_id` repetido com conteúdo conflitante deve preservar todas as linhas e sinalizar a anomalia — `test_conflicting_usage_ids_are_preserved_and_flagged` na Task 2.
+- flags de churn, evento terminal e reativação divergentes devem ser reconciliados sem trocar o rótulo primário — `test_churn_label_disagreement_is_reported` na Task 2.
+- eventos anteriores ao ciclo de vida devem permanecer em `observed` e desaparecer de `strict` — `test_strict_panel_excludes_pre_lifecycle_events` na Task 3.
+- assinaturas simultâneas com plano e frequência diferentes devem preservar receita e produzir dimensões `mixed` — `test_concurrent_subscriptions_preserve_revenue_and_mixed_dimensions` na Task 3.
+- zero findings aprovados deve gerar relatório honesto e fila vazia, não causa inventada — `test_no_accepted_finding_publishes_honest_empty_queue` na Task 6.
+
+---
 
 ## Execution Convention
 
@@ -36,12 +48,12 @@
 |---|---:|
 | 1–2 — foundation and contracts | 55 min |
 | 3 — temporal panel | 55 min |
-| 4 — diagnosis | 65 min |
+| 4 — diagnosis | 75 min |
 | 5 — optional model gate | 35 min; skip publication when the budget expires |
 | 6–7 — artifacts, report and dashboard | 80 min |
 | 8–9 — documentation and clean preflight | 35 min |
 
-Core implementation budget: `5 h 25 min`, inside the official 4–6 hour window. Public deployment is attempted only after the local submission is complete and is outside the critical path.
+Core implementation budget: `5 h 35 min`, inside the official 4–6 hour window. Public deployment is attempted only after the local submission is complete and is outside the critical path.
 
 ## File Structure
 
@@ -50,8 +62,8 @@ submissions/luis-roquette/solution/001-churn/
 ├── Makefile
 ├── README.md
 ├── pyproject.toml
+├── requirements.txt
 ├── app.py
-├── .streamlit/config.toml
 ├── data/
 │   ├── README.md
 │   └── raw/
@@ -63,6 +75,7 @@ submissions/luis-roquette/solution/001-churn/
 ├── artifacts/
 │   ├── account_panel.csv
 │   ├── account_queue.csv
+│   ├── claim_checks.csv
 │   ├── findings.csv
 │   ├── segment_metrics.csv
 │   ├── quality_report.json
@@ -105,7 +118,7 @@ submissions/luis-roquette/solution/001-churn/
 **Interfaces:**
 - Produces: `RAW_FILE_SHA256: dict[str, str]`, `RAW_TABLE_NAMES: tuple[str, ...]`, `DEFAULT_WINDOWS: tuple[int, ...]`, `DEFAULT_CUTOFFS: pandas.DatetimeIndex`.
 - Produces: `SCORING_CUTOFF = pandas.Timestamp("2024-12-31")` para a fila corrente sem alvo futuro.
-- Produces: um ambiente instalável com `python -m pip install -e '.[dev]'`.
+- Produces: um ambiente instalável sem compilação nativa com `python -m pip install --only-binary=:all: -e '.[dev]'`.
 
 - [ ] **Step 1: Write the failing raw-file checksum test**
 
@@ -211,7 +224,7 @@ Do not commit the downloaded archive. Add `data/README.md` with source URL, retr
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install --only-binary=:all: -e '.[dev]'
 .venv/bin/python -m pytest tests/test_contracts.py::test_raw_files_match_published_checksums -v
 ```
 
@@ -249,7 +262,7 @@ git commit -m "feat(churn): add reproducible project and verified data"
 
 - [ ] **Step 1: Create minimal synthetic tables in `tests/conftest.py`**
 
-Define a `mini_tables()` fixture returning all five DataFrames with accounts `A-1` and `A-2`; set their signup dates to `2023-01-01` and `2024-05-20`. Give `A-1` an annual `S-1` from `2023-06-15` to `2024-06-15` at MRR `1000`, plus monthly `S-2` from `2024-04-01` onward at MRR `200`; give `A-2` monthly `S-3` from `2024-05-20` onward at MRR `300`. Add usage before and after the `2024-05-31` cutoff, one conflicting duplicated `usage_id`, one `A-1` ticket before signup, one future ticket, terminal churn for `A-1` on `2024-06-15`, and a later reactivation. Copy the exact column lists from `SCHEMAS`, assert `set(mini_tables) == set(RAW_TABLE_NAMES)`, and fill non-tested required fields with fixed valid values.
+Define a `mini_tables()` fixture returning all five DataFrames with accounts `A-1` and `A-2`; set their signup dates to `2023-01-01` and `2024-05-20`, with account churn flags `False` and `True` respectively. Give `A-1` an annual Enterprise `S-1` from `2023-06-15` to `2024-06-15` at MRR `1000`, plus monthly Pro `S-2` from `2024-04-01` onward at MRR `200`; give `A-2` monthly Basic `S-3` from `2024-05-20` onward at MRR `300`. Add usage before and after the `2024-05-31` cutoff, one conflicting duplicated `usage_id`, one `A-1` ticket before signup, one future ticket, terminal churn for `A-1` on `2024-06-15`, and a later reactivation. Copy the exact column lists from `SCHEMAS`, assert `set(mini_tables) == set(RAW_TABLE_NAMES)`, and fill non-tested required fields with fixed valid values.
 
 - [ ] **Step 2: Write failing contract and quality tests**
 
@@ -272,6 +285,12 @@ def test_conflicting_usage_ids_are_preserved_and_flagged(mini_tables):
     assert len(validated) == len(mini_tables["feature_usage"])
     report = build_quality_report({**mini_tables, "feature_usage": validated})
     assert report["contradictions"]["duplicate_usage_id_groups"] == 1
+
+
+def test_churn_label_disagreement_is_reported(mini_tables):
+    report = build_quality_report(mini_tables)
+    assert report["contradictions"]["accounts_flag_vs_terminal_event"] == 2
+    assert report["label_policy"] == "first_non_reactivation_event"
 ```
 
 - [ ] **Step 3: Verify both tests fail**
@@ -388,6 +407,14 @@ def test_mrr_lost_is_active_revenue_immediately_before_churn(mini_tables):
     assert lost["A-1"] == 1200
 
 
+def test_concurrent_subscriptions_preserve_revenue_and_mixed_dimensions(mini_tables):
+    panel = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
+    account = panel.loc[panel.account_id.eq("A-1")].iloc[0]
+    assert account["mrr_active"] == 1200
+    assert account["plan_tier"] == "mixed"
+    assert account["billing_frequency"] == "mixed"
+
+
 def test_incomplete_observation_window_is_null_not_zero(mini_tables):
     panel = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
     recent = panel.loc[panel.account_id.eq("A-2")].iloc[0]
@@ -413,7 +440,7 @@ Include accounts with `signup_date <= cutoff` and no terminal churn on or before
 
 - [ ] **Step 6: Implement time-window aggregation**
 
-For each window `w`, select events in `(cutoff - w days, cutoff]`. Map usage to account through `subscription_id`. A support window is covered only when `signup_date <= cutoff - w days`; a usage window is covered only when that condition holds and at least one mapped subscription spans the full window. For covered windows, captured-event counts may be zero. For uncovered windows, count and aggregate metrics are null and their coverage flags are false. Response, resolution and satisfaction means are additionally null when no ticket carries the measured field; record field coverage as `non_null_measured_tickets / tickets_in_window`, with null when there are no tickets. Create `usage_count_{w}d`, `usage_duration_{w}d`, `errors_{w}d`, `feature_breadth_{w}d`, `beta_share_{w}d`, `tickets_{w}d`, `escalations_{w}d`, `mean_first_response_{w}d`, `mean_resolution_{w}d`, `mean_satisfaction_{w}d`, structural coverage flags and measured-field coverage. In `strict`, also require event time on or after account signup and usage time on or after subscription start.
+For each window `w`, select events in `(cutoff - w days, cutoff]`. Map usage to account through `subscription_id`. A support window is covered only when `signup_date <= cutoff - w days`; a usage window is covered only when that condition holds and at least one mapped subscription spans the full window. For covered windows, captured-event counts may be zero. For uncovered windows, count and aggregate metrics are null and their coverage flags are false. Response, resolution and satisfaction means are additionally null when no ticket carries the measured field; record the non-null response count and field coverage as `non_null_measured_tickets / tickets_in_window`, with null when there are no tickets. Create `usage_count_{w}d`, `usage_duration_{w}d`, `errors_{w}d`, `feature_breadth_{w}d`, `beta_share_{w}d`, `tickets_{w}d`, `escalations_{w}d`, `mean_first_response_{w}d`, `mean_resolution_{w}d`, `mean_satisfaction_{w}d`, `satisfaction_responses_{w}d`, structural coverage flags and measured-field coverage. In `strict`, also require event time on or after account signup and usage time on or after subscription start.
 
 - [ ] **Step 7: Implement trends and labels**
 
@@ -447,18 +474,19 @@ git commit -m "feat(churn): build leak-free temporal account panel"
 - Consumes: observed and strict account panels plus churn feedback.
 - Produces: `build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame`, one row per account at the last eligible pre-churn cutoff or `2024-11-30` for controls; the `2024-12-31` scoring rows never enter coefficient estimation.
 - Produces: `evaluate_candidates(observed: pd.DataFrame, strict: pd.DataFrame, churn_events: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]` returning `findings` and `segment_metrics`.
+- Produces: `build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame`, an auditable six-month reconciliation of overall versus next-30-day-churn usage and satisfaction.
 - Produces finding columns: `finding_id`, `driver_group`, `claim`, `evidence_level`, `adjusted_odds_ratio`, `ci_low`, `ci_high`, `observed_effect`, `strict_effect`, `sensitivity_delta`, `source_tables`, `affected_accounts`, `mrr_exposed_max`, `confidence`, `counterevidence`, `limitation`, `immediate_action`, `structural_action`, `priority_rank`.
 
 - [ ] **Step 1: Add deterministic diagnosis fixtures**
 
-Extend `tests/conftest.py` with `candidate_frames`, a tuple of observed panel, strict panel and churn events containing one stable and one direction-reversing candidate; and `accepted_findings`, two fully populated passing rows whose MRR/reach order is unambiguous. Tests must not refer to production artifacts.
+Extend `tests/conftest.py` with `candidate_frames`, a tuple of observed panel, strict panel and churn events containing one stable and one direction-reversing candidate; `accepted_findings`, two fully populated passing rows whose MRR/reach order is unambiguous; and `claim_panel`, six monthly cutoffs where overall usage rises while the next-30-day-churn cohort falls and overall satisfaction is at least `4.0` while that cohort remains below `4.0`. Tests must not refer to production artifacts.
 
 - [ ] **Step 2: Write failing finding-gate tests**
 
 ```python
 import pandas as pd
 
-from ravenstack_churn.diagnosis import evaluate_candidates, rank_findings
+from ravenstack_churn.diagnosis import build_claim_checks, evaluate_candidates, rank_findings
 
 
 def test_unstable_candidate_is_not_ranked(candidate_frames):
@@ -481,6 +509,14 @@ def test_zero_variance_candidate_is_inconclusive(candidate_frames):
     row = findings.loc[findings.finding_id.eq("F-product-errors")].iloc[0]
     assert row["confidence"] == "inconclusive"
     assert row["failure_reason"] == "zero_variance"
+
+
+def test_claim_checks_expose_aggregate_contradictions(claim_panel):
+    checks = build_claim_checks(claim_panel).set_index(["claim_id", "cohort"])
+    assert checks.loc[("C-usage-growth", "overall"), "status"] == "up"
+    assert checks.loc[("C-usage-growth", "churn_next_30d"), "status"] == "down"
+    assert checks.loc[("C-satisfaction-ok", "overall"), "status"] == "ok"
+    assert checks.loc[("C-satisfaction-ok", "churn_next_30d"), "status"] == "concern"
 ```
 
 - [ ] **Step 3: Verify diagnosis tests fail**
@@ -545,11 +581,15 @@ ACTIONS = {
 }
 ```
 
-- [ ] **Step 8: Produce segment metrics**
+- [ ] **Step 8: Reconcile the CEO's two aggregate claims**
+
+Use the last six labeled monthly cutoffs. Define `retained` as `churn_next_30d == 0`, `churn_next_30d` as `churn_next_30d == 1`, and `overall` as both cohorts. For `C-usage-growth`, calculate covered-account daily usage (`usage_count_30d / 30`) and its ordinary least-squares slope over cutoff ordinal; status is `up`, `down` or `flat` using slope tolerance `1e-9`. For `C-satisfaction-ok`, calculate the ticket-response-weighted mean from `mean_satisfaction_90d` and `satisfaction_responses_90d`; status is `ok` only when mean is at least `4.0` and response coverage is at least `70%`, otherwise `concern`, with `insufficient` when either value is unavailable. Emit `claim_id`, `cohort`, `start_value`, `end_value`, `slope`, `status`, `coverage`, `cutoff_start`, `cutoff_end` and `limitation`. These are observed facts, not causal findings.
+
+- [ ] **Step 9: Produce segment metrics**
 
 Generate churn count, churn rate, MRR lost, MRR exposed, sample size and coverage by `industry`, `country`, `referral_source`, derived `plan_tier`, derived `billing_frequency`, `is_trial`, and MRR band. Define MRR lost as `mrr_lost_at_churn`; never use refund or current MRR as a substitute. Suppress executive ranking for groups below the sample gates but retain them with `confidence=inconclusive`.
 
-- [ ] **Step 9: Run diagnosis tests**
+- [ ] **Step 10: Run diagnosis tests**
 
 ```bash
 .venv/bin/python -m pytest tests/test_diagnosis.py -v
@@ -557,7 +597,7 @@ Generate churn count, churn rate, MRR lost, MRR exposed, sample size and coverag
 
 Expected: PASS.
 
-- [ ] **Step 10: Commit traceable diagnosis**
+- [ ] **Step 11: Commit traceable diagnosis**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn/diagnosis.py submissions/luis-roquette/solution/001-churn/tests/test_diagnosis.py submissions/luis-roquette/solution/001-churn/tests/conftest.py
@@ -595,7 +635,11 @@ from ravenstack_churn.modeling import MODEL_FEATURES, apply_model_gate, stable_a
 
 def test_accounts_never_cross_train_and_test(model_panel):
     split = stable_account_split(model_panel["account_id"])
-    grouped = pd.DataFrame({"account_id": model_panel.account_id, "split": split}).groupby("account_id").split.nunique()
+    grouped = (
+        pd.DataFrame({"account_id": model_panel.account_id, "split": split})
+        .groupby("account_id")
+        .split.nunique()
+    )
     assert grouped.max() == 1
 
 
@@ -670,7 +714,7 @@ git commit -m "feat(churn): gate predictive risk outside time"
 - Create at runtime: `submissions/luis-roquette/solution/001-churn/artifacts/*`
 
 **Interfaces:**
-- Consumes: quality report, both panels, findings, segment metrics, model evaluation and optional scores.
+- Consumes: quality report, both panels, claim checks, findings, segment metrics, model evaluation and optional scores.
 - Produces: `publish_artifacts(result: AnalysisResult, output_dir: Path) -> dict[str, Path]`.
 - Produces: `validate_artifact_set(output_dir: Path) -> dict[str, object]`; raises `ArtifactConsistencyError` on mixed or incomplete runs.
 - Produces: `compare_artifact_sets(reference_dir: Path, candidate_dir: Path) -> None`; compares canonical CSV/report checksums and manifest parameters while ignoring only run timestamp and source Git SHA.
@@ -698,10 +742,13 @@ from ravenstack_churn.publish import (
 def test_queue_and_report_use_same_finding_ids(analysis_result, tmp_path):
     paths = publish_artifacts(analysis_result, tmp_path)
     findings = pd.read_csv(paths["findings"])
+    claim_checks = pd.read_csv(paths["claim_checks"])
     queue = pd.read_csv(paths["account_queue"])
     report = paths["report"].read_text()
     assert set(queue.finding_id).issubset(set(findings.finding_id))
     assert all(fid in report for fid in findings.query("confidence != 'inconclusive'").finding_id)
+    assert set(claim_checks.claim_id) == {"C-usage-growth", "C-satisfaction-ok"}
+    assert all(claim_id in report for claim_id in claim_checks.claim_id.unique())
 
 
 def test_manifest_rejects_modified_artifact(analysis_result, tmp_path):
@@ -712,7 +759,10 @@ def test_manifest_rejects_modified_artifact(analysis_result, tmp_path):
 
 
 def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_path):
-    result = replace(analysis_result, findings=analysis_result.findings.assign(confidence="inconclusive"))
+    result = replace(
+        analysis_result,
+        findings=analysis_result.findings.assign(confidence="inconclusive"),
+    )
     paths = publish_artifacts(result, tmp_path)
     assert pd.read_csv(paths["account_queue"]).empty
     assert "Evidência insuficiente para priorizar uma causa" in paths["report"].read_text()
@@ -728,7 +778,7 @@ Expected: FAIL because publication interfaces do not exist.
 
 - [ ] **Step 4: Define the `AnalysisResult` data contract**
 
-Use a frozen dataclass with `quality_report`, `panel`, `findings`, `segment_metrics`, `model_evaluation`, and optional `model_scores`. Keep DataFrames in memory; serialize only in `publish_artifacts`.
+Use a frozen dataclass with `quality_report`, `panel`, `claim_checks`, `findings`, `segment_metrics`, `model_evaluation`, and optional `model_scores`. Keep DataFrames in memory; serialize only in `publish_artifacts`.
 
 - [ ] **Step 5: Build the operational queue**
 
@@ -736,7 +786,7 @@ Create one row per active account exposed to an accepted finding. Columns: `acco
 
 - [ ] **Step 6: Generate the executive report from data**
 
-Write `artifacts/report.md` with: executive decision, top accepted cause, counterevidence, segment table, named priority accounts, one-week containment, 30–90-day correction, expected measurement, methodology and limitations. Insert metrics from DataFrames; do not hard-code numbers into prose. If no finding passes, replace the decision and action ranking with `Evidência insuficiente para priorizar uma causa`, list the failed gates, preserve descriptive facts and emit no named priority account.
+Write `artifacts/report.md` with: executive decision; section `O que não bate` showing `C-usage-growth` and `C-satisfaction-ok` overall versus the next-30-day-churn cohort; top accepted cause; counterevidence; segment table; named priority accounts; one-week containment; 30–90-day correction; expected measurement; methodology and limitations. Insert metrics from DataFrames; do not hard-code numbers into prose. If no finding passes, replace the decision and action ranking with `Evidência insuficiente para priorizar uma causa`, list the failed gates, preserve the two claim checks and descriptive facts, and emit no named priority account.
 
 - [ ] **Step 7: Write the run manifest last**
 
@@ -744,7 +794,7 @@ Include UTC generation timestamp, source git SHA, Python and dependency versions
 
 - [ ] **Step 8: Implement the reproduce CLI**
 
-The CLI loads, validates, profiles, builds both panels, evaluates findings, evaluates the optional model, publishes artifacts, validates the artifact set and exits non-zero on any critical failure. Print only paths and a compact gate summary; no secret or raw feedback text in logs.
+The CLI loads, validates, profiles, builds both panels, reconciles the two aggregate CEO claims, evaluates findings, evaluates the optional model, publishes artifacts, validates the artifact set and exits non-zero on any critical failure. Print only paths and a compact gate summary; no secret or raw feedback text in logs.
 
 - [ ] **Step 9: Run publication tests**
 
@@ -767,17 +817,21 @@ git commit -m "feat(churn): publish consistent diagnostic artifacts"
 
 **Files:**
 - Create: `submissions/luis-roquette/solution/001-churn/app.py`
-- Create: `submissions/luis-roquette/solution/001-churn/.streamlit/config.toml`
+- Create: `submissions/luis-roquette/solution/001-churn/requirements.txt`
 - Test: `submissions/luis-roquette/solution/001-churn/tests/test_app.py`
 
 **Interfaces:**
 - Consumes: only validated files under `artifacts/`.
 - Produces: tabs named `Decisão executiva`, `Evidências`, and `Fila operacional` plus expander `Metodologia e limitações`.
 - Produces: CSV download with the currently filtered queue.
+- Runs from the solution directory and from the repository root used by Streamlit Community Cloud.
 
 - [ ] **Step 1: Write the failing Streamlit smoke test**
 
 ```python
+from pathlib import Path
+import tomllib
+
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
@@ -800,6 +854,26 @@ def test_queue_filter_and_download_match_canonical_artifact(generated_artifacts,
     expected = canonical.query("finding_id == 'F-support-escalation'")
     assert selected.dataframe[0].value["account_id"].tolist() == expected["account_id"].tolist()
     assert len(selected.download_button) == 1
+
+
+def test_dashboard_runs_from_repository_root(generated_artifacts, monkeypatch):
+    repo_root = next(
+        parent
+        for parent in Path(__file__).resolve().parents
+        if (parent / "CONTRIBUTING.md").exists()
+    )
+    monkeypatch.chdir(repo_root)
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(generated_artifacts))
+    app_path = "submissions/luis-roquette/solution/001-churn/app.py"
+    app = AppTest.from_file(app_path).run(timeout=20)
+    assert not app.exception
+
+
+def test_cloud_requirements_match_runtime_dependencies():
+    project = tomllib.loads(Path("pyproject.toml").read_text())
+    expected = set(project["project"]["dependencies"])
+    actual = {line for line in Path("requirements.txt").read_text().splitlines() if line}
+    assert actual == expected
 ```
 
 - [ ] **Step 2: Verify the smoke test fails**
@@ -810,13 +884,13 @@ def test_queue_filter_and_download_match_canonical_artifact(generated_artifacts,
 
 Expected: FAIL because `app.py` does not exist.
 
-- [ ] **Step 3: Validate artifacts before rendering**
+- [ ] **Step 3: Bootstrap paths and validate artifacts before rendering**
 
-Read `RAVENSTACK_ARTIFACT_DIR`, defaulting to `artifacts`. Call `validate_artifact_set` before any chart. On failure, call `st.error` with the exact reason and `st.stop()` with instruction to run `make reproduce`; never recalculate data in the app.
+Set `SOLUTION_ROOT = Path(__file__).resolve().parent`, prepend `SOLUTION_ROOT / "src"` to `sys.path` before importing `ravenstack_churn`, and read `RAVENSTACK_ARTIFACT_DIR`, defaulting to `SOLUTION_ROOT / "artifacts"`. Call `validate_artifact_set` before any chart. On failure, call `st.error` with the exact reason and `st.stop()` with instruction to run `make reproduce`; never recalculate data in the app.
 
 - [ ] **Step 4: Implement executive view**
 
-Show the top accepted finding, confidence, MRR exposed maximum, account reach, counterevidence, immediate action and structural action. Use a maximum of three charts: MRR/count churn trend, top causes, and segment exposure. Label every metric with its definition.
+Show `O que não bate` from `claim_checks.csv`, then the top accepted finding, confidence, MRR exposed maximum, account reach, counterevidence, immediate action and structural action. Use a maximum of three charts: MRR/count churn trend, top causes, and segment exposure. Label every metric with its definition.
 
 When no finding passes, render the same explicit inconclusive message and failed gates, hide cause ranking and action cards, and keep descriptive trend and quality evidence available.
 
@@ -828,11 +902,27 @@ Add filters for finding, segment dimension and chronology. Display adjusted effe
 
 Filter by priority, finding, plan and MRR band. Display account ID, MRR exposed, signals and actions. Use `st.download_button` with the filtered DataFrame encoded as UTF-8 CSV. Keep `owner` and `status` editable only after download; the web app remains read-only.
 
-- [ ] **Step 7: Add accessible, restrained theme**
+- [ ] **Step 7: Add the Cloud runtime dependency file**
 
-Configure wide layout, high-contrast text, visible focus states and color-independent status labels. Avoid custom JavaScript and ornamental animation.
+Create `requirements.txt` beside `app.py` with exactly:
 
-- [ ] **Step 8: Run the dashboard test**
+```text
+numpy==2.5.3
+pandas==3.0.6
+plotly==7.1.0
+scikit-learn==1.9.1
+scipy==1.18.1
+statsmodels==0.15.0
+streamlit==1.64.0
+```
+
+Do not add `packages.txt`; every dependency has a Python 3.12 Linux wheel and the app requires no apt package.
+
+- [ ] **Step 8: Add accessible, restrained theme**
+
+Call `st.set_page_config(layout="wide")` before rendering. Add minimal in-app CSS for high-contrast text and visible focus states, plus color-independent status labels. Avoid custom JavaScript and ornamental animation. Do not create a nested `.streamlit/config.toml`: Community Cloud reads configuration only from the repository root, which is outside the allowed submission scope.
+
+- [ ] **Step 9: Run the dashboard test**
 
 ```bash
 .venv/bin/python -m pytest tests/test_app.py -v
@@ -840,10 +930,10 @@ Configure wide layout, high-contrast text, visible focus states and color-indepe
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit the dashboard**
+- [ ] **Step 10: Commit the dashboard**
 
 ```bash
-git add -f submissions/luis-roquette/solution/001-churn/app.py submissions/luis-roquette/solution/001-churn/.streamlit submissions/luis-roquette/solution/001-churn/tests/test_app.py
+git add -f submissions/luis-roquette/solution/001-churn/app.py submissions/luis-roquette/solution/001-churn/requirements.txt submissions/luis-roquette/solution/001-churn/tests/test_app.py
 git commit -m "feat(churn): add decision-focused Streamlit dashboard"
 ```
 
@@ -871,7 +961,7 @@ PYTHON := .venv/bin/python
 
 setup:
 	python3.12 -m venv .venv
-	$(PYTHON) -m pip install -e '.[dev]'
+	$(PYTHON) -m pip install --only-binary=:all: -e '.[dev]'
 
 test:
 	$(PYTHON) -m pytest -q
@@ -908,7 +998,7 @@ Document purpose, executive output, architecture, exact setup commands, file str
 
 - [ ] **Step 4: Complete the submission README**
 
-Fill the official template sections: identity, 3–5 sentence executive summary, approach, findings, recommendations, limitations, AI tools, workflow, where AI erred, human additions and evidence links. Link the report, dashboard instructions, CSV and both process logs.
+Fill every field from `templates/submission-template.md`: name, LinkedIn, chosen challenge, 3–5 sentence executive summary, approach, findings, recommendations, limitations, AI-tools table, numbered workflow, where AI erred, human additions, evidence checklist and submission date. Link the report, dashboard instructions, CSV, Git history and all process logs (`000`, `001`, `002`); leave no bracketed template placeholder.
 
 - [ ] **Step 5: Record actual findings and corrections in the process log**
 
@@ -924,6 +1014,7 @@ git add -f \
   submissions/luis-roquette/solution/001-churn/README.md \
   submissions/luis-roquette/solution/001-churn/artifacts/account_panel.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/account_queue.csv \
+  submissions/luis-roquette/solution/001-churn/artifacts/claim_checks.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/findings.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/segment_metrics.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/quality_report.json \
@@ -991,7 +1082,16 @@ git commit -m "docs(churn): link verified public dashboard"
 
 - [ ] **Step 7: Prepare the Pull Request evidence**
 
-Confirm that only `submissions/luis-roquette/` differs from upstream, the process logs are included, setup works from a clean environment, and the PR title is `[Submission] Luis Roquette — Challenge 001`. Do not push, deploy or open the PR until the canonical preflight is green for the exact final SHA and the user has explicitly authorized those external actions in the current conversation.
+Run from the repository root:
+
+```bash
+git fetch upstream main
+test "$(git merge-base HEAD upstream/main)" = "$(git rev-parse upstream/main)"
+test -z "$(git diff --name-only upstream/main...HEAD | rg -v '^submissions/luis-roquette/')"
+test "$(git branch --show-current)" = "submission/luis-roquette"
+```
+
+Confirm that process logs `000`, `001` and `002` plus setup evidence are present, and use the single PR title `[Submission] Luis Roquette — Challenge 001`. Do not push, deploy or open the PR until the canonical preflight is green for the exact final SHA and the user has explicitly authorized those external actions in the current conversation.
 
 ---
 
@@ -1001,6 +1101,7 @@ Confirm that only `submissions/luis-roquette/` differs from upstream, the proces
 |---|---|---|
 | Cross all five tables | Tasks 1–4 | contract, orphan, panel and corroboration tests |
 | Explain churn without claiming proven causality | Task 4 | direction, confidence interval, chronology and sensitivity gates |
+| Reconcile “usage grew” and “satisfaction is okay” | Tasks 4, 6 and 7 | six-month claim checks, canonical artifact and executive section |
 | Identify risky segments and named accounts | Tasks 4 and 6 | segment thresholds plus canonical account queue |
 | Prioritize concrete action by MRR | Tasks 3, 4 and 6 | MRR-at-churn test, deterministic ranking and shared finding IDs |
 | Prevent leakage and expose contradictory dates | Tasks 2 and 3 | known-data assertions and observed-versus-strict panel tests |
@@ -1019,7 +1120,9 @@ Confirm that only `submissions/luis-roquette/` differs from upstream, the proces
 - [ ] Findings that fail coverage, stability or evidence gates are visibly inconclusive and unranked.
 - [ ] The model can fail closed without breaking diagnosis, report, queue or dashboard.
 - [ ] Report, dashboard and CSV read the same canonical artifacts and manifest.
+- [ ] `claim_checks.csv`, report and dashboard answer the two contradictory executive claims with the same numbers.
 - [ ] No paid API, secret, external database or production-only dependency exists.
 - [ ] `make reproduce` and `make check` are sufficient from a clean Python 3.12 environment.
+- [ ] The dashboard starts from the repository root with the exact runtime pins in `requirements.txt` and no apt package.
 - [ ] Process logs contain actual prompts, mistakes, corrections, commands and validation evidence.
 - [ ] Only files under `submissions/luis-roquette/` are changed.
