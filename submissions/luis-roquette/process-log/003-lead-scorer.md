@@ -355,6 +355,20 @@ Quais informações devem ser proibidas como features do modelo de `Engaging` pa
 
 A opção D produz leakage e diferença entre treino e uso. O modelo aprenderia atalhos a partir de `close_value`, `close_date` ou estágio final — informações que não existem quando um deal ativo recebe score. A validação pareceria melhor do que o desempenho possível em produção, contrariando o risco central explícito do challenge.
 
-#### Recomendação corretiva — aguardando decisão de Luis
+#### Recomendação corretiva — aprovada por Luis
 
 Adotar **C**: proibir `close_value`, `close_date`, estágio final e derivados como preditores. `Won/Lost` pode ser usado somente como rótulo; `close_date`, somente para corte temporal e avaliação; `close_value`, somente para medir resultado financeiro histórico.
+
+#### Decisão final
+
+Luis substituiu a resposta inicial pela opção **C**. O contrato contra leakage passa a ser obrigatório no código, nos testes e na documentação do modelo.
+
+#### Evidência de qualidade dos dados
+
+Entre os deals ativos, 337 de 500 `Prospecting` e 1.088 de 1.589 `Engaging` não têm conta: 1.425 de 2.089, ou 68,2%. Em contraste, todos os 6.711 deals encerrados têm conta. Usar atributos da conta sem fallback criaria forte diferença entre treino e uso. Também existe `GTXPro` no pipeline, enquanto o catálogo registra `GTX Pro`; essa chave precisa de normalização explícita e testada.
+
+#### Pergunta 6
+
+Como devemos tratar os deals ativos sem conta associada?
+
+**Resposta:** aguardando Luis.
