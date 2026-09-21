@@ -782,4 +782,23 @@ Qual conjunto de provas deve acompanhar a entrega funcional?
 
 **Recomendação da IA:** **A**. Prova scoring, antileakage, fallbacks e execução sem transformar o challenge em um projeto de infraestrutura de testes.
 
+#### Resposta de Luis
+
+**A:** testes automatizados dos contratos críticos, smoke test e evidência visual do fluxo principal com os dados reais.
+
+#### Decisão registrada
+
+A entrega deverá provar, no mínimo, ingestão e joins, bloqueio de leakage, separação temporal, roteamento completo/fallback, ordenação, explicações e playbook. Também deverá iniciar o Streamlit em smoke test e registrar uma evidência visual do fluxo vendedor/gestor. Métricas isoladas não serão aceitas como prova de produto.
+
+#### Pergunta 6
+
+Qual contrato de ambiente deve ser oferecido ao avaliador?
+
+- **A.** Python 3.11, ambiente virtual e `requirements.txt` com versões fixadas, além de comandos curtos para instalar, testar e executar.
+- **B.** Docker como única forma de execução.
+- **C.** `uv` obrigatório com lockfile.
+- **D.** Conda obrigatório com arquivo de ambiente.
+
+**Recomendação da IA:** **A**. Usa ferramentas amplamente disponíveis e reduz pré-requisitos; Docker ou outro gerenciador não resolve requisito adicional do brief.
+
 **Resposta:** aguardando Luis.
