@@ -826,7 +826,7 @@ git commit -m "feat(churn): publish consistent diagnostic artifacts"
 - Produces: CSV download with the currently filtered queue.
 - Runs from the solution directory and from the repository root used by Streamlit Community Cloud.
 
-- [ ] **Step 1: Write the failing Streamlit smoke test**
+- [x] **Step 1: Write the failing Streamlit smoke test**
 
 ```python
 from pathlib import Path
@@ -876,7 +876,7 @@ def test_cloud_requirements_match_runtime_dependencies():
     assert actual == expected
 ```
 
-- [ ] **Step 2: Verify the smoke test fails**
+- [x] **Step 2: Verify the smoke test fails**
 
 ```bash
 .venv/bin/python -m pytest tests/test_app.py -v
@@ -884,25 +884,25 @@ def test_cloud_requirements_match_runtime_dependencies():
 
 Expected: FAIL because `app.py` does not exist.
 
-- [ ] **Step 3: Bootstrap paths and validate artifacts before rendering**
+- [x] **Step 3: Bootstrap paths and validate artifacts before rendering**
 
 Set `SOLUTION_ROOT = Path(__file__).resolve().parent`, prepend `SOLUTION_ROOT / "src"` to `sys.path` before importing `ravenstack_churn`, and read `RAVENSTACK_ARTIFACT_DIR`, defaulting to `SOLUTION_ROOT / "artifacts"`. Call `validate_artifact_set` before any chart. On failure, call `st.error` with the exact reason and `st.stop()` with instruction to run `make reproduce`; never recalculate data in the app.
 
-- [ ] **Step 4: Implement executive view**
+- [x] **Step 4: Implement executive view**
 
 Show `O que não bate` from `claim_checks.csv`, then the top accepted finding, confidence, MRR exposed maximum, account reach, counterevidence, immediate action and structural action. Use a maximum of three charts: MRR/count churn trend, top causes, and segment exposure. Label every metric with its definition.
 
 When no finding passes, render the same explicit inconclusive message and failed gates, hide cause ranking and action cards, and keep descriptive trend and quality evidence available.
 
-- [ ] **Step 5: Implement evidence view**
+- [x] **Step 5: Implement evidence view**
 
 Add filters for finding, segment dimension and chronology. Display adjusted effect with interval, observed-vs-strict sensitivity, sample/coverage, source tables and limitations. Distinguish fact, association and hypothesis visually and textually.
 
-- [ ] **Step 6: Implement operational queue**
+- [x] **Step 6: Implement operational queue**
 
 Filter by priority, finding, plan and MRR band. Display account ID, MRR exposed, signals and actions. Use `st.download_button` with the filtered DataFrame encoded as UTF-8 CSV. Keep `owner` and `status` editable only after download; the web app remains read-only.
 
-- [ ] **Step 7: Add the Cloud runtime dependency file**
+- [x] **Step 7: Add the Cloud runtime dependency file**
 
 Create `requirements.txt` beside `app.py` with exactly:
 
@@ -918,11 +918,11 @@ streamlit==1.64.0
 
 Do not add `packages.txt`; every dependency has a Python 3.12 Linux wheel and the app requires no apt package.
 
-- [ ] **Step 8: Add accessible, restrained theme**
+- [x] **Step 8: Add accessible, restrained theme**
 
 Call `st.set_page_config(layout="wide")` before rendering. Add minimal in-app CSS for high-contrast text and visible focus states, plus color-independent status labels. Avoid custom JavaScript and ornamental animation. Do not create a nested `.streamlit/config.toml`: Community Cloud reads configuration only from the repository root, which is outside the allowed submission scope.
 
-- [ ] **Step 9: Run the dashboard test**
+- [x] **Step 9: Run the dashboard test**
 
 ```bash
 .venv/bin/python -m pytest tests/test_app.py -v
@@ -930,7 +930,7 @@ Call `st.set_page_config(layout="wide")` before rendering. Add minimal in-app CS
 
 Expected: PASS.
 
-- [ ] **Step 10: Commit the dashboard**
+- [x] **Step 10: Commit the dashboard**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/app.py submissions/luis-roquette/solution/001-churn/requirements.txt submissions/luis-roquette/solution/001-churn/tests/test_app.py

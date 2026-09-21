@@ -238,3 +238,25 @@ O teste vermelho produziu o erro esperado: `ModuleNotFoundError: ravenstack_chur
 - modelo recusado por `lift_at_20pct`, `brier_score` e `non_converged`.
 
 O código foi versionado e publicado no commit `5c5deec`. Os artefatos de execução permanecem locais até a fase final prevista no plano. **Resultado:** Fase 6 validada e encerrada.
+
+## Fase 7 — dashboard Streamlit de decisão
+
+### Planejamento, revisão e teste vermelho
+
+O app foi limitado a consumidor somente leitura dos artefatos validados: nenhum cálculo analítico é refeito na interface. O teste vermelho confirmou ausência de `app.py` e `requirements.txt`. Durante o teste, identificamos que o exemplo do plano usava caminhos relativos incompatíveis com a regra real do `AppTest`, que os resolve a partir do arquivo de teste. Corrigimos o teste para caminhos absolutos sem reduzir a cobertura da execução pela raiz do repositório.
+
+### Execução e feedback looping
+
+Criamos três visões: decisão executiva, evidências e fila operacional, mais metodologia recolhível. O app valida o manifesto antes de renderizar, mantém a abstenção explícita, distingue fato, associação e hipótese, oferece filtros e baixa exatamente a fila visível. A dependência Cloud replica integralmente o runtime do `pyproject.toml`.
+
+Os quatro smokes passaram na primeira execução funcional. Ruff bloqueou apenas a ordem de imports no teste; ajustamos e repetimos os gates.
+
+### Resultado
+
+- 4 testes específicos e 28 testes totais aprovados;
+- Ruff e `git diff --check` verdes;
+- execução validada tanto pelo diretório da solução quanto pela raiz do repositório;
+- manifesto inconsistente bloqueia a interface com instrução de reprodução;
+- app permanece somente leitura e exporta a fila filtrada em UTF-8.
+
+O dashboard foi versionado e publicado no commit `8c6eb03`. **Resultado:** Fase 7 validada e encerrada.
