@@ -151,3 +151,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) comparação controlada de alcance e engajamento contra orgânicos comparáveis, sem alegar ROI financeiro sem custo; B) comparação direta de médias gerais; C) ROI calculado com custos hipotéticos.
 - **Resposta de Luis:** **A — comparação controlada, sem alegação indevida de ROI financeiro**.
 - **Implicação:** patrocínio será avaliado como diferença observacional de desempenho dentro de contextos comparáveis. O sistema deverá separar associação de causalidade, mostrar incerteza e declarar que retorno financeiro exige dados reais de investimento e receita.
+
+### Onda 12 — sucesso principal do MVP
+
+- **Pergunta:** qual prova define que o MVP funciona?
+- **Opções:** A) importar um CSV e identificar desvio, evidência, contexto e próxima ação em até cinco minutos, com números rastreáveis; B) atingir uma métrica mínima de previsão; C) exibir todas as métricas e filtros do dataset.
+- **Resposta de Luis:** **A — decisão rastreável em até cinco minutos**.
+- **Implicação:** a definição de pronto será orientada à velocidade e à qualidade da decisão, não ao volume de funcionalidades. Cada alerta e recomendação deverá permitir chegar aos registros e cálculos que a sustentam.
