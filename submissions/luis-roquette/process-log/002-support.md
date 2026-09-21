@@ -54,3 +54,14 @@ O protótipo precisa facilitar o trabalho diário do agente, expor categoria, pr
 ### Regra de convivência com o briefing
 
 SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa comparativa e a reprodução mínima de candidatos continuam antes de qualquer implementação. A especificação deve manter os dois datasets separados no nível de linha, explicitar premissas de custo, proteger PII, reservar fallback humano e exigir validação fora dos exemplos de construção.
+
+## I03 — Correção: SDD executado no Codex — 2026-09-21 14:36 BRT
+
+- **Objetivo:** garantir que a metodologia SDD seja executada neste agente Codex, sem depender de uma sessão do Claude Code.
+- **IA/ferramenta:** skills nativas do Codex em `~/.codex/skills`: `add-task`, `plan-task`, `implement-task`, `brainstorm` e `create-ideas`.
+- **Ação ou prompt:** Luis corrigiu explicitamente a interpretação anterior: “é para usar aqui, no CODEX!”.
+- **Resultado:** os cinco componentes foram detectados no catálogo ativo do Codex e seus arquivos `SKILL.md` foram verificados localmente. O Challenge 002 usará esses componentes nesta sessão e nas próximas etapas.
+- **Julgamento humano:** a execução no Claude Code foi uma interpretação incorreta da IA causada pelo argumento `--agent claude-code` do comando publicado. Luis definiu o Codex como executor correto.
+- **Verificação:** `npx skills list -g --agent codex --json` reconheceu os cinco componentes com agente `Codex`; os arquivos existem em `/Users/luisroquette/.codex/skills/`.
+- **Evidência:** catálogo ativo desta sessão e hashes locais dos cinco `SKILL.md`.
+- **Limitação:** a cópia instalada no Claude Code não será usada neste desafio; sua presença não altera arquivos ou execução do worktree.
