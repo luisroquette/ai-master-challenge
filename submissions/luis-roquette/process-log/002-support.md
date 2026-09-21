@@ -735,3 +735,15 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Limitação técnica registrada:** os `SKILL.md` de SDD estão instalados no Codex, mas os scripts, prompts e agentes nomeados do pacote Claude não estão presentes. O Codex seguirá o mesmo contrato com os agentes e ferramentas disponíveis, sem simular artefatos ausentes.
 
 **Decisão:** avançar automaticamente fase a fase; repetir qualquer etapa reprovada e nunca promover trabalho não validado.
+
+## I38 — SDD `plan-task`: refinamento e decomposição validados — 2026-09-21 21:18 BRT
+
+- **Configuração:** task complexa; qualidade mínima `3,5/5`; até três iterações; tier equivalente a `opus`; sem checkpoints humanos intermediários porque Luis já autorizou seguir para implementação.
+- **Fase 2a — pesquisa:** 16 recursos; skill reutilizável criada; juiz `4,70/5`.
+- **Fase 2b — impacto:** 28 criações e três modificações estimadas; risco alto; juiz `4,565/5`.
+- **Fase 2c — negócio:** 20 critérios, cinco checks, cinco rubricas e 42 casos; juiz `4,405/5`.
+- **Fase 3 — arquitetura:** primeira revisão `4,395/5`; dois contratos P1 corrigidos em loop — transporte de OOD e bloqueio de drafts por sinais; segunda revisão `4,65/5`, sem P1/P2.
+- **Fase 4 — decomposição:** dez subtarefas em três fases; primeira revisão `4,609/5`; três ambiguidades corrigidas em loop — reprodução dupla, corrida de teste e propriedade documental; segunda revisão `4,742/5`, sem novo achado.
+- **Adaptação registrada:** `prompts/judge.md`, scripts e agentes Claude do pacote não existem na instalação Codex; juízes independentes aplicaram as rubricas integrais contidas no `SKILL.md` instalado.
+
+**Decisão:** promover a SPEC de `draft` para `todo`; planejamento e revisão SDD estão validados, permitindo iniciar `implement-task`.
