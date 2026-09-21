@@ -81,7 +81,7 @@ Estado confirmado nesta fase: o repositório contém documentação do desafio, 
 | A cada alteração textual | `git diff --check` | Saída sem erros de whitespace; não substitui revisão dos requisitos. |
 | Revisão dos artefatos atuais | `git diff --stat; git status --short` | Todos os arquivos novos/alterados são identificados; `.specs/`, `.claude/` e `skills-lock.json` permanecem locais. |
 | Antes de preparar PR | `git diff --name-only main...HEAD` | Conferir todos os caminhos: somente `submissions/luis-roquette/`; comparar também alterações ainda não commitadas. |
-| Gate runtime a criar na implementação | `test -f submissions/luis-roquette/solution/004-social/tests/test_acceptance.py && python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -p 'test_*.py' -v` | A ausência do arquivo falha; a suite futura cobre os CK indicados abaixo. Executar com o Python do ambiente documentado. |
+| Gate runtime a criar na implementação | `test -d submissions/luis-roquette/solution/004-social/tests && python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` | A ausência da pasta falha; a suite futura cobre os CK indicados abaixo. Executar com o Python do ambiente documentado. |
 | Demonstração a criar na implementação | `python3 -m streamlit run submissions/luis-roquette/solution/004-social/app.py --server.address 127.0.0.1 --browser.gatherUsageStats false` | Upload real, interação, reabertura e downloads verificados; ausência da aplicação é bloqueio, não sucesso. |
 
 Os dois últimos comandos são contratos de entrega, ainda não disponíveis nesta etapa de SPEC. Instalação, versões e localização dos arquivos deverão corresponder ao README final. Antes de push/PR, reavaliar os workflows reais e executar todos os gates aplicáveis ao diff; documentação não equivale a uma aprovação de runtime.
@@ -365,7 +365,7 @@ Todos os caminhos da tabela partem de `submissions/luis-roquette/`; são contrat
 | Criar nesta fase documental | `solution/004-social/SPEC.md` | Cópia canônica revisável do resultado SDD. |
 | Criar na implementação | `solution/004-social/app.py`, `solution/004-social/analysis.py`, `solution/004-social/storage.py` | Os três componentes definidos acima, com exports no motor puro. |
 | Criar na implementação | `solution/004-social/requirements.txt`, `solution/004-social/README.md` | Pins testados, aquisição/licença do CSV, setup, comandos reais, limitações e roteiro de demonstração. |
-| Criar na implementação | `solution/004-social/tests/test_acceptance.py` | Uma suite stdlib pequena com os casos CK; este caminho prevalece sobre `test_cockpit.py` apenas sugerido na exploração e corresponde ao gate da Acceptance Criteria. |
+| Criar na implementação | `solution/004-social/tests/helpers.py`, `test_analysis.py`, `test_exports.py`, `test_storage.py`, `test_app.py` | Suite stdlib dividida por responsabilidade; todos os arquivos entram no mesmo gate `unittest discover`. |
 | Criar na implementação | `solution/004-social/analysis.md`, `solution/004-social/evidence.csv` | Achados reais, estratégia priorizada e evidência gerada pelo mesmo motor. |
 | Atualizar | `process-log/004-social.md`, `research/004-social.md` | Decisões/erros/verificações e correções de fatos confirmados; sem inventar resultados. |
 | Criar na validação final | `process-log/evidence/004/cockpit-proof.png` | Evidência visual do produto completo; distinta da prova do framework. |
@@ -376,11 +376,13 @@ Riscos aceitos e explícitos: grupos cruzados podem resultar em poucas recomenda
 
 ## Implementation Process
 
+O plano operacional detalhado e normativo está em [`IMPLEMENTATION-PLAN.md`](./IMPLEMENTATION-PLAN.md). Ele aplica TDD, passos rastreáveis, interfaces explícitas, testes por responsabilidade e commits pequenos. O agrupamento abaixo permanece como visão executiva: Tasks 1–3 do plano detalhado compõem a Fase 1; Tasks 4–6 compõem a Fase 2. Os antigos arquivos `.specs/sub-tasks/` ficam apenas como proveniência da primeira decomposição SDD e não devem orientar a execução quando divergirem do plano normativo.
+
 ### Execution directive
 
 Pré-condição externa: revisão humana da SPEC registrada no diário. Não é uma dependência de passo nem está satisfeita pela solicitação de escrever esta SPEC. Esta decomposição é um plano, não autorização para implementar, publicar, contratar serviço ou chamar API paga.
 
-Depois desse gate, lançar um agente por passo, passando ambos os caminhos: a task final `.specs/tasks/todo/implement-social-media-cockpit.feature.md` e o `Sub-Task File` da tabela. Usar o Model/Agent indicado no passo e instruir o agente a implementar exatamente aquele passo, incluindo seus testes e atualização do diário. Lançar juntos os passos declarados paralelos; neste plano não há passos paralelos. Ao completar todos os passos de uma fase, executar um code reviewer UMA ÚNICA VEZ para a fase, no Reviewer model definido, sobre o conjunto de mudanças e evidências. Correções retornam ao passo responsável e seus gates; evitar novas revisões gerais por passo. A fase seguinte exige o gate da fase anterior.
+Depois desse gate, executar as Tasks 1–6 de `IMPLEMENTATION-PLAN.md` em ordem, passando ao agente a SPEC e o plano normativo. Usar o papel/capacidade indicado na visão executiva e instruir o agente a executar somente a task ativa, incluindo testes, diário e commit. Neste plano não há tasks paralelas. Ao completar Tasks 1–3, executar um code reviewer uma única vez para a Fase 1; repetir após Tasks 4–6 para a Fase 2. Correções retornam à task responsável e seus gates; a fase seguinte exige o gate da anterior.
 
 Os nomes `developer`, `general` e `code-reviewer` são papéis para subagentes genéricos disponíveis nesta sessão: respectivamente implementação/testes, análise/documentação e revisão/validação. Não presumir plugins de agentes especializados instalados. S4 é executor de validação integrada/documentação, não uma revisão adicional de fase; por isso usa o papel `general`.
 
@@ -415,7 +417,7 @@ Contingencia: 50 min; espera externa registrada a parte
 | S3 | P2 — Cockpit e entrega validada | sonnet | developer | S1 | None | `.specs/sub-tasks/implement-social-media-cockpit/03-local-cockpit.md` |
 | S4 | P2 — Cockpit e entrega validada | sonnet | general | S3 | None | `.specs/sub-tasks/implement-social-media-cockpit/04-acceptance-handoff.md` |
 
-Os arquivos de subtarefa são instruções locais do SDD e não entram no PR. A SPEC canônica em `submissions/luis-roquette/solution/004-social/SPEC.md` preserva esta tabela como rastreabilidade; sua execução exige o pacote local de planejamento. Os critérios completos e fórmulas permanecem nas seções anteriores, evitando contratos divergentes nos passos.
+Os arquivos de subtarefa são registros locais da primeira decomposição SDD e não entram no PR. A SPEC e `IMPLEMENTATION-PLAN.md` são autocontidos e prevalecem para execução. Os critérios completos e fórmulas permanecem nas seções anteriores, evitando contratos divergentes nas tasks.
 
 ### Phase Overview
 
@@ -445,7 +447,7 @@ Rubrics: R-01 — Comparabilidade analítica; R-02 — Auditabilidade; R-03 — 
 
 ### Regras de execução e conclusão
 
-Implementar somente os três módulos runtime e os artefatos definidos na arquitetura. `unittest` usa um único arquivo de aceitação, estendido por etapa; fixtures pequenas podem ser construídas nele. Não introduzir API, ORM, frontend, framework de testes ou camada de serviços. Só adicionar otimização se a medição do CSV real identificar necessidade; registrar o motivo e manter os mesmos resultados.
+Implementar somente os três módulos runtime e os artefatos definidos na arquitetura. `unittest discover` executa arquivos de teste focados em análise, exports, persistência e interface; fixtures determinísticas compartilhadas ficam em `tests/helpers.py`. Não introduzir API, ORM, frontend, framework de testes ou camada de serviços. Só adicionar otimização se a medição do CSV real identificar necessidade; registrar o motivo e manter os mesmos resultados.
 
 Cada passo anexa ao diário os CK/HR cobertos, comandos realmente executados, resultados/limitações e julgamento humano. Os testes da etapa somam-se aos existentes. A suite completa final usa o comando da seção Regular Checks com o Python do ambiente documentado; ausência de arquivo, dependência ou evidência bloqueia sucesso. O spike antigo não substitui nenhuma validação do produto.
 

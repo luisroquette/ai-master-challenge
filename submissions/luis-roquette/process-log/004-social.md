@@ -283,3 +283,15 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Resultado:** passadas finais A e B sem novos achados. Links, caminhos SDD, requisitos, métricas, causalidade, critérios, testes e sincronização entre task e SPEC foram reavaliados.
 - **Identidade auditada:** SHA-256 da SPEC `a70a5e7f5dfbf6614cb59c0d72266df6bcbb5ac8bd662f101a212688ff631ea9`.
 - **Limite:** o goal de absorção/revisão documental foi atingido; não é prova de runtime e não substitui a revisão humana anterior à implementação.
+
+## I10 — Otimização do plano com `writing-plans` em loop — 2026-09-21
+
+- **Decisão:** aplicar a skill `writing-plans` à SPEC e continuar em cascata até obter duas passadas consecutivas sem melhorias substanciais.
+- **Artefato novo:** `submissions/luis-roquette/solution/004-social/IMPLEMENTATION-PLAN.md`, normativo para execução e vinculado pela SPEC.
+- **Melhorias incorporadas:** seis tasks TDD; 44 ações rastreáveis; interfaces e arquivos exatos; testes separados por responsabilidade; mapa CK/HR; seis commits pequenos; tempo ativo total limitado a 360 minutos.
+- **Erros prevenidos durante o loop:** exemplos não coletáveis pelo `unittest`; placeholders `...`; staging de novos arquivos dentro de `submissions/` ignorada; caminho incorreto da CLI; `sys.path` incorreto no discovery; conflito entre o plano novo e subtarefas SDD antigas; contrato inconsistente entre `load_csv`, `derive_metrics` e `analyze`.
+- **Bordas transformadas em regressões:** arquivo acima de 50 MiB, CSV vazio/malformado, cabeçalho duplicado, timezone misturado, zeros, creator repetido, IQR constante, composição desigual de patrocínio, fórmula CSV, rollback e janelas temporais desiguais.
+- **Passada limpa 1:** nenhuma melhoria substancial em cobertura, interfaces, comandos, dependências ou gates.
+- **Passada limpa 2:** revisão inversa, do handoff à ingestão, sem melhoria substancial; todos os CK-01–11 e HR-01–04 possuem task e prova primária.
+- **Goal atingido:** duas passadas consecutivas sem melhorias ou otimizações substanciais apontadas.
+- **Limite:** o plano foi otimizado e revisado; implementação, push, PR e deploy continuam não autorizados até a revisão humana.
