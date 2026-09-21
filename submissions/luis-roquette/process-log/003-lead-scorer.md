@@ -347,4 +347,14 @@ Deals em `Prospecting` terão classificação de prioridade e preço potencial d
 
 Quais informações devem ser proibidas como features do modelo de `Engaging` para impedir leakage?
 
-**Resposta:** aguardando Luis.
+#### Resposta inicial de Luis
+
+**D:** permitir campos finais durante o treinamento e removê-los apenas no uso.
+
+#### Contestação da IA
+
+A opção D produz leakage e diferença entre treino e uso. O modelo aprenderia atalhos a partir de `close_value`, `close_date` ou estágio final — informações que não existem quando um deal ativo recebe score. A validação pareceria melhor do que o desempenho possível em produção, contrariando o risco central explícito do challenge.
+
+#### Recomendação corretiva — aguardando decisão de Luis
+
+Adotar **C**: proibir `close_value`, `close_date`, estágio final e derivados como preditores. `Won/Lost` pode ser usado somente como rótulo; `close_date`, somente para corte temporal e avaliação; `close_value`, somente para medir resultado financeiro histórico.
