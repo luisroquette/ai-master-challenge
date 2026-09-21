@@ -433,3 +433,17 @@ O **motor de decisão** expõe a mesma interface para modelos separados de Custo
 O **recuperador de respostas** indexa apenas descrições e resoluções sanitizadas do conjunto permitido. Ele devolve casos similares, scores e identificadores de origem; abaixo do limite, devolve abstinência. A **aplicação web** apenas orquestra esses componentes, exibe artefatos e registra decisões humanas em persistência local simples. A interface não treina modelos nem altera thresholds. Um comando reproduz análise e modelos; outro inicia a aplicação. Frameworks, bibliotecas e formato de persistência continuam abertos até a pesquisa técnica provar a opção mínima adequada.
 
 **Pergunta de validação:** estes componentes e limites de dados estão corretos para avançar?
+
+**Validação de Luis:** A — Seção 2 aprovada sem ajustes.
+
+### Seção 3 — Segurança, abstinência e falhas — proposta
+
+O sistema adotará **falha segura** como padrão. Schema incompatível, coluna obrigatória ausente, artefato corrompido ou versão divergente interrompe apenas a função afetada e informa arquivo, causa e correção. Conversões inválidas de datas, tempos ou notas não serão silenciosamente transformadas em zero: ficarão isoladas, quantificadas e visíveis no relatório de qualidade. A aplicação nunca iniciará roteamento com modelo ou calibração ausentes.
+
+Qualquer erro no classificador, no cálculo de confiança ou no gate produz `human_review`. Regras de risco têm precedência sobre probabilidade. Temas sensíveis serão definidos a partir da inspeção dos dados e de uma política documentada; nenhum rótulo será inventado antes dessa análise. PII será removida na preparação e mascarada novamente na apresentação como defesa adicional. Dados exportados não incluirão nome ou email do cliente.
+
+O recuperador só sugere resposta quando o histórico sanitizado, a similaridade e a rubrica mínima sustentarem o uso. Índice indisponível, resolução vazia, fonte inadequada ou score insuficiente resultam em abstinência explicada. O sistema não preenche esse vazio com geração livre. O agente sempre pode rejeitar, editar ou escalonar, e nenhuma resposta é enviada externamente.
+
+A persistência local deverá gravar cada decisão de modo atômico e manter o registro anterior se ocorrer falha. A interface distinguirá estado carregando, função indisponível e artefato desatualizado. Cada exportação carregará versão dos dados, modelo, threshold e regras usadas. Não haverá credenciais ou chamadas externas. Se o Dataset 1 ou o Dataset 2 não sustentar uma função planejada, a função será removida ou rebaixada a hipótese, e a limitação será registrada em vez de ser simulada.
+
+**Pergunta de validação:** esta política de segurança e falhas está correta para avançar?
