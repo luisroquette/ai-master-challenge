@@ -108,3 +108,36 @@ Cada causa prioritária precisará de duas ações conectadas: uma medida de cur
 ### Ponto ainda aberto
 
 Precisamos escolher qual artefato apresentará essa decisão ao CEO primeiro, antes dos detalhes analíticos e operacionais.
+
+### Pergunta 5
+
+Qual artefato o CEO deve encontrar primeiro?
+
+- A. Memorando executivo de uma página com causa e decisão recomendada.
+- B. Dashboard interativo com filtros e comparações.
+- C. Fila operacional de contas e ações para o CS.
+- D. Entrega em camadas: decisão executiva primeiro, dashboard como evidência e fila de contas para execução.
+
+### Resposta de Luis
+
+> D
+
+### Interpretação
+
+A entrega atenderá três níveis de leitura sem obrigar o CEO a percorrer detalhes técnicos: decisão executiva primeiro, evidência explorável para verificação e fila operacional para transformar a recomendação em ação.
+
+### Consequência para o desenho
+
+As três camadas deverão compartilhar a mesma fonte de dados e os mesmos critérios. Não serão três produtos independentes. A arquitetura deverá permitir leitura progressiva, evitando números ou prioridades divergentes entre resumo, dashboard e fila de contas.
+
+## Síntese provisória da Onda 1
+
+- **Decisão principal:** escolher qual problema sistêmico corrigir primeiro.
+- **Postura analítica:** tese zero; nenhuma área começa favorecida.
+- **Priorização:** matriz transparente de impacto, alcance, confiança e possibilidade de ação.
+- **Horizonte:** contenção em até uma semana e correção estrutural em 30–90 dias.
+- **Entrega:** decisão executiva, dashboard de evidências e fila operacional conectados.
+
+### Estado da onda
+
+Aguardando confirmação de Luis. Após a aprovação, a Onda 2 investigará sucesso, evidências e prioridades mensuráveis com base nas cinco decisões acima.
