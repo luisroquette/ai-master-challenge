@@ -789,3 +789,11 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Inspeção:** apenas os seis arquivos do step e o registro contemporâneo estavam alterados; nenhum workflow de CI/configuração de deploy existe no repositório e a branch não possui PR aberto. O push intermediário de feature está autorizado pela regra global; não substitui o gate remoto.
 - **Gates repetidos:** seis testes focados passaram em 0,42 s; Ruff passou; `git diff --check` passou. O cache local serve apenas aos testes focados; o lock do ambiente gerenciado continua sendo a referência de reprodução.
 - **Próxima execução:** commit/push na branch `submission/luis-roquette-002-support`; reuso apenas de Codespace parado e limpo, atualização por Git e conferência do SHA exato antes de lint, testes e reprodução real.
+
+## I43 — Jornada construtiva: o diário como entrega — 2026-09-21
+
+- **Definição de Luis:** o process log é o diário oficial da construção. Deve mostrar como o arquiteto desenha e como o engenheiro constrói.
+- **O que registrar:** decisões, hipóteses, critérios, feedback, erros, correções, validação e motivo para avançar ou repetir. Fragmentos curtos, escritos durante o trabalho; uma etapa não avança apenas porque um arquivo foi concluído.
+- **Pivot do step 02:** snapshot/PTTY falhou em três tentativas. A premissa do transporte artesanal foi revista; commit e push do SHA exato substituíram esse caminho. O código foi publicado em `497ab03962f6f23481e580dfebb3c483ab55b190`, depois de seis testes focados, lint e verificação de whitespace aprovados.
+- **Concorrência preservada:** o Codespace voltou a `Available` por uma execução concorrente de `lead-step01-manifest`. Nenhum processo dessa sessão foi interrompido. O suporte aguarda `Shutdown` e checkout limpo antes de executar seus gates.
+- **Critério para avançar:** validar o SHA publicado no ambiente gerenciado, concluir os gates de dados e registrar resultados reais. Falha de código retorna ao ciclo correção → teste focado → commit/push → novo gate; ausência de evidência permanece explícita.
