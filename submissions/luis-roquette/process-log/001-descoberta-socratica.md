@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 3 aguardando confirmação
+- **Estado:** Onda 4 em andamento
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -470,4 +470,36 @@ Divisões aleatórias entre linhas e métricas calculadas na amostra de treino s
 
 ### Estado da onda
 
-Aguardando confirmação de Luis. Após a aprovação, a Onda 4 investigará arquitetura mínima, artefatos, automação e experiência de uso.
+Síntese confirmada por Luis sem ajustes. A Onda 3 está encerrada.
+
+## Onda 4: arquitetura mínima, artefatos, automação e experiência de uso
+
+### Gate de pesquisa externa antes da arquitetura
+
+Antes de propor componentes, revisitamos soluções públicas atuais que cobrem partes do problema:
+
+- [`profpius/customer-churn-prediction`](https://github.com/profpius/customer-churn-prediction): pipeline local, scoring em lote, Streamlit e explicações SHAP; serve como referência para separar processamento, modelo e interface.
+- [`PrajwalShekar22/customer-360-revenue-intelligence`](https://github.com/PrajwalShekar22/customer-360-revenue-intelligence): combina análise de receita, risco, planejamento de ações, tabelas de saída e Streamlit; é a referência mais próxima da entrega em camadas definida nas ondas anteriores.
+- [`Augusto-98/churn_llm_explainer`](https://github.com/Augusto-98/churn_llm_explainer): demonstra explicação por cliente e interface Streamlit, mas a dependência de API paga de IA será rejeitada por padrão; o padrão visual pode ser reaproveitado sem essa chamada.
+- Relatos no Reddit reforçam que mostrar métricas sem recomendar ações não resolve o trabalho operacional. São sinais qualitativos, não validação técnica.
+
+Nenhum repositório será copiado integralmente. A pesquisa valida padrões de solução; código só será reutilizado após verificação de licença, qualidade, compatibilidade com os cinco datasets e ausência de vazamento temporal.
+
+### Aplicação do Ponytail
+
+A menor solução que atende às três camadas parece ser um pipeline Python reproduzível que grava saídas tabulares, um relatório executivo em Markdown e uma aplicação Streamlit que lê essas mesmas saídas. API, banco, autenticação e serviços separados não têm necessidade demonstrada neste desafio.
+
+### Pergunta 1
+
+Qual arquitetura deve orientar a entrega?
+
+- A. Somente notebook e relatório estático, sem interface operacional.
+- B. Pipeline Python único → arquivos tabulares versionáveis → relatório Markdown + dashboard Streamlit + fila CSV, todos derivados das mesmas saídas.
+- C. API FastAPI, banco PostgreSQL, frontend React e serviço separado de modelo.
+- D. Dashboard em ferramenta proprietária de BI, com transformação manual dos dados.
+
+**Recomendação técnica preliminar do agente:** B, porque reutiliza um padrão recorrente nas soluções pesquisadas, satisfaz as três camadas e evita infraestrutura que não melhora o diagnóstico.
+
+### Estado da pergunta 1
+
+Aguardando resposta de Luis.
