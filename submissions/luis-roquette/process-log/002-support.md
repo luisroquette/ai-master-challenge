@@ -356,3 +356,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Sem sugestão + escalonamento.
 
 **Interpretação para a próxima onda:** abstinência também vale para respostas. O produto deve mostrar ausência de evidência em vez de preencher o espaço com texto plausível. A próxima escolha precisa reconciliar os dois datasets dentro da mesma arquitetura sem inventar join, taxonomia comum ou transferência de domínio.
+
+### Onda 22 — Convivência dos dois datasets
+
+**Pergunta:** como usar os dois datasets sem inventar conexão?
+
+- **A — Motor comum, modelos separados:** mesma interface e mesmos gates; Dataset 1 sustenta operação e respostas, Dataset 2 sustenta classificação IT em sua própria taxonomia.
+- **B — Transferência explícita:** treina no Dataset 2 e aplica ao Dataset 1 como experimento de mudança de domínio, exibindo a perda de qualidade.
+- **C — Taxonomia unificada:** combina categorias dos dois datasets em um único modelo criado manualmente.
+
+**Resposta de Luis:** A — Motor comum, modelos separados.
+
+**Interpretação para a próxima onda:** componentes de classificação, calibração, abstinência e auditoria serão reutilizados, mas cada domínio manterá seus próprios dados, rótulos, métricas e limitações. A próxima escolha deve definir como essa separação aparece na navegação sem transformar o produto em duas aplicações.
