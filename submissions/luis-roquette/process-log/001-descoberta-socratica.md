@@ -502,4 +502,35 @@ Qual arquitetura deve orientar a entrega?
 
 ### Estado da pergunta 1
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+A solução terá um único pipeline Python como fonte dos artefatos. Ele produzirá tabelas reutilizáveis; o relatório em Markdown, o dashboard Streamlit e a fila CSV consumirão essas mesmas saídas, evitando cálculos divergentes entre as três camadas.
+
+### Consequência para o desenho
+
+API, banco de dados, autenticação, frontend separado e chamadas pagas de IA ficam fora do escopo inicial. Só serão reconsiderados se um requisito posterior não puder ser satisfeito com arquivos locais e execução reproduzível.
+
+### Ponto ainda aberto
+
+O repositório não possui task runner, ambiente Python ou automação existentes para reutilizar. Precisamos escolher o menor contrato de execução que permita ao avaliador reproduzir os resultados.
+
+### Pergunta 2
+
+Como o avaliador deve executar e reproduzir a solução?
+
+- A. Abrir o notebook e executar manualmente todas as células na ordem indicada.
+- B. Usar `make reproduce` para validar dados e regenerar os artefatos, e `make app` para abrir o dashboard, com comandos Python simples por baixo.
+- C. Subir vários serviços com Docker Compose antes de executar a análise.
+- D. Acessar somente uma versão hospedada, sem caminho local reproduzível.
+
+**Recomendação técnica preliminar do agente:** B, porque oferece uma porta de entrada curta e auditável sem adicionar um orquestrador ou infraestrutura permanente.
+
+### Estado da pergunta 2
+
 Aguardando resposta de Luis.
