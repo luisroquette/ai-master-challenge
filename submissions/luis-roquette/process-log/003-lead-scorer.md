@@ -753,6 +753,14 @@ Onde a intervenção temporária do gestor deve persistir no protótipo?
 - **C.** Alterando diretamente os CSVs originais.
 - **D.** Em banco externo com autenticação completa.
 
-**Recomendação da IA:** **B**. Usa a biblioteca padrão, preserva a auditoria entre reinícios e implementa a expiração na recalculação sem serviço externo.
+#### Questionamento de Luis
+
+“Como o README do projeto/desafio manda? Você é quem precisa averiguar e dizer.”
+
+#### Verificação e correção da IA
+
+O README não exige persistência, banco, autenticação nem auditoria durável. Ele exige solução funcional, dados reais, scoring explicável, setup, lógica e limitações; também orienta começar simples dentro de 4–6 horas. SQLite seria uma expansão criada pela IA, não uma exigência do desafio.
+
+**Recomendação corrigida da IA:** **A**. Manter a intervenção em `session_state`, exibindo gestor e horário durante a sessão, satisfaz o comportamento temporário já aprovado. A ausência de persistência multiusuário será declarada como limitação e caminho de escala.
 
 **Resposta:** aguardando Luis.
