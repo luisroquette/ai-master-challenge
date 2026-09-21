@@ -1,3 +1,10 @@
 .specs/scratchpad/*.md
 .specs/analysis/*.md
 .specs/reports/*.md
+.venv/
+__pycache__/
+*.pyc
+data/.recovery.lock/
+data/.recovery-*/
+data/.raw-backup-*/
+test-results/

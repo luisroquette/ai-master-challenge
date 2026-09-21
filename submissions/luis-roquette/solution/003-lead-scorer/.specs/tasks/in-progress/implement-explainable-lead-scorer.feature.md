@@ -782,7 +782,7 @@ Phase 3                 v
 
 | Step | Phase | Model | Agent | Depends on | Parallel with | Sub-Task File |
 |------|-------|-------|-------|------------|---------------|---------------|
-| `01-validated-snapshot` | Phase 1 | opus | sdd:developer | None | None | `.specs/sub-tasks/implement-explainable-lead-scorer/01-validated-snapshot.md` |
+| `01-validated-snapshot` [DONE] | Phase 1 | opus | sdd:developer | None | None | `.specs/sub-tasks/implement-explainable-lead-scorer/01-validated-snapshot.md` |
 | `02a-verified-recovery` | Phase 1 | opus | sdd:developer | `01-validated-snapshot` | `02b-temporal-evaluation` | `.specs/sub-tasks/implement-explainable-lead-scorer/02a-verified-recovery.md` |
 | `02b-temporal-evaluation` | Phase 1 | opus | sdd:developer | `01-validated-snapshot` | `02a-verified-recovery` | `.specs/sub-tasks/implement-explainable-lead-scorer/02b-temporal-evaluation.md` |
 | `03a-explainable-priorities` | Phase 2 | opus | sdd:developer | `02b-temporal-evaluation` | `03b-portfolio-session-ui` | `.specs/sub-tasks/implement-explainable-lead-scorer/03a-explainable-priorities.md` |
