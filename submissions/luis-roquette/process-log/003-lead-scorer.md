@@ -915,7 +915,7 @@ O vencedor e seus diagnósticos são armazenados em cache pelo fingerprint dos d
 
 **Resposta:** “Aprovo a seção 2.”
 
-### Seção 3 — Score, calibração e explicação — aguardando aprovação
+### Seção 3 — Score, calibração e explicação — aprovada
 
 Para `Engaging`, o histórico será dividido cronologicamente em treino, calibração e teste final. O treino ajusta os candidatos; a fatia intermediária calibra probabilidades e define faixas; o período mais recente permanece intocado até a comparação final. Um modelo só poderá publicar probabilidade se superar o baseline de taxa histórica em Brier score e log loss no teste e se suas faixas mantiverem relação coerente entre previsão e frequência observada. Entre candidatos aprovados, vencem ordenação e concentração de resultado financeiro no topo; sem ganho consistente, permanece a regressão logística.
 
@@ -924,3 +924,17 @@ As features serão limitadas ao que existe no momento da decisão: produto, sér
 A explicação da regressão logística virá das contribuições dos próprios coeficientes; se o gradient boosting vencer, usará contribuição local compatível com árvores. O painel traduzirá os fatores de maior impacto favorável e desfavorável, mostrando valor observado e direção, nunca causalidade. Receita esperada será calculada somente quando a probabilidade passar no gate.
 
 Para `Prospecting`, produto, vendedor e conta alimentarão taxas históricas suavizadas. Combinações escassas recuam para grupos mais gerais e, por fim, para a base global. O app mostrará faixa de prioridade, receita potencial, tamanho da amostra efetiva e nível de evidência. O playbook mapeará estágio e principal fator acionável para uma recomendação versionada; se nenhum fator sustentado existir, declarará “Sem ação recomendada com os dados atuais”.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo a seção 3.”
+
+### Seção 4 — Falhas, testes e evidências — aguardando aprovação
+
+O sistema distinguirá falhas globais de problemas por oportunidade. Arquivo ausente, schema incompatível, chave duplicada crítica ou conjunto histórico incapaz de produzir as divisões temporais interrompem a aplicação com mensagem que identifica arquivo, causa e correção. Conta ausente segue o fallback validado; produto sem correspondência, preço inválido ou categoria sem caminho seguro mantém o deal visível como “Dados insuficientes”. Nenhuma exceção será convertida silenciosamente em zero, média ou score padrão.
+
+Se um candidato falhar durante treino, o outro ainda poderá ser avaliado. Se nenhum passar no gate de calibração, `Engaging` muda explicitamente para prioridade relativa, remove probabilidade e receita esperada e mostra o diagnóstico. O app só publica resultados depois que as quatro rotas — modelos completo e fallback para os dois candidatos — terminarem ou declararem falha controlada.
+
+Os testes automatizados cobrirão os contratos que poderiam invalidar a decisão: schema e joins; normalização `GTXPro`; proibição de leakage; ordem cronológica das divisões; ausência deliberada de conta no fallback; roteamento de deals; estabilidade da ordenação; expiração da prioridade manual; cálculo de receita; explicações compatíveis com o score; playbook; e supressão da probabilidade quando o gate falhar. Fixtures sintéticas pequenas testarão bordas; ao menos um teste de integração percorrerá os quatro CSVs reais.
+
+O preflight canônico executará testes, verificação de imports, treino completo e smoke test do Streamlit no Codespace gerenciado. Depois, o fluxo vendedor e gestor será inspecionado no navegador: troca de abas, filtros, painel lateral, estado de dados insuficientes e prioridade temporária. Screenshots e métricas finais serão registradas como evidência. Qualquer falha determinística bloqueia push, deploy e alegação de conclusão.
