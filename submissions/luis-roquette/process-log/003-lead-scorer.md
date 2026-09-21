@@ -152,3 +152,19 @@ Luis descartou “percentual de deals prioritários trabalhados em até 24 horas
 #### Decisão registrada
 
 A receita esperada por vendedor será a métrica norteadora; velocidade de ação, redução de deals frios e taxa de fechamento poderão funcionar como métricas auxiliares. A escolha reduz o risco de otimizar mera atividade, mas ainda exige uma fórmula independente, auditável e baseada apenas em informações disponíveis no momento do score. Sem isso, “receita esperada” poderia se tornar uma estimativa circular produzida pelo próprio modelo.
+
+#### Pergunta 5
+
+O que “receita esperada” deve significar na primeira versão?
+
+#### Resposta final de Luis
+
+**A:** probabilidade de fechamento × preço do produto.
+
+#### Correção registrada
+
+Uma mensagem intermediária respondeu apenas “C”, mas Luis a substituiu explicitamente pela opção A. A resposta final acima prevalece; a opção C não foi tratada como decisão aprovada.
+
+#### Decisão registrada
+
+A receita esperada de cada deal será calculada como `probabilidade de fechamento × preço do produto`. O preço vem do catálogo; a probabilidade ainda precisa ser definida, calibrada e validada somente com informação disponível no momento do score. O cálculo deverá mostrar os dois componentes ao usuário.
