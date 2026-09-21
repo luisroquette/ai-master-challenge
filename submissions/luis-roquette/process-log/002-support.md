@@ -461,3 +461,17 @@ A recuperação de respostas será avaliada em tickets não vistos, sem resoluç
 O fluxo ponta a ponta validará fila, explicação, decisão humana, persistência, exportação e scorecard usando uma amostra definida antes de observar resultados. Os artefatos incluirão relatório de qualidade, tabelas analíticas, métricas versionadas, decisões do gate, avaliação da recuperação, log exportado e screenshot real da aplicação. Comandos documentados regenerarão tudo. Uma lógica não trivial só será considerada pronta com teste reproduzível; qualquer falha conhecida bloqueia a alegação correspondente.
 
 **Pergunta de validação:** esta estratégia de testes e evidências está correta para avançar?
+
+**Validação de Luis:** A — Seção 4 aprovada sem ajustes.
+
+### Seção 5 — Experiência e hierarquia da interface — proposta
+
+A aplicação abrirá na **Fila de hoje**, não em um dashboard abstrato. Cada linha mostrará posição, prioridade composta, categoria sugerida, confiança, estado do gate e até três motivos objetivos. A ordenação será compreensível sem depender de cor; rótulos, ícones e texto manterão acessibilidade. PII permanecerá mascarada em lista, detalhe, screenshots e exportações.
+
+Ao abrir um ticket, o agente verá três zonas. O contexto sanitizado fica em primeiro plano. Ao lado, o painel de decisão apresenta classificação, prioridade, probabilidades calibradas, regras acionadas e veredito `auto_route` ou `human_review`. A área de resposta mostra casos similares com identificadores rastreáveis, score e resolução histórica, seguida do rascunho editável. Sem evidência suficiente, ela mostra abstinência e motivo, nunca uma caixa vazia que sugira erro.
+
+As ações serão poucas: **aprovar**, **editar e aprovar**, **rejeitar** ou **escalonar**. Rejeição e escalonamento pedem motivo curto. Após salvar, a interface confirma a gravação e exibe o evento na trilha auditável. Nenhuma ação envia mensagem real. Filtros essenciais permitem focar revisão humana, risco, categoria e prioridade; busca e customizações extensas ficam fora do MVP.
+
+Uma navegação secundária leva ao **Scorecard**, dividido visualmente em Diagnóstico Observado, Avaliação do Protótipo e Cenários. A calculadora mostra premissas editáveis e nunca mistura projeção com histórico. O **Laboratório IT** exibe métricas, matriz de confusão, calibração e casos do teste congelado em sua própria taxonomia. Uma área de **Evidências** oferece versões, comandos de reprodução e exportações. O desenho será desktop-first, responsivo o suficiente para leitura, com estados de carregamento, indisponibilidade e erro explícitos.
+
+**Pergunta de validação:** esta experiência e hierarquia estão corretas para avançar?
