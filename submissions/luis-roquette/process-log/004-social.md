@@ -193,3 +193,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) mostrar benchmark, tamanho da amostra, diferença observada e nível de confiança; B) usar apenas um semáforo; C) apresentar somente uma explicação textual.
 - **Resposta de Luis:** **A — evidência quantitativa e nível de confiança**.
 - **Implicação:** todo alerta deverá expor os elementos mínimos para auditoria. Grupos insuficientes deverão ser sinalizados, e uma recomendação não poderá aparentar certeza maior que a sustentada pelos dados.
+
+### Onda 18 — navegação do dashboard
+
+- **Pergunta:** como organizar a experiência principal?
+- **Opções:** A) visão geral com alertas prioritários e detalhamento sob demanda; B) páginas separadas por tema; C) página única extensa.
+- **Resposta de Luis:** **A — visão geral com drill-down**.
+- **Implicação:** o dashboard deverá começar pelo que exige atenção e permitir aprofundamento progressivo até os registros e cálculos. A arquitetura de informação evitará tanto fragmentação por excesso de páginas quanto uma tela única sobrecarregada.
