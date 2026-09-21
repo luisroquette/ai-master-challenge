@@ -168,3 +168,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Agente de suporte.
 
 **Interpretação para a próxima onda:** a unidade central da interface será o ticket em trabalho. Métricas gerenciais devem nascer das decisões registradas nesse fluxo, sem criar um segundo produto do mesmo tamanho. A próxima escolha deve definir como o agente entra e percorre esse workspace na demonstração.
+
+### Onda 7 — Entrada no workspace
+
+**Pergunta:** como o agente começa o trabalho?
+
+- **A — Fila diária priorizada:** tickets reais de validação ordenados por risco e urgência; o agente abre, revisa e decide.
+- **B — Ticket individual:** o agente cola um texto e recebe categoria, prioridade, confiança, rota e resposta sugerida.
+- **C — Fila + entrada manual:** combina operação diária com uma caixa para testar novos tickets.
+
+**Resposta de Luis:** A — Fila diária priorizada.
+
+**Interpretação para a próxima onda:** o protótipo deve provar utilidade em uma sequência de trabalho, não apenas em uma inferência isolada. A fila usará dados separados da construção e permitirá rastrear decisão e resultado por ticket. A próxima escolha deve definir o princípio de ordenação da atenção humana.
