@@ -228,3 +228,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) resumo executivo de uma página e CSV das evidências e decisões; B) relatório técnico completo em PDF; C) somente imagens dos gráficos.
 - **Resposta de Luis:** **A — resumo executivo e CSV rastreável**.
 - **Implicação:** o Head receberá síntese curta e priorizada; o Analista poderá auditar os dados estruturados. A exportação evitará um relatório longo que replique toda a interface.
+
+### Onda 23 — uso dos dados de audiência
+
+- **Pergunta:** como audiência deve influenciar a análise?
+- **Opções:** A) usar idade, gênero e localização nos benchmarks e filtros quando houver amostra suficiente; B) criar clusters e personas automáticas; C) mostrar demografia sem influenciar alertas.
+- **Resposta de Luis:** **A — segmentação contextual condicionada à suficiência da amostra**.
+- **Implicação:** audiência fará parte do contexto analítico, mas não fragmentará grupos até perder validade. O sistema deverá recuar a uma segmentação mais ampla e informar o usuário quando a amostra não sustentar o corte solicitado.
