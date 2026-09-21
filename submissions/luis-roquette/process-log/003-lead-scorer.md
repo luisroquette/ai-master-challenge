@@ -558,4 +558,23 @@ Como a experiência deve permanecer unificada sem misturar a probabilidade calib
 
 **Recomendação da IA:** **B**. Mantém um ponto operacional único sem fabricar equivalência entre probabilidade e heurística.
 
+#### Resposta de Luis
+
+**B:** uma única tela com duas filas ou abas, uma para `Engaging` e outra para `Prospecting`.
+
+#### Decisão registrada
+
+A ferramenta terá uma entrada operacional única, mas preservará dois contextos de decisão. Cada aba terá ordenação, rótulos e explicações compatíveis com a evidência disponível naquele estágio. Não existirá score comum para intercalar as duas filas.
+
+#### Pergunta 2
+
+Qual escopo deve abrir por padrão para cada perfil?
+
+- **A.** Vendedor e gestor sempre veem toda a equipe.
+- **B.** Vendedor abre apenas sua carteira; gestor abre a equipe e pode filtrar por vendedor.
+- **C.** Ambos abrem apenas a própria carteira.
+- **D.** A tela sempre restaura o último filtro usado, independentemente do perfil.
+
+**Recomendação da IA:** **B**. Reduz ruído para o vendedor e entrega visão de gestão sem criar duas experiências separadas.
+
 **Resposta:** aguardando Luis.
