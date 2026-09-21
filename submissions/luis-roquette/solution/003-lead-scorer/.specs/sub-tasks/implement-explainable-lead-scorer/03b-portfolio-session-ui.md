@@ -24,8 +24,8 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 
 #### Success Criteria
 
-- [ ] TC-33 through TC-41 pass once 03a is available; TC-40 also proves data/config/source changes cause a new cache identity and unchanged filters do not refit.
-- [ ] Seller starts at own portfolio; manager starts at only the selected manager's team, supports exact seller filtering and shows prototype/no-auth context; unassigned seller rows stay in data-quality view.
+- [ ] TC-33 through TC-41 pass first against frozen C3 contract fixtures; the completed real `build_scoring_bundle` integration is owned by 04 after 03a is available. TC-40 also proves data/config/source changes cause a new cache identity and unchanged filters do not refit.
+- [ ] Seller starts at own portfolio; manager starts at only the selected manager's team, supports exact regional-office and seller filtering and shows prototype/no-auth context; unassigned seller rows stay in data-quality view.
 - [ ] Selection always resolves an ID from the exact displayed table; stage/role/filter/order changes cannot leave stale details; empty portfolios have explicit message and no pin action.
 - [ ] Only manager callback can pin a current portfolio deal, one per stage, with manager/time; scores remain byte-equivalent; filtering retains valid hidden state, recalculation/new browser session/new fingerprint clears overrides.
 - [ ] Failed-route rows/details/hover/totals expose no probability or expected revenue; calibrated-only totals show coverage; insufficient rows keep named corrections, even when pinned.
@@ -33,10 +33,10 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 #### Subtasks
 
 - [ ] Implement app.py snapshot verification/cache entry and source identity (read-only HEAD when available plus required three-source/requirements SHA-256) without sending filters or pins into the cache key.
-- [ ] Implement role/identity/team/seller controls, st.tabs and stage-specific calibrated/relative/insufficient sections plus unassigned-row quality diagnostics in app.py; do not invent currency.
+- [ ] Implement role/identity/region/team/seller controls, st.tabs and stage-specific calibrated/relative/insufficient sections plus unassigned-row quality diagnostics in app.py; do not invent currency.
 - [ ] Implement native row selection/adjacent details with stage-context-ID keys, strongest two factors per direction, origin/support/actions, empty-state handling and visible version/fingerprint diagnostics.
 - [ ] Implement st.session_state generation, selection and one pin per stage in app.py; recheck manager/portfolio in callback and clear session state without global cache clear.
-- [ ] Write tests/test_app.py TC-33–41 with AppTest and Playwright, using isolated browser contexts and temporary fixture copies for insufficient/failed-route/empty states; run the suite against fixtures and the real pipeline after 03a.
+- [ ] Write tests/test_app.py TC-33–41 with AppTest and Playwright, using isolated browser contexts and temporary fixture copies for insufficient/failed-route/empty states; keep this step fixture-only so parallel work does not depend on unfinished 03a.
 
 #### Blockers & Risks
 

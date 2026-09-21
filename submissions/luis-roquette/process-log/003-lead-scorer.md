@@ -975,3 +975,53 @@ As limitações serão explícitas: o dataset é um recorte estático; não cont
 - Separar obrigações agrupadas quando isso melhorar a rastreabilidade dos testes.
 - Garantir teste visual da supressão de probabilidades e smoke test em ambiente virtual limpo.
 - Concentrar em `04-canonical-verification` os testes reais que dependem do scoring criado em `03a`; `03b` deve usar fixtures do contrato.
+
+## I08 — Auditoria final de aderência ao desafio e à stack — 2026-09-21
+
+**Decisão de Luis:** antes da implementação, reler o repositório do desafio, conferir a cobertura integral do avaliador, validar toda a stack e eliminar gargalos conhecidos.
+
+### Fontes relidas
+
+- `challenges/build-003-lead-scorer/README.md`: software funcional, dados reais, priorização além de valor, explicação compreensível, setup, lógica, limitações, process log e bônus de filtros.
+- `submission-guide.md`: solução e process log obrigatórios; evidência de decomposição, iteração, correção de erros e contribuição humana; comunicação concisa.
+- `templates/submission-template.md`: README compartilhado com resumo, solução, resultados, recomendações, limitações, workflow e evidências.
+- `CONTRIBUTING.md`: PR obrigatório, título padronizado e nenhuma alteração fora de `submissions/luis-roquette/`.
+
+### Gargalos encontrados e correções incorporadas à SPEC
+
+1. **Recuperação do dataset:** a API pública sem versão respondeu `404`; o endpoint com `datasetVersionNumber=1` respondeu corretamente. A recuperação foi fixada na versão 1, mantendo checksum obrigatório e preservação dos arquivos existentes.
+2. **Python no Codespace:** a imagem atual oferece Python 3.14.2 e não oferece Python 3.11. A SPEC agora exige bootstrap descartável com `uv`, instalação do CPython 3.11 e criação do ambiente com `uv venv --seed --python 3.11`.
+3. **Compatibilidade de dependências:** a instalação conjunta de Streamlit, pandas, NumPy, SciPy, scikit-learn e Playwright em Python 3.11, além dos imports críticos, foi comprovada. A SPEC acrescentou `protobuf<6`, requisito de compatibilidade do Streamlit Community Cloud, e preservou `pip check` como gate. A combinação final com esse pin e Chromium ainda precisa do preflight estável da implementação.
+4. **Paralelismo da interface:** `03b` passa a testar somente fixtures congeladas do contrato; a integração real com o scoring de `03a` pertence ao passo `04`, removendo dependência circular escondida.
+5. **Deploy aninhado:** o plano agora explicita Python 3.11, raiz do repositório como diretório de trabalho e `app.py` aninhado como entrypoint no Streamlit Community Cloud.
+6. **Bônus de filtros:** a primeira releitura pós-correção mostrou que região estava prevista apenas para diagnóstico. A SPEC passou a exigir e testar filtros exatos por manager, região e vendedor, sem alterar scores.
+7. **Título e destino do PR:** a checagem de entrega mostrou que a referência genérica à política de PR era insuficiente. O plano passou a exigir um único PR para `upstream/main` com o título exato `[Submission] Luis Roquette — Challenge 003`.
+
+### Matriz de cobertura do avaliador
+
+| Exigência | Cobertura planejada | Gate final |
+|---|---|---|
+| Software funcional | Streamlit executável, smoke test e jornadas Playwright | `04` local/Codespace + `05` ao vivo |
+| Dados reais | Quatro CSVs CC0 versionados, manifestados e testados em integração | `01`, `02a`, `04` |
+| Priorização além de valor | Engaging validado temporalmente; Prospecting com evidência suavizada | `02b`, `03a`, `04` |
+| Explicação do score | Fatores favoráveis/desfavoráveis, origem, força da evidência e ação | `03a`, `03b`, `04` |
+| Uso por não técnico | Carteira do vendedor, visão do gestor, filtros e estados acionáveis | `03b`, `04`, `05` |
+| Setup, lógica e limitações | README copiável, ledger medido e limites explícitos | `04`, `06` |
+| Process log | Perguntas, respostas, decisões, erros e correções preservados | este diário + `06` |
+| Forma de submissão | README do template, escopo exclusivo e PR padronizado | `05`, `06` |
+
+### Controle de escopo
+
+A SPEC interna é deliberadamente completa para impedir lacunas, mas o material entregue ao avaliador permanecerá curto e operacional. O caminho crítico prioriza o que é obrigatório; filtros de gestor/região e deploy público permanecem diferenciais aprovados, sem criar API, autenticação, banco, escrita no CRM ou dependência paga.
+
+**Estado após a auditoria:** cobertura de requisitos completa no plano; implementação, preflight, deploy renderizado e PR continuam sendo gates futuros e não foram declarados concluídos.
+
+### Loop final de absorção
+
+- **Passagem limpa 1/2:** requisitos funcionais, documentação obrigatória, bônus de filtros e limite de escopo foram remapeados após as correções; nenhum novo achado.
+- **Passagem limpa 2/2:** oito passos, 50 critérios, 47 testes, stack, título/destino do PR e isolamento de arquivos foram verificados novamente; nenhum novo achado.
+- **Goal de absorção:** atingido — duas passagens consecutivas sem novas descobertas.
+
+### Gargalo operacional observado
+
+Três tentativas de completar a prova remota da stack pelo `codespace-manager` foram recusadas porque o Codespace limpo do mesmo repositório alternou entre `Shutdown`, `Available` e `ShuttingDown`. A hipótese duvidosa é o ciclo de vida externo desse ambiente antigo. A validação não foi contornada: o preflight de implementação permanece obrigado a comprovar Python 3.11, instalação com `protobuf<6`, `pip check`, Chromium e abertura headless em um Codespace estável antes de push, deploy ou conclusão.

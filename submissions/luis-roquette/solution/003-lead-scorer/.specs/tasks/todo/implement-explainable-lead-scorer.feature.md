@@ -17,14 +17,14 @@ NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code
 #### Objective and users
 
 - Build a functional lead-prioritization application that uses the four real CRM CSV files from Challenge 003.
-- Optimize the seller's decision about where to focus while giving managers a team view, seller filtering and a temporary manual-priority control.
+- Optimize the seller's decision about where to focus while giving managers a team view, region and seller filters, and a temporary manual-priority control.
 - Treat expected revenue per seller as the business north star, while ordering `Engaging` deals primarily by validated closing-probability bands.
 - Keep the product useful to non-technical sellers: every priority must be understandable and lead to a concrete next action when supported by data.
 
 #### Operational experience
 
 - Implement one Streamlit screen with separate `Engaging` and `Prospecting` tabs; never create a synthetic common score across the stages.
-- Default sellers to their own portfolio. Default managers to the team view with a seller filter.
+- Default sellers to their own portfolio. Default managers to the team view with region and seller filters.
 - Render compact rows for comparison and a side panel with favorable and unfavorable factors, score origin, evidence strength and next action.
 - Let managers temporarily pin a deal to the top without changing its score. Show manager and timestamp; keep this state only in `st.session_state` and expire it on a new session or recalculation.
 - Keep unsupported deals visible as `Dados insuficientes`, without an invented score, and name the field or condition that needs correction.
@@ -32,7 +32,7 @@ NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code
 #### Data contracts
 
 - Version the four real CC0 CSVs under `data/raw/` with source, license and checksums.
-- Provide an explicit external recovery command that verifies checksums before replacing any file; it must not run silently when the app starts.
+- Provide an explicit external recovery command pinned to Kaggle dataset version 1 (`datasetVersionNumber=1`) that verifies checksums before replacing any file; it must not run silently when the app starts.
 - Validate required files, columns, keys, data types and prices. Normalize the known `GTXPro` product key to `GTX Pro` before joining.
 - Never discard invalid rows silently. Fail globally when the dataset cannot support the pipeline; isolate row-level problems when the remaining data is usable.
 - Fingerprint data and scoring configuration so cached results invalidate when either changes.
@@ -72,7 +72,7 @@ NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code
 
 - Use Python 3.11 and Streamlit with three application units: `app.py` for presentation/session state, `data.py` for data contracts and joins, and `scoring.py` for modeling, prioritization, explanations and playbook.
 - Train deterministically on first load per data/configuration fingerprint and cache the result for filters and navigation.
-- Pin runtime and test dependencies in `requirements.txt`; local `venv` execution is the source of truth.
+- Pin runtime and test dependencies in `requirements.txt`, including a Streamlit Community Cloud-compatible `protobuf<6`; local `venv` execution is the source of truth.
 - Do not add a separate API, frontend, database, authentication layer or CRM writeback.
 
 #### Verification and evidence
@@ -150,7 +150,7 @@ Provide seller-own and manager-team views, compact comparison rows, deal details
 | CK-23 | Do unsupported active deals remain visible as Dados insuficientes with no invented score and the field or condition requiring correction named? | hard_rule | essential |
 | CK-24 | Does one Streamlit screen provide distinct Engaging and Prospecting tabs without a synthetic shared score? | hard_rule | essential |
 | CK-25 | Do selectable seller and manager contexts default respectively to own portfolio and the team view without implying authentication? | hard_rule | essential |
-| CK-26 | Does the manager seller filter produce the selected portfolio without changing underlying scores? | hard_rule | essential |
+| CK-26 | Do the manager, region and seller filters produce the exact selected portfolio without changing underlying scores? | hard_rule | essential |
 | CK-27 | Do compact comparison rows open a side panel containing factors, score origin, evidence strength and the next action? | hard_rule | important |
 | CK-28 | Can only the manager context temporarily pin a deal above the normal order without changing its score? | hard_rule | essential |
 | CK-29 | Does each temporary pin show its manager and timestamp? | hard_rule | important |
@@ -451,11 +451,11 @@ Case IDs identify distinct behaviors; a single implemented test can satisfy the 
 #### CK-25: Do selectable seller and manager contexts default respectively to own portfolio and the team view without implying authentication?
 
 - [e2e] TC-34: Seller journey: selected seller starts with own active portfolio; both separate tabs show their stage-specific output without a common score.
-- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a seller updates visible opportunity membership without changing scores.
+- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a regional office and seller updates exact visible opportunity membership without changing scores.
 
-#### CK-26: Does the manager seller filter produce the selected portfolio without changing underlying scores?
+#### CK-26: Do the manager, region and seller filters produce the exact selected portfolio without changing underlying scores?
 
-- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a seller updates visible opportunity membership without changing scores.
+- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a regional office and seller updates exact visible opportunity membership without changing scores.
 
 #### CK-27: Do compact comparison rows open a side panel containing factors, score origin, evidence strength and the next action?
 
@@ -505,7 +505,7 @@ Case IDs identify distinct behaviors; a single implemented test can satisfy the 
 #### CK-38: Does recorded browser verification exercise rendered seller and manager journeys including both tabs, filtering, details, insufficient data and temporary priority?
 
 - [e2e] TC-34: Seller journey: selected seller starts with own active portfolio; both separate tabs show their stage-specific output without a common score.
-- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a seller updates visible opportunity membership without changing scores.
+- [e2e] TC-35: Manager journey: manager starts at team scope; choosing a regional office and seller updates exact visible opportunity membership without changing scores.
 - [e2e] TC-36: Deal details: opening a compact row reveals its factors, origin, evidence strength and next action; changing filter/tab cannot display a stale or different row's details.
 - [e2e] TC-37: Manager pin: a manager pin moves the deal to the top with unchanged score plus manager/timestamp attribution.
 - [e2e] TC-39: Pin lifetime: filtering/navigation retain the override; explicit recalculation clears it even for unchanged data; data/config generation changes clear it; a new browser session has no prior override.
@@ -646,7 +646,7 @@ Global rate is total wins/observations; if history is empty, return insufficient
 
 ### C4 — Streamlit and session lifecycle
 
-Use `st.tabs` for the two stages, a native single-row-select dataframe and adjacent `st.columns` details. Provide explicit accessible labels for role, identity, manager seller filter, recalculation and temporary priority. Seller defaults to selected seller; manager defaults to sellers mapped to the selected manager, with “Todos da equipe” and an exact-membership seller filter. Display the prototype/no-auth context. Unassigned/invalid seller rows remain visible in a separate data-quality area, since they cannot safely be assigned to a seller.
+Use `st.tabs` for the two stages, a native single-row-select dataframe and adjacent `st.columns` details. Provide explicit accessible labels for role, identity, regional office, manager seller filter, recalculation and temporary priority. Seller defaults to selected seller; manager defaults to sellers mapped to the selected manager, with “Todas as regiões”, “Todos da equipe” and exact-membership region/seller filters. Display the prototype/no-auth context. Unassigned/invalid seller rows remain visible in a separate data-quality area, since they cannot safely be assigned to a seller.
 
 Store `fingerprint`, `calculation_generation: int`, `selection_by_stage` and `pins_by_stage` in `st.session_state`. Each stage allows one `TemporaryPin(opportunity_id, manager, created_at_utc, fingerprint, generation)`; choosing another replaces only that stage's pin. The callback rechecks current manager context and portfolio membership. Display manager and localized timestamp. Pins survive ordinary stage/filter changes, are visible only if they still match the current portfolio, and clear on explicit recalculation, new session or changed fingerprint. A role/identity change clears selections; hidden pins remain session-local and cannot give a seller pin controls.
 
@@ -656,13 +656,13 @@ Resolve selected positions against the exact displayed section's ID list; key/re
 
 ### C5 — Recovery, reproducibility and evidence boundaries
 
-The proposed explicit command is `.venv/bin/python data.py recover --manifest data/manifest.json --raw-dir data/raw`. It is never reachable from app initialization. Manifest entries identify source/license URL, exact CSV name, SHA-256, acquisition date, source download URL and optional archive member; recovery supports direct CSV or exact allowlisted ZIP members, rejects traversal/symlinks and never extracts arbitrary archive paths. Sources use HTTPS; local HTTP is allowed only by test fixtures. Changed upstream bytes cause a failure, not an automatic checksum update.
+The proposed explicit command is `.venv/bin/python data.py recover --manifest data/manifest.json --raw-dir data/raw`. It is never reachable from app initialization. Manifest entries identify source/license URL, exact CSV name, SHA-256, acquisition date, source download URL and optional archive member; the production URL is the public Kaggle endpoint pinned with `datasetVersionNumber=1`, because the unversioned API path returns 404. Recovery supports direct CSV or exact allowlisted ZIP members, rejects traversal/symlinks and never extracts arbitrary archive paths. Sources use HTTPS; local HTTP is allowed only by test fixtures. Changed upstream bytes cause a failure, not an automatic checksum update.
 
 Before any replacement, acquire an exclusive `data/.recovery.lock` directory, download all four files into a temporary sibling directory, validate all checksums and schemas, then rename existing `raw` to a unique backup and promote the complete staged directory to `raw` on the same filesystem. Readers fail closed while the marker exists and recheck it after reading. If promotion or final verification fails, restore the original directory and verify original digests. On rollback failure/crash, retain marker, backup and staging with exact recovery instructions; never remove the only original. A `recover --resume` command reads the transaction record, restores the recorded original snapshot first and verifies it before clearing the marker. Lock/transaction paths and expected digests are validated against the solution data directory. This is a guarded transaction with recoverable interruption, not a claim that two renames are one atomic operation. The replacement strategy follows [Python filesystem rename guarantees](https://docs.python.org/3.11/library/os.html#os.replace).
 
-`requirements.txt` pins the complete resolved Python 3.11 runtime and test set. Start from the research candidates for Streamlit/pandas/NumPy/SciPy/sklearn; use stdlib `unittest`, not the optional research pytest dependency. Add and pin Playwright for its already-approved browser tests, with matching Chromium installed explicitly during setup. A fresh disposable Python 3.11 venv must install solely that file, pass `pip check` and execute the same canonical preflight. Freeze the proven versions; candidate pins are not claimed as installed. Missing interpreter/browser/dependency is a blocking gate, never an optional skip.
+`requirements.txt` pins the complete resolved Python 3.11 runtime and test set. Start from the research candidates for Streamlit/pandas/NumPy/SciPy/sklearn; use stdlib `unittest`, not the optional research pytest dependency. Add and pin Playwright for its already-approved browser tests, with matching Chromium installed explicitly during setup, and constrain `protobuf<6` for Streamlit Community Cloud compatibility. A fresh disposable Python 3.11 venv must install solely that file, pass `pip check` and execute the same canonical preflight. Freeze the proven versions; candidate pins are not claimed as installed. Missing interpreter/browser/dependency is a blocking gate, never an optional skip.
 
-Canonical command: `bash scripts/preflight.sh`. It creates an isolated temporary Python 3.11 venv, installs only the pinned requirements and matching Playwright Chromium, then checks dependencies/imports, runs `unittest` discovery over the three test files (including seeded property cases and the local recovery server), completes the four-route real-data evaluation, and runs Streamlit startup plus Playwright journeys. The shell command owns clean-environment setup exactly once; TC-46 verifies startup inside that environment and never recursively invokes preflight. Cleanup touches only the temporary environment and child processes created by that invocation. A statistically rejected route is a valid evaluated outcome; incomplete evaluation, invalid output, exceptions, missing tests or failed assertions return nonzero. Test methods have stable TC IDs; existing 47 distinct TC contracts remain mapped to the business matrix. `tests/test_app.py` owns both AppTest lifecycle checks and Playwright journeys; no fourth test file or separate frontend suite is required. Local discovery contains only local checks. TC-47 is a separate explicit post-deploy `verify_live_revision(url, expected_revision, expected_source_digest, expected_fingerprint)` verifier in that same file, invoked through its `live` CLI mode with those four required arguments. It is not a discovered local TestCase that skips when a URL is missing; its nonzero result blocks delivery after deployment, avoiding a preflight/deploy dependency cycle.
+Canonical command: `bash scripts/preflight.sh`. It creates an isolated temporary Python 3.11 venv, installs only the pinned requirements and matching Playwright Chromium, then checks dependencies/imports, runs `unittest` discovery over the three test files (including seeded property cases and the local recovery server), completes the four-route real-data evaluation, and runs Streamlit startup plus Playwright journeys. On the managed Codespace, where the base image currently exposes Python 3.14 rather than 3.11, the gate bootstraps pinned `uv` in a disposable bootstrap venv, installs CPython 3.11 and creates the test venv with `uv venv --seed --python 3.11`; local execution uses the already-required Python 3.11 directly. The shell command owns clean-environment setup exactly once; TC-46 verifies startup inside that environment and never recursively invokes preflight. Cleanup touches only the temporary environment and child processes created by that invocation. A statistically rejected route is a valid evaluated outcome; incomplete evaluation, invalid output, exceptions, missing tests or failed assertions return nonzero. Test methods have stable TC IDs; existing 47 distinct TC contracts remain mapped to the business matrix. `tests/test_app.py` owns both AppTest lifecycle checks and Playwright journeys; no fourth test file or separate frontend suite is required. Local discovery contains only local checks. TC-47 is a separate explicit post-deploy `verify_live_revision(url, expected_revision, expected_source_digest, expected_fingerprint)` verifier in that same file, invoked through its `live` CLI mode with those four required arguments. It is not a discovered local TestCase that skips when a URL is missing; its nonzero result blocks delivery after deployment, avoiding a preflight/deploy dependency cycle.
 
 Extend the existing verification obligations without rewriting Acceptance Criteria: TC-03 injects second-rename and rollback failures; TC-34/35 include empty portfolios and a fixture forcing a failed probability route; TC-36 checks absent probability/revenue in that fixture's detail panel; TC-44 denies external networking after installation during load/train/score; TC-46 includes clean-venv installation and teardown of only the spawned server. Use a temporary copied app plus fixture data/config in tests, never a production “test mode” or edits to real CSVs. Disable Streamlit usage telemetry on the spawned command. Offline denial permits loopback for local browser/recovery fixtures and fails attempted external traffic; no network prohibition is bypassed by stubbing a successful external response.
 
@@ -670,7 +670,7 @@ Resolve the Python/package/browser versions in a clean environment before the re
 
 The full automated gate follows the approved managed-Codespace execution policy via `codespace-manager list` / `codespace-manager run`, at the exact intended source/diff and data fingerprint. Fresh local Python 3.11 reproduction remains separately required evidence; remote success cannot be described as a local run. Both use the same portable command, no Node build is introduced, and no secrets are copied. These gates run during implementation, not this architecture phase.
 
-Capture evidence by separate fields in `docs/evaluation.md`: actual dataset/join counts, four route records, selected route/source, baseline/model metrics, temporal/feature/config identities, environment/dependency digest, verified source revision, commands/status, seller screenshot and manager screenshot. List each CK-43 limitation and pilot recommendation separately so bundled checklist failures stay diagnosable. Screenshots over synthetic error fixtures are labeled as such. Record those findings in the challenge process log; hand its concise section to the shared-README owner. After all local/managed gates and browser inspection pass, verify the same source revision, fingerprint and rendered journey at the Community Cloud URL; HTTP readiness alone is insufficient. Delivery remains blocked if that external proof is unavailable.
+Capture evidence by separate fields in `docs/evaluation.md`: actual dataset/join counts, four route records, selected route/source, baseline/model metrics, temporal/feature/config identities, environment/dependency digest, verified source revision, commands/status, seller screenshot and manager screenshot. List each CK-43 limitation and pilot recommendation separately so bundled checklist failures stay diagnosable. Screenshots over synthetic error fixtures are labeled as such. Record those findings in the challenge process log; hand its concise section to the shared-README owner. After all local/managed gates and browser inspection pass, configure Community Cloud for Python 3.11 with the nested app entrypoint and repository root as working directory. Verify the same source revision, fingerprint and rendered journey at the Community Cloud URL; HTTP readiness alone is insufficient. Delivery remains blocked if that external proof is unavailable.
 
 ## Runtime Scenarios
 
@@ -681,7 +681,7 @@ Source: scratchpad Step 3.7.
 | First load / supported seller | Verify snapshot -> fit/cache all four route outcomes -> choose stage-specific result state -> seller portfolio -> select exact opportunity -> show true factors and action. Subsequent filters reuse fitted computation. |
 | Missing account / rejected probability | Missing/unusable account -> account-free pipeline; rejected route or unsupported probability band -> explicit relative section with actual-score explanation and validation reason. No deal probability or expected revenue survives in any UI surface. |
 | Invalid row / empty portfolio / global failure | Unsupported active row -> visible “Dados insuficientes” with field/correction; empty selection -> empty-state message; global corruption or impossible temporal split -> stop scoring with actionable diagnostics. |
-| Manager intervention | Manager team -> optional seller filter -> temporary pin with author/time -> unchanged result moved to stage top; filtering retains state -> recalculation/new session/fingerprint change expires it. |
+| Manager intervention | Manager team -> optional region/seller filters -> temporary pin with author/time -> unchanged result moved to stage top; filtering retains state -> recalculation/new session/fingerprint change expires it. |
 | Recovery failure | Explicit CLI -> acquire marker -> stage/verify whole snapshot -> replace -> verify; write failure -> restore and verify original; failed rollback -> keep backup and marker, block app, explicit resume recovers. |
 
 ```text

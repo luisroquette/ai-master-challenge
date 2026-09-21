@@ -26,14 +26,15 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 #### Success Criteria
 
 - [ ] No push/deploy occurs with known deterministic gate failure; all applicable actual CI/provider checks reach terminal green at the latest delivery SHA.
+- [ ] The single submission PR targets upstream `main` and uses the exact required title `[Submission] Luis Roquette — Challenge 003`; subsequent changes update that same PR.
 - [ ] Run .venv/bin/python tests/test_app.py live --url <actual-url> --expected-revision <verified-sha> --expected-source-digest <verified-digest> --expected-fingerprint <verified-fingerprint>; TC-47 succeeds against rendered active-stage UI.
 - [ ] The Cloud source digest is linked to the exact reviewed revision even when runtime Git HEAD is unavailable; no guessed revision or HTTP-only success is accepted.
 - [ ] Seller and manager browser journeys at the published URL, identity evidence and actual screenshots are recorded; lack of access or final provider proof remains a concrete delivery blocker.
 
 #### Subtasks
 
-- [ ] Revalidate intended diff/revision, source and data/config fingerprints plus actual workflow/branch-check/provider requirements, then coordinate scoped Git inclusion and branch/PR publication with the orchestrator.
-- [ ] Publish the gated source to Streamlit Community Cloud with Python 3.11, the actual solution app.py entrypoint and requirements.txt; follow provider runs to terminal result without bypassing checks.
+- [ ] Revalidate intended diff/revision, source and data/config fingerprints plus actual workflow/branch-check/provider requirements, then coordinate scoped Git inclusion and the single `[Submission] Luis Roquette — Challenge 003` PR targeting upstream `main` with the orchestrator.
+- [ ] Publish the gated source to Streamlit Community Cloud with Python 3.11, repository root as working directory, the actual nested solution `app.py` entrypoint and requirements.txt containing `protobuf<6`; follow provider runs to terminal result without bypassing checks.
 - [ ] Write the concrete live browser verification cases/results in docs/evaluation.md, execute TC-47 and seller/manager journeys, include wrong-identity rejection evidence from the existing verifier tests, and capture the two required screenshots.
 - [ ] Record actual URL, revision/digest/fingerprint, commands/status and deployment identity in docs/evaluation.md; if runtime source changes, return to canonical verification and repeat live proof before delivery.
 

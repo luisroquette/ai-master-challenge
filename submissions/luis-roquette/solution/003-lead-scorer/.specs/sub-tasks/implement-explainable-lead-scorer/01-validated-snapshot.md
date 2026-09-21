@@ -20,7 +20,7 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 #### Expected Output
 
 - data.py with read_snapshot, load_dataset, fingerprint and C1 diagnostics; data/manifest.json; data/raw/{accounts,products,sales_teams,sales_pipeline}.csv
-- requirements.txt with the complete compatible Python 3.11 dependency lock, including Streamlit, pandas, NumPy, SciPy, sklearn and Playwright; .gitignore for generated local/recovery artifacts
+- requirements.txt with the complete compatible Python 3.11 dependency lock, including Streamlit, pandas, NumPy, SciPy, sklearn, Playwright and a `protobuf<6` pin compatible with Community Cloud; .gitignore for generated local/recovery artifacts
 - tests/test_data.py with unittest fixture builders and the real-four-file integration harness, reused by later tests without a new helpers module
 
 #### Success Criteria
@@ -28,12 +28,12 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 - [ ] TC-01, TC-04, TC-05, TC-06 and TC-07 pass via .venv/bin/python -m unittest discover -s tests -p test_data.py; TC-40 checks the generic snapshot/config digest contract.
 - [ ] IDs retain leading zeroes; normalization precedes uniqueness checks; GTXPro joins exactly one GTX Pro; opportunity counts reconcile across supported/unsupported/excluded rows.
 - [ ] Missing files/headers/checksum violations/critical duplicate keys block globally; row errors name record, field and correction; missing account permits later fallback; bad financial labels exclude financial evaluation only.
-- [ ] A fresh Python 3.11 venv installs requirements.txt, passes pip check and imports the required estimator, calibration, Streamlit AppTest and Playwright APIs; candidate pins are corrected only from actual compatibility evidence before modeling policy freeze.
+- [ ] A fresh Python 3.11 venv installs requirements.txt, passes pip check and imports the required estimator, calibration, Streamlit AppTest and Playwright APIs; the managed Codespace bootstrap uses pinned `uv`, `uv python install 3.11` and `uv venv --seed --python 3.11`; candidate pins are corrected only from actual compatibility evidence before modeling policy freeze.
 
 #### Subtasks
 
 - [ ] Acquire and verify the four real CSVs into data/raw/, recording exact headers, source/license/download or archive-member metadata and checksums in data/manifest.json.
-- [ ] Resolve and pin the complete Python 3.11 runtime/test dependency set in requirements.txt; use unittest rather than adding pytest/SHAP; add generated-path ignores to .gitignore without changing repository-root rules.
+- [ ] Resolve and pin the complete Python 3.11 runtime/test dependency set in requirements.txt, including `protobuf<6`; use unittest rather than adding pytest/SHAP; add generated-path ignores to .gitignore without changing repository-root rules.
 - [ ] Implement data.py snapshot-byte reads with recovery-marker checks before/after; validate C1 schema, keys, finite numerics/dates/prices, normalize only approved aliases, perform cardinality-preserving joins and retain diagnostic accounting.
 - [ ] Implement data.py fingerprint over actual bytes, provenance/schema metadata, canonical supplied config and dependency digest; source identity will be added by the app caller without importing scoring into data.
 - [ ] Write tests/test_data.py fixtures and TC-01/04/05/06/07/40 tests, including financial-label isolation and exact boundary/error partitions; run them in the resolved environment and preserve measured acquisition evidence for docs/evaluation.md.
