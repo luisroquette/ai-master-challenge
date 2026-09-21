@@ -260,11 +260,11 @@ git commit -m "feat(churn): add reproducible project and verified data"
 - Produces: `build_quality_report(tables: dict[str, pd.DataFrame]) -> dict[str, object]` with row counts, nulls, duplicate IDs, orphan counts, chronology contradictions and churn-label reconciliation.
 - Produces: `add_usage_row_key(usage: pd.DataFrame) -> pd.DataFrame` using `f"{usage_id}#{occurrence}"`, where `occurrence` starts at zero, without dropping rows.
 
-- [ ] **Step 1: Create minimal synthetic tables in `tests/conftest.py`**
+- [x] **Step 1: Create minimal synthetic tables in `tests/conftest.py`**
 
 Define a `mini_tables()` fixture returning all five DataFrames with accounts `A-1` and `A-2`; set their signup dates to `2023-01-01` and `2024-05-20`, with account churn flags `False` and `True` respectively. Give `A-1` an annual Enterprise `S-1` from `2023-06-15` to `2024-06-15` at MRR `1000`, plus monthly Pro `S-2` from `2024-04-01` onward at MRR `200`; give `A-2` monthly Basic `S-3` from `2024-05-20` onward at MRR `300`. Add usage before and after the `2024-05-31` cutoff, one conflicting duplicated `usage_id`, one `A-1` ticket before signup, one future ticket, terminal churn for `A-1` on `2024-06-15`, and a later reactivation. Copy the exact column lists from `SCHEMAS`, assert `set(mini_tables) == set(RAW_TABLE_NAMES)`, and fill non-tested required fields with fixed valid values.
 
-- [ ] **Step 2: Write failing contract and quality tests**
+- [x] **Step 2: Write failing contract and quality tests**
 
 ```python
 import pytest
@@ -293,7 +293,7 @@ def test_churn_label_disagreement_is_reported(mini_tables):
     assert report["label_policy"] == "first_non_reactivation_event"
 ```
 
-- [ ] **Step 3: Verify both tests fail**
+- [x] **Step 3: Verify both tests fail**
 
 ```bash
 .venv/bin/python -m pytest tests/test_contracts.py tests/test_quality.py -v
@@ -301,15 +301,15 @@ def test_churn_label_disagreement_is_reported(mini_tables):
 
 Expected: FAIL because `contracts.py` and `quality.py` do not exist.
 
-- [ ] **Step 4: Implement explicit schemas and date parsing**
+- [x] **Step 4: Implement explicit schemas and date parsing**
 
 In `contracts.py`, define a `SCHEMAS` mapping for all columns and parse only these date fields: `signup_date`, `start_date`, `end_date`, `usage_date`, `submitted_at`, `closed_at`, `churn_date`. Parse booleans from `True` and `False`; reject any third value. Validate `arr_amount == 12 * mrr_amount` with exact integer arithmetic.
 
-- [ ] **Step 5: Implement critical-vs-warning validation**
+- [x] **Step 5: Implement critical-vs-warning validation**
 
 Critical failures: missing file/column, unparseable value, duplicate primary key except `usage_id`, orphan foreign key, negative `mrr_amount`, `arr_amount`, counts or durations. Warning evidence: conflicting `usage_id`, event before signup, usage before subscription start, usage after subscription end, closed ticket before submission, and churn-label disagreement.
 
-- [ ] **Step 6: Encode the known-data assertions**
+- [x] **Step 6: Encode the known-data assertions**
 
 Add a test that loads the vendored data and asserts these observed counts so a dataset refresh cannot silently change conclusions:
 
@@ -327,7 +327,7 @@ assert report["contradictions"]["usage_before_signup"] == 13198
 assert report["contradictions"]["tickets_before_signup"] == 1077
 ```
 
-- [ ] **Step 7: Run the quality suite**
+- [x] **Step 7: Run the quality suite**
 
 ```bash
 .venv/bin/python -m pytest tests/test_contracts.py tests/test_quality.py -v
@@ -335,7 +335,7 @@ assert report["contradictions"]["tickets_before_signup"] == 1077
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit contracts and quality evidence**
+- [x] **Step 8: Commit contracts and quality evidence**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn submissions/luis-roquette/solution/001-churn/tests

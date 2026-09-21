@@ -128,3 +128,22 @@ No Codespace gerenciado, para o SHA exato `ccf0d13d5cbb2937d441215b5a0023229c140
 - worktree remota limpa.
 
 A Task 1 atende seu critério de aceite. A próxima fase autorizada é a Task 2, contratos de dados e evidências de qualidade.
+
+## Fase 2 — contratos de dados e evidências de qualidade
+
+### Planejamento e revisão
+
+Definimos contratos explícitos para as cinco tabelas, chaves primárias e estrangeiras, datas, booleanos e números. Duplicidades de `usage_id` permanecem como warning e recebem `usage_row_id`; schemas ausentes, parse inválido, chaves inválidas, órfãos, valores negativos e ARR divergente bloqueiam a execução.
+
+### Execução e teste
+
+O commit de testes `21f0ceb` produziu o vermelho esperado no Codespace: `ModuleNotFoundError` para `ravenstack_churn.contracts`. Implementamos o menor fluxo compartilhado de coerção e validação, mais o relatório de qualidade canônico.
+
+No SHA `df13fa1150a50b485be2051cf407a7a58f30e946`, o Codespace confirmou:
+
+- cinco testes aprovados;
+- 500 contas, 5.000 assinaturas, 25.000 usos, 2.000 tickets e 600 eventos;
+- 21 grupos de `usage_id` duplicados, 19.142 usos antes da assinatura, 13.198 antes do cadastro e 1.077 tickets antes do cadastro;
+- Ruff verde e worktree remota limpa.
+
+**Resultado:** Fase 2 validada e encerrada. Nenhuma anomalia cronológica foi apagada ou reclassificada como dado válido.
