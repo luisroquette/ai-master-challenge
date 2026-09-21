@@ -307,4 +307,20 @@ A fila operacional excluirá oportunidades encerradas. O histórico de `Won` e `
 
 Como devemos separar os deals históricos para estimar e validar a probabilidade de fechamento?
 
+#### Resposta de Luis
+
+**B:** divisão temporal — deals antigos treinam; deals mais recentes validam.
+
+#### Decisão registrada
+
+A validação deverá simular o futuro: nenhum deal com fechamento posterior poderá informar o treinamento usado para avaliar um período anterior. O ponto de corte será escolhido somente após medir a distribuição das datas; não será definido arbitrariamente nesta conversa.
+
+#### Evidência inspecionada antes da próxima pergunta
+
+O arquivo real possui 8.800 oportunidades: 500 `Prospecting`, 1.589 `Engaging`, 4.238 `Won` e 2.473 `Lost`. Todos os `Prospecting` não têm `engage_date`; todos os `Engaging` têm `engage_date`, mas ainda não têm `close_date`. Os deals encerrados têm ambas as datas. O ZIP consultado tem SHA-256 `74d535826330b616758ebb6bb393abf701a5126364a72fbe71003cb6a7a87a9c`.
+
+#### Pergunta 3
+
+Como devemos estimar a probabilidade dos `Prospecting`, já que o histórico encerrado contém apenas deals que chegaram ao engajamento?
+
 **Resposta:** aguardando Luis.
