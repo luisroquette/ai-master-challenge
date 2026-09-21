@@ -832,4 +832,23 @@ Qual deve ser o alcance de disponibilização da aplicação?
 
 Streamlit Community Cloud é o serviço de hospedagem da Streamlit: conecta-se a um repositório GitHub, instala as dependências e executa o arquivo principal do app, gerando uma URL que o avaliador pode abrir sem instalar nada. Ele facilita a demonstração, mas não substitui o setup local: depende de um serviço externo, pode ter inicialização fria e limites de recursos. Como o projeto não usa segredos nem APIs pagas, é compatível com esse tipo de publicação.
 
+#### Resposta de Luis
+
+**B:** execução local obrigatória e demo pública adicional, por apresentar o melhor custo-benefício.
+
+#### Decisão registrada
+
+A entrega será plenamente executável sem a nuvem. Depois de código, testes, smoke test e inspeção visual aprovados, poderá ser publicada no Streamlit Community Cloud para fornecer acesso imediato por URL. O deploy não será usado para esconder falha no setup local.
+
+#### Pergunta 8
+
+O que a aplicação deve fazer se nenhum modelo de `Engaging` passar pelo gate de calibração?
+
+- **A.** Publicar a probabilidade do modelo menos ruim mesmo assim.
+- **B.** Remover a probabilidade e usar apenas uma faixa de prioridade relativa, acompanhada de aviso e métricas da falha.
+- **C.** Impedir a abertura de toda a aplicação.
+- **D.** Usar as métricas do conjunto de treino até o modelo parecer aceitável.
+
+**Recomendação da IA:** **B**. Mantém a ferramenta útil sem apresentar como probabilidade um número que a validação rejeitou.
+
 **Resposta:** aguardando Luis.
