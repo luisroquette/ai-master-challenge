@@ -763,4 +763,23 @@ O README não exige persistência, banco, autenticação nem auditoria durável.
 
 **Recomendação corrigida da IA:** **A**. Manter a intervenção em `session_state`, exibindo gestor e horário durante a sessão, satisfaz o comportamento temporário já aprovado. A ausência de persistência multiusuário será declarada como limitação e caminho de escala.
 
+#### Resposta de Luis
+
+**A:** persistência apenas na sessão do navegador.
+
+#### Decisão registrada
+
+A repriorização temporária usará `st.session_state`, com gestor selecionado e horário visíveis durante a sessão. Ela não será apresentada como auditoria persistente nem autenticação real. Refresh, nova sessão ou recalculação poderão removê-la; esse limite será documentado.
+
+#### Pergunta 5
+
+Qual conjunto de provas deve acompanhar a entrega funcional?
+
+- **A.** Testes automatizados dos contratos críticos, smoke test de inicialização e evidência visual do fluxo principal executado com os dados reais.
+- **B.** Apenas inspeção manual da interface.
+- **C.** Apenas métricas do modelo em um relatório.
+- **D.** Uma suíte extensa de testes ponta a ponta para todos os controles.
+
+**Recomendação da IA:** **A**. Prova scoring, antileakage, fallbacks e execução sem transformar o challenge em um projeto de infraestrutura de testes.
+
 **Resposta:** aguardando Luis.
