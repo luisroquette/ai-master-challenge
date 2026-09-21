@@ -943,7 +943,7 @@ O preflight canônico executará testes, verificação de imports, treino comple
 
 **Resposta:** “Aprovo a seção 4.”
 
-### Seção 5 — Entrega, documentação e limites — aguardando aprovação
+### Seção 5 — Entrega, documentação e limites — aprovada
 
 Toda a entrega permanecerá em `submissions/luis-roquette/`. A solução conterá código, testes, `requirements.txt` fixado, os quatro CSVs em `data/raw/`, manifesto com origem, licença e checksums, além de um comando explícito de recuperação que valida o conteúdo antes de substituir qualquer arquivo. O README da solução fornecerá comandos copiáveis para criar o ambiente Python 3.11, instalar dependências, executar o preflight e iniciar o Streamlit. O README principal da submissão seguirá o template oficial e conduzirá o avaliador ao app, às evidências e ao process log.
 
@@ -952,3 +952,9 @@ A documentação explicará o problema de negócio, a diferença entre as filas,
 A execução local será a fonte de verdade. Somente após o preflight verde e a inspeção visual, a mesma revisão versionada poderá ser publicada no Streamlit Community Cloud; a URL será adicionada à documentação após verificação ao vivo. Nenhum segredo ou API paga será necessário.
 
 As limitações serão explícitas: o dataset é um recorte estático; não contém desfechos de leads que nunca chegaram a `Engaging`; associações não provam causalidade; prioridade manual não persiste; não há autenticação, escrita no CRM, monitoramento de drift nem retreino agendado. A evolução recomendada será um piloto com vendedores, captura de intervenções e resultados, auditoria de desempenho por segmento e recalibração periódica antes de qualquer uso operacional em escala.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovado.”
+
+**Gate concluído:** as cinco seções do design consolidado estão aprovadas. O draft SDD pode receber os requisitos e seguir para `/plan-task`; implementação permanece bloqueada até a SPEC planejada ser revisada.
