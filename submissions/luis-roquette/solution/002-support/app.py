@@ -119,7 +119,10 @@ def render_proof() -> None:
 
 def render_limits() -> None:
     st.title("Limites da prova")
-    st.write("Este checkpoint valida navegação, formulário, SQLite e download; não implementa domínio.")
+    st.write(
+        "Este checkpoint valida navegação, formulário, SQLite e download; "
+        "não implementa domínio."
+    )
 
 
 def main() -> None:

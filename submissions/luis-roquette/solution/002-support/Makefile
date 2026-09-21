@@ -21,13 +21,16 @@ doctor:
 	test -f requirements.lock || { echo "ERRO: requirements.lock ausente; execute make bootstrap-lock no ambiente Python 3.12."; status=1; }; \
 	mkdir -p data/runtime 2>/dev/null && test -w data/runtime || { echo "ERRO: data/runtime não é gravável; corrija as permissões."; status=1; }; \
 	if test ! -s "$(CUSTOMER_CSV)" || test ! -s "$(IT_CSV)"; then \
-		curl -fsIL --max-time 15 "$(CUSTOMER_URL)" >/dev/null || { echo "ERRO: fonte Customer indisponível; baixe manualmente para $(CUSTOMER_CSV)."; status=1; }; \
-		curl -fsIL --max-time 15 "$(IT_URL)" >/dev/null || { echo "ERRO: fonte IT indisponível; baixe manualmente para $(IT_CSV)."; status=1; }; \
+		curl -fsSL --max-time 30 --range 0-0 -o /dev/null "$(CUSTOMER_URL)" || { echo "ERRO: fonte Customer indisponível; baixe manualmente para $(CUSTOMER_CSV)."; status=1; }; \
+		curl -fsSL --max-time 30 --range 0-0 -o /dev/null "$(IT_URL)" || { echo "ERRO: fonte IT indisponível; baixe manualmente para $(IT_CSV)."; status=1; }; \
 	else \
 		echo "OK: fontes locais preparadas; conectividade externa não é necessária."; \
 	fi; \
-	test "$$status" -eq 0; \
-	echo "OK: Python 3.12, lock, ferramentas, fontes e diretório gravável verificados."
+	if test "$$status" -eq 0; then \
+		echo "OK: Python 3.12, lock, ferramentas, fontes e diretório gravável verificados."; \
+	else \
+		exit "$$status"; \
+	fi
 
 bootstrap-lock:
 	@test ! -e requirements.lock || { echo "ERRO: requirements.lock já existe; não sobrescrito."; exit 2; }
