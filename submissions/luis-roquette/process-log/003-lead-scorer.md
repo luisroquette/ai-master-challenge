@@ -615,4 +615,23 @@ Como a ferramenta deve produzir a próxima ação recomendada?
 
 **Recomendação da IA:** **B**. É auditável, funciona sem API paga e evita recomendações inventadas; o playbook mínimo pode ser validado por testes diretos.
 
+#### Resposta de Luis
+
+**B:** usar um playbook determinístico baseado no estágio e no principal fator acionável.
+
+#### Decisão registrada
+
+A recomendação será produzida por regras versionadas e testáveis, sem chamada a modelo generativo. Cada ação deverá apontar o sinal que a ativou. Na ausência de sinal acionável suficiente, a interface declarará isso em vez de inventar uma recomendação.
+
+#### Pergunta 5
+
+Como o gestor deve fazer a repriorização manual temporária já aprovada?
+
+- **A.** Arrastar qualquer deal para uma posição arbitrária na fila.
+- **B.** Usar uma ação “Priorizar temporariamente”, que fixa o deal no topo, identifica a intervenção e expira na próxima recalculação.
+- **C.** Digitar manualmente um número de posição.
+- **D.** Alterar diretamente a probabilidade calculada.
+
+**Recomendação da IA:** **B**. Entrega a intervenção necessária com uma regra simples, auditável e sem confundir decisão humana com previsão do modelo.
+
 **Resposta:** aguardando Luis.
