@@ -267,4 +267,20 @@ A intervenção do manager será temporária e não modificará score, pesos ou 
 
 Mesmo sendo temporária, a intervenção do manager deve deixar qual evidência?
 
-**Resposta:** aguardando Luis.
+#### Resposta de Luis
+
+**B:** registrar apenas quem alterou e quando.
+
+#### Decisão registrada
+
+A auditoria mínima da repriorização guardará identidade do manager e horário. Justificativa, comparação antes/depois e resultado posterior do deal não serão obrigatórios na primeira versão.
+
+### Síntese da Onda 2 — aguardando aprovação
+
+- **Problema primário:** substituir priorização subjetiva; depois reduzir o volume analisado.
+- **Atualização:** recalcular continuamente quando os dados mudarem, mas reordenar apenas após mudança material.
+- **Protótipo:** recalcular toda a fila após nova carga; sem alegar integração em tempo real.
+- **Produto real:** usar variação percentual configurável, calibrada no piloto.
+- **Intervenção do manager:** repriorização temporária até o próximo recálculo, auditando apenas quem e quando.
+
+Permanecem para ondas posteriores: persistência de redistribuições, definição da probabilidade, eventos disponíveis no tempo, interface e limites operacionais.
