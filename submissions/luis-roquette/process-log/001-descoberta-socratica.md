@@ -712,4 +712,35 @@ Qual conjunto mínimo de testes deve bloquear a entrega?
 
 ### Estado da pergunta 2
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+A entrega será bloqueada por falhas nos contratos de dados, cardinalidades e chaves, invariantes financeiros, isolamento temporal, consistência entre relatório, dashboard e CSV, ou inicialização da interface. Cobertura ampla de código trivial não será objetivo.
+
+### Consequência para o desenho
+
+`make reproduce` deverá executar esses gates antes de declarar sucesso. Cada teste protegerá uma conclusão ou um risco real já identificado. Um artefato gerado com teste vermelho será considerado inválido, mesmo que pareça correto visualmente.
+
+### Ponto ainda aberto
+
+O modelo preditivo é um diferencial opcional. Precisamos definir um portão objetivo para impedir que um modelo fraco entre apenas para tornar a entrega mais sofisticada.
+
+### Pergunta 3
+
+Quando o modelo preditivo deve fazer parte da entrega final?
+
+- A. Sempre, porque o desafio cita previsão de churn como diferencial.
+- B. Somente se superar um baseline simples na avaliação fora do tempo, produzir risco útil para a fila e apresentar desempenho e limitações por segmento; caso contrário, será removido.
+- C. Quando atingir boa acurácia no conjunto de treinamento.
+- D. Mesmo sem validação suficiente, desde que as explicações SHAP sejam visualmente claras.
+
+**Recomendação técnica preliminar do agente:** B, porque “um modelo preditivo que funcione” é diferencial; um modelo sem ganho fora do tempo enfraquece a credibilidade do diagnóstico.
+
+### Estado da pergunta 3
+
 Aguardando resposta de Luis.
