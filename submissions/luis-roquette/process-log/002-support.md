@@ -132,3 +132,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** B — Autonomia por risco.
 
 **Interpretação para a próxima onda:** a arquitetura precisa separar decisões internas reversíveis de comunicação externa. Roteamento pode ocorrer automaticamente sob critérios verificáveis; respostas não serão enviadas sem revisão humana. A próxima escolha deve definir como risco e confiança serão combinados no gate.
+
+### Onda 4 — Gate de automação
+
+**Pergunta:** como o gate decide se a IA pode rotear automaticamente?
+
+- **A — Confiança + regras de risco:** exige confiança calibrada e bloqueia temas sensíveis, prioridade crítica, PII ou ambiguidade.
+- **B — Apenas confiança do modelo:** automatiza acima de um limite estatístico; abaixo dele, envia ao humano.
+- **C — Apenas regras operacionais:** usa palavras-chave, categoria e prioridade; a confiança do modelo serve somente como informação.
+
+**Resposta de Luis:** A — Confiança + regras de risco.
+
+**Interpretação para a próxima onda:** o gate será híbrido e auditável. Um score alto não poderá superar bloqueios explícitos de segurança; a confiança deverá ser calibrada e o motivo da decisão ficará visível. A próxima escolha deve definir como provar, com métricas, que esse equilíbrio produz valor sem esconder risco.
