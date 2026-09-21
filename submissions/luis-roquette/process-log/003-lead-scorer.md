@@ -335,4 +335,16 @@ Como devemos estimar a probabilidade dos `Prospecting`, já que o histórico enc
 
 Como a ferramenta deve apresentar o resultado dessa heurística de `Prospecting` sem prometer uma probabilidade que os dados não sustentam?
 
+#### Resposta de Luis
+
+**D:** mostrar faixa de prioridade e receita potencial, separadas da receita esperada dos `Engaging`.
+
+#### Decisão registrada
+
+Deals em `Prospecting` terão classificação de prioridade e preço potencial do produto. Deals em `Engaging` poderão exibir probabilidade calibrada e receita esperada. A interface deverá distinguir visualmente potencial de expectativa para evitar comparação enganosa entre métricas de naturezas diferentes.
+
+#### Pergunta 5
+
+Quais informações devem ser proibidas como features do modelo de `Engaging` para impedir leakage?
+
 **Resposta:** aguardando Luis.
