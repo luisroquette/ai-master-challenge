@@ -22,6 +22,8 @@ import pandas as pd
 
 METHOD_VERSION = "1.0.0"
 MAX_CSV_BYTES = 50 * 1024 * 1024
+MAX_INT64 = 2**63 - 1
+DATE_TIME_POLICY = "datas todas sem offset ou todas com o mesmo offset UTC explícito"
 REQUIRED_COLUMNS = (
     "id",
     "platform",
@@ -121,12 +123,19 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
             for index in frame.index[empty]
         )
 
+    numeric_columns: dict[str, pd.Series] = {}
     for column in METRIC_COLUMNS:
         numeric = pd.to_numeric(frame[column], errors="coerce")
+        numeric_columns[column] = numeric
+        out_of_range = numeric.gt(MAX_INT64)
         invalid = numeric.isna() | ~numeric.map(math.isfinite) | numeric.lt(0) | numeric.mod(1).ne(0)
         errors.extend(
             _error(int(index) + 2, column, "invalid_nonnegative_integer", "inteiro finito maior ou igual a zero")
-            for index in frame.index[invalid]
+            for index in frame.index[invalid & ~out_of_range]
+        )
+        errors.extend(
+            _error(int(index) + 2, column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
+            for index in frame.index[out_of_range]
         )
 
     allowed_flags = {"TRUE": True, "FALSE": False, "true": True, "false": False}
@@ -136,16 +145,32 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         for index in frame.index[invalid_flags]
     )
 
-    timezone_flags = frame["post_date"].astype(str).str.contains(r"(?:Z|[+-]\d{2}:?\d{2})$", regex=True)
+    timezone_flags = frame["post_date"].astype(str).str.contains(r"(?:[zZ]|[+-]\d{2}:?\d{2})$", regex=True)
     if timezone_flags.any() and not timezone_flags.all():
-        errors.append(_error(None, "post_date", "mixed_timezone_semantics", "datas todas com ou todas sem offset"))
+        errors.append(_error(None, "post_date", "mixed_timezone_semantics", DATE_TIME_POLICY))
     parsed_dates: list[pd.Timestamp | None] = []
+    timezone_offsets: list[tuple[int, float]] = []
     for index, value in frame["post_date"].items():
         try:
-            parsed_dates.append(pd.Timestamp(value))
+            parsed = pd.Timestamp(value)
+            if pd.isna(parsed):
+                raise ValueError("NaT is not an analytical date")
+            if parsed.tzinfo is not None:
+                offset = parsed.utcoffset()
+                if offset is None:
+                    raise ValueError("timezone has no UTC offset")
+                timezone_offsets.append((int(index), offset.total_seconds()))
+            parsed_dates.append(parsed)
         except (ValueError, TypeError):
             parsed_dates.append(None)
             errors.append(_error(int(index) + 2, "post_date", "invalid_date", "ISO-8601 ou %m/%d/%y %I:%M %p"))
+    if timezone_offsets:
+        expected_offset = timezone_offsets[0][1]
+        errors.extend(
+            _error(index + 2, "post_date", "incompatible_timezone_offset", DATE_TIME_POLICY)
+            for index, offset in timezone_offsets[1:]
+            if offset != expected_offset
+        )
 
     duplicated_ids = frame["id"].duplicated(keep=False)
     errors.extend(
@@ -162,7 +187,8 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         return None, errors
 
     source_hash = hashlib.sha256(raw).hexdigest()
-    frame = frame.astype({column: "int64" for column in METRIC_COLUMNS}).assign(
+    frame = frame.assign(
+        **{column: numeric_columns[column].astype("int64") for column in METRIC_COLUMNS},
         is_sponsored=frame["is_sponsored"].map(allowed_flags).astype("bool"),
         post_date=pd.Series(parsed_dates, index=frame.index),
         source_hash=source_hash,

@@ -65,6 +65,37 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertIsNone(frame)
         self.assertEqual(errors[0]["column"], "post_date")
 
+    def test_load_csv_rejects_nat_and_incompatible_timezone_offsets(self):
+        cases = (
+            [make_post(post_date="NaT")],
+            [
+                make_post(id="1", content_id="a", post_date="2025-01-01T00:00:00+00:00"),
+                make_post(id="2", content_id="b", post_date="2025-01-02T00:00:00-03:00"),
+            ],
+        )
+        for rows in cases:
+            with self.subTest(rows=rows):
+                frame, errors = load_csv(csv_bytes(rows))
+                self.assertIsNone(frame)
+                self.assertTrue(any(error["column"] == "post_date" for error in errors))
+
+    def test_load_csv_returns_diagnostic_for_integer_outside_int64(self):
+        frame, errors = load_csv(csv_bytes([make_post(views=2**63)]))
+        self.assertIsNone(frame)
+        self.assertEqual(errors[0]["row"], 2)
+        self.assertEqual(errors[0]["column"], "views")
+        self.assertEqual(errors[0]["problem"], "integer_out_of_range")
+
+    def test_load_csv_accepts_one_explicit_offset_with_datetime_dtype(self):
+        raw = csv_bytes([
+            make_post(id="1", content_id="a", post_date="2025-01-01T00:00:00+02:00"),
+            make_post(id="2", content_id="b", post_date="2025-01-02T00:00:00+02:00"),
+        ])
+        frame, errors = load_csv(raw)
+        self.assertEqual(errors, [])
+        self.assertTrue(str(frame["post_date"].dtype).startswith("datetime64"))
+        self.assertEqual(analyze(frame, {}, str(frame.iloc[0]["source_hash"]))["source"]["rows"], 2)
+
     def test_load_csv_rejects_empty_malformed_and_duplicate_headers(self):
         for raw in (b"", b'"unterminated', b"id,id,platform\n1,2,Instagram\n"):
             with self.subTest(raw=raw[:20]):

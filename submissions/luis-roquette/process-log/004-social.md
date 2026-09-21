@@ -356,3 +356,14 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Estratégia humana:** não transformar diferenças globais mínimas em mudança de mix; testar somente células patrocinadas controladas, revisar a célula negativa prioritária e exigir investimento, custo e conversão antes de qualquer decisão de ROI. Frequência e threshold de creators permanecem hipóteses de teste, não leis do dataset.
 - **Proveniência:** fonte SHA-256 `693a2df6e609d1c099f3430d9a5b894b224fe12b2420c0d93e6defe90d15f18e`; método `1.0.0`; comando: `python3 analysis.py /caminho/social_media_dataset.csv --evidence evidence.csv --summary summary.html`.
 - **Limites:** o snapshot não contém zeros observados nem dados financeiros; associação patrocinada não é causalidade. A publicação local não autoriza push, PR ou deploy.
+
+## I16 — Revisão P1/S1: endurecimento da fronteira temporal e numérica — 2026-09-21 20:02 BRT
+
+- **Report recebido:** a primeira revisão de P1 atribuiu nota combinada 3,18 e encontrou uma falha alta de CK-01 em S1: `NaT`, offsets incompatíveis e inteiros acima de `int64` podiam atravessar ou derrubar `load_csv`.
+- **Planejamento/revisão:** corrigir somente a fronteira de confiança de S1, sem alterar exports/relatório de S2. Política temporal explícita: o arquivo usa datas todas sem offset ou todas com o mesmo offset UTC declarado; nenhuma conversão silenciosa para UTC.
+- **Gate vermelho:** duas regressões reproduziram três falhas: `NaT` e `+00:00/-03:00` eram aceitos; `views=2**63` lançava `OverflowError` em vez de retornar diagnóstico.
+- **Execução:** `NaT` agora é data inválida; offsets distintos geram `incompatible_timezone_offset`; valores fora de `0..2**63-1` geram `integer_out_of_range`. As séries numéricas validadas alimentam a conversão, evitando um segundo parse divergente.
+- **Teste positivo:** duas datas com o mesmo `+02:00` permanecem aceitas como dtype temporal compatível e atravessam `analyze` sem erro.
+- **Gate verde:** suíte completa com warnings como erro: 27/27 testes aprovados em 2,332 s. `compileall` e `git diff --check` passaram; não existe lint configurado no repositório.
+- **Regressão real:** CSV canônico aprovado com 52.214 linhas e cinco plataformas; validação em 1,270 s e análise em 11,545 s.
+- **Resultado:** a importação continua atômica e nenhum dos três valores hostis pode alcançar o motor após um retorno de sucesso.
