@@ -219,4 +219,35 @@ Como devemos ordenar as causas candidatas e as intervenções?
 
 ### Estado da pergunta 3
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> C
+
+### Interpretação
+
+A prioridade será definida em duas etapas. Primeiro, hipóteses frágeis serão eliminadas por um nível mínimo de confiança. Entre as hipóteses restantes, o MRR realisticamente recuperável orientará a ordem; alcance e possibilidade de ação funcionarão como desempate, com análise de sensibilidade para testar a estabilidade do ranking.
+
+### Consequência para o desenho
+
+A solução não usará uma nota única opaca. Ela mostrará quais causas passaram pelo portão de evidência, como o valor recuperável foi estimado e se a prioridade muda quando premissas razoáveis variam. Exposição bruta e recuperação esperada serão métricas distintas.
+
+### Ponto ainda aberto
+
+O dataset não contém o resultado futuro das intervenções propostas. Precisamos decidir como estimar MRR recuperável sem apresentar suposições como fatos.
+
+### Pergunta 4
+
+Como devemos estimar o MRR recuperável quando não há histórico confiável das intervenções propostas?
+
+- A. Considerar recuperável todo o MRR exposto ao fator de risco.
+- B. Aplicar uma única taxa de recuperação escolhida pelo time e apresentar o resultado pontual.
+- C. Apresentar cenários conservador, base e otimista, com premissas explícitas, intervalo de impacto e separação entre dado observado e estimativa.
+- D. Pedir que um modelo de IA estime a taxa de recuperação a partir dos textos de feedback.
+
+**Recomendação técnica preliminar do agente:** C, porque permite decidir sob incerteza sem transformar uma premissa não observada em falsa precisão.
+
+### Estado da pergunta 4
+
 Aguardando resposta de Luis.
