@@ -198,3 +198,20 @@ O teste vermelho confirmou a ausência de `diagnosis.py`. A primeira implementa�
 - nenhum ranking causal foi fabricado.
 
 O diagnóstico foi versionado no commit `33ec222`. **Resultado:** Fase 4 validada e encerrada, com abstenção preservada como resultado legítimo.
+
+## Fase 5 — gate do modelo opcional
+
+### Execução e feedback looping
+
+O teste vermelho confirmou a ausência de `modeling.py`. Implementamos split SHA-256 estável por conta, treino até agosto, teste de setembro a novembro, baseline de prevalência, regressão logística interpretável e gate por AP, lift, Brier e segmentos.
+
+O primeiro smoke real falhou porque o sklearn recebeu `pd.NA` em colunas numéricas do painel. Normalizamos somente as 20 features aprovadas para `float/np.nan` ou string/`np.nan` e adicionamos regressão com nulo real. O segundo smoke expôs não convergência em 2.000 iterações; mantivemos o limite planejado e transformamos o warning em motivo bloqueante, sem mascará-lo.
+
+### Resultado
+
+- 21 testes aprovados e Ruff verde;
+- modelo real rejeitado por lift abaixo do gate, Brier pior que o baseline e não convergência;
+- zero scores publicados;
+- diagnóstico permanece independente do modelo.
+
+O gate foi versionado no commit `5a170fd`. **Resultado:** Fase 5 validada e encerrada pela rota de abstenção prevista.

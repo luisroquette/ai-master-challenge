@@ -621,11 +621,11 @@ git commit -m "feat(churn): rank traceable causes and segments"
 - Produces: `evaluate_model(panel: pd.DataFrame) -> tuple[dict[str, object], pd.DataFrame | None]` returning evaluation and optional current scores.
 - Gate: publish only if `average_precision_gain >= 0.05`, `lift_at_20pct >= 1.25`, `brier_score <= baseline_brier_score`, and all eligible segments report metrics.
 
-- [ ] **Step 1: Add a deterministic model fixture**
+- [x] **Step 1: Add a deterministic model fixture**
 
 Extend `tests/conftest.py` with `model_panel`: at least ten accounts, repeated monthly rows, both outcomes, known account hashes on both sides of the split and only the approved pre-cutoff feature columns. Assert the fixture itself has disjoint expected train/test account IDs.
 
-- [ ] **Step 2: Write failing split and gate tests**
+- [x] **Step 2: Write failing split and gate tests**
 
 ```python
 import pandas as pd
@@ -659,7 +659,7 @@ def test_model_features_exclude_post_churn_sources():
     assert forbidden.isdisjoint(MODEL_FEATURES)
 ```
 
-- [ ] **Step 3: Verify model tests fail**
+- [x] **Step 3: Verify model tests fail**
 
 ```bash
 .venv/bin/python -m pytest tests/test_modeling.py -v
@@ -667,27 +667,27 @@ def test_model_features_exclude_post_churn_sources():
 
 Expected: FAIL because `modeling.py` does not exist.
 
-- [ ] **Step 4: Implement deterministic grouped, out-of-time evaluation**
+- [x] **Step 4: Implement deterministic grouped, out-of-time evaluation**
 
 Assign accounts with the exact SHA-256 formula declared in the interface. Train only on train-account cutoffs through `2024-08-31`. Test only on test-account cutoffs from `2024-09-30` through `2024-11-30`. Assert account sets are disjoint and every feature timestamp is at or before cutoff.
 
-- [ ] **Step 5: Fit baseline and interpretable candidate**
+- [x] **Step 5: Fit baseline and interpretable candidate**
 
 Use `DummyClassifier(strategy="prior")` as baseline and a pipeline of median imputation, one-hot encoding and `LogisticRegression(class_weight="balanced", max_iter=2000, random_state=42)` as candidate. Fit preprocessing only on training rows.
 
 Select exactly `MODEL_FEATURES`; do not add IDs, names, raw dates, churn flags, reason codes, feedback, refunds or fields discovered after the cutoff.
 
-- [ ] **Step 6: Calculate operational metrics and gate**
+- [x] **Step 6: Calculate operational metrics and gate**
 
 Calculate average precision, Brier score, recall in the top 20% of ranked accounts and lift at 20%. Report the same metrics for eligible `plan_tier`, `billing_frequency` and MRR-band segments. Write `publish_model`, every threshold, observed metric and failure reason to the evaluation dictionary.
 
 If train or test has a single outcome class, or an eligible segment cannot produce the required metric, set `publish_model=False`, record `single_class_split` or `incomplete_segment_metrics`, and return no scores instead of raising or weakening the gate.
 
-- [ ] **Step 7: Generate current scores only after passing**
+- [x] **Step 7: Generate current scores only after passing**
 
 When all gates pass, refit on strict labeled rows through `2024-11-30` and score active accounts from the strict feature-only `SCORING_CUTOFF` snapshot. Return `account_id`, `risk_probability`, `risk_rank`, and signed per-feature logistic contributions. When any gate fails, return `None`; downstream code must omit predictive claims.
 
-- [ ] **Step 8: Run model tests**
+- [x] **Step 8: Run model tests**
 
 ```bash
 .venv/bin/python -m pytest tests/test_modeling.py -v
@@ -695,7 +695,7 @@ When all gates pass, refit on strict labeled rows through `2024-11-30` and score
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit the optional model gate**
+- [x] **Step 9: Commit the optional model gate**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn/modeling.py submissions/luis-roquette/solution/001-churn/tests/test_modeling.py submissions/luis-roquette/solution/001-churn/tests/conftest.py
