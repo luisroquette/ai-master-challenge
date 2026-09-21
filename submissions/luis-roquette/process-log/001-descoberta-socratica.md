@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** cinco ondas concluídas; desenho em validação
+- **Estado:** exploração e `add-task` concluídos; `plan-task` pendente
 - **SPEC:** draft criado após a aprovação integral do desenho
 
 ## Protocolo de registro
@@ -904,3 +904,40 @@ Após a aprovação das quatro seções, criamos a SPEC draft em `solution/001-c
 ### Adaptação necessária da skill
 
 O script `create-folders.sh` da instalação cria `.specs` e `.claude` na raiz Git. Isso violaria a regra oficial de modificar somente `submissions/luis-roquette/`. Aplicamos o fallback previsto pela skill e criamos a estrutura manualmente dentro de `submissions/luis-roquette/solution/001-churn/`, sem alterar arquivos fora da submissão.
+
+## Fechamento da exploração e criação da SPEC draft
+
+### Escopo concluído
+
+Esta fase começou sem solução ou SPEC. Encerramos com o briefing relido até estabilização, pesquisa externa registrada, cinco ondas socráticas completas, 25 decisões respondidas, quatro seções de desenho aprovadas e uma SPEC criada no estado `draft`. Todas as perguntas, respostas literais, interpretações e consequências foram preservadas neste diário.
+
+### Decisões que orientam a próxima fase
+
+- O produto principal é um diagnóstico que ajuda o CEO a escolher qual problema sistêmico corrigir primeiro.
+- A entrega terá relatório executivo, dashboard de evidências e fila CSV, derivados da mesma execução.
+- O rigor temporal, a rastreabilidade e a capacidade de declarar “inconclusivo” têm precedência sobre uma narrativa mais impressionante.
+- O modelo preditivo é opcional e será removido se não superar um baseline fora do tempo.
+- Reprodução local e process log são obrigatórios; demonstração pública é diferencial não bloqueante.
+
+### Evidências produzidas
+
+- Diário pré-início com regras, pesquisa, releitura em loop, SDD e Ponytail.
+- Diário socrático com as cinco ondas e o desenho validado incrementalmente.
+- Histórico Git granular, com um commit por decisão ou pequeno conjunto coerente.
+- SPEC draft em `solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md`.
+
+### O que deliberadamente ainda não foi feito
+
+Nenhum dataset foi transformado, nenhum código da solução foi escrito, nenhum modelo foi treinado e nenhum dashboard foi iniciado. Essa contenção foi intencional: o contrato precisava ser discutido e aprovado antes da implementação. A seção `Description`, os critérios formais de aceite e a decomposição em subtarefas pertencem ao próximo estágio, `plan-task`.
+
+### Erro operacional registrado
+
+Ao tentar abrir a SPEC, o comando foi quebrado em duas linhas após `submissions/luis-roquette/`. O shell interpretou `solution/...` como um segundo comando e retornou `no such file or directory`. O arquivo estava correto; a causa foi apenas a quebra de linha. O comando corrigido usa caminho absoluto entre aspas:
+
+```bash
+open "/Users/luisroquette/Projects/ai-master-challenge/submissions/luis-roquette/solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md"
+```
+
+### Gate de saída
+
+A exploração está encerrada e o desenho foi aprovado por Luis. A SPEC draft existe, está versionada e mantém o placeholder exigido pelo SDD. O próximo passo autorizado será executar `plan-task`; implementar antes dessa promoção violaria a metodologia acordada.
