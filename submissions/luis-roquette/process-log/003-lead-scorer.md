@@ -958,3 +958,20 @@ As limitações serão explícitas: o dataset é um recorte estático; não cont
 **Resposta:** “Aprovado.”
 
 **Gate concluído:** as cinco seções do design consolidado estão aprovadas. O draft SDD pode receber os requisitos e seguir para `/plan-task`; implementação permanece bloqueada até a SPEC planejada ser revisada.
+
+## I07 — SPEC planejada pelo SDD — 2026-09-21
+
+- **Método:** `/plan-task` completo, com pesquisa, análise de codebase, análise de negócio, síntese arquitetural, decomposição e judge independente após cada fase.
+- **Configuração:** qualidade-alvo `3,5/5`, até três iterações, todas as fases ativas, judges habilitados e tier equivalente a Opus por integridade de dados e modelagem não trivial.
+- **Resultados dos gates:** pesquisa `4,10/5`; codebase `3,75/5`; negócio `3,52/5`; arquitetura `4,00/5`; decomposição `3,85/5`. Todos `PASS`.
+- **Plano produzido:** oito passos em três fases verificáveis, largura paralela máxima dois, 37 subtarefas, 50 critérios e cinco rubricas integralmente mapeados.
+- **Estado SDD:** task promovida de `draft` para `todo`; nenhum código de produto foi implementado nesta etapa.
+- **Correção operacional:** o script de pastas do plugin tentou criar scaffolding na raiz Git. Apenas os arquivos recém-criados pelo próprio fluxo foram removidos, e os artefatos válidos permaneceram dentro de `submissions/luis-roquette/`.
+
+### Melhorias não bloqueantes registradas pelos judges
+
+- Explicitar horizonte de previsão e viés de censura do histórico composto apenas por deals resolvidos.
+- Manter campos e nulabilidade dos contratos concretos durante a implementação.
+- Separar obrigações agrupadas quando isso melhorar a rastreabilidade dos testes.
+- Garantir teste visual da supressão de probabilidades e smoke test em ambiente virtual limpo.
+- Concentrar em `04-canonical-verification` os testes reais que dependem do scoring criado em `03a`; `03b` deve usar fixtures do contrato.
