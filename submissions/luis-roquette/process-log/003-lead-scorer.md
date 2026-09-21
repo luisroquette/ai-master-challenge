@@ -138,3 +138,17 @@ O que o manager poderá fazer na primeira versão?
 #### Decisão registrada
 
 O manager será um usuário operacional, não apenas observador. A solução deverá permitir visão da equipe, orientação ao vendedor, alteração de prioridade e redistribuição de oportunidades. Regras de permissão, histórico de alterações, conflitos e reversão permanecem abertas e precisarão ser tratadas em ondas posteriores.
+
+#### Pergunta 4
+
+Qual será a métrica principal de sucesso?
+
+#### Resposta de Luis
+
+**D:** aumento da receita esperada por vendedor.
+
+Luis descartou “percentual de deals prioritários trabalhados em até 24 horas” como métrica norteadora porque isso deixaria uma análise importante e ambígua para a IA decidir. Considera a receita esperada por vendedor uma referência mais confiável.
+
+#### Decisão registrada
+
+A receita esperada por vendedor será a métrica norteadora; velocidade de ação, redução de deals frios e taxa de fechamento poderão funcionar como métricas auxiliares. A escolha reduz o risco de otimizar mera atividade, mas ainda exige uma fórmula independente, auditável e baseada apenas em informações disponíveis no momento do score. Sem isso, “receita esperada” poderia se tornar uma estimativa circular produzida pelo próprio modelo.
