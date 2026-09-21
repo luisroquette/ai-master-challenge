@@ -192,3 +192,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** C — Prioridade composta e explicável.
 
 **Interpretação para a próxima onda:** o ranking não será uma caixa-preta nem dependerá de campos presumidos. Cada ticket exibirá os fatores que elevaram sua posição; a fórmula final dependerá da auditoria dos datasets. A próxima escolha deve definir a origem e o nível de automação da resposta sugerida.
+
+### Onda 9 — Origem da resposta sugerida
+
+**Pergunta:** como a resposta sugerida deve ser produzida?
+
+- **A — Recuperação de casos similares:** busca resoluções históricas semelhantes, mostra as fontes e produz um rascunho editável; só entra se a qualidade dos textos for validada.
+- **B — Templates por categoria:** usa respostas padronizadas e regras, sem geração livre.
+- **C — Modelo generativo local:** cria resposta fundamentada em casos similares, sem API paga, com maior complexidade e risco de alucinação.
+
+**Resposta de Luis:** A — Recuperação de casos similares.
+
+**Interpretação para a próxima onda:** a resposta assistida será fundamentada e rastreável, não geração livre. A auditoria do campo `Resolution` decidirá se ele é utilizável; baixa similaridade ou histórico inadequado exigirá fallback humano. A próxima escolha deve definir quais decisões e correções humanas retornam ao sistema.
