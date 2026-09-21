@@ -74,3 +74,18 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 - **Julgamento humano:** “Ganha quem documenta.” Como referência criativa, Luis citou Silvio Santos: “Você sabe por que o ovo de galinha vende mais do que o de pata? Porque a galinha canta quando bota.”
 - **Verificação:** regra registrada neste diário antes da próxima etapa do SDD.
 - **Limitação:** concisão não pode apagar evidência necessária; o diário não incluirá raciocínio interno oculto, segredos, credenciais ou dados pessoais.
+
+## I05 — Descoberta socrática antes da SPEC — 2026-09-21 14:41 BRT
+
+- **Objetivo:** discutir exaustivamente o projeto e arquitetar a solução sobre decisões explícitas antes de criar ou revisar qualquer especificação.
+- **IA/ferramenta:** skill `brainstorm` da metodologia SDD no Codex, aplicada como método socrático de ondas adaptativas.
+- **Ação ou prompt:** Luis identificou corretamente que ainda não existe SPEC e que o projeto sequer foi discutido. Ele definiu um mínimo de cinco ondas de perguntas; cada onda posterior deve depender das respostas anteriores e aprofundar lacunas, conflitos e escolhas descobertas.
+- **Resultado esperado:** uma direção validada para problema, usuário, fluxo operacional, evidência, fronteira humano/IA, arquitetura, riscos e critérios de sucesso. Esses temas orientam as ondas, mas não formam um questionário rígido: as respostas determinam a próxima pergunta.
+- **Julgamento humano:** o método de ondas adaptativas é uma decisão criativa de Luis. O Codex fará uma pergunta por vez, registrará os destaques de cada resposta e não antecipará a solução.
+- **Verificação:** após pelo menos cinco ondas, o desenho será apresentado em seções curtas para validação incremental. Somente depois a skill `add-task` criará a SPEC inicial; `plan-task` fará o refinamento e `implement-task` só poderá começar com a especificação aprovada.
+- **Evidência:** respostas desta conversa, síntese validada e futura SPEC vinculada neste diário.
+- **Limitação:** cinco ondas são o piso, não o teto. Novas ondas serão abertas enquanto houver decisão material, contradição ou hipótese sem resposta.
+
+### Sequência SDD acordada
+
+`brainstorm socrático → síntese validada → add-task → plan-task → revisão humana da SPEC → implement-task`
