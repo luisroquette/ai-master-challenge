@@ -250,4 +250,35 @@ Como devemos estimar o MRR recuperável quando não há histórico confiável da
 
 ### Estado da pergunta 4
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> A
+
+### Interpretação
+
+Para fins de priorização, todo o MRR exposto ao fator de risco será inicialmente considerado recuperável. Portanto, o valor usado no ranking corresponderá à oportunidade financeira bruta associada à causa, sem desconto por probabilidade de sucesso da intervenção.
+
+### Consequência para o desenho
+
+Essa escolha simplifica o cálculo e evita taxas de recuperação inventadas, mas cria uma premissa forte que os dados não comprovam. O valor não poderá ser tratado silenciosamente como impacto esperado. O relatório deverá tornar explícito que se trata de um teto teórico, sujeito à sobreposição entre causas e à impossibilidade prática de recuperar toda a receita exposta.
+
+### Ponto ainda aberto
+
+Precisamos definir o nome e o tratamento visual desse valor para que o CEO não interprete a oportunidade máxima como previsão de recuperação.
+
+### Pergunta 5
+
+Como esse valor deve aparecer na entrega?
+
+- A. “MRR recuperável projetado”, sem ressalva adicional.
+- B. “MRR exposto — oportunidade máxima”, separado de impacto esperado e acompanhado das limitações.
+- C. “Impacto financeiro da recomendação”, usando o mesmo valor no resumo executivo.
+- D. Mostrar apenas a quantidade de contas e omitir o valor financeiro.
+
+**Recomendação técnica preliminar do agente:** B, porque preserva sua decisão de usar 100% do MRR exposto no ranking sem transformar um limite superior em promessa de resultado.
+
+### Estado da pergunta 5
+
 Aguardando resposta de Luis.
