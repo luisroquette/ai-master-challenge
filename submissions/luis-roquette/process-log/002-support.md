@@ -252,3 +252,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Baseline primeiro.
 
 **Interpretação para a próxima onda:** o algoritmo não será escolhido por novidade. A pesquisa reproduzirá candidatos e o baseline mais simples permanecerá se alternativas mais complexas não melhorarem métricas relevantes. A próxima decisão deve explicitar qual erro operacional é mais caro, orientando calibração e abstinência.
+
+### Onda 14 — Custo assimétrico do erro
+
+**Pergunta:** qual erro operacional é mais caro?
+
+- **A — Automação indevida:** é pior rotear automaticamente um caso errado ou sensível; o sistema prefere encaminhar dúvidas ao humano.
+- **B — Excesso de fallback:** é pior mandar tickets seguros demais ao humano; o sistema aceita mais risco para ampliar cobertura.
+- **C — Custos equivalentes:** falsos roteamentos e fallbacks humanos recebem o mesmo peso.
+
+**Resposta de Luis:** A — Automação indevida.
+
+**Interpretação para a próxima onda:** os thresholds serão conservadores e avaliados por risco seletivo, não apenas por cobertura. Abstinência é comportamento correto quando a confiança ou as regras não sustentam automação. A próxima escolha deve definir como transformar cobertura segura em horas e custo sem fabricar ROI.
