@@ -741,6 +741,14 @@ Quando o modelo preditivo deve fazer parte da entrega final?
 
 **Recomendação técnica preliminar do agente:** B, porque “um modelo preditivo que funcione” é diferencial; um modelo sem ganho fora do tempo enfraquece a credibilidade do diagnóstico.
 
+### Pedido de esclarecimento de Luis
+
+> B ou C? Qual recomenda?
+
+### Esclarecimento do agente
+
+A recomendação permanece **B, sem dúvida**. A opção C mede o desempenho nos mesmos dados usados para aprender e, portanto, pode recompensar memorização, sobreajuste ou vazamento. Ela não demonstra que o modelo funcionará em contas e períodos futuros. A opção B testa exatamente o uso pretendido, exige ganho sobre uma regra simples e permite retirar o modelo se ele não agregar valor real.
+
 ### Estado da pergunta 3
 
 Aguardando resposta de Luis.
