@@ -736,4 +736,23 @@ Quando o treinamento e a validação dos modelos devem acontecer no protótipo?
 
 **Recomendação da IA:** **A**. Com cerca de 6,7 mil deals encerrados, o treino local é pequeno; executá-lo uma vez e manter em cache prova o pipeline completo sem artefato binário frágil.
 
+#### Resposta de Luis
+
+**A:** treinar e validar na primeira abertura, de forma determinística, mantendo o resultado em cache durante a execução.
+
+#### Decisão registrada
+
+O app executará o pipeline real uma vez por versão dos dados e da configuração, com seed fixa e cache por fingerprint. Filtros e navegação reutilizarão o resultado. Uma mudança nos dados ou na configuração invalidará o cache e provocará nova avaliação antes de publicar scores.
+
+#### Pergunta 4
+
+Onde a intervenção temporária do gestor deve persistir no protótipo?
+
+- **A.** Apenas na sessão do navegador; um refresh apaga a intervenção.
+- **B.** Em SQLite local, com autor, horário e fingerprint dos dados; uma nova versão dos dados invalida a intervenção.
+- **C.** Alterando diretamente os CSVs originais.
+- **D.** Em banco externo com autenticação completa.
+
+**Recomendação da IA:** **B**. Usa a biblioteca padrão, preserva a auditoria entre reinícios e implementa a expiração na recalculação sem serviço externo.
+
 **Resposta:** aguardando Luis.
