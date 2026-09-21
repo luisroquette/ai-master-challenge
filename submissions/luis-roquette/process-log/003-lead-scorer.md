@@ -126,3 +126,15 @@ Quem precisa usar a primeira versão?
 #### Decisão registrada
 
 A primeira versão terá dois públicos. O vendedor precisa operar a própria fila; o manager precisa enxergar o desempenho e as prioridades da equipe. Permissões de alteração, intervenção e redistribuição ainda não foram definidas.
+
+#### Pergunta 3
+
+O que o manager poderá fazer na primeira versão?
+
+#### Resposta de Luis
+
+**D:** visualizar, orientar, repriorizar e redistribuir deals.
+
+#### Decisão registrada
+
+O manager será um usuário operacional, não apenas observador. A solução deverá permitir visão da equipe, orientação ao vendedor, alteração de prioridade e redistribuição de oportunidades. Regras de permissão, histórico de alterações, conflitos e reversão permanecem abertas e precisarão ser tratadas em ondas posteriores.
