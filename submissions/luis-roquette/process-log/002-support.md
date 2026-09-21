@@ -419,3 +419,17 @@ A resposta assistida recupera resoluções semelhantes somente do conjunto permi
 O scorecard gerencial deriva desse fluxo, mas separa três naturezas de evidência: histórico observado, desempenho medido do protótipo e cenários de horas ou custo. O Laboratório IT usa o Dataset 2, sua taxonomia de oito categorias e seu próprio modelo. Ele reutiliza classificação, calibração e abstinência, mas nunca mistura registros ou rótulos com o Dataset 1. Framework, algoritmo e armazenamento serão escolhidos somente após pesquisa e reprodução técnica.
 
 **Pergunta de validação:** esta arquitetura e este fluxo principal estão corretos para avançar?
+
+**Validação de Luis:** A — Seção 1 aprovada sem ajustes.
+
+### Seção 2 — Componentes e fronteiras dos dados — proposta
+
+A solução terá componentes pequenos, com arquivos de entrada e saída explícitos. O **preparador de dados** valida schemas, mede ausências e duplicidades, remove PII, normaliza tempos e cria manifests reproduzíveis de treino, validação e teste. Cada dataset terá seu próprio adaptador; nenhuma função aceitará registros dos dois domínios como se compartilhassem a mesma taxonomia. Dados brutos não serão publicados. Scripts e instruções permitirão baixá-los das fontes oficiais e regenerar artefatos derivados seguros.
+
+O **motor analítico** processa o Dataset 1 e gera tabelas rastreáveis para gargalos, satisfação e desperdício recuperável. Ele salva resultados estruturados consumidos pelo scorecard, evitando recalcular regras de negócio na interface. Associações serão identificadas como associações; horas observadas, premissas ajustáveis e valores financeiros permanecerão em campos diferentes.
+
+O **motor de decisão** expõe a mesma interface para modelos separados de Customer Support e IT: classe, probabilidades calibradas, confiança, versão do artefato e explicação. Um **gate de risco determinístico** recebe essa saída e regras auditáveis, retornando `auto_route` ou `human_review` com códigos de motivo. Thresholds vêm da validação, nunca de ajuste visual na demonstração.
+
+O **recuperador de respostas** indexa apenas descrições e resoluções sanitizadas do conjunto permitido. Ele devolve casos similares, scores e identificadores de origem; abaixo do limite, devolve abstinência. A **aplicação web** apenas orquestra esses componentes, exibe artefatos e registra decisões humanas em persistência local simples. A interface não treina modelos nem altera thresholds. Um comando reproduz análise e modelos; outro inicia a aplicação. Frameworks, bibliotecas e formato de persistência continuam abertos até a pesquisa técnica provar a opção mínima adequada.
+
+**Pergunta de validação:** estes componentes e limites de dados estão corretos para avançar?
