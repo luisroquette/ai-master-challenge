@@ -25,6 +25,9 @@ Fonte: [Social Media Sponsorship & Engagement Dataset](https://www.kaggle.com/da
 - Patrocínio: 22.314 posts patrocinados e 29.900 orgânicos.
 - Métricas disponíveis: views, likes, shares, comments e follower count.
 - Contextos disponíveis: plataforma, tipo, categoria, idioma, data, creator, disclosure, patrocinador e audiência.
+- O arquivo não possui coluna física `engagement_rate`; qualquer taxa será derivada, com fórmula, denominador e unidade explícitos.
+- Apesar do nome, `audience_age_distribution` e `audience_gender_distribution` contêm rótulos categóricos, não percentuais. Idade, gênero e localização só podem ser usados como segmentos observados; não sustentam personas ou distribuição individual inferida.
+- O snapshot inspecionado não contém zeros nas cinco métricas numéricas. O produto deve registrar essa limitação de representatividade e continuar aceitando/preservando zeros em outros arquivos válidos e nas fixtures.
 - Ausências observadas: 8.743 hashtags e 8.688 textos de comentário vazios; não são campos obrigatórios para a análise principal.
 - Restrição crítica: não há investimento, receita ou conversão. Portanto, o produto não deve calcular ROI financeiro.
 
@@ -61,12 +64,12 @@ Fluxo reproduzido:
 3. validar colunas obrigatórias;
 4. persistir hash e contagem da importação em SQLite;
 5. renderizar KPI, gráfico e tabela;
-6. baixar o CSV de evidências.
+6. renderizar o controle de download do CSV de evidências.
 
 Resultados:
 
 - health check: `ok`;
-- verificação Playwright: `UI_CHECK=PASS`;
+- verificação Playwright: `UI_CHECK=PASS` para upload e renderização; o spike não comprovou a conclusão de um download no navegador;
 - persistência: uma importação com quatro registros;
 - evidência visual: [`streamlit-proof.png`](../process-log/evidence/004/framework-research/streamlit-proof.png).
 
