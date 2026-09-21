@@ -401,4 +401,11 @@ Permanecem abertos: features exatas, algoritmo, calibração da probabilidade, d
 
 Qual componente deve comandar a prioridade dos deals em `Engaging`?
 
+- **A.** Apenas receita esperada (`probabilidade × preço`).
+- **B.** Apenas probabilidade de fechamento.
+- **C.** Apenas urgência ou risco de esfriamento.
+- **D.** Receita esperada como base, com urgência ou risco como modificador explícito; a próxima ação permanece separada.
+
+**Recomendação da IA:** **D**. Preserva a métrica norteadora já aprovada sem deixar oportunidades valiosas e urgentes perderem prioridade. Os pesos não serão inventados agora: deverão ser simples, visíveis e validados com o histórico disponível.
+
 **Resposta:** aguardando Luis.
