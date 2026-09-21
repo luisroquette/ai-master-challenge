@@ -717,4 +717,23 @@ Como garantir que o avaliador rode a solução com os dados reais sem depender d
 
 **Recomendação da IA:** **A**. O conjunto é pequeno, CC0 e fica reproduzível mesmo se Kaggle ou credenciais estiverem indisponíveis.
 
+#### Resposta inicial e correção de Luis
+
+Luis respondeu primeiro **“A com fallback em B”** e, em seguida, corrigiu para **“A com fallback em C”**. A segunda resposta substitui a primeira.
+
+#### Decisão final
+
+Os quatro CSVs reais serão versionados como fonte primária, com origem, licença e checksums. Um comando explícito de recuperação poderá baixar uma cópia de uma URL pública; ele não rodará silenciosamente na abertura do app e só substituirá arquivos após validar os checksums esperados. Falha de rede ou conteúdo divergente deverá preservar os dados existentes e encerrar com erro claro.
+
+#### Pergunta 3
+
+Quando o treinamento e a validação dos modelos devem acontecer no protótipo?
+
+- **A.** Na primeira abertura do app, de forma determinística, com resultado armazenado em cache durante a execução.
+- **B.** Antes da entrega; o app carrega um artefato pronto e um comando separado permite reproduzir o treino.
+- **C.** Nunca no projeto; somente scores finais pré-calculados são versionados.
+- **D.** A cada filtro ou interação da interface.
+
+**Recomendação da IA:** **A**. Com cerca de 6,7 mil deals encerrados, o treino local é pequeno; executá-lo uma vez e manter em cache prova o pipeline completo sem artefato binário frágil.
+
 **Resposta:** aguardando Luis.
