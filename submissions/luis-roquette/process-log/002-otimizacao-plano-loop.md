@@ -206,4 +206,10 @@ Uma checagem adicional improvisada do download Kaggle falhou três vezes sem tes
 
 O semáforo listou cinco Codespaces, todos de outros repositórios, e nenhum reutilizável para este challenge. O candidato mais antigo, `codex-preflight-vr7p79qv66whw4g9`, está limpo, sem commits locais e corresponde ao commit `d73cbea`, já integrado no PR `luisroquette/swen.ia.br-claude#320`. Uma inspeção remota acionou pager, interrompeu o comando e deixou o ambiente ativo; ele foi explicitamente parado, sem exclusão nem alteração de arquivos.
 
-Esse é o único gargalo externo remanescente: antes do primeiro preflight pesado, será necessário obter autorização para excluir esse Codespace já salvo no GitHub ou ampliar temporariamente o teto de cinco. O plano técnico e a stack não possuem lacuna conhecida; a capacidade depende de decisão destrutiva do proprietário e não será presumida.
+Esse era o único gargalo externo remanescente. Solicitamos autorização explícita antes da ação destrutiva; o proprietário autorizou a exclusão permanente do ambiente indicado.
+
+### Liberação da capacidade de Codespaces
+
+Excluímos exclusivamente o Codespace `codex-preflight-vr7p79qv66whw4g9`, que estava parado e limpo. O disco efêmero do ambiente não é recuperável, mas o código permanece preservado no commit `d73cbea`, já integrado no PR `luisroquette/swen.ia.br-claude#320`.
+
+Após a exclusão, `codespace-manager list` confirmou quatro ambientes, todos em estado `Shutdown`. O teto global voltou a ter uma vaga disponível para criar ou reutilizar um Codespace do Challenge 001. Não há gargalo conhecido de capacidade antes da implementação; a validação real da stack continua sendo um gate da fase de execução, pois a solução ainda não foi implementada.
