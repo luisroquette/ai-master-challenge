@@ -42,11 +42,11 @@ No primeiro verificador local, a variável de shell `path` sobrescreveu o `PATH`
 - **Objetivo:** tornar a especificação verificável o contrato de entrada para pesquisa, arquitetura e implementação do Lead Scorer.
 - **IA/ferramenta:** plugin SDD `3.6.0` do `NeoLabHQ/context-engineering-kit`, baseado em GitHub Spec Kit, OpenSpec e arc42 adaptado.
 - **Ação ou prompt:** Luis decidiu seguir Spec-Driven Development e indicou a instalação `npx skills add NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code`.
-- **Resultado:** o plugin já estava instalado, habilitado e atualizado no Claude Code. O estágio `add-task` foi aplicado para criar a especificação inicial em `solution/003-lead-scorer/.specs/tasks/draft/`, sem iniciar planejamento ou código.
+- **Resultado:** o plugin já estava instalado, habilitado e atualizado no Claude Code. O estágio `add-task` criou somente um rascunho da intenção em `solution/003-lead-scorer/.specs/tasks/draft/`; isso ainda não é uma SPEC. Nenhum planejamento ou código foi iniciado.
 - **Julgamento humano:** a escolha de SDD é de Luis. A metodologia será combinada com a Regra zero, Ponytail `full` e os gates de evidência do briefing; não substitui pesquisa, validação humana ou limites contra leakage.
 - **Verificação:** `claude plugin details sdd@context-engineering-kit` confirmou versão `3.6.0`, cinco skills, oito agentes e status habilitado; `claude plugin update` confirmou a versão mais recente.
 - **Evidência:** `solution/003-lead-scorer/.specs/tasks/draft/implement-explainable-lead-scorer.feature.md` e este registro.
-- **Limitação:** `/plan-task` e `/implement-task` ainda não foram executados. A especificação permanece em `draft` até a pesquisa inicial e a revisão humana definirem critérios verificáveis.
+- **Limitação:** a SPEC ainda não existe. `/plan-task` e `/implement-task` não foram executados; antes deles, o projeto será discutido e arquitetado com Luis.
 
 ### Fluxo acordado
 
@@ -74,3 +74,23 @@ Luis resumiu o princípio com uma frase atribuída a Silvio Santos:
 > “Sabe por que o ovo da galinha vende mais que o da pata? Porque a galinha canta quando bota!”
 
 **Princípio permanente:** fazer um bom trabalho não basta; o processo precisa deixar evidência clara, fiel e útil. O diário é parte do produto.
+
+## I04 — Deliberação socrática por ondas adaptativas — 2026-09-21 14:42 BRT
+
+- **Objetivo:** construir entendimento e arquitetura sólidos antes de escrever a SPEC.
+- **Correção de estado:** existe apenas um rascunho `add-task`; ainda não discutimos suficientemente o projeto e não há SPEC pronta para revisão.
+- **Decisão de Luis:** conduzir a descoberta em pelo menos cinco ondas de perguntas socráticas. As ondas posteriores devem depender das respostas anteriores, não de um questionário fixo preparado de antemão.
+- **Método:** fazer uma pergunta por vez, testar premissas, pedir exemplos concretos, expor tensões e registrar decisões, alternativas rejeitadas, dúvidas e evidências ao final de cada onda.
+- **Gate:** não executar `/plan-task`, desenhar arquitetura definitiva ou implementar enquanto as ondas não convergirem e Luis não validar a síntese do desenho.
+- **Julgamento humano:** objetivos, prioridades e escolhas finais pertencem a Luis; a IA organiza a investigação, desafia pressupostos e transforma decisões aprovadas em especificação verificável.
+
+### Mapa provisório das ondas
+
+1. **Resultado e usuário:** qual decisão precisa melhorar, para quem e em qual momento do trabalho.
+2. **Fluxo comercial:** como a priorização funciona hoje, onde falha e qual mudança seria realmente adotada.
+3. **Dados e verdade temporal:** quais sinais podem ser usados, quando ficam disponíveis e como impedir leakage.
+4. **Score e explicação:** o que significa prioridade, como justificar o ranking e qual próxima ação deve aparecer.
+5. **Experiência e operação:** interface, filtros, frequência, exceções, fallback e limites de manutenção.
+6. **Arquitetura e prova:** alternativas técnicas, trade-offs, testes, critérios de aceitação e definição de pronto.
+
+O mapa é intencionalmente provisório. Cada resposta pode reordenar, dividir, ampliar ou eliminar perguntas e ondas. Ao final da descoberta, serão comparadas alternativas de solução; o desenho escolhido será apresentado em partes curtas para validação antes de alimentar o `/plan-task`.
