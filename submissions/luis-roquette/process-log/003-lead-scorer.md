@@ -94,3 +94,23 @@ Luis resumiu o princípio com uma frase atribuída a Silvio Santos:
 6. **Arquitetura e prova:** alternativas técnicas, trade-offs, testes, critérios de aceitação e definição de pronto.
 
 O mapa é intencionalmente provisório. Cada resposta pode reordenar, dividir, ampliar ou eliminar perguntas e ondas. Ao final da descoberta, serão comparadas alternativas de solução; o desenho escolhido será apresentado em partes curtas para validação antes de alimentar o `/plan-task`.
+
+## I05 — Registro contínuo da sessão socrática — 2026-09-21 14:48 BRT
+
+- **Decisão de Luis:** registrar no diário todas as perguntas e respostas desta sessão de descoberta.
+- **Forma de registro:** corrigir o português, preservar o sentido e anotar a decisão resultante sem transformar resposta parcial em requisito definitivo.
+- **Estado:** Onda 1 em andamento; uma decisão aprovada e seus detalhes ainda em investigação.
+
+### Onda 1 — Resultado e usuário
+
+#### Pergunta 1
+
+Na segunda-feira de manhã, qual decisão principal o vendedor deve conseguir tomar em até 60 segundos ao abrir a ferramenta?
+
+#### Resposta de Luis
+
+**D:** uma fila única que combine prioridade, risco, valor e próxima ação.
+
+#### Decisão registrada
+
+A experiência principal será uma fila unificada de trabalho, não quatro relatórios separados. A resposta ainda não define pesos, regras de desempate, público secundário ou forma de cálculo; esses pontos permanecem abertos para as próximas perguntas.
