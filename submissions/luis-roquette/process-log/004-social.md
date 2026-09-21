@@ -86,3 +86,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) Gestor de Social Media, no planejamento e acompanhamento diário; B) Head de Marketing, na revisão semanal de estratégia e investimento; C) Analista de Marketing, no diagnóstico mensal e preparação das recomendações.
 - **Resposta de Luis:** **A, B e C**, tendo o **Gestor de Social Media como operador principal**.
 - **Implicação:** a arquitetura deverá atender três níveis de uso sem confundir responsabilidades: operação diária pelo Gestor de Social Media, decisão executiva pelo Head de Marketing e análise periódica pelo Analista de Marketing. O fluxo principal será desenhado para o gestor; os demais receberão visões derivadas.
+
+### Onda 3 — cadência central
+
+- **Pergunta:** qual cadência deve comandar o sistema?
+- **Opções:** A) ciclo diário, com consolidações semanais e mensais automáticas; B) ciclo semanal, com dados diários usados apenas como entrada; C) ciclo mensal, orientado principalmente à revisão estratégica.
+- **Resposta de Luis:** **A — ciclo diário, com consolidações semanais e mensais automáticas**.
+- **Implicação:** o produto deverá gerar utilidade operacional todos os dias e agregar os mesmos dados em visões semanais e mensais, sem criar três fluxos independentes.
