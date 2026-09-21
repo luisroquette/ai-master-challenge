@@ -295,4 +295,16 @@ Onda 2 aprovada sem alterações em 21 de setembro de 2026. O gate de fluxo come
 
 Quais oportunidades devem receber score e aparecer na fila operacional?
 
+#### Resposta de Luis
+
+**A:** somente deals ativos — `Prospecting` e `Engaging`. Deals `Won` e `Lost` servem apenas para aprendizado e validação.
+
+#### Decisão registrada
+
+A fila operacional excluirá oportunidades encerradas. O histórico de `Won` e `Lost` poderá ensinar e testar a probabilidade de fechamento, mas seus campos de resultado não poderão vazar para as features usadas nos deals ativos.
+
+#### Pergunta 2
+
+Como devemos separar os deals históricos para estimar e validar a probabilidade de fechamento?
+
 **Resposta:** aguardando Luis.
