@@ -371,4 +371,20 @@ Entre os deals ativos, 337 de 500 `Prospecting` e 1.088 de 1.589 `Engaging` não
 
 Como devemos tratar os deals ativos sem conta associada?
 
-**Resposta:** aguardando Luis.
+#### Resposta de Luis
+
+**C:** usar modelo completo quando houver conta e modelo fallback sem atributos de conta quando não houver.
+
+#### Decisão registrada
+
+O roteamento será determinado pela disponibilidade da conta. O fallback será treinado deliberadamente sem atributos de conta, não com valores médios inventados. Os dois caminhos precisarão de validação temporal própria e a interface deverá informar qual deles produziu o score.
+
+### Síntese da Onda 3 — aguardando aprovação
+
+- **Universo operacional:** somente `Prospecting` e `Engaging`; encerrados servem para aprendizado e validação temporal.
+- **Prospecting:** heurística própria; exibe prioridade e receita potencial, não probabilidade calibrada.
+- **Engaging:** probabilidade e receita esperada, com divisão temporal entre treino e validação.
+- **Antileakage:** campos finais e derivados proibidos como preditores; `Won/Lost` é somente rótulo.
+- **Dados incompletos:** modelo completo com conta e fallback sem conta; normalização explícita de `GTXPro` para `GTX Pro`.
+
+Permanecem abertos: features exatas, algoritmo, calibração da probabilidade, desempenho mínimo aceitável e tratamento de categorias novas.
