@@ -401,3 +401,21 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Fundamento:** A é a única arquitetura que cobre simultaneamente o diagnóstico obrigatório, a proposta realista de automação, a demonstração funcional, os dois datasets, o trabalho diário do agente, a fronteira humano/IA e a estimativa de horas ou ROI. B dilui o caso de uso principal; C rebaixa o protótipo operacional; D fragmenta a proposta; E viola o alerta contra automação total; F excede o orçamento de 4–6 horas com infraestrutura não solicitada.
 
 **Resultado:** arquitetura escolhida para a síntese incremental do desenho e futura SPEC.
+
+## I07 — Síntese incremental da arquitetura — 2026-09-21 16:39 BRT
+
+- **Objetivo:** validar o desenho do Support Decision Copilot em seções curtas antes de criar a SPEC.
+- **Método:** apresentar uma seção de 200–300 palavras por vez, oferecer validação de múltipla escolha e registrar aprovação ou correção antes de avançar.
+- **Estado inicial:** nenhuma SPEC criada; arquitetura A selecionada após 24 ondas socráticas.
+
+### Seção 1 — Arquitetura e fluxo principal — proposta
+
+O Support Decision Copilot será uma aplicação web local e autocontida com duas áreas claramente separadas: **Operação de Suporte** e **Laboratório IT**. A área principal usa o Dataset 1. Uma preparação offline remove PII, audita qualidade e produz métricas observadas. A fila diária recebe somente tickets reservados para validação, evitando demonstrar o sistema nos mesmos exemplos usados na construção.
+
+Cada ticket percorre um pipeline único: classificação e prioridade sugeridas, confiança calibrada, regras explícitas de risco, decisão de roteamento e resposta assistida. A ordenação combina apenas sinais validados nos dados e mostra por que cada item subiu na fila. O roteamento automático exige simultaneamente confiança suficiente e ausência de bloqueios; caso sensível, crítico, ambíguo ou incerto vai para revisão humana.
+
+A resposta assistida recupera resoluções semelhantes somente do conjunto permitido para referência, exibe os casos usados e entrega um rascunho editável. Sem similaridade segura, o sistema se abstém. O agente aprova, edita, rejeita ou escalona; a decisão, o motivo e a diferença entre sugestão e resposta final entram em uma trilha local auditável e exportável.
+
+O scorecard gerencial deriva desse fluxo, mas separa três naturezas de evidência: histórico observado, desempenho medido do protótipo e cenários de horas ou custo. O Laboratório IT usa o Dataset 2, sua taxonomia de oito categorias e seu próprio modelo. Ele reutiliza classificação, calibração e abstinência, mas nunca mistura registros ou rótulos com o Dataset 1. Framework, algoritmo e armazenamento serão escolhidos somente após pesquisa e reprodução técnica.
+
+**Pergunta de validação:** esta arquitetura e este fluxo principal estão corretos para avançar?
