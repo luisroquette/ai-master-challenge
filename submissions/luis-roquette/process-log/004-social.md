@@ -123,3 +123,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Resposta de Luis:** **C**, deixando claro que, para o MVP, foi escolhida uma solução simplificada e manual.
 - **Implicação:** o MVP aceitará arquivos CSV com validação explícita. Integrações com APIs serão apenas uma possibilidade futura; não haverá conectores, autenticação ou sincronização automática no escopo inicial.
 - **Simplificação deliberada:** a extensibilidade futura não autoriza abstrações ou infraestrutura especulativas. O código do MVP deverá permanecer mínimo e orientado ao formato de dados comprovado.
+
+### Onda 8 — formato de uso do MVP
+
+- **Pergunta:** onde os três perfis devem usar o sistema?
+- **Opções:** A) dashboard web local; B) planilha enriquecida; C) notebook analítico.
+- **Resposta de Luis:** **A — dashboard web local**.
+- **Implicação:** o MVP deverá permitir importar o CSV e navegar visualmente por monitoramento, desvios contextuais, rankings e recomendações. A ferramenta deverá funcionar localmente e ser demonstrável sem infraestrutura remota obrigatória.
