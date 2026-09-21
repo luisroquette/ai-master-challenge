@@ -214,3 +214,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) volume potencial afetado, combinando alcance, interações e exposição do creator, separado da confiança estatística; B) somente engagement rate; C) importância subjetiva atribuída pelo gestor.
 - **Resposta de Luis:** **A — volume potencial afetado**.
 - **Implicação:** o dashboard priorizará escala observável sem chamá-la de receita ou ROI. Taxa e volume serão apresentados juntos para evitar favorecer artificialmente creators grandes ou pequenos.
+
+### Onda 21 — arquivo inválido
+
+- **Pergunta:** como o MVP deve reagir a um CSV incompleto ou inconsistente?
+- **Opções:** A) bloquear a análise e mostrar coluna, problema e correção esperada; B) importar apenas linhas válidas e descartar as demais; C) corrigir automaticamente sem confirmação.
+- **Resposta de Luis:** **A — bloquear e apresentar diagnóstico acionável**.
+- **Implicação:** a validação da entrada será um gate. O sistema não produzirá indicadores sobre uma base parcialmente descartada ou modificada sem conhecimento do usuário; o erro deverá indicar localização, causa e correção.
