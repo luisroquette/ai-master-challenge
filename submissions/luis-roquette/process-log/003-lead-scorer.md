@@ -1025,3 +1025,34 @@ A SPEC interna é deliberadamente completa para impedir lacunas, mas o material 
 ### Gargalo operacional observado
 
 Três tentativas de completar a prova remota da stack pelo `codespace-manager` foram recusadas porque o Codespace limpo do mesmo repositório alternou entre `Shutdown`, `Available` e `ShuttingDown`. A hipótese duvidosa é o ciclo de vida externo desse ambiente antigo. A validação não foi contornada: o preflight de implementação permanece obrigado a comprovar Python 3.11, instalação com `protobuf<6`, `pip check`, Chromium e abertura headless em um Codespace estável antes de push, deploy ou conclusão.
+
+## I09 — Encerramento da construção socrática e método obrigatório de implementação — 2026-09-21
+
+### Registro consolidado das ondas socráticas
+
+As perguntas, alternativas, respostas de Luis, recomendações da IA e aprovações já estão preservadas integralmente neste diário, na ordem em que ocorreram. A construção foi conduzida por seis ondas adaptativas: cada onda posterior usou as respostas anteriores para aprofundar decisões relevantes e evitou transferir ambiguidades importantes para a IA.
+
+1. **Onda 1 — objetivo e métrica:** definiu usuário, decisão operacional e receita esperada como métrica norteadora, calculada por probabilidade de fechamento × preço do produto.
+2. **Onda 2 — experiência e priorização:** separou `Engaging` de `Prospecting`, definiu filas compreensíveis, detalhes acionáveis e intervenção temporária do gestor sem alterar o score.
+3. **Onda 3 — verdade dos dados:** fixou divisão temporal, exclusão de leakage, uso de `Won/Lost` apenas como rótulo e tratamento explícito de dados insuficientes.
+4. **Onda 4 — modelagem e explicação:** escolheu comparação controlada de candidatos, calibração obrigatória, fallback sem conta, explicações fiéis ao score e eliminação de viés de vendedor no modelo de `Engaging`.
+5. **Onda 5 — produto e governança:** definiu filtros, contexto vendedor/gestor, estado de sessão, limitações, validação visual e evidências reproduzíveis.
+6. **Onda 6 — entrega:** consolidou Python 3.11 + Streamlit, dados reais versionados com recuperação segura, execução local como fonte de verdade e Streamlit Community Cloud como demonstração adicional.
+
+Após as ondas, cinco seções de design foram apresentadas e aprovadas individualmente: produto/experiência; arquitetura/dados; score/calibração/explicação; falhas/testes/evidências; entrega/documentação/limites. O planejamento SDD converteu essas decisões em oito etapas, três fases, 50 critérios e 47 contratos de teste. A auditoria final corrigiu os gargalos restantes e atingiu duas releituras consecutivas sem novos achados.
+
+### Decisão de implementação em feedback looping
+
+**Decisão de Luis:** seguir para a implementação respeitando obrigatoriamente a metodologia SDD, em fases cronológicas, uma após a outra.
+
+Cada etapa seguirá a cascata:
+
+`Planejamento → Revisão → Execução → Teste`
+
+- O trabalho de cada etapa produz relatórios quase em tempo real para a própria IA.
+- Os insights do relatório determinam autonomamente se a etapa precisa de reforço ou se pode avançar.
+- Se o teste falhar, a mesma etapa retorna ao início do loop; a causa é corrigida e todos os gates aplicáveis são repetidos.
+- Nenhuma etapa avança sem validação. Uma fase só termina depois da revisão SDD e dos testes verdes correspondentes.
+- O `/goal` mantém o objetivo global; cascatas de `/loop` controlam a convergência de cada etapa sem inventar novos checkpoints humanos.
+
+**Critério de saída:** somente avançar quando a etapa estiver implementada, revisada e validada; caso contrário, permanecer no feedback loop até corrigir ou identificar um impedimento externo concreto.
