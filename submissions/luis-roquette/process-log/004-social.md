@@ -158,3 +158,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) importar um CSV e identificar desvio, evidência, contexto e próxima ação em até cinco minutos, com números rastreáveis; B) atingir uma métrica mínima de previsão; C) exibir todas as métricas e filtros do dataset.
 - **Resposta de Luis:** **A — decisão rastreável em até cinco minutos**.
 - **Implicação:** a definição de pronto será orientada à velocidade e à qualidade da decisão, não ao volume de funcionalidades. Cada alerta e recomendação deverá permitir chegar aos registros e cálculos que a sustentam.
+
+### Onda 13 — ciclo de aprendizado
+
+- **Pergunta:** o que deve acontecer com cada recomendação?
+- **Opções:** A) registrar se foi aceita, rejeitada ou editada e comparar depois a decisão com o resultado observado; B) exibir temporariamente sem guardar a decisão; C) converter automaticamente em tarefa ou publicação.
+- **Resposta de Luis:** **A — registrar a decisão humana e comparar com o resultado posterior**.
+- **Implicação:** o sistema terá memória operacional auditável. A evolução não dependerá de a IA executar ações: dependerá de registrar a escolha humana, receber dados posteriores e confrontar recomendação, decisão e resultado sem inventar causalidade.
