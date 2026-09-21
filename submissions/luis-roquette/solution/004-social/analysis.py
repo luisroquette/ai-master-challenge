@@ -782,8 +782,12 @@ def _cell(value: object) -> str | int | float:
     if isinstance(value, (int, float)):
         return value
     text = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str) if isinstance(value, (dict, list, tuple)) else str(value)
-    significant = next((char for char in text if not char.isspace() and unicodedata.category(char) not in ("Cc", "Cf")), "")
-    return f"'{text}" if significant in ("=", "+", "-", "@") else text
+    for char in text:
+        if unicodedata.category(char) in ("Cc", "Cf") or char in ("=", "+", "-", "@"):
+            return f"'{text}"
+        if not char.isspace():
+            break
+    return text
 
 
 def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:

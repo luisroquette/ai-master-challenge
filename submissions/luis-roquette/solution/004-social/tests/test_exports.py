@@ -59,7 +59,7 @@ def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
 class ExportTests(unittest.TestCase):
     def test_formula_prefix_after_whitespace_and_controls_preserves_original_text(self):
         unsafe = [prefix + marker + "1" for prefix in ("  ", "\n", " \t\r\n\x00\x7f\ufeff", "\u00a0") for marker in "=+-@"]
-        safe = ["  texto", "\ntexto", "   ", ""]
+        safe = ["  texto", "   ", ""]
         result = result_with_texts(unsafe + safe)
         rows = parse_export(export_evidence(result, [{"text": value} for value in unsafe + safe]))
         for record_type in ("evidence", "decision"):
@@ -68,6 +68,17 @@ class ExportTests(unittest.TestCase):
         result["recommendations"][0]["delta_erv_pp"] = -0.25
         recommendation = next(row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "recommendation")
         self.assertEqual(recommendation["delta_erv_pp"], "-0.25")
+
+    def test_initial_controls_are_prefixed_without_formula_markers(self):
+        unsafe = [spaces + control + suffix
+                  for spaces in ("", "  ")
+                  for control in ("\t", "\r", "\n", "\x00", "\x7f", "\ufeff", "\u200b")
+                  for suffix in ("texto", "")]
+        safe = ["texto\tcontinuação", " texto\ncontinuação", "   ", ""]
+        rows = parse_export(export_evidence(result_with_texts(unsafe + safe), [{"text": value} for value in unsafe + safe]))
+        for record_type in ("evidence", "decision"):
+            actual = [row["text"] for row in rows if row["record_type"] == record_type and (record_type == "decision" or row["evidence_id"].startswith("text-"))]
+            self.assertEqual(actual, ["'" + value for value in unsafe] + safe)
 
     def test_frequency_is_reconciled_in_csv_and_reports_for_test_and_collect(self):
         for weeks, end, expected_status in ((2, "2025-01-19", "test"), (1, "2025-01-12", "collect")):
