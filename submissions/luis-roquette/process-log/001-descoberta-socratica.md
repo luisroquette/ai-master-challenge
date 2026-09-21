@@ -853,4 +853,18 @@ O pipeline produzirá arquivos tabulares versionáveis como fonte única do rela
 
 ### Estado da seção 1
 
-Aguardando validação de Luis antes da seção sobre componentes, experiência e artefatos.
+Seção aprovada por Luis sem ajustes.
+
+## Consolidação do desenho — Seção 2: componentes, experiência e artefatos
+
+O código será dividido apenas pelos limites reais do fluxo: carregamento e validação; construção temporal; análise e findings; modelo opcional; publicação dos artefatos; aplicação Streamlit. Não haverá classes, serviços ou interfaces genéricas sem mais de uma implementação. Um arquivo de configuração concentrará somente parâmetros que precisam ser auditáveis, como datas de corte, janelas, thresholds de confiança e sementes aleatórias.
+
+A publicação produzirá um conjunto pequeno de artefatos canônicos. O registro de findings conterá identificador, afirmação, força da evidência, métricas, segmentos, MRR exposto, limitações e ações. A fila operacional conterá `account_id`, prioridade, MRR exposto — oportunidade máxima, sinais explicativos, ação imediata, ação estrutural, responsável e status. Um resumo de qualidade registrará cobertura, perdas nos joins, datas, contagens e resultados dos gates. O relatório executivo e o dashboard lerão esses arquivos; não manterão cópias manuais dos números.
+
+O Streamlit terá três visões. **Decisão executiva** mostrará a causa prioritária, oportunidade máxima, confiança, contenção de uma semana e correção de 30–90 dias. **Evidências** permitirá examinar causas, segmentos, evolução temporal, métricas de proteção e sinais contrários. **Fila operacional** permitirá filtrar contas e baixar o CSV. Metodologia, definições e limitações ficarão em painel recolhível. Cada gráfico deverá responder a uma pergunta explícita; visualizações sem consequência decisória serão removidas.
+
+O README da submissão será a porta de entrada: executive summary, comandos, estrutura, findings, recomendações, limitações e links para o diário. A demonstração pública será somente leitura e não terá funcionalidade exclusiva ausente na execução local.
+
+### Estado da seção 2
+
+Aguardando validação de Luis antes da seção sobre erros, incerteza e abstenção.
