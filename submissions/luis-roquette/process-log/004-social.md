@@ -165,3 +165,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) registrar se foi aceita, rejeitada ou editada e comparar depois a decisão com o resultado observado; B) exibir temporariamente sem guardar a decisão; C) converter automaticamente em tarefa ou publicação.
 - **Resposta de Luis:** **A — registrar a decisão humana e comparar com o resultado posterior**.
 - **Implicação:** o sistema terá memória operacional auditável. A evolução não dependerá de a IA executar ações: dependerá de registrar a escolha humana, receber dados posteriores e confrontar recomendação, decisão e resultado sem inventar causalidade.
+
+### Onda 14 — persistência local
+
+- **Pergunta:** onde o MVP deve guardar decisões e resultados?
+- **Opções:** A) SQLite local, sem serviço externo; B) arquivos CSV ou JSON; C) somente na sessão.
+- **Resposta de Luis:** **A — SQLite local**.
+- **Implicação:** decisões, revisões e resultados poderão ser consultados entre sessões com integridade transacional e trilha auditável, sem exigir conta, nuvem ou banco remoto.
