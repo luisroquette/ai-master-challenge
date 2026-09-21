@@ -201,4 +201,16 @@ Onda 1 aprovada sem alterações em 21 de setembro de 2026. O gate de resultado 
 
 Qual falha do fluxo atual deve ser eliminada primeiro?
 
+#### Resposta de Luis
+
+**A, seguida de B:** primeiro eliminar a priorização subjetiva, feita “no feeling”; depois reduzir o esforço causado pelo volume excessivo de oportunidades.
+
+#### Decisão registrada
+
+A solução deve primeiro instituir um critério comum, explicável e auditável. A redução de carga cognitiva vem em seguida: o sistema usa esse critério para transformar o pipeline extenso em uma fila curta e acionável. Filtrar volume sem padronizar a decisão apenas automatizaria o “feeling”.
+
+#### Pergunta 2
+
+Em que momento do fluxo a ferramenta deve intervir primeiro?
+
 **Resposta:** aguardando Luis.
