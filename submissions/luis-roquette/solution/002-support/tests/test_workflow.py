@@ -1,10 +1,13 @@
+import runpy
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
-from app import persist_export, read_synthetic_decision, record_synthetic_decision
-
 ROOT = Path(__file__).parents[1]
+PROOF = runpy.run_path(ROOT / "app.py")
+persist_export = PROOF["persist_export"]
+read_synthetic_decision = PROOF["read_synthetic_decision"]
+record_synthetic_decision = PROOF["record_synthetic_decision"]
 
 
 def test_package_imports() -> None:
