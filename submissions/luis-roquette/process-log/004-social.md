@@ -172,3 +172,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) SQLite local, sem serviço externo; B) arquivos CSV ou JSON; C) somente na sessão.
 - **Resposta de Luis:** **A — SQLite local**.
 - **Implicação:** decisões, revisões e resultados poderão ser consultados entre sessões com integridade transacional e trilha auditável, sem exigir conta, nuvem ou banco remoto.
+
+### Onda 15 — retenção dos dados
+
+- **Pergunta:** o que deve ser persistido no SQLite?
+- **Opções:** A) decisões, resultados e metadados do arquivo, mantendo o CSV bruto fora do banco; B) toda a base importada; C) uma cópia completa de cada CSV enviado.
+- **Resposta de Luis:** **A — persistir decisões, resultados e metadados; não copiar o CSV bruto**.
+- **Implicação:** o banco manterá o estado operacional mínimo. Cada importação poderá ser identificada por metadados e hash, enquanto análises serão recalculadas a partir do arquivo fornecido pelo usuário, reduzindo duplicação e exposição de dados.
