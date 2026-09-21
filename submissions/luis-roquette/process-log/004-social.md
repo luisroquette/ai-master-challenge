@@ -221,3 +221,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) bloquear a análise e mostrar coluna, problema e correção esperada; B) importar apenas linhas válidas e descartar as demais; C) corrigir automaticamente sem confirmação.
 - **Resposta de Luis:** **A — bloquear e apresentar diagnóstico acionável**.
 - **Implicação:** a validação da entrada será um gate. O sistema não produzirá indicadores sobre uma base parcialmente descartada ou modificada sem conhecimento do usuário; o erro deverá indicar localização, causa e correção.
+
+### Onda 22 — saída para Head e Analista
+
+- **Pergunta:** o que o dashboard deve exportar?
+- **Opções:** A) resumo executivo de uma página e CSV das evidências e decisões; B) relatório técnico completo em PDF; C) somente imagens dos gráficos.
+- **Resposta de Luis:** **A — resumo executivo e CSV rastreável**.
+- **Implicação:** o Head receberá síntese curta e priorizada; o Analista poderá auditar os dados estruturados. A exportação evitará um relatório longo que replique toda a interface.
