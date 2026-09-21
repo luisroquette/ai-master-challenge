@@ -595,4 +595,35 @@ Qual deve ser a automação inicial da fila de Customer Success?
 
 ### Estado da pergunta 4
 
+Respondida por Luis.
+
+### Resposta de Luis
+
+> B
+
+### Interpretação
+
+A primeira automação será uma fila CSV pronta para importação ou uso direto pelo CS. Cada linha representará uma conta priorizada e incluirá evidências, oportunidade financeira máxima, ação imediata, ação estrutural e campos operacionais editáveis.
+
+### Consequência para o desenho
+
+O pipeline será responsável por gerar o CSV; o dashboard apenas filtrará e oferecerá seu download. Integração com CRM e contato automático ficam fora do escopo porque exigiriam sistema-alvo, credenciais, regras de negócio e autorização inexistentes no desafio.
+
+### Ponto ainda aberto
+
+Precisamos decidir se a experiência do avaliador dependerá apenas da execução local ou se também haverá uma demonstração acessível por link.
+
+### Pergunta 5
+
+Como devemos disponibilizar a solução final?
+
+- A. Somente execução local reproduzível.
+- B. Execução local reproduzível e demonstração Streamlit pública, somente leitura, sem segredos nem APIs pagas.
+- C. Aplicação privada com login, banco de dados e gestão de usuários.
+- D. Somente capturas de tela e PDF, sem dashboard executável.
+
+**Recomendação técnica preliminar do agente:** B, porque reduz o atrito da avaliação sem substituir a prova de reprodução local nem adicionar infraestrutura de produto.
+
+### Estado da pergunta 5
+
 Aguardando resposta de Luis.
