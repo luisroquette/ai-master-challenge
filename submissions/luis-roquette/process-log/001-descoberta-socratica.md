@@ -2,7 +2,7 @@
 
 - **Início:** 21 de setembro de 2026
 - **Estado:** cinco ondas concluídas; desenho em validação
-- **SPEC:** ainda não criada
+- **SPEC:** draft criado após a aprovação integral do desenho
 
 ## Protocolo de registro
 
@@ -895,4 +895,12 @@ A entrega estará pronta quando responder às três perguntas oficiais usando as
 
 ### Estado da seção 4
 
-Aguardando validação final de Luis. Com a aprovação, o desenho estará fechado e poderá ser convertido em SPEC `draft` pelo estágio `add-task` do SDD.
+Seção aprovada por Luis sem ajustes. O desenho completo está fechado.
+
+## Criação da SPEC pelo estágio SDD `add-task`
+
+Após a aprovação das quatro seções, criamos a SPEC draft em `solution/001-churn/.specs/tasks/draft/implement-churn-diagnostic.feature.md`. O arquivo preserva as solicitações originais relevantes e registra, em `Initial User Prompt → Requirements`, o desenho aprovado. A seção `Description` permanece com o placeholder exigido pela metodologia e será preenchida no estágio `plan-task`.
+
+### Adaptação necessária da skill
+
+O script `create-folders.sh` da instalação cria `.specs` e `.claude` na raiz Git. Isso violaria a regra oficial de modificar somente `submissions/luis-roquette/`. Aplicamos o fallback previsto pela skill e criamos a estrutura manualmente dentro de `submissions/luis-roquette/solution/001-churn/`, sem alterar arquivos fora da submissão.
