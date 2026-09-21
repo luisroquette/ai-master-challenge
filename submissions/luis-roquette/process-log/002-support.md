@@ -320,3 +320,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Fundamento:** o desafio pede diagnóstico, proposta de automação e algo funcional rodando com dados reais; fornece orçamento de 4–6 horas e aceita código ou aplicação com instruções de setup. Não exige integração com helpdesk, envio real, autenticação, multiempresa, API pública ou deploy. Construir B ou C consumiria o prazo em infraestrutura não avaliada e reduziria a profundidade das evidências obrigatórias.
 
 **Interpretação para a próxima onda:** o MVP termina em uma aplicação local reproduzível que demonstra o pipeline ponta a ponta, persiste decisões localmente e exporta evidências. Integrações externas serão descritas apenas como evolução, não implementadas.
+
+### Onda 19 — Validação do classificador
+
+**Pergunta:** como validar o classificador sem favorecer o resultado?
+
+- **A — Teste congelado + validação cruzada:** separa uma amostra estratificada intocável; usa validação cruzada no restante; mede por classe, calibração e cobertura segura.
+- **B — Um único holdout:** separa treino e teste uma vez e reporta o resultado.
+- **C — Amostra demonstrativa:** avalia manualmente um conjunto pequeno de tickets representativos.
+
+**Resposta de Luis:** A — Teste congelado + validação cruzada.
+
+**Interpretação para a próxima onda:** seleção de algoritmo e threshold ocorrerá sem consultar o teste final. O resultado reportará métricas globais e por classe, confiabilidade das probabilidades e trade-off entre cobertura e erro seletivo. A próxima escolha deve definir uma avaliação igualmente séria para a recuperação de respostas.
