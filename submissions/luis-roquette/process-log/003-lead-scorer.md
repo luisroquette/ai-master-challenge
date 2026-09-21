@@ -483,4 +483,23 @@ Qual critério deve selecionar o vencedor entre os modelos?
 
 **Recomendação da IA:** **D**. A fila precisa ordenar bem, mas o número exibido como probabilidade também precisa ser confiável.
 
+#### Resposta de Luis
+
+**D:** aplicar um gate de calibração e, entre os modelos aprovados, comparar ordenação e resultado financeiro; sem ganho relevante, vence o modelo simples.
+
+#### Decisão registrada
+
+Nenhum modelo poderá vencer apenas por discriminar bem se suas probabilidades forem pouco confiáveis. Após o gate de calibração, a seleção considerará a capacidade de priorizar `Won` e concentrar resultado financeiro no topo da fila. A magnitude mínima de ganho relevante será definida a partir da variabilidade observada na validação, não por um número arbitrário.
+
+#### Pergunta 6
+
+Quando duas probabilidades devem ser consideradas “próximas” para permitir o desempate por receita esperada?
+
+- **A.** Quando forem iguais após arredondamento para percentual inteiro.
+- **B.** Quando estiverem a até 5 pontos percentuais, como regra fixa.
+- **C.** Quando pertencerem à mesma faixa de probabilidade cuja confiabilidade foi confirmada na validação temporal.
+- **D.** Nunca; receita esperada só desempata probabilidades exatamente iguais.
+
+**Recomendação da IA:** **C**. Evita precisão falsa e deriva o desempate da resolução que os dados realmente sustentam.
+
 **Resposta:** aguardando Luis.
