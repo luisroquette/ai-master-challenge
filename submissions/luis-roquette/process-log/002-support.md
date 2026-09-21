@@ -300,3 +300,21 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Scorecard decisório.
 
 **Interpretação para a próxima onda:** a camada gerencial responderá quatro decisões e oferecerá evidência detalhada sob demanda, sem virar um BI genérico. A próxima escolha deve tornar explícito o limite do MVP e impedir integrações especulativas de consumirem o tempo da demonstração principal.
+
+### Onda 18 — Limite do MVP
+
+**Pergunta:** qual deve ser o limite do MVP?
+
+- **A — Demonstração local completa:** pipeline funcional com dados reais, sem integração com helpdesk, envio real de mensagens, autenticação, multiempresa ou aprendizado online.
+- **B — Integração real:** conectar o protótipo a um helpdesk ou canal de atendimento.
+- **C — Plataforma extensível:** incluir API, autenticação e estrutura para múltiplas empresas desde o início.
+
+**Pedido de Luis:** o Codex deve decidir após revisar novamente o repositório oficial, sem transferir essa avaliação ao usuário.
+
+**Decisão do Codex:** A — Demonstração local completa.
+
+**Verificação:** reavaliação do fork em `main` no commit `4aed364d572fabe0f1fff1f0c6f32960b30fe575`; README do Challenge 002 no blob `6c873eb7dd1955ebccfb730bcd98143373cbaab2`, além do README geral, guia de submissão e regras do PR.
+
+**Fundamento:** o desafio pede diagnóstico, proposta de automação e algo funcional rodando com dados reais; fornece orçamento de 4–6 horas e aceita código ou aplicação com instruções de setup. Não exige integração com helpdesk, envio real, autenticação, multiempresa, API pública ou deploy. Construir B ou C consumiria o prazo em infraestrutura não avaliada e reduziria a profundidade das evidências obrigatórias.
+
+**Interpretação para a próxima onda:** o MVP termina em uma aplicação local reproduzível que demonstra o pipeline ponta a ponta, persiste decisões localmente e exporta evidências. Integrações externas serão descritas apenas como evolução, não implementadas.
