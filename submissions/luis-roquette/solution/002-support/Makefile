@@ -1,0 +1,73 @@
+SHELL := /bin/sh
+
+PYTHON ?= python3
+VENV := .venv
+BIN := $(VENV)/bin
+CUSTOMER_CSV := data/raw/customer_support_tickets.csv
+IT_CSV := data/raw/all_tickets_processed_improved_v3.csv
+CUSTOMER_URL := https://www.kaggle.com/api/v1/datasets/download/suraj520/customer-support-ticket-dataset
+IT_URL := https://www.kaggle.com/api/v1/datasets/download/adisongoh/it-service-ticket-classification-dataset
+
+.PHONY: doctor bootstrap-lock setup data test lint reproduce app demo
+
+doctor:
+	@status=0; \
+	for command in "$(PYTHON)" make curl unzip; do \
+		command -v "$$command" >/dev/null 2>&1 || { echo "ERRO: $$command ausente; instale-o e repita make doctor."; status=1; }; \
+	done; \
+	if command -v "$(PYTHON)" >/dev/null 2>&1; then \
+		"$(PYTHON)" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' || { echo "ERRO: use Python 3.12 (PYTHON=/caminho/python3.12)."; status=1; }; \
+	fi; \
+	test -f requirements.lock || { echo "ERRO: requirements.lock ausente; execute make bootstrap-lock no ambiente Python 3.12."; status=1; }; \
+	mkdir -p data/runtime 2>/dev/null && test -w data/runtime || { echo "ERRO: data/runtime não é gravável; corrija as permissões."; status=1; }; \
+	if test ! -s "$(CUSTOMER_CSV)" || test ! -s "$(IT_CSV)"; then \
+		curl -fsIL --max-time 15 "$(CUSTOMER_URL)" >/dev/null || { echo "ERRO: fonte Customer indisponível; baixe manualmente para $(CUSTOMER_CSV)."; status=1; }; \
+		curl -fsIL --max-time 15 "$(IT_URL)" >/dev/null || { echo "ERRO: fonte IT indisponível; baixe manualmente para $(IT_CSV)."; status=1; }; \
+	else \
+		echo "OK: fontes locais preparadas; conectividade externa não é necessária."; \
+	fi; \
+	test "$$status" -eq 0; \
+	echo "OK: Python 3.12, lock, ferramentas, fontes e diretório gravável verificados."
+
+bootstrap-lock:
+	@test ! -e requirements.lock || { echo "ERRO: requirements.lock já existe; não sobrescrito."; exit 2; }
+	@"$(PYTHON)" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' || { echo "ERRO: bootstrap-lock exige Python 3.12."; exit 2; }
+	"$(PYTHON)" -m venv "$(VENV)"
+	"$(BIN)/python" -m pip install --upgrade pip
+	"$(BIN)/python" -m pip install -e '.[dev]'
+	"$(BIN)/python" -m pip freeze --exclude-editable > requirements.lock
+
+setup:
+	@test -f requirements.lock || { echo "ERRO: requirements.lock ausente; execute make bootstrap-lock."; exit 2; }
+	"$(PYTHON)" -m venv "$(VENV)"
+	"$(BIN)/python" -m pip install -r requirements.lock
+	"$(BIN)/python" -m pip install --no-deps -e .
+
+data:
+	@mkdir -p data/raw
+	@if test ! -s "$(CUSTOMER_CSV)"; then \
+		tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT INT TERM; \
+		curl -fL "$(CUSTOMER_URL)" -o "$$tmp/customer.zip"; \
+		unzip -j "$$tmp/customer.zip" 'customer_support_tickets.csv' -d data/raw; \
+	fi
+	@if test ! -s "$(IT_CSV)"; then \
+		tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT INT TERM; \
+		curl -fL "$(IT_URL)" -o "$$tmp/it.zip"; \
+		unzip -j "$$tmp/it.zip" 'all_tickets_processed_improved_v3.csv' -d data/raw; \
+	fi
+	@test -s "$(CUSTOMER_CSV)" && test -s "$(IT_CSV)" || { echo "ERRO: CSV esperado ausente ou vazio em data/raw."; exit 2; }
+
+test:
+	"$(BIN)/pytest" -q
+
+lint:
+	"$(BIN)/ruff" check .
+
+reproduce:
+	@test -f scripts/reproduce.py || { echo "ERRO: scripts/reproduce.py ainda não existe; o gate de reprodução será implementado em step posterior."; exit 2; }
+	"$(BIN)/python" scripts/reproduce.py
+
+app:
+	"$(BIN)/streamlit" run app.py
+
+demo: doctor setup app

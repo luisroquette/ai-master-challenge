@@ -1,1 +1,10 @@
 .specs/scratchpad/
+.venv/
+artifacts/
+data/raw/
+data/runtime/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.sqlite3

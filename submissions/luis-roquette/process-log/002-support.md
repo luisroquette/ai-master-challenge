@@ -747,3 +747,12 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Adaptação registrada:** `prompts/judge.md`, scripts e agentes Claude do pacote não existem na instalação Codex; juízes independentes aplicaram as rubricas integrais contidas no `SKILL.md` instalado.
 
 **Decisão:** promover a SPEC de `draft` para `todo`; planejamento e revisão SDD estão validados, permitindo iniciar `implement-task`.
+
+## I39 — Step 01: início da prova de ambiente — 2026-09-21 21:35 BRT
+
+- **Aprovação e escopo:** a autorização humana da SPEC foi confirmada em I38. O step limita-se à prova sintética de ambiente; não implementa dados, modelos ou domínio.
+- **Estado inicial:** branch `submission/luis-roquette-002-support`, commit `ee01252b3bf0799ba1508b1c2cad7fbc923bc7ec`, árvore limpa e nenhum workflow de CI presente.
+- **Decisão:** manter Streamlit, após comparar os três candidatos já registrados — Streamlit, Gradio e Dash — e reproduzir navegação, formulário editado, transação SQLite, releitura por nova conexão e CSV persistido.
+- **Arquivos em preparação:** pacote Python 3.12, comandos Make reais, configuração Streamlit offline, prova em `app.py`, teste focal e README técnico inicial.
+- **Gate:** versões exatas só serão registradas após instalação e teste no Codespace gerenciado com o diff deste checkpoint. `make reproduce` falha explicitamente enquanto o pipeline de step posterior não existe.
+- **Validação local leve:** `python3 -m compileall -q app.py src tests` e `git diff --check` concluíram com status 0. Instalação, lock e pytest permanecem pendentes do ambiente Python 3.12 gerenciado.
