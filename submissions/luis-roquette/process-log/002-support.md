@@ -288,3 +288,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Persistência local auditável.
 
 **Interpretação para a próxima onda:** a trilha de auditoria será persistida localmente com tecnologia nativa ou já instalada, escolhida após a pesquisa. Nenhuma credencial ou infraestrutura remota será necessária. PII deverá ser removida antes da persistência. A próxima escolha deve limitar o painel gerencial ao conjunto mínimo de decisões úteis.
+
+### Onda 17 — Primeira visão gerencial
+
+**Pergunta:** o que o gestor deve ver primeiro?
+
+- **A — Scorecard decisório:** gargalo principal, fatores associados à satisfação, cobertura segura da automação e horas ou economia por cenário.
+- **B — Explorador analítico:** muitos filtros, cruzamentos e gráficos para investigação livre.
+- **C — Narrativa executiva:** conclusões e recomendações em texto, com poucos indicadores.
+
+**Resposta de Luis:** A — Scorecard decisório.
+
+**Interpretação para a próxima onda:** a camada gerencial responderá quatro decisões e oferecerá evidência detalhada sob demanda, sem virar um BI genérico. A próxima escolha deve tornar explícito o limite do MVP e impedir integrações especulativas de consumirem o tempo da demonstração principal.
