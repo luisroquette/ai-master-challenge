@@ -213,4 +213,18 @@ A solução deve primeiro instituir um critério comum, explicável e auditável
 
 Em que momento do fluxo a ferramenta deve intervir primeiro?
 
+#### Resposta de Luis
+
+**B:** continuamente, reordenando a fila quando os dados mudarem.
+
+Luis escolheu a opção depois de comparar fila diária, atualização contínua, publicação pelo manager e análise sob demanda.
+
+#### Decisão registrada
+
+O comportamento-alvo é uma fila continuamente recalculada a partir de novas informações do CRM. Como o dataset do challenge é estático, a entrega atual demonstrará o mesmo mecanismo ao recalcular após atualização ou recarga dos dados; não alegará possuir uma integração em tempo real que não foi construída nem validada.
+
+#### Pergunta 3
+
+Como evitar que a reordenação contínua torne a fila instável ou difícil de confiar?
+
 **Resposta:** aguardando Luis.
