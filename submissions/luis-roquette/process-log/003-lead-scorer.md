@@ -36,3 +36,26 @@ A entrega precisa incluir setup reproduzível, lógica e limitações, além de 
 ### Erro registrado nesta etapa
 
 No primeiro verificador local, a variável de shell `path` sobrescreveu o `PATH` especial do `zsh`, e o comando `git` deixou de ser localizado. A variável foi renomeada para `challenge_file`; o verificador passou sem alterar arquivos.
+
+## I02 — SDD adotado antes da construção — 2026-09-21 14:36 BRT
+
+- **Objetivo:** tornar a especificação verificável o contrato de entrada para pesquisa, arquitetura e implementação do Lead Scorer.
+- **IA/ferramenta:** plugin SDD `3.6.0` do `NeoLabHQ/context-engineering-kit`, baseado em GitHub Spec Kit, OpenSpec e arc42 adaptado.
+- **Ação ou prompt:** Luis decidiu seguir Spec-Driven Development e indicou a instalação `npx skills add NeoLabHQ/context-engineering-kit --skill sdd --agent claude-code`.
+- **Resultado:** o plugin já estava instalado, habilitado e atualizado no Claude Code. O estágio `add-task` foi aplicado para criar a especificação inicial em `solution/003-lead-scorer/.specs/tasks/draft/`, sem iniciar planejamento ou código.
+- **Julgamento humano:** a escolha de SDD é de Luis. A metodologia será combinada com a Regra zero, Ponytail `full` e os gates de evidência do briefing; não substitui pesquisa, validação humana ou limites contra leakage.
+- **Verificação:** `claude plugin details sdd@context-engineering-kit` confirmou versão `3.6.0`, cinco skills, oito agentes e status habilitado; `claude plugin update` confirmou a versão mais recente.
+- **Evidência:** `solution/003-lead-scorer/.specs/tasks/draft/implement-explainable-lead-scorer.feature.md` e este registro.
+- **Limitação:** `/plan-task` e `/implement-task` ainda não foram executados. A especificação permanece em `draft` até a pesquisa inicial e a revisão humana definirem critérios verificáveis.
+
+### Fluxo acordado
+
+1. `add-task`: preservar a intenção original em `draft`.
+2. `plan-task`: pesquisar, analisar negócio e código, definir arquitetura, critérios de aceitação, testes e subtarefas.
+3. Revisar a especificação contra o briefing, a Regra zero e o risco de leakage.
+4. `implement-task`: construir por fases, com revisão e evidência em cada gate.
+5. Mover a tarefa para `done` somente após definição de pronto e validações reproduzíveis.
+
+### Erro e correção desta etapa
+
+O comando publicado pela página do recurso falhou com `No matching skills found for: sdd`: o CLI encontrou 68 skills individuais, mas `sdd` é um plugin composto, não uma skill isolada. A instalação oficial do próprio repositório foi conferida; `sdd@context-engineering-kit` já estava instalado e habilitado, então apenas o atualizamos e validamos em vez de duplicá-lo.
