@@ -577,4 +577,23 @@ Qual escopo deve abrir por padrão para cada perfil?
 
 **Recomendação da IA:** **B**. Reduz ruído para o vendedor e entrega visão de gestão sem criar duas experiências separadas.
 
+#### Resposta de Luis
+
+**B:** vendedor abre apenas sua carteira; gestor abre a equipe e pode filtrar por vendedor.
+
+#### Decisão registrada
+
+O escopo inicial será orientado ao papel. A visão do vendedor reduz a carga à carteira sob sua responsabilidade. A visão do gestor oferece panorama da equipe e recorte por vendedor, preservando a mesma estrutura de filas e métricas.
+
+#### Pergunta 3
+
+Como equilibrar leitura rápida e explicação detalhada em cada fila?
+
+- **A.** Exibir todos os fatores e dados diretamente em cada linha.
+- **B.** Usar linha compacta com prioridade, valor e principal motivo; ao selecionar, abrir painel lateral com explicação completa e próxima ação.
+- **C.** Mostrar somente cartões grandes, um deal por bloco.
+- **D.** Exibir uma tabela de dados brutos e deixar a interpretação para o usuário.
+
+**Recomendação da IA:** **B**. Permite percorrer a fila rapidamente e mantém a justificativa acessível sem poluir a comparação.
+
 **Resposta:** aguardando Luis.
