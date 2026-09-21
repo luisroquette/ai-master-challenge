@@ -865,7 +865,7 @@ Luis determinou: “Você deve trazer questões relevantes para o entendimento d
 
 Daqui em diante, perguntas ao usuário ficam restritas a escolhas que alterem produto, risco ou aderência ao challenge. Decisões técnicas proporcionais serão tomadas autonomamente e registradas com sua justificativa.
 
-### Síntese da Onda 6 — aguardando aprovação
+### Síntese da Onda 6 — aprovada
 
 - **Arquitetura:** aplicação Python 3.11 + Streamlit, autocontida e sem API separada.
 - **Dados e modelo:** CSVs reais versionados, recuperação externa validada por checksum e treino temporal determinístico com cache.
@@ -874,3 +874,25 @@ Daqui em diante, perguntas ao usuário ficam restritas a escolhas que alterem pr
 - **Entrega:** setup local obrigatório e demo pública adicional no Streamlit Community Cloud após todos os gates.
 
 Com esta síntese, as seis ondas adaptativas mínimas foram concluídas. O próximo estágio, após aprovação, é consolidar o design em seções curtas e validá-lo antes de transformar o draft na SPEC.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo a Onda 6.”
+
+**Gate concluído:** as seis ondas adaptativas estão aprovadas. A descoberta socrática termina e começa a consolidação incremental do design.
+
+#### Verificação do fluxo SDD
+
+O plugin `sdd@context-engineering-kit` 3.6.0 permanece instalado e habilitado no Claude Code. Seu fluxo oficial é `draft → /plan-task → todo → /implement-task`; o componente `brainstorm` exige design em seções de 200–300 palavras com validação incremental. No Codex, os componentes equivalentes estão disponíveis como skills separadas. O draft existente só será preenchido após aprovação do design consolidado.
+
+## Design consolidado
+
+### Seção 1 — Produto e experiência operacional — aguardando aprovação
+
+O produto será uma aplicação Streamlit para a rotina de priorização comercial. Ao abrir, o usuário escolhe o perfil demonstrado. O vendedor entra diretamente em sua carteira; o gestor entra na visão da equipe e pode filtrar por vendedor. A experiência ocupa uma única tela, mas separa `Engaging` e `Prospecting` em abas porque os dois estágios não compartilham a mesma natureza de score.
+
+Em `Engaging`, a fila é ordenada primeiro por faixa validada de probabilidade de fechamento. Dentro da mesma faixa, receita esperada — probabilidade multiplicada pelo preço do produto — desempata os deals. Em `Prospecting`, a fila usa prioridade relativa derivada de evidências históricas suavizadas e mostra receita potencial, sem rotular a heurística como probabilidade. Assim, o produto mantém utilidade sem fabricar comparabilidade estatística.
+
+Cada linha será compacta: posição, oportunidade, conta quando disponível, vendedor, produto, prioridade, valor e principal motivo. A seleção abre um painel lateral com fatores favoráveis e desfavoráveis, origem do score, força da evidência e próxima ação produzida por playbook determinístico. Dados fora dos caminhos validados permanecem visíveis como “Dados insuficientes”, com o campo a corrigir.
+
+O gestor poderá “Priorizar temporariamente” um deal. A ação fixa o item no topo, exibe gestor e horário, não altera o score e expira com a sessão ou recalculação. O protótipo não promete autenticação, gravação no CRM nem auditoria persistente; esses limites serão declarados explicitamente.
