@@ -207,3 +207,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Opções:** A) impacto × confiança × atualidade; B) maior variação percentual; C) ordem cronológica.
 - **Resposta de Luis:** **A — impacto × confiança × atualidade**.
 - **Implicação:** uma anomalia extrema, mas pequena ou pouco sustentada, não dominará automaticamente o painel. A fórmula final deverá ser simples, documentada e testada, sem esconder seus componentes em um score opaco.
+
+### Onda 20 — definição de impacto
+
+- **Pergunta:** sem dados financeiros, como medir o impacto de um alerta?
+- **Opções:** A) volume potencial afetado, combinando alcance, interações e exposição do creator, separado da confiança estatística; B) somente engagement rate; C) importância subjetiva atribuída pelo gestor.
+- **Resposta de Luis:** **A — volume potencial afetado**.
+- **Implicação:** o dashboard priorizará escala observável sem chamá-la de receita ou ROI. Taxa e volume serão apresentados juntos para evitar favorecer artificialmente creators grandes ou pequenos.
