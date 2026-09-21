@@ -65,3 +65,12 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 - **Verificação:** `npx skills list -g --agent codex --json` reconheceu os cinco componentes com agente `Codex`; os arquivos existem em `/Users/luisroquette/.codex/skills/`.
 - **Evidência:** catálogo ativo desta sessão e hashes locais dos cinco `SKILL.md`.
 - **Limitação:** a cópia instalada no Claude Code não será usada neste desafio; sua presença não altera arquivos ou execução do worktree.
+
+## I04 — Documentar é parte central da entrega — 2026-09-21 14:39 BRT
+
+- **Objetivo:** tratar o diário como parte da qualidade da submissão, com importância igual ou superior à entrega final.
+- **Ação ou prompt:** Luis definiu: registrar continuamente o processo em fragmentos curtos, objetivos e diretos, destacando especialmente os pontos que ele indicar na conversa. Corrigir o português antes de incorporar qualquer texto ao diário.
+- **Resultado:** cada marco relevante passará a deixar evidência contemporânea de decisão, hipótese, erro, correção, validação e contribuição humana, sem reconstrução retroativa.
+- **Julgamento humano:** “Ganha quem documenta.” Como referência criativa, Luis citou Silvio Santos: “Você sabe por que o ovo de galinha vende mais do que o de pata? Porque a galinha canta quando bota.”
+- **Verificação:** regra registrada neste diário antes da próxima etapa do SDD.
+- **Limitação:** concisão não pode apagar evidência necessária; o diário não incluirá raciocínio interno oculto, segredos, credenciais ou dados pessoais.
