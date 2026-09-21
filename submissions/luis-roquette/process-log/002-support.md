@@ -313,6 +313,8 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 
 **Decisão do Codex:** A — Demonstração local completa.
 
+**Confirmação de Luis:** decisão aceita; seguir com esse limite de MVP.
+
 **Verificação:** reavaliação do fork em `main` no commit `4aed364d572fabe0f1fff1f0c6f32960b30fe575`; README do Challenge 002 no blob `6c873eb7dd1955ebccfb730bcd98143373cbaab2`, além do README geral, guia de submissão e regras do PR.
 
 **Fundamento:** o desafio pede diagnóstico, proposta de automação e algo funcional rodando com dados reais; fornece orçamento de 4–6 horas e aceita código ou aplicação com instruções de setup. Não exige integração com helpdesk, envio real, autenticação, multiempresa, API pública ou deploy. Construir B ou C consumiria o prazo em infraestrutura não avaliada e reduziria a profundidade das evidências obrigatórias.
