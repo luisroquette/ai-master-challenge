@@ -661,7 +661,7 @@ Como tratar um deal ativo cujos dados não permitem score confiável, por exempl
 
 Deals sem suporte de dados permanecerão visíveis, mas não receberão número ou faixa que sugira confiança inexistente. A interface explicará o bloqueio e os dados a corrigir. O fallback sem conta continua válido quando aplicável; “Dados insuficientes” cobre somente casos fora dos caminhos validados.
 
-### Síntese da Onda 5 — aguardando aprovação
+### Síntese da Onda 5 — aprovada
 
 - **Estrutura:** uma tela com filas separadas de `Engaging` e `Prospecting`, sem score comum entre estágios.
 - **Papéis:** vendedor abre sua carteira; gestor abre a equipe e pode filtrar por vendedor.
@@ -670,3 +670,28 @@ Deals sem suporte de dados permanecerão visíveis, mas não receberão número 
 - **Incerteza:** dados fora dos caminhos validados permanecem visíveis como “Dados insuficientes”, com correção indicada e sem score enganoso.
 
 Permanecem para a Onda 6: arquitetura mínima, fronteira do protótipo, persistência, execução, testes e prova final.
+
+#### Aprovação de Luis
+
+**Resposta:** “Aprovo.”
+
+**Gate concluído:** a Onda 5 está aprovada integralmente e passa a orientar a arquitetura e a futura SPEC.
+
+### Onda 6 — Arquitetura e prova
+
+#### Evidência antes da arquitetura
+
+O repositório não prescreve stack nem possui aplicação-base. O challenge exige software funcional, dados reais, scoring explicável e setup reproduzível dentro de um orçamento sugerido de 4–6 horas. Portanto, a arquitetura deve minimizar integração acidental e concentrar esforço na qualidade do produto e da prova.
+
+#### Pergunta 1
+
+Qual arquitetura deve sustentar o protótipo funcional?
+
+- **A.** Aplicação Python em Streamlit, com preparação de dados, scoring e interface no mesmo projeto.
+- **B.** Frontend React e API Python separados.
+- **C.** HTML/JavaScript estático consumindo scores pré-calculados.
+- **D.** CLI Python que gera relatório priorizado.
+
+**Recomendação da IA:** **A**. Entrega interface interativa, filtros, modelo e explicações com o menor número de partes, sem sacrificar nenhum requisito obrigatório.
+
+**Resposta:** aguardando Luis.
