@@ -305,4 +305,32 @@ Por instrução explícita de Luis, o Codespace foi dispensado nesta etapa. Exec
 
 O dashboard público é opcional e não foi implantado: não houve autorização explícita atual para criar o serviço. O PR também não foi aberto pela mesma fronteira de autorização. A evidência para ambos está preparada.
 
-O gate obrigatório de compreensão em cinco minutos permanece aberto porque exige uma pessoa não técnica diferente do autor da análise. Não simulamos nem fabricamos essa validação. A SPEC continuará `in-progress` até registrar tempo, cinco respostas e eventuais correções.
+O gate interno de compreensão em cinco minutos permanece aberto porque exige uma pessoa não técnica diferente do autor da análise. Ele foi criado durante nosso planejamento para elevar a qualidade, não é uma obrigação textual do desafio e não invalida o app funcional. Não simulamos nem fabricamos essa validação.
+
+## Correção de comunicação — o projeto precisava aparecer
+
+Ao encerrar o preflight, a comunicação enfatizou o teste de compreensão e não mostrou com clareza que o produto já existia. Luis reagiu corretamente: “Você fechou? Cadê o projeto? Eu não deveria entregar um app funcional?”. A pergunta revelou uma falha de entrega, não de código: o dashboard estava implementado e testado, mas ainda não havia sido colocado diante do autor para inspeção direta.
+
+Como correção, iniciamos o Streamlit local, confirmamos `HTTP 200` e abrimos o dashboard no Chrome. A inspeção visual mostrou as três visões — `Decisão executiva`, `Evidências` e `Fila operacional` — carregadas com os artefatos canônicos. O app local foi mantido aberto para revisão. A implantação pública continua separada e não foi confundida com a existência do produto funcional.
+
+Luis também questionou a orientação para “começar a contar as horas”. Esclarecemos três conceitos que haviam sido apresentados de forma confusa:
+
+1. `4–6 horas` é o orçamento sugerido pelo briefing, não um cronômetro obrigatório.
+2. `5 minutos` é um gate criado por nós para testar compreensão executiva, não tempo de desenvolvimento.
+3. Não houve cronômetro contínuo da implementação; portanto, nenhuma duração será reconstruída ou inventada retrospectivamente.
+
+Essa correção muda o estado comunicado: a implementação funcional está pronta; o que falta é revisão visual, eventual refinamento e, somente após autorização, publicação externa.
+
+## Princípio editorial — registrar a jornada construtiva
+
+Luis definiu que o valor central dos relatórios, agendas e diários é preservar sua **jornada construtiva**. O registro deve mostrar quase como um arquiteto desenha e um engenheiro constrói: intenção, perguntas, alternativas, decisões, desenho, execução, testes, falhas, correções e resultado visível.
+
+Assim, o diário não pode virar apenas uma lista de comandos, commits ou gates verdes. Cada etapa relevante deve deixar explícitos:
+
+- o problema percebido por Luis e a decisão humana que orientou a solução;
+- o desenho escolhido, as alternativas rejeitadas e o motivo;
+- como o desenho foi transformado em construção executável;
+- o que a evidência revelou e como ela alterou o caminho;
+- a diferença entre produto construído, produto demonstrado e produto publicado.
+
+Esta própria etapa exemplifica o princípio: havia um app construído, mas ainda faltava torná-lo visível ao autor. A intervenção de Luis corrigiu a narrativa e melhorou a entrega. Documentar essa correção é tão importante quanto registrar os 29 testes aprovados.
