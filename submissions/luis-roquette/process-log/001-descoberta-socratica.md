@@ -1,7 +1,7 @@
 # Diário de processo: descoberta socrática
 
 - **Início:** 21 de setembro de 2026
-- **Estado:** Onda 1 em andamento
+- **Estado:** Onda 2 em andamento
 - **SPEC:** ainda não criada
 
 ## Protocolo de registro
@@ -140,4 +140,21 @@ As três camadas deverão compartilhar a mesma fonte de dados e os mesmos crité
 
 ### Estado da onda
 
-Aguardando confirmação de Luis. Após a aprovação, a Onda 2 investigará sucesso, evidências e prioridades mensuráveis com base nas cinco decisões acima.
+Síntese confirmada por Luis sem ajustes. A Onda 1 está encerrada.
+
+## Onda 2: sucesso, evidências e prioridades mensuráveis
+
+### Pergunta 1
+
+Qual nível mínimo de evidência devemos exigir antes de apresentar um fator como provável causa raiz do churn?
+
+- A. Diferença descritiva relevante entre clientes que cancelaram e clientes que permaneceram.
+- B. Associação que continue relevante após controlar diferenças de segmento, plano e valor da conta.
+- C. Convergência de três sinais: associação controlada, coerência temporal e confirmação em mais de uma tabela, deixando explícito que dados observacionais não provam causalidade.
+- D. Somente um experimento controlado permite mencionar causa raiz; sem ele, não faremos recomendação causal.
+
+**Recomendação técnica preliminar do agente:** C, porque oferece rigor compatível com dados observacionais sem prometer uma causalidade que o dataset não consegue provar sozinho.
+
+### Estado da pergunta
+
+Aguardando resposta de Luis.
