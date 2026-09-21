@@ -147,3 +147,19 @@ No SHA `df13fa1150a50b485be2051cf407a7a58f30e946`, o Codespace confirmou:
 - Ruff verde e worktree remota limpa.
 
 **Resultado:** Fase 2 validada e encerrada. Nenhuma anomalia cronológica foi apagada ou reclassificada como dado válido.
+
+## Fase 3 — painel temporal sem vazamento
+
+### Planejamento e revisão — ciclo 1
+
+Relemos a Task 3 e identificamos uma incompatibilidade interna no teste proposto: um ticket anterior ao cadastro não pode ao mesmo tempo possuir cobertura estrutural de 90 dias, pois a própria regra exige cadastro anterior ao início da janela. Mantivemos a regra de negócio correta: janelas sem histórico suficiente permanecem nulas. O teste `strict` comprovará exclusão pré-assinatura no uso e abstenção por cobertura no suporte.
+
+Os testes preservam os demais gates: churn terminal ignora reativação, eventos futuros não entram, MRR simultâneo não duplica, dimensões divergentes viram `mixed`, renovação anual usa o próximo aniversário e a chave do painel é única.
+
+### Incidentes e estado do gate
+
+Um patch digitou `submissions/luisroquette/` sem hífen e criou um `test_panel.py` vazio fora da pasta do participante. O arquivo vazio e toda a árvore criada por engano foram removidos imediatamente; a versão correta foi criada somente em `submissions/luis-roquette/`.
+
+O commit de testes `142ebf6` foi publicado para executar o vermelho no Codespace. Duas tentativas sequenciais foram recusadas pelo gerenciador porque outra sessão reiniciou o mesmo ambiente durante a transição para `ShuttingDown`. A inspeção mostrou um processo externo consultando `uv`, `mise`, `pyenv` e `asdf`; não o interrompemos.
+
+**Resultado:** Fase 3 bloqueada antes do teste vermelho. `panel.py` não foi criado e nenhuma etapa posterior começou. O desbloqueio exige que a outra sessão libere `codex-preflight-657v7q4ggx7f5557` ou autorização para liberar outra vaga de Codespace.

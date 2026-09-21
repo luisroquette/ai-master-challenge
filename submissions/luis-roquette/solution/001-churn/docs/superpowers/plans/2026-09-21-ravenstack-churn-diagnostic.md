@@ -358,7 +358,7 @@ git commit -m "feat(churn): validate inputs and expose data contradictions"
 - Produces: `build_account_panel(tables: dict[str, pd.DataFrame], cutoffs: pd.DatetimeIndex, chronology: Literal["observed", "strict"]) -> pd.DataFrame`.
 - Produces columns: `account_id`, `cutoff`, `chronology`, `churn_next_30d`, `first_terminal_churn_date`, `mrr_active`, `billing_frequency`, `days_to_annual_renewal`, static account fields, and 7/30/90-day usage/support features.
 
-- [ ] **Step 1: Write the terminal-churn and future-leakage tests**
+- [x] **Step 1: Write the terminal-churn and future-leakage tests**
 
 ```python
 import pandas as pd
@@ -381,7 +381,7 @@ def test_panel_excludes_events_after_cutoff(mini_tables):
     assert row["churn_next_30d"] == 1
 ```
 
-- [ ] **Step 2: Write the strict chronology sensitivity test**
+- [x] **Step 2: Write the strict chronology sensitivity test**
 
 ```python
 from ravenstack_churn.panel import build_account_panel, mrr_lost_at_churn
