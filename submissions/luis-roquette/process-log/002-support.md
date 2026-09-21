@@ -204,3 +204,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Recuperação de casos similares.
 
 **Interpretação para a próxima onda:** a resposta assistida será fundamentada e rastreável, não geração livre. A auditoria do campo `Resolution` decidirá se ele é utilizável; baixa similaridade ou histórico inadequado exigirá fallback humano. A próxima escolha deve definir quais decisões e correções humanas retornam ao sistema.
+
+### Onda 10 — Feedback humano
+
+**Pergunta:** o que o sistema deve aprender com a decisão humana?
+
+- **A — Feedback auditável:** registra aprovação, edição ou rejeição, motivo e diferença entre sugestão e resposta final; usa isso somente em avaliações e versões futuras.
+- **B — Feedback mínimo:** registra apenas aprovação ou rejeição para métricas.
+- **C — Aprendizado automático imediato:** cada decisão altera o comportamento do sistema em produção.
+
+**Resposta de Luis:** A — Feedback auditável.
+
+**Interpretação para a próxima onda:** o protótipo preservará a trilha entre recomendação, intervenção humana e resultado, mas não fará aprendizado online. Isso evita mudanças não validadas e cria dados para melhoria posterior. A próxima escolha deve impedir que o painel confunda métricas históricas observadas com resultados simulados ou projetados do protótipo.
