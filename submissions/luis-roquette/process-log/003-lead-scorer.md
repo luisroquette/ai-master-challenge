@@ -227,4 +227,16 @@ O comportamento-alvo é uma fila continuamente recalculada a partir de novas inf
 
 Como evitar que a reordenação contínua torne a fila instável ou difícil de confiar?
 
+#### Resposta de Luis
+
+**B:** reordenar somente quando a mudança ultrapassar um limite relevante.
+
+#### Decisão registrada
+
+A atualização dos dados pode ser contínua, mas uma alteração pequena não deve mudar a ordem exibida. A fila terá um mecanismo de estabilidade: somente variações materiais atravessam o limite de reordenação. O valor e a unidade desse limite ainda não foram definidos e não serão inventados antes da análise dos dados.
+
+#### Pergunta 4
+
+Como o limite de mudança relevante deve ser definido?
+
 **Resposta:** aguardando Luis.
