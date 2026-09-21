@@ -384,4 +384,35 @@ Quais janelas de observação devem gerar os sinais de uso e suporte?
 
 ### Estado da pergunta 3
 
+Respondida por Luis.
+
+### Resposta literal de Luis
+
+> c
+
+### Interpretação
+
+A resposta corresponde à opção **C**. Sinais de uso e suporte serão calculados em janelas de 7, 30 e 90 dias anteriores a cada corte, permitindo comparar estado recente, tendência e persistência. Uma janela só será usada se a cobertura efetiva dos dados for suficiente.
+
+### Consequência para o desenho
+
+Os atributos deverão distinguir volume, taxa, tendência e volatilidade, sem confundir ausência de histórico com valor zero. A auditoria inicial dos dados poderá reduzir ou remover uma janela, mas não substituí-la silenciosamente; qualquer adaptação será registrada.
+
+### Ponto ainda aberto
+
+O arquivo de churn contém motivo e feedback que podem ter sido registrados após a decisão de cancelar. Precisamos separar seu uso retrospectivo do uso preditivo.
+
+### Pergunta 4
+
+Como devemos usar `reason_code` e o texto de feedback dos eventos de churn?
+
+- A. Como atributos do modelo de risco e como evidência do diagnóstico.
+- B. Excluí-los completamente para evitar qualquer contaminação.
+- C. Usá-los somente no diagnóstico retrospectivo e na triangulação das causas; nunca como atributos de previsão anteriores ao churn.
+- D. Usá-los no modelo desde que os textos sejam anonimizados.
+
+**Recomendação técnica preliminar do agente:** C, porque esses campos ajudam a explicar cancelamentos já ocorridos, mas revelam informação indisponível no momento em que uma conta ainda poderia ser salva.
+
+### Estado da pergunta 4
+
 Aguardando resposta de Luis.
