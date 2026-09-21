@@ -720,11 +720,11 @@ git commit -m "feat(churn): gate predictive risk outside time"
 - Produces: `compare_artifact_sets(reference_dir: Path, candidate_dir: Path) -> None`; compares canonical CSV/report checksums and manifest parameters while ignoring only run timestamp and source Git SHA.
 - CLI: `python -m ravenstack_churn.cli reproduce --raw-dir data/raw --output-dir artifacts`.
 
-- [ ] **Step 1: Add the publication fixture**
+- [x] **Step 1: Add the publication fixture**
 
 Extend `tests/conftest.py` with `analysis_result`, built only from small in-memory DataFrames matching the `AnalysisResult` fields. After `publish.py` exists, add `generated_artifacts(tmp_path, analysis_result)` that calls `publish_artifacts` and returns the output directory for the app smoke test.
 
-- [ ] **Step 2: Write failing consistency tests**
+- [x] **Step 2: Write failing consistency tests**
 
 ```python
 from dataclasses import replace
@@ -768,7 +768,7 @@ def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_p
     assert "Evidência insuficiente para priorizar uma causa" in paths["report"].read_text()
 ```
 
-- [ ] **Step 3: Verify publication tests fail**
+- [x] **Step 3: Verify publication tests fail**
 
 ```bash
 .venv/bin/python -m pytest tests/test_publish.py -v
@@ -776,27 +776,27 @@ def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_p
 
 Expected: FAIL because publication interfaces do not exist.
 
-- [ ] **Step 4: Define the `AnalysisResult` data contract**
+- [x] **Step 4: Define the `AnalysisResult` data contract**
 
 Use a frozen dataclass with `quality_report`, `panel`, `claim_checks`, `findings`, `segment_metrics`, `model_evaluation`, and optional `model_scores`. Keep DataFrames in memory; serialize only in `publish_artifacts`.
 
-- [ ] **Step 5: Build the operational queue**
+- [x] **Step 5: Build the operational queue**
 
 Create one row per active account exposed to an accepted finding. Columns: `account_id`, `priority`, `finding_id`, `mrr_exposed_max`, `risk_probability`, `signals`, `immediate_action`, `structural_action`, `owner`, `status`. Copy the reviewed owner into `owner` and leave `status` empty. If the model is unpublished, leave `risk_probability` empty and rank by finding priority, MRR and reach. If no finding passes, write an empty CSV with these headers; do not promote model scores into an action queue without an accepted driver.
 
-- [ ] **Step 6: Generate the executive report from data**
+- [x] **Step 6: Generate the executive report from data**
 
 Write `artifacts/report.md` with: executive decision; section `O que não bate` showing `C-usage-growth` and `C-satisfaction-ok` overall versus the next-30-day-churn cohort; top accepted cause; counterevidence; segment table; named priority accounts; one-week containment; 30–90-day correction; expected measurement; methodology and limitations. Insert metrics from DataFrames; do not hard-code numbers into prose. If no finding passes, replace the decision and action ranking with `Evidência insuficiente para priorizar uma causa`, list the failed gates, preserve the two claim checks and descriptive facts, and emit no named priority account.
 
-- [ ] **Step 7: Write the run manifest last**
+- [x] **Step 7: Write the run manifest last**
 
 Include UTC generation timestamp, source git SHA, Python and dependency versions, input checksums, chronology modes, cutoffs, thresholds, artifact checksums, test status from `RAVENSTACK_TEST_STATUS`, and `publish_model`. `make reproduce` sets the status only after tests pass; a direct CLI run records `unknown`, never `passed`. Write other artifacts to temporary sibling paths and rename them before the manifest; the manifest marks a complete run. `compare_artifact_sets` ignores only metadata that must change between executions and fails on any changed data, report content, parameters or artifact checksums.
 
-- [ ] **Step 8: Implement the reproduce CLI**
+- [x] **Step 8: Implement the reproduce CLI**
 
 The CLI loads, validates, profiles, builds both panels, reconciles the two aggregate CEO claims, evaluates findings, evaluates the optional model, publishes artifacts, validates the artifact set and exits non-zero on any critical failure. Print only paths and a compact gate summary; no secret or raw feedback text in logs.
 
-- [ ] **Step 9: Run publication tests**
+- [x] **Step 9: Run publication tests**
 
 ```bash
 .venv/bin/python -m pytest tests/test_publish.py -v
@@ -804,7 +804,7 @@ The CLI loads, validates, profiles, builds both panels, reconciles the two aggre
 
 Expected: PASS.
 
-- [ ] **Step 10: Commit canonical publication**
+- [x] **Step 10: Commit canonical publication**
 
 ```bash
 git add -f submissions/luis-roquette/solution/001-churn/src/ravenstack_churn submissions/luis-roquette/solution/001-churn/tests/test_publish.py submissions/luis-roquette/solution/001-churn/tests/conftest.py

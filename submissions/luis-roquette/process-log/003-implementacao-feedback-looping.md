@@ -215,3 +215,26 @@ O primeiro smoke real falhou porque o sklearn recebeu `pd.NA` em colunas numéri
 - diagnóstico permanece independente do modelo.
 
 O gate foi versionado no commit `5a170fd`. **Resultado:** Fase 5 validada e encerrada pela rota de abstenção prevista.
+
+## Fase 6 — publicação canônica e relatório executivo
+
+### Planejamento e revisão
+
+O recorte manteve uma única fonte em memória (`AnalysisResult`) para gerar painel, findings, claims, segmentos, fila, relatório e manifesto. A fila só pode nascer de finding aceito; scores do modelo recusado não podem virar recomendação operacional. O manifesto é escrito por último e seus checksums impedem mistura entre execuções.
+
+Luis reafirmou o bypass do Codespace. Todos os gates desta fase foram executados localmente no Python 3.12.13 isolado, por autorização explícita.
+
+### Execução e feedback looping
+
+O teste vermelho produziu o erro esperado: `ModuleNotFoundError: ravenstack_churn.publish`. A implementação mínima usou apenas biblioteca padrão e dependências já instaladas. Os três testes de publicação passaram na primeira execução funcional; Ruff então bloqueou três ocorrências de estilo em `publish.py`. Corrigimos somente as concatenações e o alias UTC e repetimos todo o gate.
+
+### Teste e resultado real
+
+- 3 testes específicos e 24 testes totais aprovados;
+- Ruff verde e `git diff --check` verde;
+- reprodução real concluída em 19,7 segundos;
+- 8 artefatos protegidos pelo manifesto, com `test_status=passed`;
+- dois claims publicados, fila vazia coerente e frase explícita de evidência insuficiente;
+- modelo recusado por `lift_at_20pct`, `brier_score` e `non_converged`.
+
+O código foi versionado e publicado no commit `5c5deec`. Os artefatos de execução permanecem locais até a fase final prevista no plano. **Resultado:** Fase 6 validada e encerrada.
