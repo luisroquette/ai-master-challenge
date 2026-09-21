@@ -344,3 +344,15 @@ SDD organiza o trabalho, mas não substitui os gates já definidos. A pesquisa c
 **Resposta de Luis:** A — Rubrica humana em tickets não vistos.
 
 **Interpretação para a próxima onda:** similaridade será apenas um sinal de recuperação, não prova de resposta adequada. A avaliação preservará exemplos de falha e esforço de edição. A próxima escolha deve definir o comportamento seguro quando nenhum caso histórico satisfizer a rubrica ou o threshold mínimo.
+
+### Onda 21 — Fallback da resposta assistida
+
+**Pergunta:** o que acontece quando não há resolução histórica segura?
+
+- **A — Sem sugestão + escalonamento:** explica a insuficiência de evidência e entrega o ticket ao humano.
+- **B — Template neutro:** oferece uma resposta genérica de recebimento, claramente identificada como template.
+- **C — Geração local:** produz um rascunho mesmo sem precedente suficientemente similar.
+
+**Resposta de Luis:** A — Sem sugestão + escalonamento.
+
+**Interpretação para a próxima onda:** abstinência também vale para respostas. O produto deve mostrar ausência de evidência em vez de preencher o espaço com texto plausível. A próxima escolha precisa reconciliar os dois datasets dentro da mesma arquitetura sem inventar join, taxonomia comum ou transferência de domínio.
