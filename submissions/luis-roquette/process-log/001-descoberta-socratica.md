@@ -353,4 +353,35 @@ Como devemos definir o horizonte de risco para assinaturas mensais e anuais?
 
 ### Estado da pergunta 2
 
+Respondida por Luis.
+
+### Resposta literal de Luis
+
+> c
+
+### Interpretação
+
+A resposta corresponde à opção **C**. Todas as contas terão uma visão operacional de risco nos próximos 30 dias. Contratos anuais também terão uma leitura específica de proximidade e risco na janela de renovação.
+
+### Consequência para o desenho
+
+A fila operacional continuará comparável entre contas, mas o dashboard não misturará risco imediato com risco de renovação anual. Frequência de cobrança e distância até a renovação deverão aparecer como contexto obrigatório na análise e nos controles estatísticos.
+
+### Ponto ainda aberto
+
+Precisamos escolher quanto histórico anterior a cada corte será usado para distinguir nível atual, deterioração recente e padrão persistente.
+
+### Pergunta 3
+
+Quais janelas de observação devem gerar os sinais de uso e suporte?
+
+- A. Somente os 30 dias anteriores ao corte.
+- B. Todo o histórico disponível até o corte.
+- C. Janelas de 7, 30 e 90 dias, comparando nível, tendência e volatilidade, desde que a cobertura real dos dados sustente cada janela.
+- D. Eventos brutos, sem agregação temporal, entregues diretamente a um modelo.
+
+**Recomendação técnica preliminar do agente:** C, porque separa choque recente de deterioração gradual e comportamento persistente, sem usar uma janela que os dados não consigam preencher.
+
+### Estado da pergunta 3
+
 Aguardando resposta de Luis.
