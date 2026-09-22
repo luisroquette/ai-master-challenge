@@ -389,7 +389,7 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **CSV real:** 52.214 linhas e cinco plataformas passaram; load em 1,268 s e dois escopos analisados em 26,422 s. A fila recente permaneceu idêntica. A fila histórica manteve os mesmos três IDs e a mesma ordem, mas os scores mudaram de `4,567965e-09 / 3,950288e-11 / 5,079782e-12` para `6,532899e-09 / 5,863452e-11 / 6,169594e-12`.
 - **Handoff S2:** como a fila histórica mudou numericamente, `analysis.md`, `evidence.csv` e HTML precisam ser regenerados pelo responsável de S2. Nenhum desses artefatos foi alterado neste fix S1.
 
-## I18 — Revisão P1/S2: contrato único de prioridades — 2026-09-21 20:09 BRT
+## I19 — Revisão P1/S2: contrato único de prioridades — 2026-09-21 20:09 BRT
 
 - **Planejamento:** corrigir os três achados de S2: exportar a fila e seus componentes, gerar o relatório com a ordem do motor corrigido em `81b18fd` e preservar o vínculo compacto entre ID e linha da fonte.
 - **Revisão:** `result[recommendations]` será a única fila ordenada; rankings por efeito/força não substituirão a fórmula. O relatório documentará a recência histórica, sem alterar scores para favorecer achados. Não há nova decisão humana sobre patrocínio.
@@ -474,3 +474,46 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Navegador real:** servidor local em `127.0.0.1`, Chrome e dataset canônico de 23,3 MB. A tela reconciliou hash `693a2df6e609…`, 52.214 linhas, cinco plataformas e, na janela recente, 468 posts, 4.724.954 visualizações e 940.289 interações. Tecla Tab percorreu controles sem bloqueio; uma decisão `accepted` foi confirmada e persistida; HTML e CSV iniciaram download; um CSV inválido mostrou erro sem apagar fonte/histórico; após reiniciar o servidor em outra porta, o histórico reapareceu sem o CSV e pediu o reenvio do hash para o drill-down.
 - **Gate validado:** a suite acumulada aprovou **52/52 testes em 10,991 s**. `compileall` e `git diff --check` passaram sem saída. O banco e o dataset usados no navegador ficaram em `/tmp`, fora da submissão; nenhum serviço externo, API paga, push, PR ou deploy foi acionado.
 - **Limites e autoria:** a interação automatizada comprova funcionamento técnico, não substitui a validação HR-01 por um gestor humano cronometrado. O cockpit não afirma que a decisão de 2026 foi executada nem usa dados de 2025 como efeito; sem snapshot posterior comparável, o estado correto continua “resultado pendente”.
+
+## I27 — S4/Task 6: da obra validada ao handoff — 2026-09-21 21:36 BRT
+
+- **A jornada construtiva como entrega:** Luis determinou que o diário registrasse não só comandos, mas o percurso de autoria: o arquiteto investiga e desenha; o engenheiro constrói; o feedback revela tensões; a correção altera a obra; a evidência decide se a etapa pode avançar. Essa orientação foi aplicada às 24 ondas, à pesquisa, à SPEC, ao plano e a cada ciclo I13–I26.
+- **Planejamento e revisão:** S4 reuniu os contratos finais: dois READMEs, instalação limpa, CLI real, interface em navegador, export A4, screenshot persistente, matriz CK/HR, rubricas e escopo Git. Nenhuma nota poderia compensar requisito obrigatório ausente; HR-01 não seria atribuído a uma automação.
+- **Feedback loop de ambiente:** o primeiro gate com `python3` global carregou 48 testes e falhou em `tests/test_app.py` porque Streamlit não estava instalado. A falha voltou ao setup: foi criado `/tmp/ai-master-004-s4.u57Rt2/.venv`, instalados os dois pins e confirmado `pip check` sem dependências quebradas. Não houve mudança de código para esconder uma lacuna do ambiente.
+- **Gate limpo:** Python 3.14.2, Pandas 2.3.3, Streamlit 1.64.0 e SQLite 3.50.4. A suite aprovou **52/52** em 9,993 s; execução total 10,52 s, pico residente 207.568.896 bytes e zero swap. `compileall` e `git diff --check` passaram.
+- **CSV canônico:** a CLI reproduziu as 52.214 linhas em 23,77 s, pico residente 519.471.104 bytes e zero swap. Os hashes foram `5e124331…` (CSV), `772b159b…` (HTML) e `2b2fb7d…` (Markdown); CSV e Markdown foram idênticos byte a byte aos publicados.
+- **A4 e exports:** Chrome imprimiu o resumo em uma página A4 (594,96 × 841,92 pt); causalidade, ausência de ROI e necessidade de custos reais permanecem visíveis. Os testes reconciliam IDs, ordem, componentes, referências e neutralização de fórmulas/controles.
+- **Navegador real:** upload do CSV de 23,3 MB mostrou hash `693a2df6e609…`, 52.214 linhas, cinco plataformas e, na janela recente, 468 posts, 4.724.954 views e 940.289 interações. A tela exibiu as três prioridades, impacto, força, atualidade, drill-down e downloads. A captura exata da aba validada foi persistida em `process-log/evidence/004/cockpit-proof.png` (1502×776; SHA-256 `a1945b57366d7fccef79675532240a04cbf5c6c489b50b879404da16e928f1d6`). A validação anterior de decisão, erro atômico e reinício permanece em I26.
+- **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
+
+### Matriz de aceitação final
+
+| ID | Estado | Evidência |
+|---|---|---|
+| CK-01 | pass | `test_analysis.py`; fonte real reconciliada em I27 |
+| CK-02 | pass | fórmula/zeros/faixas em testes e `analysis.md` |
+| CK-03 | pass | fallback, IQR, creators e abstinência em `test_analysis.py` |
+| CK-04 | pass | estratos controlados e contraparte em testes/relatório |
+| CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
+| CK-06 | pass | prioridade recomposta e ordem estável em `test_acceptance.py` |
+| CK-07 | pass | esforço, público, frequência, patrocínio, creators, interrupção e quick wins em `analysis.md` |
+| CK-08 | pass | decisões, revisões, idempotência e reinício em `test_storage.py`/`test_app.py` |
+| CK-09 | pass | guards temporais, execução humana e pendência em `test_storage.py` |
+| CK-10 | pass | HTML A4 de uma página, CSV reconciliado e downloads no navegador |
+| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I27 |
+| HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
+| HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
+| HR-03 | pass | I01–I27 preservam pesquisa, 24 ondas, decisões, erros e correções |
+| HR-04 | pass | setup, screenshot e auditoria Git final restritos à submissão |
+
+### Rubricas finais
+
+| Rubrica | Nota | Justificativa verificável |
+|---|---:|---|
+| R-01 — Comparabilidade | 4,8/5 | patrocínio controla cinco dimensões, usa medianas por creator e declara cobertura/abstinência |
+| R-02 — Auditabilidade | 5,0/5 | hash, método, IDs, linhas físicas, fórmula, filtros e joins reproduzíveis |
+| R-03 — Acionabilidade | 4,5/5 | fila única, dono, janela, métrica, revisão e frequência como hipótese; dados históricos limitam atualidade |
+| R-04 — Clareza executiva | 4,7/5 | prioridades no primeiro bloco da UI e resumo A4 de uma página |
+| R-05 — Qualidade do diário | 5,0/5 | jornada, decisões humanas, loops, erros, correções, comandos e evidências ligados |
+
+- **Metadados de publicação ainda não executada:** branch-alvo `submission/luis-roquette`; um único PR; título `[Submission] Luis Roquette — Challenge 004`. Push, PR, merge e deploy permanecem fora do escopo autorizado.
