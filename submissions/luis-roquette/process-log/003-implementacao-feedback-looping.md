@@ -645,3 +645,151 @@ Depois da correção, os sete testes do dashboard passaram. A suíte completa pa
 A inspeção no navegador confirmou abas escuras com estado selecionado, três filtros alinhados no desktop, tabela executiva com três casas e percentuais legíveis, tema e fontes carregados, foco bicolor, ausência de overflow global no mobile e layout compacto em largura estreita. O dashboard final foi restaurado no viewport desktop em `http://localhost:8501`.
 
 **Resultado:** backlog implementado e validado. Artefatos analíticos e decisão executiva permaneceram inalterados.
+
+## Retorno ao objetivo primário — qualidade do output
+
+### Regra autoral de produto
+
+Luis estabeleceu uma regra superior para esta e futuras decisões do projeto:
+
+> Mais importante que UI/UX, integrações ou LLMs — mais importante que qualquer componente — é a qualidade do output e sua utilidade para responder à pergunta final.
+
+Essa regra corrige a prioridade da construção. O dashboard é somente um meio; o produto real é uma resposta clara, verificável e útil para o CEO. Uma interface refinada não compensa um diagnóstico incapaz de explicar o que está acontecendo, quantificar sua extensão e orientar a próxima decisão.
+
+### Reavaliação honesta da entrega
+
+A solução atual resolveu parte da contradição: o uso cresce no agregado, mas cai na coorte que churnará; a satisfação não pode ser considerada “ok” com a cobertura e a queda observadas; e a cronologia dos dados possui falhas materiais. Entretanto, nenhuma das seis hipóteses passou os gates definidos. Portanto, o sistema respondeu corretamente que a evidência causal é insuficiente, mas ainda não satisfez integralmente a pergunta “por que estamos perdendo clientes?”.
+
+O próximo ciclo será arquitetado de trás para frente a partir da pergunta do CEO. Antes de qualquer nova melhoria visual, a saída deverá mostrar: se o churn realmente subiu, quando e quanto; onde a perda se concentra; qual mecanismo possui a evidência convergente mais forte; o que permanece incerto; e qual ação concreta reduz a incerteza ou testa o mecanismo.
+
+**Decisão:** qualidade e utilidade do diagnóstico passam a ser o gate principal. UI/UX, automação e modelos só avançam quando tornarem essa resposta mais clara ou mais confiável.
+
+### Pesquisa e evidência para o novo ciclo
+
+Antes de propor nova arquitetura, buscamos implementações públicas do problema. Projetos de churn baseados em comportamento reforçam observações temporais por cliente, coortes e calibração; exemplos de sobrevivência mostram Kaplan–Meier e testes log-rank para comparar curvas; e a documentação do DoWhy reforça que inferência causal exige hipóteses explícitas e refutação. Relatos técnicos alertam ainda que SHAP explica predição, não causalidade. A decisão Ponytail é reaproveitar pandas, SciPy e statsmodels já instalados; sobrevivência ou DoWhy só entram se responderem uma pergunta que os dados atuais consigam identificar.
+
+A primeira reanálise revelou a narrativa executiva que o relatório atual enterra:
+
+- a taxa mensal ponderada de churn saiu de `5,93%` no segundo semestre de 2023 para `13,83%` entre junho e novembro de 2024: aumento relativo de `2,33×`, diferença de `7,90 p.p.` e `p < 0,00000001`;
+- novembro de 2024 chegou a `18,52%`, aproximadamente `3,27×` a média mensal do segundo semestre de 2023;
+- o MRR perdido somou cerca de `US$ 2,01 milhões` entre junho e novembro de 2024, contra `US$ 195,8 mil` no segundo semestre de 2023;
+- nenhum segmento elegível apresenta concentração forte: o maior risco relativo elegível é País / US, com apenas `1,08×`, indicando deterioração ampla, não um nicho isolado;
+- entre os churns terminais de junho a dezembro de 2024, os motivos se distribuem entre orçamento (`21,3%`), suporte (`19,0%`), funcionalidades (`17,5%`), desconhecido (`16,1%`), preço (`14,2%`) e concorrência (`11,8%`). Não existe uma causa declarada dominante.
+
+Esses fatos mudam a resposta. O fenômeno comprovado é uma **crise ampla e multifatorial de retenção**, mascarada por médias agregadas e agravada por baixa confiabilidade temporal. A queda de uso pré-churn é um mecanismo promissor, mas sua cobertura individual ainda é insuficiente para ser chamada de causa raiz. A satisfação também não valida a narrativa de CS: possui baixa cobertura e piora na coorte de churn.
+
+### Contrato proposto para a resposta do CEO
+
+O sistema deverá produzir uma resposta em cinco blocos obrigatórios: `o que mudou`, `onde se concentra`, `mecanismo mais sustentado`, `o que não sabemos` e `o que fazer agora`. A saída não poderá terminar em “inconclusivo” sem antes declarar os fatos executivos já comprovados.
+
+A arquitetura recomendada é uma **escada de evidências**: fato confirmado → mecanismo sustentado → hipótese plausível → afirmação rejeitada. Ela substitui o atual gate binário, que protege contra exageros, mas apaga informação útil quando nenhuma causa passa. O relatório deve publicar tendência mensal de churn e MRR, decomposição dos motivos, scorecard de mecanismos e uma conclusão determinística; modelos continuam opcionais e subordinados à resposta.
+
+**Estado:** direção recomendada, ainda não implementada. A próxima decisão é validar com Luis o nível de afirmação executiva antes de criar a nova SPEC.
+
+### Escolha da arquitetura
+
+Luis escolheu a **Arquitetura A — answer-first com escada de evidências**. A decisão fixa como objetivo do próximo ciclo satisfazer diretamente a pergunta do CEO. A resposta executiva será o contrato central; análises, artefatos, testes e interface existirão para sustentá-la.
+
+O núcleo aprovado combina a escada de evidências com coortes em tempo relativo ao churn. Análise de sobrevivência, DoWhy, SHAP ou NLP não entram por padrão: serão adicionados somente se aumentarem de forma demonstrável a força ou a utilidade da resposta. O fluxo retorna ao SDD antes de alterar o pipeline: registrar intenção → criar SPEC → refinar plano → revisão humana → implementar em feedback looping.
+
+**Decisão:** seguir com a Arquitetura A e criar a SPEC `Implementar arquitetura de resposta executiva ao CEO`.
+
+## SDD da Arquitetura A — resposta executiva ao CEO
+
+### Intenção e prioridade
+
+Luis confirmou a Arquitetura A. Registramos a regra permanente deste ciclo: a qualidade e a utilidade do output são o produto; UI/UX, integrações e LLMs permanecem subordinados à capacidade de responder ao CEO com clareza, evidência e ação.
+
+A SPEC foi criada a partir da intenção original e refinada antes de qualquer mudança no pipeline. O contrato answer-first preserva os cinco blocos aprovados: `o que mudou`, `onde se concentra`, `mecanismo mais sustentado`, `o que não sabemos` e `o que fazer agora`.
+
+### Pesquisa antes da criação
+
+Aplicamos novamente a regra “nada se cria; tudo se copia”: foram consultadas oito referências entre projetos públicos, documentação primária e discussão técnica. Os padrões úteis foram incorporados sem dependência nova. A conclusão central foi manter os gates causais, mas publicar fatos descritivos úteis independentemente deles. Também fixamos que baixa potência ou resultado inconclusivo não significa afirmação rejeitada.
+
+### Análise do sistema existente
+
+O mapeamento ponta a ponta encontrou dois riscos que precisavam entrar na arquitetura antes da implementação:
+
+- churn mensal deve ser derivado do lifecycle e do primeiro churn válido, não da soma do painel com rótulo de 30 dias;
+- relatório e dashboard hoje duplicam a síntese executiva e precisam consumir uma única resposta canônica.
+
+Também registramos a seleção `inválido → válido`, a janela correta para motivos declarados, a política compartilhada de QA e a premissa operacional de publicação offline sem leitores e escritores concorrentes.
+
+### Arquitetura aprovada no plano
+
+A resposta será construída uma vez, publicada em `ceo_answer.json` e reutilizada pelo relatório e pelo dashboard. A escada de evidências distingue `fato confirmado`, `mecanismo sustentado`, `hipótese plausível` e `afirmação rejeitada`. Cada afirmação carrega unidade, comparador, referência, incerteza e nulabilidade explícitas.
+
+O plano reutiliza os módulos e as dependências atuais. Cinco artefatos analíticos novos sustentam a resposta, sem novo framework, modelo preditivo ou serviço. A satisfação será ponderada por respostas dentro de cada âncora e por casos elegíveis entre âncoras; a regressão determinística correspondente produz `3,35`.
+
+### Gates de qualidade e decomposição
+
+O refinamento SDD passou por agentes separados e julgamentos independentes:
+
+- pesquisa: `4,25/5`;
+- impacto técnico: `4,60/5`;
+- requisitos e critérios: `4,65/5`;
+- arquitetura, após correções de QA e ponderação: `4,80/5`;
+- decomposição: `4,62/5`.
+
+A implementação foi dividida em sete passos, duas fases verificáveis e largura paralela máxima de dois. O caminho crítico é `01 → (02,03) → 04 → 05 → (06,07)`. Cada passo possui resultado esperado, teste, risco e mitigação próprios.
+
+**Estado:** SPEC promovida para `todo`, pronta para revisão humana. Nenhum código do pipeline foi alterado nesta etapa. A implementação só começa após a validação de Luis, mantendo a sequência obrigatória `intenção → SPEC → plano → revisão humana → implementação em feedback looping`.
+
+## Validação humana e otimização recursiva do plano
+
+### Decisão de Luis
+
+Luis validou a SPEC, mas decidiu não converter aprovação em implementação imediata. A validação humana confirmou a direção; uma nova rodada de lapidação foi aberta para procurar lacunas e otimizações no plano antes de escrever código.
+
+Essa decisão explicita um componente autoral do método construtivo de Luis. A metodologia SDD fornece a estrutura `especificar → planejar → implementar`; o método desenvolvido por ele acrescenta gates recursivos de absorção, validação humana, redundância necessária e estabilidade. O plano só avança quando duas passagens consecutivas não encontram melhoria substancial.
+
+**Prompt-padrão aplicado:** otimizar o plano em cascata, usando `/loop`, até o `/goal` de pelo menos duas passadas consecutivas sem melhoria ou otimização substancial.
+
+### Pesquisa prévia e adaptação da skill
+
+Aplicamos `writing-plans` e pesquisamos implementações públicas de SDD/TDD antes de editar. Os padrões úteis convergiram em: autoridade da SPEC, TDD por tarefa, interfaces explícitas, rastreabilidade entre requisito e teste, revisão humana antes da implementação e estados de tarefa verificáveis. A regra local da submissão prevaleceu sobre o caminho padrão da skill: o plano ficou dentro de `submissions/luis-roquette/solution/001-churn/`, sem criar arquivos fora da área autorizada.
+
+### Cascata de otimização
+
+1. **Rodada 1 — melhorias substanciais:** corrigimos referências obsoletas de `draft` para `todo`, adicionamos interfaces entre os sete steps e concentramos os cinco riscos prioritários de revisão.
+2. **Rodada 2 — melhorias substanciais:** fechamos o enum da escada de evidência e criamos um plano executável em TDD, com 7 tasks, 35 passos, testes RED/GREEN, comandos, resultados esperados e checkpoints.
+3. **Rodada 3 — melhorias substanciais:** removemos o risco de commits concorrentes nos grupos paralelos e fixamos o `codespace-manager` como wrapper obrigatório de toda execução automatizada.
+4. **Rodada 4 — melhoria substancial:** movemos o plano do caminho padrão global para dentro da submissão, respeitando o escopo permitido pelo desafio e mantendo a SPEC como autoridade.
+5. **Rodada 5 — nenhuma melhoria substancial:** sete tasks, 35 passos TDD, ausência de placeholders, caminhos atuais e integridade do diff confirmados. Sequência estável `1/2`.
+6. **Rodada 6 — nenhuma melhoria substancial:** interfaces, enum, contagem de 14 payloads mais manifesto, escopo de arquivos e gates permaneceram coerentes. Sequência estável `2/2`; `/goal` atingido.
+
+### Resultado
+
+O plano executável foi salvo em `docs/superpowers/plans/2026-09-22-ceo-answer-architecture.md`, relativo à raiz da solução. Ele não substitui a SPEC: converte seus contratos em ciclos TDD pequenos, com ownership, dependências, comandos e resultados esperados.
+
+**Estado:** SPEC validada por Luis e plano otimizado até estabilidade. Nenhum código funcional foi alterado nesta rodada; o próximo passo autorizado é iniciar a implementação da Task 1 sob feedback looping.
+
+## Implementação em Feedback Looping
+
+### Decisão de Luis
+
+Luis autorizou a implementação e formalizou uma nova etapa de seu método construtivo: **Implementação em Feedback Looping**. O método transforma cada etapa do plano em um ciclo fechado de aprendizagem, no qual a própria IA recebe evidências quase em tempo real e decide se deve reforçar o trabalho ou avançar.
+
+O fluxo obrigatório de cada etapa é:
+
+```text
+Planejamento → Revisão → Execução → Teste
+                                ↑       |
+                                └───────┘ se falhar
+```
+
+Só existe avanço quando o resultado está validado. Falha, divergência ou nova lacuna retornam ao planejamento da mesma etapa; a correção é novamente revisada, executada e testada. `/goal` define o estado de saída, e as cascatas de `/loop` mantêm o trabalho na etapa até o gate passar.
+
+### Integração com SDD
+
+O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC continua sendo a autoridade, o plano traduz seus contratos e cada task percorre o ciclo completo antes da próxima. Assim, o método autoral de Luis passa a registrar cinco camadas encadeadas: descoberta socrática → SPEC → otimização até estabilidade → validação humana → implementação em feedback looping.
+
+### Gate operacional
+
+- atacar as tasks em ordem cronológica;
+- revisar o plano e o código afetado antes de editar;
+- executar somente o menor incremento necessário;
+- testar no ambiente autorizado e comparar o resultado com a SPEC;
+- avançar apenas com gate verde; caso contrário, reiniciar o ciclo na mesma task.
+
+**Estado:** Task 1 iniciada. Objetivo local: seleção terminal, QA e MRR compartilharem a mesma política válida, com regressões verdes e nenhum caller legado.
