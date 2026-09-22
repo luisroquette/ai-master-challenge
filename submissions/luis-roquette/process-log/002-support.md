@@ -1451,3 +1451,20 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   `py_compile` e `git diff --check` passaram.
 - **Medição após a frente:** diagnóstico `9,5`, automação `7,7`, prova funcional `8,8`;
   média simples `8,7/10`. Crescimento: `+0,2`. O Goal ainda não foi atingido.
+
+## I78 — Goal ≥ 9,5 · Frente 3: limite verificável da automação — 2026-09-22
+
+- **Implementação:** a resposta executiva agora compara Customer e IT no mesmo quadro,
+  sempre sobre o teste final congelado: amostra, macro-F1, ECE, limiar travado, cobertura,
+  risco seletivo e decisão operacional.
+- **Resultado Customer:** `n=231`, macro-F1 `13,94%`, ECE `3,28%` e cobertura `0%`;
+  automação autônoma permanece bloqueada.
+- **Resultado IT:** `n=5.301`, macro-F1 `83,51%`, ECE `4,14%`; no limiar travado de
+  `0,55`, cobertura `37,43%` e risco seletivo `10,64%`. Como o risco supera o teto de
+  `10%`, IT permanece em shadow com revisão humana; não houve ajuste pós-teste do limiar.
+- **Escopo autorizado:** priorização, fila, classificação assistida e auditoria. Resposta
+  externa, alteração de conta, reembolso e roteamento Customer autônomo ficam bloqueados.
+- **Validação:** `45` testes de workflow passaram em `7,95 s`; Ruff, `py_compile` e
+  `git diff --check` passaram. A tabela também foi conferida contra os JSONs congelados.
+- **Medição após a frente:** diagnóstico `9,5`, automação `9,2`, prova funcional `9,0`;
+  média simples `9,2/10`. Crescimento: `+0,5`. O Goal ainda não foi atingido.

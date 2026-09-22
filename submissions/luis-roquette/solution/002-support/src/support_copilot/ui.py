@@ -448,6 +448,31 @@ def _value_dict(bundle: ArtifactBundle, key: str) -> dict:
     return state.value if state.status == "ready" and isinstance(state.value, dict) else {}
 
 
+def automation_evidence(metrics: dict, risk_policy: dict) -> pd.DataFrame:
+    """Summarize frozen-test evidence at each domain's locked operating policy."""
+    rows = []
+    domains = metrics.get("domains", {}) if isinstance(metrics.get("domains"), dict) else {}
+    for domain, label in (("customer", "Customer"), ("it", "IT")):
+        measured = domains.get(domain, {}) if isinstance(domains.get(domain), dict) else {}
+        policy = risk_policy.get(domain, {}) if isinstance(risk_policy.get(domain), dict) else {}
+        threshold = policy.get("threshold")
+        point = next((row for row in measured.get("risk_coverage", [])
+                      if threshold is not None and row.get("threshold") == threshold), {})
+        rows.append({
+            "Domínio": label,
+            "Teste congelado (n)": (measured.get("denominators", {}).get("n_total")
+                                    or point.get("n_total")),
+            "Macro-F1": measured.get("macro_f1"),
+            "ECE": measured.get("ece"),
+            "Limiar travado": threshold,
+            "Cobertura no teste": point.get("coverage", 0.0),
+            "Risco seletivo": point.get("selective_risk"),
+            "Decisão atual": ("Bloqueada: 0% elegível" if domain == "customer"
+                              else "Somente shadow + revisão humana"),
+        })
+    return pd.DataFrame(rows)
+
+
 def render_director_brief(bundle=None) -> None:
     """Answer the sponsor's three questions before exposing implementation detail."""
     bundle = _bundle(bundle)
@@ -463,6 +488,7 @@ def render_director_brief(bundle=None) -> None:
     domains = metrics.get("domains", {}) if isinstance(metrics.get("domains"), dict) else {}
     customer = domains.get("customer", {}) if isinstance(domains.get("customer"), dict) else {}
     it = domains.get("it", {}) if isinstance(domains.get("it"), dict) else {}
+    risk_policy = _value_dict(bundle, "risk_policy")
     source_rows = int(summary.get("analysis_rows") or summary.get("development_rows") or 0)
     valid_intervals = int(summary.get("valid_intervals") or 0)
     observed_excess = summary.get("observed_excess_hours")
@@ -525,7 +551,33 @@ def render_director_brief(bundle=None) -> None:
         f"{_number(customer.get('ece'))}. A confiança baixa impede cobertura segura."
     )
 
-    _section_label("03 · Prova operacional")
+    _section_label("03 · Limite medido da automação")
+    evidence = automation_evidence(metrics, risk_policy)
+    st.dataframe(
+        evidence.style.format({
+            "Macro-F1": "{:.2%}", "ECE": "{:.2%}", "Limiar travado": "{:.2f}",
+            "Cobertura no teste": "{:.2%}", "Risco seletivo": "{:.2%}",
+        }, na_rep="—"),
+        hide_index=True,
+        use_container_width=True,
+    )
+    it_evidence = evidence.loc[evidence["Domínio"].eq("IT")]
+    if not it_evidence.empty and pd.notna(it_evidence.iloc[0]["Risco seletivo"]):
+        coverage = float(it_evidence.iloc[0]["Cobertura no teste"])
+        risk = float(it_evidence.iloc[0]["Risco seletivo"])
+        threshold = float(it_evidence.iloc[0]["Limiar travado"])
+        st.warning(
+            f"No teste final, IT cobriu {coverage:.2%} no limiar travado de "
+            f"{threshold:.2f}, com erro seletivo de {risk:.2%} — acima do teto de 10%. "
+            "Portanto, IT também permanece em shadow; o resultado não autoriza "
+            "automação autônoma em produção."
+        )
+    st.caption(
+        "Permitido agora: priorização, fila, classificação assistida e auditoria humana. "
+        "Bloqueado: resposta externa, alteração de conta, reembolso e roteamento Customer autônomo."
+    )
+
+    _section_label("04 · Prova operacional")
     proof = (
         ("analytics.operational_summary", "Diagnóstico reproduzível"),
         ("models.metrics", "Teste final congelado"),
@@ -546,7 +598,7 @@ def render_director_brief(bundle=None) -> None:
         "integração com helpdesk nem efeito causal sobre satisfação."
     )
 
-    _section_label("04 · Próximo experimento")
+    _section_label("05 · Próximo experimento")
     st.markdown("**Piloto shadow de duas semanas, sem envio automático.**")
     st.write(
         "Revisar uma amostra estratificada, medir concordância, risco, cobertura e tempo "

@@ -453,6 +453,24 @@ def test_director_brief_answers_three_questions_from_verified_artifacts(
                    "Piloto shadow", "automação Customer bloqueada"):
         assert answer in text
     assert "0% Customer" in text
+    evidence = ui.automation_evidence({"domains": {
+        "customer": {"macro_f1": 0.1394, "ece": 0.0328,
+                     "denominators": {"n_total": 231},
+                     "risk_coverage": [{"threshold": 0.5, "coverage": 0,
+                                        "selective_risk": None, "n_total": 231}]},
+        "it": {"macro_f1": 0.8351, "ece": 0.0414,
+               "denominators": {"n_total": 5301},
+               "risk_coverage": [{"threshold": 0.55, "coverage": 0.3742690058,
+                                  "selective_risk": 0.1063508065, "n_total": 5301}]},
+    }}, {"customer": {"threshold": None}, "it": {"threshold": 0.55}}).set_index(
+        "Domínio")
+    assert evidence.loc["Customer", "Cobertura no teste"] == 0
+    assert evidence.loc["Customer", "Decisão atual"] == "Bloqueada: 0% elegível"
+    assert evidence.loc["IT", "Teste congelado (n)"] == 5301
+    assert evidence.loc["IT", "Limiar travado"] == pytest.approx(0.55)
+    assert evidence.loc["IT", "Cobertura no teste"] == pytest.approx(0.3742690058)
+    assert evidence.loc["IT", "Risco seletivo"] == pytest.approx(0.1063508065)
+    assert "shadow" in evidence.loc["IT", "Decisão atual"]
     queue = app.switch_page("pages/queue.py").run()
     assert not queue.exception and queue.title[0].value == "Fila diária"
 
