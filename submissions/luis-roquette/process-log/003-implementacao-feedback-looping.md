@@ -422,3 +422,13 @@ Após as correções:
 - o plano canônico foi corrigido para refletir cutoff comum, status ponta a ponta, watchlist e stack sem Plotly.
 
 **Sequência estável:** `0/2`. A próxima passada recomeça do briefing e precisa terminar sem novo apontamento para valer `1/2`.
+
+### Passada 2 — rastreabilidade do artefato
+
+**Resultado:** novo apontamento; sequência reiniciada em `0/2`.
+
+A releitura começou pelo repositório remoto. `upstream/main` não alterou o briefing, o guia de submissão nem o `CONTRIBUTING.md`; `HEAD` e `origin/submission/luis-roquette` coincidiam em `6b111e2`. Nesse mesmo gate surgiu uma inconsistência: `run_manifest.json` ainda registrava `464a333`, o SHA anterior aos reparos da Passada 1.
+
+O manifesto foi regenerado a partir do código já commitado em `6b111e2`, após 37 testes verdes. Agora `source_git_sha` identifica o commit produtor dos artefatos; o commit seguinte apenas versiona esse manifesto. Essa diferença é inevitável sem criar uma autorreferência circular, mas deixa a proveniência verificável e não permite que o manifesto alegue ter sido produzido por código anterior.
+
+**Sequência estável:** `0/2`. Como houve achado, a próxima auditoria volta novamente ao briefing e não herda crédito desta passada.

@@ -10,7 +10,7 @@
     "report.md": "732d1785592c8a82c45dea61403ec5933446706102ad12ce7bc0712b9b83de02",
     "segment_metrics.csv": "3245cae0b716b09280606f6e785b241a7285eedc6775ef5e77a06ec11a12fee9"
   },
-  "generated_at_utc": "2026-09-22T00:44:29.604146+00:00",
+  "generated_at_utc": "2026-09-22T00:49:28.428703+00:00",
   "input_checksums": {
     "ravenstack_accounts.csv": "348d8ba906b7776894b5236b2e7aa91a503d41670dbc9aad30c37b503c9abef5",
     "ravenstack_churn_events.csv": "6391c41d8291b7b4845ec9a84d3837c2ed230a33a32a854ec33d4e66dc150940",
@@ -49,6 +49,6 @@
     },
     "python": "3.12.13"
   },
-  "source_git_sha": "464a3337f4c1d55acf00b2e1fdbb7ba90c1ceafc",
+  "source_git_sha": "6b111e2ff3dfdec17103714095b98dbf5a0e7106",
   "test_status": "passed"
 }
