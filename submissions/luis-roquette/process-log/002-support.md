@@ -1625,3 +1625,12 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   conteúdo e comprimida para `72 MB`, dentro do limite do GitHub.
 - **Auditoria:** não foi encontrado vídeo demonstrativo nem Arcade específico do Challenge
   002; materiais de outros desafios não foram reutilizados como evidência.
+
+## I88 — Pacote local organizado — 2026-09-22
+
+- **Salvaguarda:** entregáveis e réplica funcional foram copiados para
+  `~/Desktop/Challenge-002-Entrega-Final`.
+- **Estrutura:** documentos e vídeos em `01-entregaveis`; código, dados, artefatos e testes
+  em `02-sistema`; `.venv` e caches foram excluídos por serem reproduzíveis.
+- **Verificação:** pacote com `136 MB`; os dois vídeos foram comparados byte a byte com as
+  fontes. O arquivo `LEIA-ME.md` concentra links e instruções de execução.
