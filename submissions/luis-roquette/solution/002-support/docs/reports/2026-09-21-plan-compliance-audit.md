@@ -15,7 +15,8 @@ Isto é cobertura de plano, não prova de execução. A frase histórica abaixo 
 - Task concluída: `.specs/tasks/done/implement-support-decision-copilot.feature.md`, DoD 5/5.
 - CK-12 é validação futura opcional; zero elegíveis mantém drafts bloqueados sem invalidar o challenge.
 - O preflight terminal foi pulado por instrução do owner e permanece `não executado/não verde`.
-- PR não é requisito do briefing nem foi presumido; publicação permanece ação separada.
+- PR é o canal obrigatório de envio definido pelo guia de submissão e pelo CONTRIBUTING;
+  ele ainda não foi aberto nem presumido durante a construção local.
 - Evidência real atual: diagnóstico, dois datasets, protótipo, escalonamento persistido/exportado, screenshot de Scorecard, READMEs e diário.
 
 ## Matriz do avaliador
@@ -37,7 +38,7 @@ Isto é cobertura de plano, não prova de execução. A frase histórica abaixo 
 | README oficial na raiz da submissão | Task 9 cria `submissions/luis-roquette/README.md` pelo template | Coberto |
 | Instruções de setup | README técnico + `make doctor/setup/data/demo` | Coberto |
 | Alterar somente a própria pasta | Gate compara todo o diff contra `upstream/main` | Coberto |
-| PR com título oficial | Critério histórico do plano, superseded; PR não é requisito canônico nem foi presumido | Histórico |
+| PR com título oficial | Canal obrigatório de envio; ainda não aberto nem presumido durante a construção | Pendente para submissão |
 | Comunicação executiva e acionável | Root README responde às três perguntas no primeiro bloco | Coberto |
 | Limite recomendado de 4–6 horas | Orçamento de 320 minutos, com cortes opcionais definidos | Coberto |
 
@@ -79,7 +80,7 @@ Isto é cobertura de plano, não prova de execução. A frase histórica abaixo 
 
 ## Critério de fechamento
 
-**Critério histórico superseded:** este relatório exigia código implementado, preflight verde, métricas reais, rubricas concluídas, screenshot, export, README, diff limitado e PR. O fechamento atual segue a task em `done`: métricas/evidências/escopo público foram comprovados; CK-12 ficou opcional e fail-closed; preflight terminal foi pulado pelo owner e não marcado verde; PR não foi presumido.
+**Critério histórico parcialmente superseded:** este relatório exigia código implementado, preflight verde, métricas reais, rubricas concluídas, screenshot, export, README, diff limitado e PR. O fechamento atual da construção segue a task em `done`: métricas/evidências/escopo público foram comprovados; CK-12 ficou opcional e fail-closed; preflight terminal foi pulado pelo owner e não marcado verde. O PR continua obrigatório para enviar a solução, ainda não foi aberto/presumido e seu CI deverá ser acompanhado até o estado terminal sem chamar o preflight pulado de verde.
 
 ## Fechamento da auditoria
 

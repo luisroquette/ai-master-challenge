@@ -1214,3 +1214,19 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   owner. Nenhum Regular Check foi marcado.
 - **Escopo preservado:** nenhum código ou evidence foi alterado. A streak permanece em
   `0/2`; uma nova rodada completa e limpa é necessária.
+
+## I70 — Redundância Necessária R5: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `1 Medium / 1 Low`; streak reiniciado em
+  `0/2`.
+- **Medium:** a auditoria, a análise e o plano tratavam o PR como requisito superseded ou
+  não canônico. O guia de submissão e o CONTRIBUTING, porém, definem o PR como único canal
+  obrigatório de envio.
+- **Low:** a task concluída ainda dizia, no presente, que não havia aplicação, Makefile ou
+  testes, embora esse fosse apenas o inventário pré-implementação.
+- **Correções:** PR voltou a ser requisito obrigatório de submissão, ainda não aberto nem
+  presumido durante a construção; o preflight continua pulado pelo owner e não verde, e o
+  CI do futuro PR deverá ser acompanhado. O inventário da task foi rotulado como histórico
+  e distingue o estado final. RC-2 permaneceu desmarcado.
+- **Escopo preservado:** nenhum código ou evidence foi alterado. A streak permanece em
+  `0/2`; uma nova rodada completa e limpa é necessária.

@@ -3,10 +3,12 @@
 > **Estado histórico/superseded em 2026-09-22:** este foi o plano pré-implementação.
 > A task canônica concluída está em
 > `.specs/tasks/done/implement-support-decision-copilot.feature.md`. Exigências internas
-> posteriores de 60 rubricas, approve/edit real, preflight terminal verde e PR foram
+> posteriores de 60 rubricas, approve/edit real e preflight terminal verde foram
 > superseded pela emenda canônica/DoD e pelo bypass explícito do owner. Elas permanecem
-> abaixo como registro da jornada, não como blockers atuais. Estado entregue e limitações:
-> READMEs, task done e process log I61–I69.
+> abaixo como registro da jornada, não como blockers atuais. O PR continua sendo o canal
+> obrigatório de envio, mas ainda não foi aberto nem presumido durante a construção;
+> seu CI deverá ser acompanhado sem chamar o preflight pulado de verde. Estado entregue
+> e limitações: READMEs, task done e process log I61–I70.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: complete `plan-task`, then use `implement-task` to execute this plan task-by-task after Luis approves it. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -567,9 +569,11 @@ codespace-manager create-run luisroquette/ai-master-challenge submission/luis-ro
   'cd /workspaces/ai-master-challenge/submissions/luis-roquette/solution/002-support && test "$(git rev-parse HEAD)" = "$(git ls-remote origin refs/heads/submission/luis-roquette-002-support | cut -f1)" && make test && make lint && make reproduce'
 ```
 
-Expected: SHA equality and every gate exit 0; the branch is ready for the PR without another file change.
+Expectativa histórica: igualdade de SHA e todos os gates com exit 0. O preflight terminal
+foi posteriormente pulado por decisão do owner e permanece não executado/não verde.
 
-Do not open or update a PR until all statements below are proven:
+Antes de abrir o PR obrigatório de submissão, conferir os itens abaixo sob a emenda
+canônica atual e acompanhar o CI do PR até o estado terminal:
 
 1. Both datasets are used under separate taxonomies and frozen splits; raw data and PII are absent from Git.
 2. Diagnostics reconcile denominators and call the observable interval `post_response_hours`; projections expose every assumption.

@@ -5,9 +5,10 @@ Date: 2026-09-21. Scope: codebase impact only; no implementation or task-section
 > **Estado histórico/superseded em 2026-09-22:** este documento retrata a análise
 > pré-implementação. A autoridade atual é a task concluída em
 > `.specs/tasks/done/implement-support-decision-copilot.feature.md`. Claims conflitantes
-> sobre rubricas humanas obrigatórias, approve/edit real, preflight terminal verde ou PR
-> foram superseded pelas emendas canônicas I61/I62, pela decisão de bypass do owner
-> registrada em I64/I66 e pelo DoD 5/5. Consulte task, READMEs e diário atuais.
+> sobre rubricas humanas obrigatórias, approve/edit real e preflight terminal verde foram
+> superseded pelas emendas canônicas I61/I62, pela decisão de bypass do owner registrada
+> em I64/I66 e pelo DoD 5/5. O PR não foi superseded: é o canal obrigatório de envio,
+> ainda não executado nem presumido durante a construção. Consulte task, READMEs e diário.
 
 ## Inspected state and authority
 

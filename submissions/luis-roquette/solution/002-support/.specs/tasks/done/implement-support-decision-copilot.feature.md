@@ -126,7 +126,7 @@ Entregar o Support Decision Copilot, uma demonstração local para agentes de su
 
 **Regular Checks:**
 
-O repositório ainda não contém aplicação, Makefile, testes ou workflow de CI: estes são os gates canônicos definidos pelo plano aprovado e deverão existir antes de serem exigidos. Executar a partir de `submissions/luis-roquette/solution/002-support/`, exceto checks Git na raiz. Instalação, suíte completa e reprodução pesada usam `codespace-manager`; resultado de outro SHA não vale.
+**Inventário histórico pré-implementação:** no momento da redação, o repositório ainda não continha aplicação, Makefile, testes ou workflow de CI. No estado final, aplicação, Makefile e testes existem; workflow de CI próprio não foi adicionado. Os gates canônicos abaixo preservam os critérios aprovados. Executar a partir de `submissions/luis-roquette/solution/002-support/`, exceto checks Git na raiz. Instalação, suíte completa e reprodução pesada usam `codespace-manager`; resultado de outro SHA não vale.
 
 - [ ] RC-1 — Executar `make doctor` e conferir Python 3.12, dependências bloqueadas, fontes públicas e mensagens de correção; demonstrar `make demo` e uso após download sem credenciais. Cobre CK-1/18/20.
 - [ ] RC-2 — Executar `make test && make lint && make reproduce` no ambiente gerenciado com o SHA/diff exato, salvo instrução explícita do owner para pular o preflight terminal. Nesse caso, registrar `não executado/não verde`, preservar os últimos resultados reais com seu SHA e nunca convertê-los em aprovação do estado final. Cobre CK-2–14/17/18/20.
