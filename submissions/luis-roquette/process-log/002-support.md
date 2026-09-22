@@ -968,3 +968,42 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   byte a byte lock, marcador e pacote após a revisão final. Reprodução real e 66 testes
   focados sustentaram o step; o checkpoint conjunto repetiu os 66 testes em 2,30 s, Ruff,
   diff-check e S07 isolado em 1,28 s, mantendo o mesmo hash selado.
+
+## I59 — Step 10: demonstração real e fechamento dos gates — 2026-09-22
+
+- **Quatro falhas de ambiente, sem bypass:** a primeira tentativa usou o Python padrão em
+  vez de 3.12; a segunda encontrou `python3.12-venv` ausente; a terceira chegou ao
+  `make doctor` sem os CSVs reais ignorados; no gate do diff, o outro Codespace tinha
+  `.venv`, mas não as dependências do lock (`altair` ausente). As correções foram
+  declarar `PYTHON=python3.12`, instalar o módulo de venv somente no Codespace e executar
+  o `make data` público previsto; o gate do diff é repetido desde `make setup`. Nenhum
+  teste ou check foi removido.
+- **Gate base gerenciado:** no commit `67de949e57538a80cf6e63f0d9dd7f7ccba7edcf`,
+  `make doctor`, 229 testes, Ruff, reprodução dos dois datasets e 33 testes de workflow
+  passaram. Fontes e sanitização permaneceram Customer `8.469 → 1.389` e IT
+  `47.837 → 26.472`.
+- **Decisão honesta de abertura:** zero consultas elegíveis impediram qualquer rubrica
+  humana. O lock explícito `disabled` manteve drafts desligados, threshold nulo e status
+  `insufficient_evidence`; a reprodução abriu o teste congelado sem alterar a política.
+  `CK-12` continua incompleto. Customer final: macro-F1 `0,1394`, log loss `1,6124`, ECE
+  `0,0328`, n=231; IT: `0,8351`, `0,4578`, `0,0414`, n=5.301.
+- **Demonstração persistida:** a fila real abriu com 231 casos e aprovação/edição
+  bloqueadas. Um escalonamento sanitizado foi salvo como `audit_id=1`; após reiniciar o
+  Streamlit, o mesmo evento reapareceu e gerou CSV persistido SHA-256
+  `ac24e4baa5e188b6470ea411819aef2bd051e56051a5f91d2998c98d5aa8ad96`. Scorecard e
+  Laboratório IT também foram exercitados; o texto IT retornou Hardware com confiança
+  `0,5464` e revisão humana abaixo do threshold `0,55`.
+- **Correção de captura:** uma primeira captura de tela inteira incluiu outra janela e foi
+  eliminada imediatamente, sem versionamento. A captura final ficou restrita à aba da
+  aplicação, sanitizada, em `evidence/screenshot.png`, SHA-256
+  `4c909dd7fce6c7d9a51e7350c7917aa463d5c7c7012ef1e7b9061d6bd9a6a1d2`; o arquivo
+  eliminado não é recuperável, mas foi substituído pela evidência correta.
+- **Primeira repetição do diff:** o teste final correlacionou bytes/hash da imagem e do
+  CSV, audit IDs, ações e estado de CK-12. No Python 3.12 gerenciado, 230 testes passaram
+  em 18,46 s, Ruff passou, a reprodução preservou as quatro contagens e os 34 testes de
+  workflow passaram em 12,89 s. O shell do gerenciador foi suspenso antes do diff-check;
+  esse ciclo parcial não foi aceito como gate terminal, o patch foi revertido e o
+  Codespace foi parado limpo.
+- **Fechamento exigido:** a mesma sequência será repetida sobre este registro final,
+  incluindo `git diff --cached --check` e a prova de que todos os arquivos permanecem em
+  `submissions/luis-roquette/`. CK-12 continuará pendente mesmo com o gate técnico verde.

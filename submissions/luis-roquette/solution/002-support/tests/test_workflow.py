@@ -13,6 +13,7 @@ import re
 import runpy
 import socket
 import sqlite3
+import struct
 from contextlib import closing
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -476,14 +477,15 @@ def test_delivery_documentation_contract():
                     "make demo", "make test", "make lint"):
         assert command in technical
     for section in ("Histórico observado", "Desempenho medido", "Cenários projetados",
-                    "Evidências finais pendentes", "Protocolo humano de recuperação"):
+                    "Evidências finais", "Protocolo humano de recuperação"):
         assert section in technical
     for answer in ("Onde estamos perdendo tempo?", "O que pode ser automatizado com IA?",
                    "Como isso funciona na prática?"):
         assert answer in executive
     assert "LinkedIn:** Não informado" in executive
     assert "insufficient_evidence" in technical and "zero consultas elegíveis" in technical
-    assert "pendente da etapa final" in executive
+    assert "Screenshot real da demonstração" in executive
+    assert "CK-12" in executive and "zero consultas elegíveis" in executive
 
     link_pattern = re.compile(r"\[[^]]+\]\(([^)]+)\)")
     for document, content in zip(documents, (technical, executive), strict=True):
@@ -493,3 +495,30 @@ def test_delivery_documentation_contract():
             relative = target.split("#", 1)[0]
             assert not relative.startswith(("data/raw/", "data/runtime/", "artifacts/"))
             assert (document.parent / relative).resolve().exists(), (document, target)
+
+
+def test_public_demo_evidence_correlates_capture_export_and_metrics():
+    """Public evidence must be real, internally linked and safe to open in a spreadsheet."""
+    evidence = ROOT / "evidence"
+    screenshot = evidence / "screenshot.png"
+    export = evidence / "decisions-demo.csv"
+    metrics = json.loads((evidence / "metrics.json").read_text(encoding="utf-8"))
+    demo = metrics["demo_evidence"]
+
+    image = screenshot.read_bytes()
+    assert image.startswith(b"\x89PNG\r\n\x1a\n")
+    width, height = struct.unpack(">II", image[16:24])
+    assert width >= 1000 and height >= 600
+    assert hashlib.sha256(image).hexdigest() == demo["screenshot_sha256"]
+
+    content = export.read_bytes()
+    assert hashlib.sha256(content).hexdigest() == demo["export_sha256"]
+    rows = list(csv.DictReader(io.StringIO(content.decode("utf-8"))))
+    assert rows and [int(row["id"]) for row in rows] == demo["audit_ids"]
+    assert set(demo["actions_observed"]) == {row["human_action"] for row in rows}
+    assert all(row["submission_id"] and row["created_at"] for row in rows)
+    assert all(not any(value.lstrip().startswith(("=", "+", "-", "@"))
+                       for value in row.values() if value) for row in rows)
+    assert demo["approval_evidence"] == "blocked_insufficient_retrieval_evidence"
+    assert metrics["retrieval_evaluation"]["eligible"] == 0
+    assert metrics["retrieval_evaluation"]["ck_12_complete"] is False

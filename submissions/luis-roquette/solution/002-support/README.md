@@ -108,9 +108,10 @@ validado, aprovação é bloqueada e a saída correta é revisão humana ou esca
 
 - Modelos são escolhidos contra dummy e baselines textuais por CV somente no treino.
 - Teste fica lacrado até modelos, calibração, regras e thresholds estarem congelados.
-- Métricas finais por classe, confusão, log loss, ECE e risco/cobertura dependem do gate
-  final e não são antecipadas neste README.
-- Fixtures provaram fluxo, persistência e falha segura; não contam como resultado real.
+- No teste congelado, Customer obteve macro-F1 `0,1394`, log loss `1,6124` e ECE
+  `0,0328` em 231 casos; IT obteve `0,8351`, `0,4578` e `0,0414` em 5.301 casos.
+- Fixtures cobrem regressões; a evidência final abaixo usa fila, SQLite, export e
+  navegador reais. O desempenho Customer baixo mantém sua automação desativada.
 
 ### Cenários projetados
 
@@ -165,15 +166,19 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
 - SQLite usa transação atômica e idempotência por UUID. Falha não apaga registros antigos
   nem anuncia sucesso.
 
-## Evidências finais pendentes
+## Evidências finais
 
-A etapa final deve substituir este checklist somente com artefatos reais correlacionados:
-
-- [ ] screenshot sanitizado da fila/scorecard/Laboratório IT;
-- [ ] aprovação ou edição e escalonamento persistidos após reinício;
-- [ ] CSV público com os mesmos audit IDs;
-- [ ] métricas finais e estado da rubrica humana;
-- [ ] `make test && make lint && make reproduce` no SHA/diff entregue.
+- [Screenshot sanitizado real](evidence/screenshot.png): fila, abstinência e
+  `audit_id=1` persistido.
+- [Export persistido](evidence/decisions-demo.csv): mesmo `audit_id=1`, ação
+  `escalate`, SHA-256 registrado em [metrics.json](evidence/metrics.json).
+- Reinício real preservou o evento; scorecard e texto livre IT foram observados no
+  navegador. IT classificou `hardware device not starting` como Hardware, mas o gate
+  manteve revisão humana (`0,5464 < 0,55`).
+- Aprovação/edição permaneceram bloqueadas porque zero consultas eram elegíveis para a
+  avaliação humana. `CK-12` continua incompleto; nenhum draft ou rating foi fabricado.
+- Gate base no Codespace: 229 testes, Ruff, reprodução real e 33 testes de workflow
+  aprovados. O gate consolidado do diff final é registrado no diário.
 
 Ausência de humano ou de amostra suficiente mantém o critério correspondente pendente;
 desativar a função é o comportamento seguro, mas não fabrica a evidência exigida.
@@ -189,7 +194,7 @@ desativar a função é o comportamento seguro, mas não fabrica a evidência ex
 
 ## Verificação
 
-Durante o paralelo da Phase 3, este step executa somente:
+No paralelo da Phase 3, o step documental executou somente:
 
 ```bash
 .venv/bin/pytest tests/test_workflow.py::test_delivery_documentation_contract -q
@@ -197,5 +202,6 @@ Durante o paralelo da Phase 3, este step executa somente:
 git diff --check
 ```
 
-A suíte completa e a demonstração visual pertencem ao gate final. Resultado de outro SHA,
-fixture sintética ou teste S07 isolado não é apresentado como aprovação da entrega final.
+O step final executa a suíte consolidada, reprodução e demonstração real no estado
+entregue. Resultado de outro SHA, fixture sintética ou teste S07 isolado não substitui
+esse gate.

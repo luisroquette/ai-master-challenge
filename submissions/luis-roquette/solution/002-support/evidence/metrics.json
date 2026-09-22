@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "evidence_kind": "development_not_final",
+  "evidence_kind": "final_demo_with_frozen_test_metrics",
   "execution": {
-    "commit": "9f55bc9a56a0236ccbe99a7b37e775b71b899607",
-    "code_revision": "9f55bc9a56a0236ccbe99a7b37e775b71b899607+code.a6d82b833a38aa114aa117b83d1f1672dbcd1415012ed7d6cece4706f0c741af",
+    "commit": "67de949e57538a80cf6e63f0d9dd7f7ccba7edcf",
+    "code_revision": "67de949e57538a80cf6e63f0d9dd7f7ccba7edcf+code.a6d82b833a38aa114aa117b83d1f1672dbcd1415012ed7d6cece4706f0c741af",
     "configuration_sha256": "9458e1bd6b316f12fd63cec14b3f8f5831196600ca84acb9b8f9fe24ba8d7dce",
     "requirements_lock_sha256": "0e9db579cfac4b14d713a3b76c2dab10a11d35cc13b2f6afef65d0847eda82fd",
     "s07_test_sha256": "57ae4fd072bb4812acc27d903990c9656677d925cffa5121f4c66293bbb80be0"
@@ -46,12 +46,44 @@
     "policy_version": null,
     "threshold": null,
     "reason": "Nenhuma consulta de calibração passou todos os gates; faltam 30 casos elegíveis e julgamento humano real.",
-    "test_opened": false,
+    "test_opened": true,
     "ck_12_complete": false
+  },
+  "frozen_test_metrics": {
+    "customer": {
+      "status": "evaluated",
+      "n_total": 231,
+      "macro_f1": 0.13943791319426618,
+      "log_loss": 1.6123907406051685,
+      "ece": 0.03281043506756869
+    },
+    "it": {
+      "status": "evaluated",
+      "n_total": 5301,
+      "macro_f1": 0.8350854075814486,
+      "log_loss": 0.4577963676356069,
+      "ece": 0.04139269974100268
+    }
+  },
+  "demo_evidence": {
+    "queue_rows": 231,
+    "audit_ids": [1],
+    "actions_observed": ["escalate"],
+    "restart_readback": true,
+    "export_sha256": "ac24e4baa5e188b6470ea411819aef2bd051e56051a5f91d2998c98d5aa8ad96",
+    "screenshot_sha256": "4c909dd7fce6c7d9a51e7350c7917aa463d5c7c7012ef1e7b9061d6bd9a6a1d2",
+    "approval_evidence": "blocked_insufficient_retrieval_evidence",
+    "browser_observations": [
+      "queue_and_gate",
+      "restart_and_persisted_audit",
+      "csv_export",
+      "scorecard",
+      "it_free_text"
+    ]
   },
   "claims": {
     "human_ratings_present": false,
-    "final_model_metrics_present": false,
+    "final_model_metrics_present": true,
     "retrieval_validated": false,
     "draft_assistance_enabled": false
   }

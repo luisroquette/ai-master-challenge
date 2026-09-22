@@ -78,8 +78,9 @@ escolhas está em [pesquisa técnica](research/002-support.md).
   parte do manifesto reproduzível.
 - Classificadores, calibração, risco e cobertura são mantidos por domínio; nenhum join
   fictício conecta os datasets.
-- A fila, as quatro ações humanas, a persistência após reinício, o export e as páginas
-  separadas foram comprovados com fixtures sanitizadas. Fixtures não são métricas finais.
+- A fila real, o escalonamento, a persistência após reinício, o export e as páginas
+  separadas foram comprovados no navegador. Aprovação/edição ficaram corretamente
+  bloqueadas; fixtures cobrem as quatro ações, mas não contam como evidência real.
 - A avaliação humana de recuperação não pôde começar por ausência de 30 consultas
   elegíveis. Essa insuficiência mantém a assistência de resposta desativada.
 
@@ -147,9 +148,12 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 - [x] [Narrativa contemporânea e decisões](process-log/002-support.md)
 - [x] [Pesquisa técnica e prova mínima](research/002-support.md)
 - [x] [Código e instruções reproduzíveis](solution/002-support/README.md)
-- [ ] Screenshot real da demonstração — **pendente da etapa final**
-- [ ] Export persistido correlacionado aos audit IDs — **pendente da etapa final**
-- [ ] Gate consolidado no SHA final — **pendente da etapa final**
+- [x] [Screenshot real da demonstração](solution/002-support/evidence/screenshot.png)
+- [x] [Export persistido correlacionado ao audit ID 1](solution/002-support/evidence/decisions-demo.csv)
+- [x] [Métricas, hashes e limitações finais](solution/002-support/evidence/metrics.json)
+- [ ] CK-12 — 30 avaliações humanas por split: **incompleto por zero consultas elegíveis**
+- [x] Gate consolidado: `make doctor`, 230 testes, Ruff, reprodução real e 34 testes
+  de workflow no Python 3.12 do Codespace gerenciado
 
 ---
 
