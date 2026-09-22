@@ -383,7 +383,8 @@ class AppTests(unittest.TestCase):
         self.assertEqual((len(options), len(additional_options)), (4, 1))
         self.assertEqual(len(set(options)), 4)
         labels = (*captions, *options, *additional_options)
-        self.assertTrue(all("Mês: 2025-01" in value and "…" in value for value in labels))
+        self.assertTrue(all("Mês: 2025\\-01" in value and "…" in value for value in captions))
+        self.assertTrue(all("Mês: 2025-01" in value and "…" in value for value in (*options, *additional_options)))
         self.assertTrue(all(len(value) < 320 for value in labels))
         self.assertTrue(all(category not in value for category in categories for value in labels))
 
@@ -429,6 +430,37 @@ class AppTests(unittest.TestCase):
                          ["0", "-1.90735e-06", "1.90735e-06"])
         self.assertTrue(all(item.proto.format == "%.6g" for item in app.number_input))
         self.assertEqual(app.session_state["active_result"]["all_recommendations"][0]["priority"], tiny_score)
+
+    def test_external_context_is_literal_in_captions_and_complete_in_identity(self) -> None:
+        platform = "![x](https://x.invalid/x)"
+        category = "**bold** `code` [link](x)"
+        content_type = "<b>tag</b> _special_!"
+        rows = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        for row in rows:
+            row.update({"platform": platform, "content_category": category, "content_type": content_type})
+        app = self.app()
+        app.file_uploader[0].set_value(("literal.csv", csv_bytes(rows), "text/csv")).run()
+
+        self.assertFalse(app.exception)
+        source = next(item.value for item in app.caption if item.value.startswith("Fonte ativa"))
+        context = next(item.value for item in app.caption if item.value.startswith("Contexto —"))
+        escaped_image = r"\!\[x\]\(https\:\/\/x\.invalid\/x\)"
+        self.assertIn(escaped_image, source)
+        self.assertIn(escaped_image, context)
+        for marker in (r"\*\*bold\*\*", r"\`code\`", r"\[link\]\(x\)", r"\<b\>tag\<\/b\>", r"\_special\_\!"):
+            self.assertIn(marker, context)
+        self.assertEqual(len(app.image), 0)
+
+        selected = app.session_state["active_result"]["all_recommendations"][0]
+        self.assertEqual(selected["context"]["platform"], platform)
+        self.assertEqual(selected["context"]["content_category"], category)
+        option = app.selectbox(key="decision_recommendation").options[0]
+        self.assertIn(platform, option)
+        self.assertIn(category, option)
+        self.assertNotIn(escaped_image, option)
+        app.button(key="save_decision").click().run()
+        snapshot = self.stored()[0]["baseline"]["evidence_snapshot"]["context"]
+        self.assertEqual((snapshot["platform"], snapshot["content_category"]), (platform, category))
 
     def test_week_and_month_clip_before_timestamp_at_upper_date_boundary(self) -> None:
         rows = [

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import string
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -70,7 +71,7 @@ def _baseline(recommendation: dict[str, object]) -> dict[str, object]:
             "simulation": bool(os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW"))}
 
 
-def _recommendation_context(item: dict[str, object]) -> str:
+def _recommendation_context(item: dict[str, object], *, literal: bool = False) -> str:
     context = item.get("context", {})
     assert isinstance(context, dict)
     def abbreviated(value: object, limit: int = 32) -> str:
@@ -80,13 +81,18 @@ def _recommendation_context(item: dict[str, object]) -> str:
     labels = (("platform", "Plataforma"), ("content_type", "Formato"),
               ("content_category", "Categoria"), ("follower_band", "Faixa"),
               ("period_month", "Mês"))
-    parts = [f"{label}: {abbreviated(context[key])}" for key, label in labels if context.get(key) is not None]
+    values = ((key, label, abbreviated(context[key])) for key, label in labels if context.get(key) is not None)
+    parts = [f"{label}: {_literal_caption(value) if literal else value}" for _, label, value in values]
     return " · ".join(parts) or "Contexto amplo"
 
 
 def _display_number(value: object) -> str:
     number = float(value)
     return "0" if number == 0 else f"{number:.6g}"
+
+
+def _literal_caption(value: object) -> str:
+    return "".join(f"\\{character}" if character in string.punctuation else character for character in str(value))
 
 
 def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
@@ -195,7 +201,8 @@ if active_frame is None or metadata is None:
 else:
     st.caption(
         f"Fonte ativa `{str(metadata['source_hash'])[:12]}…` · {metadata['row_count']} linhas · "
-        f"{metadata['period_start']} a {metadata['period_end']} · {', '.join(metadata['platforms'])}"
+        f"{metadata['period_start']} a {metadata['period_end']} · "
+        f"{_literal_caption(', '.join(metadata['platforms']))}"
     )
     st.caption("Dados históricos são rotulados pela data do dataset; associação não implica causalidade nem ROI.")
 
@@ -328,7 +335,7 @@ else:
             title = item.get("action", item.get("reason", "Coletar evidência"))
             with st.container(border=True):
                 st.markdown(f"**{rank}. {title}**")
-                st.caption(f"Contexto — {_recommendation_context(item)}")
+                st.caption(f"Contexto — {_recommendation_context(item, literal=True)}")
                 components = item.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
                 component_columns = st.columns(3)
                 for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
