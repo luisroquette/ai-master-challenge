@@ -32,7 +32,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 - Maior associação patrocinada observada: YouTube / mixed / beauty / 500.000+, +0,212889 p.p. de ERv; menor: TikTok / video / lifestyle / 10.000–49.999, −0,262464 p.p. Nenhuma é efeito causal ou ROI.
 - O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, registra aceitar/rejeitar/editar, vincula revisões e preserva outcomes após reinício; cronologia inválida permanece pendente.
 
-![Cockpit com CSV real e prioridades](./process-log/evidence/004/cockpit-proof.png)
+![Histórico do cockpit após reinício, com outcomes distintos para ação não executada e execução não informada](./process-log/evidence/004/cockpit-proof.png)
 
 ### Recomendações
 
@@ -61,7 +61,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 | Codex | Pesquisa, ondas socráticas, SDD, implementação, regressões, documentação e auditoria final |
 | Claude Code | Skill SDD e estruturação inicial dos artefatos de especificação |
 | Chrome automatizado | Validação do upload real, decisões, reinício, erros, downloads e prova visual |
-| Python/Pandas/unittest | Motor determinístico, reconciliação e 52 testes locais |
+| Python/Pandas/unittest | Motor determinístico, reconciliação e 62 testes locais |
 
 ### Workflow
 

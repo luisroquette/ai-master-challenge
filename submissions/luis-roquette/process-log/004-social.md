@@ -485,6 +485,7 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **A4 e exports:** Chrome imprimiu o resumo em uma página A4 (594,96 × 841,92 pt); causalidade, ausência de ROI e necessidade de custos reais permanecem visíveis. Os testes reconciliam IDs, ordem, componentes, referências e neutralização de fórmulas/controles.
 - **Navegador real:** upload do CSV de 23,3 MB mostrou hash `693a2df6e609…`, 52.214 linhas, cinco plataformas e, na janela recente, 468 posts, 4.724.954 views e 940.289 interações. A tela exibiu as três prioridades, impacto, força, atualidade, drill-down e downloads. A captura exata da aba validada foi persistida em `process-log/evidence/004/cockpit-proof.png` (1502×776; SHA-256 `a1945b57366d7fccef79675532240a04cbf5c6c489b50b879404da16e928f1d6`). A validação anterior de decisão, erro atômico e reinício permanece em I26.
 - **Atualização após I28:** o refresh de S4 validou 58/58 testes em 9,243 s, CLI canônica em 16,69 s, resumo em uma página A4 e artefatos analíticos idênticos. A prova visual passou a mostrar o histórico corrigido após reinício, com revisão vinculada, outcome `pending / execution_before_decision` e outcome `observed / comparable_after_declared_execution`: PNG 1502×817, SHA-256 `130408568727ed1aac8e21e2283f7c9f39a8caac017e13a43f80a69de8bbcf9c`.
+- **Atualização após I31:** o refresh de S4 aprovou 62/62 testes em 17,407 s (18,27 s totais), com warnings como erro, `pip check`, `compileall` e `git diff --check` verdes. A CLI canônica completou em 23,08 s, pico residente de 558.514.176 bytes e zero swap; CSV/Markdown reproduzidos foram idênticos aos publicados, e o HTML permaneceu em uma página A4. A prova visual agora registra o histórico reaberto sem CSV e distingue `observed / comparable_action_not_executed` de `observed / comparable_execution_unknown`, ambos não causais: PNG 1502×817, SHA-256 `362da9813327e6a701ee7ffb3bbb9f37a6c61afd52f833113e33acc3058c2ee1`.
 - **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
 
 ### Matriz de aceitação final
@@ -498,13 +499,13 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 | CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
 | CK-06 | pass | prioridade recomposta e ordem estável em `test_acceptance.py` |
 | CK-07 | pass | esforço, público, frequência, patrocínio, creators, interrupção e quick wins em `analysis.md` |
-| CK-08 | pass | decisões, revisões vinculadas, idempotência e reinício em `test_storage.py`/`test_app.py`; I28 |
-| CK-09 | pass | guards temporais, execução humana, outcome persistido e pendência em `test_storage.py`; I28 |
+| CK-08 | pass | estados de decisão/revisão preservam o texto correto, idempotência e reinício em `test_storage.py`/`test_app.py`; I28 e I31 |
+| CK-09 | pass | guards temporais, execução humana e outcomes persistidos distinguem ação não executada de execução desconhecida; I28 e I31 |
 | CK-10 | pass | HTML A4 de uma página, CSV reconciliado e downloads no navegador |
-| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I28 |
+| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I31 |
 | HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
 | HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
-| HR-03 | pass | I01–I30 preservam pesquisa, 24 ondas, decisões, erros e correções |
+| HR-03 | pass | I01–I31 preservam pesquisa, 24 ondas, decisões, erros e correções |
 | HR-04 | pass | setup, screenshot e auditoria Git final restritos à submissão |
 
 ### Rubricas finais

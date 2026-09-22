@@ -4,7 +4,7 @@ Aplicação local que valida o CSV do desafio, produz análise contextual reprod
 
 ## Instalação
 
-Requisitos testados em 21/09/2026: Python 3.14.2, Streamlit 1.64.0, Pandas 2.3.3 e SQLite 3.50.4.
+Requisitos testados em 22/09/2026: Python 3.14.2, Streamlit 1.64.0, Pandas 2.3.3 e SQLite 3.50.4.
 
 ```bash
 python3 -m venv .venv
@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após a correção documentada em I28, o gate limpo aprovou 58/58 testes em 9,243 s (9,81 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 16,69 s, com pico residente de 557.023.232 bytes e zero swap; os arquivos gerados foram idênticos aos artefatos publicados.
+Após as correções documentadas até I31, o gate limpo aprovou 62/62 testes em 17,407 s (18,27 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 23,08 s, com pico residente de 558.514.176 bytes e zero swap; CSV e Markdown foram idênticos byte a byte aos artefatos publicados. O resumo impresso permaneceu em uma página A4.
 
 ## Executar o cockpit
 
