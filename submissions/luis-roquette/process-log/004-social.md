@@ -807,6 +807,14 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Decisão de fechamento:** duas passadas consecutivas não identificaram correção ou otimização mínima restante. Isso encerra o goal de lapidação sem prometer ausência absoluta de defeitos, validar HR-01 ou ampliar o MVP.
 - **Bypass e limites:** sem suíte completa, CLI real, A4, preflight, instalação ou nova prova visual. Os **122/122**, determinismo e impressão de I48 continuam a última evidência pesada. HR-01 humano e publicação na branch exigida permanecem externos; sem push, PR, deploy ou API paga.
 
+## I58 — Verificação formal da Definition of Done — 2026-09-22
+
+- **Estado verificado:** no HEAD `04ae066`, **CK-01–11 e HR-02–04 estão PASS**; **HR-01 está BLOCKED**, pois exige um Gestor de Social Media humano executar o fluxo cronometrado. Resultado: **14/15 critérios PASS, 1/15 BLOCKED, zero FAIL constatado**.
+- **DoD:** DoD-02, DoD-04 e DoD-05 estão PASS. DoD-01 e DoD-03 permanecem BLOCKED pelo mesmo HR-01 — respectivamente, todos os critérios obrigatórios e a medição humana do fluxo em até cinco minutos. A task continua em `.specs/tasks/in-progress/implement-social-media-cockpit.feature.md`; não deve ser movida para `done` por inferência.
+- **Próximo passo exato:** um Gestor de Social Media humano deve seguir `submissions/luis-roquette/solution/004-social/README.md`, seção **“Roteiro de cinco minutos”** (`#roteiro-de-cinco-minutos`), com instalação e CSV já disponíveis. Registrar operador/papel, início, fim, duração real de até 300 segundos, contexto/evidência explicados e decisão persistida.
+- **Evidência e bypass:** por autorização explícita, esta verificação formal não repetiu suíte, CLI analítica, A4, preflight, instalação ou navegador. Os **122/122**, determinismo e impressão de I48 permanecem a última evidência pesada; I49–I57 e os relatórios independentes registram os deltas e probes focais posteriores. Isso não declara preflight completo no HEAD atual.
+- **Publicação separada:** a branch local ainda difere da branch exigida; rename/integração, push e PR dependem de autorização e dos gates aplicáveis ao diff exato. Esse bloqueio externo de publicação não é o HR-01 nem altera a matriz local da DoD. Sem push, PR, deploy ou API paga.
+
 ## I55 — Lapidação e melhoria/otimização, passada 4: valores externos como texto literal — 2026-09-22
 
 - **Estado da passada:** `clean=false`, uma melhoria relevante corrigida; contador reiniciado/mantido em **0 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-4-20260922-144143.md`.
