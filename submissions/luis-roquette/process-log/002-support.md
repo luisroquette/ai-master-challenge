@@ -1581,3 +1581,22 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   e executar um teste documentado de restauração.
 - **Risco residual:** aceito apenas para o protótipo público e somente leitura; continua
   crítico para qualquer uso real.
+
+## I85 — Segurança mínima: higiene de credenciais — 2026-09-22
+
+- **Prioridade:** tratar somente controles indispensáveis ao protótipo. Login, cadastro,
+  e-mail, banco remoto, cookies próprios, WAF, CAPTCHA e APIs pagas não existem e não
+  justificam infraestrutura preventiva nesta fase.
+- **Varredura atual:** nenhum padrão de token, chave privada, credencial cloud ou JWT foi
+  encontrado no código, configuração ou diário do Challenge 002.
+- **Varredura histórica:** a busca restrita ao Challenge 002 encontrou somente o commit
+  que adicionou `.streamlit/secrets.example.toml`; inspeção confirmou placeholders
+  `SET_IN_STREAMLIT_CLOUD`, sem valor secreto.
+- **Falso positivo descartado:** a busca ampla inicialmente confundiu o trecho textual
+  `task-...` do Challenge 004 com prefixo `sk-`; o achado não era credencial e estava fora
+  do escopo.
+- **Proteção vigente:** `.env`, `.env.*` e `.streamlit/secrets.toml` são ignorados; o
+  exemplo versionado contém somente nomes e placeholders. Nenhuma reescrita de histórico
+  é necessária.
+- **Limite:** a prova é uma varredura por padrões conhecidos, não certificação por scanner
+  especializado. Scanner dedicado passa a ser obrigatório se uma credencial real existir.

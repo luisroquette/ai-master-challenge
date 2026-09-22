@@ -24,8 +24,8 @@ está configurado e o armazenamento continua efêmero e sem backup.
 | 7 | Backup e recuperação | Adiado; sem estado operacional | Aceito no protótipo; crítico antes de escrita | Sem OIDC, visitantes não criam o SQLite. O CSV demonstrativo está versionado e os artefatos são reproduzíveis. Banco durável, retenção, backup automático e restore testado bloqueiam qualquer ativação operacional. |
 | 8 | Sentry | Ausente | Médio | Nenhum SDK/DSN/configuração. Antes de instalar, definir redaction para não enviar texto de tickets, PII ou segredos. |
 | 9 | Alertas de custo | Ausente / baixa exposição atual | Baixo | Não há API paga; treino é local no boot. Faltam alertas do provedor e limites de CPU/storage/reboot. |
-| 10 | Ocultar chaves de API | Coberto por ausência | Baixo hoje | Não foram encontradas chaves ou `.env` rastreados. Se surgir integração, segredo deve ficar no cofre do provedor e nunca no browser/log. |
-| 11 | Remover segredos do histórico Git | Sem indício, não certificado | Médio | Busca por padrões conhecidos no histórico da pasta não encontrou candidatos; `gitleaks` não está instalado, portanto a prova ainda não é completa. |
+| 10 | Ocultar chaves de API | Verificado por ausência | Baixo hoje | Nenhuma credencial foi encontrada. `.env`, `.env.*` e `.streamlit/secrets.toml` são ignorados; o exemplo contém somente placeholders. |
+| 11 | Remover segredos do histórico Git | Nenhuma remoção necessária | Baixo hoje | A varredura restrita ao Challenge 002 encontrou somente placeholders no commit que criou o exemplo de secrets. Scanner especializado será obrigatório se uma credencial real for introduzida. |
 | 12 | Chave pública para banco | Não aplicável | — | O banco é SQLite local e não usa chave. Em banco remoto, chave pública não substitui autorização; credencial privilegiada fica somente no servidor. |
 | 13 | Row-Level Security | Não aplicável hoje | Crítico numa migração multiusuário | SQLite não oferece RLS e não há tenants/usuários. Banco remoto deve negar por padrão e testar políticas por organização e papel. |
 | 14 | Criptografia de dados sensíveis | Parcial | Alto | A aplicação sanitiza PII e pretende não persistir dado sensível, mas o SQLite não tem criptografia de aplicação nem chave gerenciada. TLS/criptografia do provedor não foram verificados. |
@@ -50,7 +50,7 @@ está configurado e o armazenamento continua efêmero e sem backup.
 - `deploy_app.py`: bootstrap público, sem autenticação ou middleware de autorização.
 - `src/support_copilot/store.py`: SQLite transacional, validação, SQL parametrizado,
   idempotência e export; sem identidade, criptografia ou backup.
-- `.gitignore`: `.env` não aparece explicitamente; SQLite/runtime são ignorados.
+- `.gitignore`: `.env`, `.env.*`, `.streamlit/secrets.toml`, SQLite e runtime são ignorados.
 - `.streamlit/config.toml`: somente telemetria, watcher e modo headless.
 - Git atual e histórico da pasta: nenhum segredo reconhecido pelos padrões executados;
   varredura especializada ainda pendente.
@@ -97,3 +97,15 @@ teste de regressão, evidência no diário e nova medição de risco residual.
   backup automático, runbook e teste de restauração com evidência.
 - Risco residual: aceito somente para avaliação pública em modo fail-closed; crítico para
   produção, piloto com operadores ou dados reais.
+
+## Tratamento 03 — credenciais e histórico Git
+
+- Estado: concluído para o escopo atual; nenhuma credencial real existe no protótipo.
+- Checkout: nenhum padrão conhecido de token, chave privada, credencial cloud ou JWT foi
+  encontrado nos arquivos do Challenge 002.
+- Histórico: o único commit candidato adicionou `.streamlit/secrets.example.toml`; todos
+  os valores sensíveis são placeholders `SET_IN_STREAMLIT_CLOUD`.
+- Proteção: secrets reais permanecem fora do Git por regras explícitas de ignore e devem
+  existir somente no cofre do provedor.
+- Decisão mínima: não instalar scanner nem reescrever histórico sem segredo confirmado.
+  Scanner dedicado vira gate quando a primeira credencial real for criada.
