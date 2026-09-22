@@ -522,9 +522,9 @@ Snapshot S07 é saída obrigatória de 07, selada após a revisão da fase 2: `d
 | 05 [DONE] | 2 | opus | sdd:developer | 02 | 04, 06 | `.specs/sub-tasks/implement-support-decision-copilot/05-transactional-audit.md` |
 | 06 [DONE] | 2 | opus | sdd:ml-engineer | 02, 04 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/06-safe-retrieval-and-review.md` |
 | 07 [DONE] | 2 | opus | sdd:developer | 03, 04, 05, 06 | None | `.specs/sub-tasks/implement-support-decision-copilot/07-integrated-local-workflow.md` |
-| 08 | 3 | opus | sdd:ml-engineer | 07 | 09 | `.specs/sub-tasks/implement-support-decision-copilot/08-human-evaluation-and-freeze.md` |
-| 09 | 3 | sonnet | sdd:tech-writer | 07 | 08 | `.specs/sub-tasks/implement-support-decision-copilot/09-delivery-documentation.md` |
-| 10 | 3 | sonnet | sdd:test-engineer | 08, 09 | None | `.specs/sub-tasks/implement-support-decision-copilot/10-real-demo-and-final-gates.md` |
+| 08 [DONE] | 3 | opus | sdd:ml-engineer | 07 | 09 | `.specs/sub-tasks/implement-support-decision-copilot/08-human-evaluation-and-freeze.md` |
+| 09 [DONE] | 3 | sonnet | sdd:tech-writer | 07 | 08 | `.specs/sub-tasks/implement-support-decision-copilot/09-delivery-documentation.md` |
+| 10 [DONE] | 3 | sonnet | sdd:test-engineer | 08, 09 | None | `.specs/sub-tasks/implement-support-decision-copilot/10-real-demo-and-final-gates.md` |
 
 Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revisão da fase 1 → 04 → 06 → 07 → revisão da fase 2/S07 → 08 → 10 → revisão da fase 3. Avaliação humana no step 08 ocorre somente se houver população elegível e não bloqueia o prazo canônico; na insuficiência, a assistência permanece desativada. Largura máxima: dois steps, sem escrita concorrente nos mesmos arquivos. Na fase 2, 05 documenta armazenamento no README e 06 documenta o protocolo exclusivamente no docstring/ajuda CLI de `retrieval.py`. Na fase 3, 08 escreve evidence/testes modeling/retrieval e executa somente o teste de reprodução em S07 com hash conferido antes/depois; 09 escreve READMEs/workflow mutável e executa só seu teste documental. Nenhum deles coleta a suíte inteira durante o paralelo. Step 10 executa workflow e suíte final consolidados após ambos; S07 não substitui evidência do estado final.
 
@@ -575,7 +575,7 @@ Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revi
 - Agent Workflow and Durable Evidence — execução com fixtures identificadas e registros persistidos.
 - Project Guidelines Alignment — gates do diff e diário contemporâneo.
 
-#### Phase 3
+#### Phase 3 [REVIEWED]
 
 **Steps:** 08, 09, 10.
 

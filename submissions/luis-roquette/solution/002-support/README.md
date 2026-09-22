@@ -187,8 +187,9 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
 - Aprovação/edição permaneceram bloqueadas porque zero consultas eram elegíveis para a
   validação humana opcional. CK-12 fica como evolução futura; nenhum draft ou rating foi
   fabricado, e o escalonamento real persistido demonstra a intervenção humana canônica.
-- Gate base no Codespace: 229 testes, Ruff, reprodução real e 33 testes de workflow
-  aprovados. O gate consolidado do diff final é registrado no diário.
+- Evidência técnica mais recente: 242 testes completos, 41 testes de workflow e 2 testes
+  de documentação/evidência aprovados. O preflight terminal do SHA final foi pulado por
+  instrução do owner e não é apresentado como verde.
 
 Ausência de amostra suficiente mantém somente a resposta assistida desativada. Essa falha
 segura é uma limitação explícita e não impede os entregáveis obrigatórios do challenge.

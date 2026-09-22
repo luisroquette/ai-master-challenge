@@ -1094,3 +1094,26 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   são observados. O gate integral do novo SHA publicado será registrado somente após
   executar setup, dados, doctor, suíte, Ruff, reprodução, workflow, documentação e diff
   no Codespace limpo.
+
+## I64 — Phase 3 aprovada pela matriz canônica — 2026-09-22
+
+- **Matriz aplicada:** a revisão voltou à autoridade máxima do Challenge 002 e do guia de
+  submissão: diagnóstico concreto do Dataset 1; uso independente dos dois datasets;
+  automação, não automação e fluxo prático; protótipo real; process log; números e ROI
+  transparentes. CK-12, S07 e approve/edit real permanecem extensões opcionais e não
+  substituem os critérios do briefing.
+- **Resultado:** `combined_score=4,7`, sem issue bloqueadora. O diagnóstico estruturado,
+  modelos por domínio, gate conservador, escalonamento persistido/exportado, screenshot,
+  scorecard, Laboratório IT e diário sustentam a Phase 3. A insuficiência de recuperação
+  continua explícita e mantém drafts desligados; nenhuma rubrica ou aprovação foi
+  fabricada.
+- **Sobre-especificações removidas:** 60 avaliações humanas e approve/edit real deixaram
+  de ser blockers do DoD quando não existe draft seguro. A segurança não foi relaxada:
+  zero elegíveis, threshold nulo, abstinência e intervenção humana continuam preservados.
+- **Low corrigido:** os READMEs não repetem mais as contagens antigas `229/33` e `230/34`.
+  A evidência técnica mais recente disponível registra 242 testes completos, 41 testes de
+  workflow e 2 testes de documentação/evidência aprovados.
+- **Limite do gate:** por instrução do owner, o preflight terminal do SHA final foi pulado
+  e não é marcado como verde. A aprovação 4,7 não converte esse comando não executado em
+  evidência. Decisão SDD: marcar somente steps 08–10 `[DONE]` e Phase 3 `[REVIEWED]`, sem
+  antecipar o DoD geral; avançar agora para sua verificação específica.

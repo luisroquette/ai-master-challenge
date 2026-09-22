@@ -160,8 +160,9 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 - [x] Intervenção humana real: escalonamento persistido após reinício e exportado
 - [ ] Validação futura opcional CK-12 — 30 avaliações por split; zero consultas elegíveis,
   sem impacto no fechamento dos entregáveis canônicos e com drafts bloqueados
-- [x] Gate consolidado: `make doctor`, 230 testes, Ruff, reprodução real e 34 testes
-  de workflow no Python 3.12 do Codespace gerenciado
+- [x] Evidência técnica mais recente: 242 testes completos, 41 testes de workflow e
+  2 testes de documentação/evidência aprovados
+- [ ] Preflight terminal do SHA final: pulado por instrução do owner; não marcado verde
 
 ---
 
