@@ -1483,3 +1483,9 @@ Uma fonte única, curta e sem segredos foi preparada para impedir que os materia
 5. A validação no navegador confirmou onze telas, cinco imagens carregadas em resolução nativa e zero erros ou avisos de console.
 
 O vídeo explicativo foi solicitado em português, no formato abrangente, com foco no produto, nas decisões de integridade, na evolução MCCL, na contribuição humana e nos limites. O NotebookLM entregou uma versão de **5min48s**, baixada e incorporada diretamente à experiência guiada. O portal final passou a ter doze telas, incluindo reprodução nativa do vídeo.
+
+## I30 — Wizard no estilo Arcade e limite da plataforma — 2026-09-22
+
+O requisito foi atendido como uma experiência guiada local no estilo Arcade: doze telas, navegação sequencial, hotspots, capturas reais do produto, vídeo incorporado e chamadas claras para produto e evidências. Essa escolha mantém a experiência revisável antes de qualquer publicação.
+
+O Arcade real foi aberto, mas exigiu autenticação ou criação de conta. Nenhuma conta, extensão, gravação pública ou compartilhamento foi criado automaticamente. A migração do wizard validado para a plataforma permanece uma etapa opcional posterior, sujeita à autorização específica de login/publicação e sem bloquear a entrega local.
