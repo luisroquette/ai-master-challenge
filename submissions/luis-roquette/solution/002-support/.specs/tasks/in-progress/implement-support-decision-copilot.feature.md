@@ -122,14 +122,14 @@ Entregar o Support Decision Copilot, uma demonstração local para agentes de su
 | CK-17 | Artefato ausente, corrompido, incompatível ou com hash divergente bloqueia apenas a função afetada, impede automação insegura e informa caminho, causa e `make reproduce` como correção, mantendo disponível a evidência válida restante? | hard_rule | essential |
 | CK-18 | Reprodução registra hashes, contagens, splits, sementes, versões, regras e thresholds, regenera resultados equivalentes com as mesmas entradas/configuração e oferece instrução explícita para obter os CSVs quando o download público falha? | hard_rule | essential |
 | CK-19 | README executivo na raiz da submissão segue o template oficial, responde às três perguntas do diretor e aponta setup técnico, métricas reais, limitações, screenshot real, export persistido e diário contemporâneo, sem perfil pessoal inventado ou alegação de gate não executado? | hard_rule | essential |
-| CK-20 | Pesquisa/prova mínima, aprovação humana da SPEC e ciclo Planejamento → Revisão → Execução → Teste são evidenciados; gates canônicos passam no SHA/diff pretendido, com pesados via `codespace-manager`, e toda entrega pública permanece em `submissions/luis-roquette/`? | hard_rule | essential |
+| CK-20 | Pesquisa/prova mínima, aprovação humana da SPEC e ciclo Planejamento → Revisão → Execução → Teste são evidenciados; resultados de gates são atribuídos ao SHA/diff real e qualquer preflight pulado por instrução do owner fica registrado como não executado/não verde, sem falsa aprovação; toda entrega pública permanece em `submissions/luis-roquette/`? | hard_rule | essential |
 
 **Regular Checks:**
 
 O repositório ainda não contém aplicação, Makefile, testes ou workflow de CI: estes são os gates canônicos definidos pelo plano aprovado e deverão existir antes de serem exigidos. Executar a partir de `submissions/luis-roquette/solution/002-support/`, exceto checks Git na raiz. Instalação, suíte completa e reprodução pesada usam `codespace-manager`; resultado de outro SHA não vale.
 
 - [ ] RC-1 — Executar `make doctor` e conferir Python 3.12, dependências bloqueadas, fontes públicas e mensagens de correção; demonstrar `make demo` e uso após download sem credenciais. Cobre CK-1/18/20.
-- [ ] RC-2 — Executar `make test && make lint && make reproduce` no ambiente gerenciado com o SHA/diff exato; registrar saídas/artefatos reais, sem afirmar sucesso enquanto comando, runtime ou gate obrigatório estiver ausente. Cobre CK-2–14/17/18/20.
+- [ ] RC-2 — Executar `make test && make lint && make reproduce` no ambiente gerenciado com o SHA/diff exato, salvo instrução explícita do owner para pular o preflight terminal. Nesse caso, registrar `não executado/não verde`, preservar os últimos resultados reais com seu SHA e nunca convertê-los em aprovação do estado final. Cobre CK-2–14/17/18/20.
 - [ ] RC-3 — Executar `.venv/bin/pytest tests/test_workflow.py -q` e demonstração visual real: fila, escalonamento humano, reinício, download CSV, scorecard e texto livre IT; conferir screenshot sanitizado e audit ID persistido. Aprovação/edição real só é exigível se existir draft seguro habilitado; seus controles permanecem cobertos por testes. Cobre CK-13–19.
 - [ ] RC-4 — Conferir manifests/splits, denominadores e relatórios de métricas, congelamento dos thresholds e motivos de funções desativadas. Se a avaliação humana opcional não tiver população suficiente, registrar contagens reais e manter drafts bloqueados; os dois formulários de 30 casos não bloqueiam a entrega canônica. Cobre CK-3–12/18/19.
 - [ ] RC-5 — Executar `git diff --check`, `git status --short` e `git diff --name-only upstream/main --`; revisar entrega contra PII, segredos e licença; conferir README pelo template e diário em cada checkpoint. Nenhum arquivo público fora de `submissions/luis-roquette/`. Cobre CK-2/19/20.
@@ -222,13 +222,13 @@ Anchors:
 
 - `score_2`:
   ```text
-  SHA pretendido=abc123; suíte completa=pendente; relatório=preflight aprovado.
+  SHA pretendido=abc123; suíte completa=não executada por instrução do owner; relatório=preflight aprovado.
   ```
 - `score_4`:
   ```text
-  SHA pretendido=abc123; suíte completa=passou via codespace-manager em abc123; relatório=preflight aprovado.
+  SHA pretendido=abc123; suíte completa=não executada por instrução do owner; relatório=preflight não executado/não verde.
   ```
-- `contrast`: muda somente a evidência de execução que sustenta a alegação de preflight.
+- `contrast`: muda somente a integridade documental; comando não executado nunca sustenta alegação verde.
 
 **Test Strategy:**
 
@@ -343,14 +343,14 @@ Anchors:
 
 #### CK-20: Processo
 
-- [inspection] Conferir candidatos/prova mínima, aprovação humana, loops e SHA dos gates; suíte completa/reprodução pesada via gerenciador, sem bypass.
+- [inspection] Conferir candidatos/prova mínima, aprovação humana, loops e SHA dos gates; quando o owner mandar pular o preflight terminal, registrar a decisão e o estado não executado/não verde, sem reaproveitar resultado de outro SHA.
 - [inspection] Conferir diff público restrito à submissão e prontidão para `[Submission] Luis Roquette — Challenge 002`; publicação depende do escopo autorizado, não se presume pela preparação.
 
 **Definition of Done:**
 
 - [X] CK-1–11 e CK-13–20 possuem evidência; checks/testes passam no estado pretendido e limitações legítimas aparecem como funções desativadas, sem simular sucesso. CK-12 registra honestamente a validação futura opcional ou a insuficiência que mantém drafts bloqueados.
 - [X] Ambos os domínios são demonstrados com dados reais independentes; diagnóstico e métricas têm fontes/denominadores/versões; oportunidades/projeções expõem premissas. Rubricas humanas são opcionais e só habilitam assistência futura.
-- [X] Um escalonamento humano real persiste após reinício, exporta dados sanitizados e corresponde ao audit ID/screenshot documentado. Aprovação/edição real só é exigida quando houver draft seguro; seus controles permanecem validados por testes.
+- [X] Um escalonamento humano real persiste após reinício e exporta dados sanitizados; `decisions-demo.csv` e seu hash são a evidência exclusiva do audit ID/persistência, enquanto a screenshot comprova somente o Scorecard. Aprovação/edição real só é exigida quando houver draft seguro; seus controles permanecem validados por testes.
 - [X] READMEs, pesquisa, diário e evidências cumprem desafio/template; dados brutos, PII, segredos, modelos gerados e banco runtime não integram a entrega pública.
 - [X] SPEC foi aprovada antes da implementação; revisões/testes fecharam os loops; publicação/deploy não são presumidos pela prontidão local e nenhum gate obrigatório permanece ocultamente pendente. A rubrica humana opcional pode permanecer não executada com drafts bloqueados e limitação explícita.
 
@@ -588,7 +588,7 @@ Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revi
 - CK-1 e CK-18 — execução local/offline preparada e reprodução real rastreável.
 - CK-8 — medições finais por domínio. CK-12 — insuficiência ou avaliação opcional documentada, sempre fail-closed.
 - CK-16 — scorecard e Laboratório IT reais, conectados somente por evidências agregadas.
-- CK-19 e CK-20 — template/READMEs/diário/evidências reais, aprovação da SPEC e gates canônicos no estado entregue.
+- CK-19 e CK-20 — template/READMEs/diário/evidências reais, aprovação da SPEC e integridade documental dos gates, incluindo preflight pulado como não executado/não verde.
 - CK-2–7, CK-9–11, CK-13–15 e CK-17 — regressão final do comportamento já entregue, incluindo tela/export sem PII e escalonamento persistido; aprovação/edição real somente se houver draft seguro.
 
 **Rubrics:**

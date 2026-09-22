@@ -47,8 +47,19 @@ make PYTHON=python3.12 data
 make PYTHON=python3.12 setup
 make PYTHON=python3.12 doctor
 make PYTHON=python3.12 reproduce
-make PYTHON=python3.12 demo
+.venv/bin/python -m support_copilot.retrieval prepare-review \
+  --artifacts artifacts --split calibration
+# Se o comando acima retornar eligible=0:
+.venv/bin/python -m support_copilot.retrieval lock-review \
+  --artifacts artifacts --split calibration --decision disabled
+make PYTHON=python3.12 reproduce
+make PYTHON=python3.12 app
 ```
+
+Se `eligible` for maior que zero, não use `--decision disabled`: preencha a rubrica de
+calibração e execute `lock-review --rubric CAMINHO_DA_RUBRICA.csv` antes da segunda
+reprodução. Essa sequência libera a fila somente após uma decisão de recuperação
+congelada; iniciar o app logo após a primeira reprodução mantém a fila indisponível.
 
 `make data` é a única etapa normal que exige rede. Depois de baixar os CSVs e reproduzir
 os artefatos, inferência, decisões, exportação e demonstração funcionam localmente sem API,
@@ -177,13 +188,14 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
 
 ## Evidências finais
 
-- [Screenshot sanitizado real](evidence/screenshot.png): fila, abstinência e
-  `audit_id=1` persistido.
-- [Export persistido](evidence/decisions-demo.csv): mesmo `audit_id=1`, ação
-  `escalate`, SHA-256 registrado em [metrics.json](evidence/metrics.json).
-- Reinício real preservou o evento; scorecard e texto livre IT foram observados no
-  navegador. IT classificou `hardware device not starting` como Hardware, com confiança
-  `0,9701` e `auto_route` no threshold `0,55`.
+- [Screenshot sanitizado real](evidence/screenshot.png): Scorecard com o diagnóstico
+  operacional; a imagem não prova persistência nem contém audit ID.
+- [Export persistido](evidence/decisions-demo.csv): evidência pública exclusiva da
+  persistência do `audit_id=1`, ação `escalate`, SHA-256 `5d832e99...357e5b` registrado em
+  [metrics.json](evidence/metrics.json).
+- Scorecard e texto livre IT foram observados no navegador. IT classificou
+  `hardware device not starting` como Hardware, com confiança `0,9701` e `auto_route` no
+  threshold `0,55`.
 - Aprovação/edição permaneceram bloqueadas porque zero consultas eram elegíveis para a
   validação humana opcional. CK-12 fica como evolução futura; nenhum draft ou rating foi
   fabricado, e o escalonamento real persistido demonstra a intervenção humana canônica.

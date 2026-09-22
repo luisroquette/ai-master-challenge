@@ -1146,3 +1146,23 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   declarado verde; essa decisão permanece visível, sem ocultar gate ou simular execução.
 - **Resultado:** os cinco checkboxes do DoD foram marcados `[X]`. A task permanece em
   `in-progress`; movimentação para `done`, PR ou publicação não fazem parte deste checkpoint.
+
+## I66 — Redundância Necessária R1: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `1 High / 2 Medium`; streak reiniciado em
+  `0/2`. O High era a contradição entre o bypass explícito do owner e CK-20 ainda tratar
+  preflight terminal verde como bloqueador. Os Medium eram setup incompleto para clone
+  limpo e legenda da screenshot atribuindo persistência que ela não mostra.
+- **Decisão do owner preservada:** o preflight terminal foi pulado por instrução explícita.
+  A task agora exige integridade documental: registrar `não executado/não verde`, sem
+  transformar resultados de outro SHA em aprovação. O DoD permanece `[X]` porque o
+  briefing canônico não exige esse preflight e a decisão não foi ocultada.
+- **Setup corrigido:** clone limpo executa setup/dados/doctor, primeira reprodução,
+  `prepare-review`; quando `eligible=0`, congela `lock-review --decision disabled`, repete
+  `make reproduce` e só então abre `make app`. Com elegíveis, usa rubrica real em vez do
+  lock disabled.
+- **Evidência corrigida:** a screenshot é identificada somente como Scorecard. Persistência
+  e `audit_id=1` são sustentados exclusivamente por `decisions-demo.csv` e seu SHA-256
+  `5d832e99...357e5b` registrado em metrics. Nenhuma captura ou evidência foi recriada.
+- **Próximo critério:** executar nova rodada completa de Redundância. Esta correção encerra
+  R1 em `0/2`; somente duas rodadas limpas consecutivas fecham a etapa.
