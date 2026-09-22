@@ -657,7 +657,7 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(first_id, equivalent["dimensions"]["platform"][0]["evidence_id"])
         self.assertNotEqual(first_id, changed["dimensions"]["platform"][0]["evidence_id"])
         self.assertEqual(first["scope"]["method_version"], METHOD_VERSION)
-        self.assertEqual(METHOD_VERSION, "2.3.0")
+        self.assertEqual(METHOD_VERSION, "2.4.0")
 
     def test_insufficiency_diagnostics_and_source_rate_warning_are_preserved(self):
         frame = frame_with_target(make_cohort(4, 6, [4]), 20)

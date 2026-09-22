@@ -23,8 +23,8 @@ from typing import Any
 import pandas as pd
 
 
-METHOD_VERSION = "2.3.0"
-HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0", "2.2.0")
+METHOD_VERSION = "2.4.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0", "2.2.0", "2.3.0")
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
 MIN_OPERATIONAL_DATE = pd.Timestamp("1971-01-01T00:00:00")
@@ -939,6 +939,17 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
     targets = filtered_frame.loc[
         (filtered_frame["post_date"] >= start) & (filtered_frame["post_date"] < end_exclusive)
     ]
+    has_observations = not targets.empty
+    analysis_state = {
+        "status": "ready" if has_observations else "empty_scope",
+        "has_observations": has_observations,
+        "reason": None if has_observations else "no_matching_records",
+        "message": (
+            None
+            if has_observations
+            else "Nenhum registro corresponde aos filtros/período selecionados. Ajuste o recorte para continuar."
+        ),
+    }
     coverage_frame = filtered_frame if len(filtered_frame) else frame
     frequency_coverage_start = max(start.normalize(), min(coverage_frame["post_date"]).normalize())
     frequency_coverage_end = min(
@@ -1244,11 +1255,18 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
 
     pending = [] if recommendations else [{
         "evidence_id": _stable_id(
-            "pending", source_hash, {"scope": scope_identity, "statistic": "eligibility_abstention"}
+            "pending", source_hash, {
+                "scope": scope_identity,
+                "statistic": "no_matching_records" if not has_observations else "eligibility_abstention",
+            }
         ),
-        "action_type": "collect",
-        "action": ACTION_TEXT["collect"],
-        "reason": "no_eligible_performance_evidence",
+        "action_type": "adjust_scope" if not has_observations else "collect",
+        "action": (
+            "Ajustar filtros ou período; nenhum registro corresponde ao recorte selecionado"
+            if not has_observations
+            else ACTION_TEXT["collect"]
+        ),
+        "reason": "no_matching_records" if not has_observations else "no_eligible_performance_evidence",
     }]
     return {
         "source": {
@@ -1263,6 +1281,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             **scope_identity,
             "target_end": (end_exclusive - timedelta(days=1)).normalize().isoformat(),
         },
+        "analysis_state": analysis_state,
         "quality": {
             "optional_columns_missing": sorted(set(OPTIONAL_COLUMNS) - set(frame.columns)),
             "ignored_source_engagement_rate": "engagement_rate" in frame.columns,
@@ -1401,13 +1420,23 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
         yield exported
         yield from chunks
 
-    yield from analytical_row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
+    state = result.get("analysis_state", {})
+    has_observations = bool(state.get("has_observations", result.get("metrics", {}).get("posts", 0) > 0))
+    yield from analytical_row(
+        "summary",
+        metric_name="posts" if has_observations else "analysis_state",
+        metric_value=result.get("metrics", {}).get("posts") if has_observations else None,
+        unit="posts" if has_observations else "",
+        text="Escopo analisado" if has_observations else state.get("message", "Nenhum registro corresponde ao recorte."),
+        statistics=state,
+    )
     summary_id = _stable_id("summary", str(source_hash), scope)
     evidence: list[dict[str, object]] = [{
         "evidence_id": summary_id,
         "dimension": "overall",
         "value": "Escopo completo",
         **result.get("metrics", {}),
+        "analysis_state": state,
         "source_row_ids": result.get("target_source_row_ids", []),
     }]
     for items in result.get("dimensions", {}).values():
@@ -1552,6 +1581,13 @@ RECENCY_NOTE = (
 )
 
 
+def _delta_text(item: dict[str, object], precision: int) -> str:
+    delta = item.get("delta_erv_pp")
+    if delta is None:
+        return "ΔERv não definido — sem comparador elegível"
+    return f"ΔERv {float(delta):+.{precision}g} p.p."
+
+
 def _recommendation_text(item: dict[str, object]) -> str:
     context = " / ".join(str(value) for value in item.get("context", {}).values())
     components = item.get("priority_components", {})
@@ -1573,7 +1609,7 @@ def _recommendation_text(item: dict[str, object]) -> str:
         f"{context}: {item.get('action', item.get('reason', 'Coletar evidência'))}. "
         f"Prioridade {item.get('priority', 0):.6g}; impacto {components.get('impact', 0):.6g}; "
         f"força {components.get('strength', 0):.6g}; atualidade {components.get('recency', 0):.6g}; "
-        f"ΔERv {item.get('delta_erv_pp', 0):+.6g} p.p.; data representativa {item.get('representative_date', 'não definida')}. "
+        f"{_delta_text(item, 6)}; data representativa {item.get('representative_date', 'não definida')}. "
         f"Responsável: {item.get('owner', 'Gestor de Social Media')}; execução: {item.get('execution_window', 'coletar primeiro')}; "
         f"revisão: {item.get('review_window', 'após coleta')}; métrica: {item.get('metric', 'amostra comparável')}. "
         f"Evidência: {item.get('evidence_id', '')}{frequency_text}"
@@ -1596,15 +1632,24 @@ def _scope_text(result: dict[str, object]) -> str:
                     f"{_short(scope.get('requested_start', 'não informada'), 35)} a "
                     f"{_short(scope.get('requested_end', 'não informada'), 35)}; "
                     f"cobertura temporal {coverage}. ")
+    state = result.get("analysis_state", {})
+    target_text = (
+        f"{result.get('metrics', {}).get('posts', 0)} posts-alvo de {source.get('rows', 0)} linhas na fonte."
+        if state.get("has_observations", result.get("metrics", {}).get("posts", 0) > 0)
+        else f"{state.get('message', 'Nenhum registro corresponde ao recorte.')} A fonte preserva {source.get('rows', 0)} linhas."
+    )
     return (f"{temporal}Método {scope.get('method_version', METHOD_VERSION)}. Escopo efetivo: "
             f"{scope.get('target_start', 'não informado')} a {scope.get('target_end', 'não informado')}; "
             f"referência {scope.get('reference_date', 'não informada')}; "
             f"filtros {json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True)}. "
-            f"{result.get('metrics', {}).get('posts', 0)} posts-alvo de {source.get('rows', 0)} linhas na fonte.")
+            f"{target_text}")
 
 
 def _coverage_text(result: dict[str, object]) -> str:
     sponsorship, quality = result.get("sponsorship", {}), result.get("quality", {})
+    state = result.get("analysis_state", {})
+    if not state.get("has_observations", result.get("metrics", {}).get("posts", 0) > 0):
+        return "Cobertura analítica não definida: o recorte não contém observações; ajuste filtros ou período."
     diagnostics = quality.get("benchmark_diagnostics", [])
     missing = sum(int(item.get("target_count", 0)) for item in diagnostics)
     return (f"Cobertura parcial: patrocínio {100 * sponsorship.get('coverage', 0):.3g}% dos posts, "
@@ -1655,7 +1700,7 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
         cadence = item.get("frequency_hypothesis", {})
         compact = (f"{context}: {_short(item.get('action', item.get('reason', 'Coletar evidência')), 180)}. "
                    f"Prioridade {item.get('priority', 0):.6g}; força {item.get('priority_components', {}).get('strength', 0):.3g}; "
-                   f"ΔERv {item.get('delta_erv_pp', 0):+.4g} p.p. Responsável {_short(item.get('owner', 'Gestor'), 45)}; "
+                   f"{_delta_text(item, 4)}. Responsável {_short(item.get('owner', 'Gestor'), 45)}; "
                    f"execução {_short(item.get('execution_window', 'coletar'), 45)}; revisão {_short(item.get('review_window', 'após coleta'), 45)}. "
                    f"Cadência observacional: {_short(cadence.get('value', 'N/A'), 20)} posts/creator/semana; estado {_short(cadence.get('status', 'collect'), 20)}. "
                    f"Evidência {_short(item.get('evidence_id', ''), 60)}.")
@@ -1666,7 +1711,13 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
     )
     decisions_html = "".join(f"<li>{html.escape(line)}</li>" for line in _decision_lines(result, decisions))
     warnings = " ".join(_short(item.get("message", ""), 160) for item in result.get("quality", {}).get("warnings", [])[:2])
-    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+    state = result.get("analysis_state", {})
+    if state.get("has_observations", metrics.get("posts", 0) > 0):
+        kpis = (f"<b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b>"
+                f"<b>{int(metrics.get('interactions', 0))} interações</b>")
+    else:
+        kpis = f"<b>{html.escape(str(state.get('message', 'Nenhum registro corresponde ao recorte.')))}</b>"
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\">{kpis}</div><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
 
 
 def analysis_report(result: dict[str, object], decisions: list[dict[str, object]] | None = None) -> str:
@@ -1675,12 +1726,28 @@ def analysis_report(result: dict[str, object], decisions: list[dict[str, object]
     summary_id = _stable_id("summary", str(source["source_hash"]), scope)
     sponsorship = result.get("sponsorship", {})
     overview_id = sponsorship.get("evidence_id", "")
+    state = result.get("analysis_state", {})
 
     def text(value: object) -> str:
         return html.escape(str(value)).replace("|", "\\|").replace("\n", " ").replace("\r", " ")
 
     def number(value: object) -> str:
         return "não definida" if value is None else f"{float(value):.6g}"
+
+    if state.get("has_observations", metrics.get("posts", 0) > 0):
+        performance_summary = (
+            f"{metrics.get('posts', 0)} posts; {metrics.get('creators', 0)} creators; "
+            f"{metrics.get('views', 0)} views; {metrics.get('interactions', 0)} interações. "
+            f"Mediana ERv: {number(metrics.get('median_erv'))}{'%' if metrics.get('median_erv') is not None else ''}; "
+            f"ERv ponderado: {number(metrics.get('weighted_erv'))}{'%' if metrics.get('weighted_erv') is not None else ''}. "
+            f"Proporção de posts com zero interação: {number(metrics.get('zero_interaction_share'))}; "
+            f"taxas indefinidas: {metrics.get('undefined_rates', 0)}. Evidência: `{summary_id}`."
+        )
+    else:
+        performance_summary = (
+            f"{state.get('message', 'Nenhum registro corresponde ao recorte.')} "
+            f"Métricas de performance não definidas para este recorte. Evidência: `{summary_id}`."
+        )
 
     lines = ["# Estratégia Social Media — Challenge 004", "", "## Decisão para segunda-feira", "",
              "Fila única: o top 3 abaixo vem de `result[recommendations]`, na mesma ordem do HTML e do início do CSV; "
@@ -1696,12 +1763,7 @@ def analysis_report(result: dict[str, object], decisions: list[dict[str, object]
               *[text(item.get("message", "")) for item in result.get("quality", {}).get("warnings", [])], "",
               "### Decisões recentes desta fonte", "",
               *[f"- {text(line)}" for line in _decision_lines(result, decisions or [])], "",
-              f"{metrics.get('posts', 0)} posts; {metrics.get('creators', 0)} creators; "
-              f"{metrics.get('views', 0)} views; {metrics.get('interactions', 0)} interações. "
-              f"Mediana ERv: {number(metrics.get('median_erv'))}{'%' if metrics.get('median_erv') is not None else ''}; "
-              f"ERv ponderado: {number(metrics.get('weighted_erv'))}{'%' if metrics.get('weighted_erv') is not None else ''}. "
-              f"Proporção de posts com zero interação: {number(metrics.get('zero_interaction_share'))}; "
-              f"taxas indefinidas: {metrics.get('undefined_rates', 0)}. Evidência: `{summary_id}`.", "",
+              performance_summary, "",
               "ERv = 100 × (likes + shares + comments_count) / views; views=0 deixa a taxa indefinida e preserva volume. "
               "A mediana usa taxas por post; a taxa ponderada usa totais apenas onde views>0. "
               "Views não são alcance único; interações não são pessoas únicas.", "",

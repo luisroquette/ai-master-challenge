@@ -11,7 +11,8 @@ from pathlib import Path
 from contextlib import closing
 
 from analysis import METHOD_VERSION, executive_summary, export_evidence, analysis_report, analyze, load_csv
-from tests.helpers import csv_bytes, make_post, default_scope, sponsorship_frequency_rows
+from tests.helpers import (aggregate_effect_rows, csv_bytes, default_scope,
+                           frame_from_rows, make_post, sponsorship_frequency_rows)
 from storage import connect, list_decisions, record_decision, record_import, record_outcome
 from tests.test_storage import decision_event, import_event, outcome_event
 
@@ -167,6 +168,77 @@ class ExportTests(unittest.TestCase):
             for row in dimensions:
                 self.assertEqual(row["metric_name"], "median_erv")
                 self.assertEqual(row["metric_value"], "" if views == 0 else "0.0")
+
+    def test_empty_filter_intersection_and_time_window_have_explicit_shared_state(self):
+        frame = frame_from_rows([
+            make_post(id="instagram-tech", content_id="instagram-tech"),
+            make_post(id="tiktok-beauty", content_id="tiktok-beauty", platform="TikTok", content_category="beauty"),
+        ])
+        source_hash = str(frame["source_hash"].iloc[0])
+        scopes = (
+            default_scope(filters={"platform": ["Instagram"], "content_category": ["beauty"]}),
+            default_scope(target_start="2025-02-01", target_end="2025-02-01", reference_date="2025-02-01"),
+        )
+        for scope in scopes:
+            with self.subTest(scope=scope):
+                result = analyze(frame, scope, source_hash)
+                expected = {
+                    "status": "empty_scope",
+                    "has_observations": False,
+                    "reason": "no_matching_records",
+                    "message": "Nenhum registro corresponde aos filtros/período selecionados. Ajuste o recorte para continuar.",
+                }
+                self.assertEqual(result["analysis_state"], expected)
+                self.assertEqual(result["metrics"]["posts"], 0)
+                self.assertEqual(result["source"]["rows"], 2)
+                self.assertEqual(result["target_source_row_ids"], [])
+                self.assertEqual(result["pending"][0]["action_type"], "adjust_scope")
+                self.assertEqual(result["pending"][0]["reason"], "no_matching_records")
+
+                page, report = executive_summary(result, []), analysis_report(result)
+                for output in (page, report):
+                    self.assertIn(expected["message"], output)
+                    self.assertIn("ΔERv não definido — sem comparador elegível", output)
+                    self.assertNotIn("ΔERv +0", output)
+                self.assertNotIn("<b>0 posts</b>", page)
+                self.assertNotIn("0 posts; 0 creators; 0 views; 0 interações", report)
+
+                rows = parse_export(export_evidence(result, []))
+                summary = next(row for row in rows if row["record_type"] == "summary")
+                self.assertEqual(summary["metric_name"], "analysis_state")
+                self.assertEqual(summary["metric_value"], "")
+                self.assertEqual(summary["unit"], "")
+                self.assertEqual(json.loads(summary["statistics"]), expected)
+
+        observed_zero = frame_from_rows([
+            make_post(id="observed-zero", content_id="observed-zero", likes=0, shares=0, comments_count=0),
+        ])
+        measured = analyze(observed_zero, default_scope(), str(observed_zero["source_hash"].iloc[0]))
+        self.assertEqual(measured["analysis_state"], {
+            "status": "ready", "has_observations": True, "reason": None, "message": None,
+        })
+        self.assertIn("<b>0 interações</b>", executive_summary(measured, []))
+        summary = next(row for row in parse_export(export_evidence(measured, [])) if row["record_type"] == "summary")
+        self.assertEqual((summary["metric_name"], summary["metric_value"], summary["unit"]), ("posts", "1", "posts"))
+
+    def test_missing_delta_and_legitimate_zero_remain_distinct_in_reports(self):
+        sparse = frame_from_rows([make_post()])
+        pending = analyze(sparse, default_scope(), str(sparse["source_hash"].iloc[0]))
+        self.assertNotIn("delta_erv_pp", pending["pending"][0])
+        for output in (executive_summary(pending, []), analysis_report(pending)):
+            self.assertIn("ΔERv não definido — sem comparador elegível", output)
+            self.assertNotIn("ΔERv +0", output)
+
+        equal_effect = aggregate_effect_rows(before_interactions=4, current_interactions=4)
+        compared = analyze(
+            equal_effect,
+            default_scope(target_start="2025-01-08", target_end="2025-01-14", reference_date="2025-01-14"),
+            "hash",
+        )
+        zero = next(item for item in compared["recommendations"] if item["delta_erv_pp"] == 0)
+        self.assertEqual(zero["action_type"], "test")
+        for output in (executive_summary(compared, []), analysis_report(compared)):
+            self.assertIn("ΔERv +0 p.p.", output)
 
     def test_large_reference_export_round_trips_with_default_csv_limit(self):
         result = sample_result()
