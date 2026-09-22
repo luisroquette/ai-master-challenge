@@ -1,22 +1,22 @@
 # Social Media Decision Cockpit Implementation Plan
 
-## Adendo de status da implementação — 22/09/2026
-
-- Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original.
-- A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento; a barreira final `export_field` cobre qualquer célula extensa antes de `analysis_field` e `history_field`.
-- Gate vigente após a correção da Passada 7: **122/122 testes** com warnings como erro. `METHOD_VERSION = "2.4.0"`; `1.0.0`–`2.3.0` são legíveis, porém incompatíveis para nova comparação automática. O CSV contém seis recomendações e 6.703 registros. Artefatos publicados: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` SHA-256 `a1a1692f3e448169b612a83d2006657173feb26eced0eecf592138d2414d6dbc` e HTML reproduzido SHA-256 `40e7d9ea711c630512c6a48fcfc4aba13cb0a0734b3f0e6b6f064a12027fca77`.
-- A Passada 6 foi limpa (**1/2**); a Passada 7 encontrou dois defeitos e reiniciou o contador em **0/2**. `analysis_state` agora separa `ready`/`empty_scope`: um recorte vazio preserva fonte, filtros e histórico, mas oculta KPIs/prioridades/downloads. Delta ausente permanece indefinido e zero é reservado a comparação medida. Replay retrospectivo é sempre rotulado **SIMULAÇÃO**; futuro permanece `pending / observation_in_future`.
-- A implementação local foi autorizada e executada após a revisão humana registrada no diário. **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
-
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a local Streamlit cockpit that turns the Challenge 004 CSV into reproducible analysis, explainable recommendations, durable human decisions and auditable exports.
+**Goal:** Elevar para pelo menos `9,5/10` a capacidade média do cockpit de responder às três perguntas do Head de Marketing, acrescentando profundidade multivariada, decisão financeira condicional e estratégia executável de 30 dias sem inventar causalidade ou ROI.
 
-**Architecture:** A single local Python process owns the UI and calls pure Pandas analysis functions plus a stdlib SQLite persistence module. Raw CSV bytes remain transient; deterministic result dictionaries are the only input to UI, exports and persisted decision baselines.
+**Architecture:** O processo local existente continua com Streamlit, funções puras Pandas e SQLite padrão. `analysis.py` recebe ranking contextual, cenário financeiro puro e estratégia relativa de 30 dias; o mesmo resultado determinístico alimenta UI e exports. Nenhum serviço, dependência ou segundo motor é criado.
 
 **Tech Stack:** Python 3.14.2, Streamlit 1.64.0, Pandas 2.3.3, stdlib `sqlite3`, `csv`, `hashlib`, `html`, `json`, `unittest`.
 
 **Spec:** [`SPEC.md`](./SPEC.md)
+
+## Adendo de status da implementação — 22/09/2026
+
+- Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original. Tasks 7–11 são o refinamento executivo ainda não implementado.
+- A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento; a barreira final `export_field` cobre qualquer célula extensa antes de `analysis_field` e `history_field`.
+- Último gate completo: **122/122 testes** com warnings como erro. `METHOD_VERSION = "2.4.0"`; o refinamento analítico deverá publicar `2.5.0`. O CSV contém seis recomendações e 6.703 registros. Artefatos correntes: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` SHA-256 `41ab16f88839869bb7693778e4e1f72d54d1815c66ef30ceb5c31e19bc109084` e HTML reproduzido SHA-256 `6e0c84ab59cae9318384113f7cd490eb9e48153c1f06ec4b427bc5248ec3f90d`.
+- O gate executivo anterior atingiu 15/15 em cobertura estrutural. O novo gate adiciona sustentação multivariada, estabilidade, decisão operacional e estratégia executável; não reutiliza 15/15 como prova automática de nota `≥9,5`.
+- **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
 
 ## Global Constraints
 
@@ -24,6 +24,9 @@
 - Use exactly `streamlit==1.64.0` and `pandas==2.3.3`; add no runtime dependency unless a measured blocker is recorded in the diary.
 - Derive `ERv = 100 × (likes + shares + comments_count) / views`; never treat `engagement_rate` as a source column.
 - Keep sponsorship claims observational; never invent ROI, unique reach, causality, audience percentages or content-duration units.
+- Keep observed evidence and manually entered financial scenarios separate in data structures, labels, exports and persistence; a scenario never becomes historical evidence.
+- A contextual winner requires the exact sample, stability, materiality and strength gates in the SPEC; absence of a winner is a valid definitive answer.
+- Preserve the current mix outside explicit tests; the 30-day strategy is a decision program and never schedules, publishes, hires or spends automatically.
 - Bind Streamlit to `127.0.0.1`; use no account, cloud service, external API, LLM call, automatic publication or investment action.
 - Persist metadata, baselines, decisions and outcomes only; never persist raw CSV rows, descriptions, comments, URLs or secrets.
 - An invalid import fails atomically with `{row, column, problem, expected}` diagnostics and leaves the previous valid analysis active.
@@ -36,17 +39,22 @@
 - Sponsored and organic cohorts with different composition must remain stratified and show uncovered groups; pinned in Task 2.
 - Streamlit reruns must not duplicate a decision or display success after a failed transaction; pinned in Tasks 4 and 5.
 - A later 30-day snapshot must not look better than a 7-day baseline because of raw volume alone; pinned in Task 4.
+- A large but unstable multivariate delta must not become a winner; pinned in Task 7 with alternating monthly signs and concentrated creators.
+- A tiny stable delta below practical materiality must remain “sem vencedor sustentado”; pinned in Task 7.
+- Financial inputs with missing/negative values, zero conversion value or rates outside `[0,1]` must abstain without mutating evidence; pinned in Task 8.
+- Filters and Streamlit reruns must not change the full-history executive ranking or duplicate its 30-day plan; pinned in Task 10.
+- HTML/Markdown/CSV must agree on verdict, strength, coverage and decision-change trigger while escaping adversarial labels; pinned in Tasks 9–10.
 
 ## File Map
 
 | Path | Responsibility |
 |---|---|
-| `analysis.py` | CSV boundary, formulas, cohorts, alerts, sponsorship, recommendations, exports and CLI. No Streamlit or SQLite imports. |
+| `analysis.py` | CSV boundary, formulas, cohorts, multivariate driver ranking, sponsorship/scenario math, 30-day strategy, recommendations, exports and CLI. No Streamlit or SQLite imports. |
 | `storage.py` | SQLite schema, idempotent import/decision/outcome writes and durable reads. No Pandas or Streamlit imports. |
 | `app.py` | Streamlit composition only: upload, filters, drill-down, decision forms, history and downloads. |
 | `requirements.txt` | Two direct runtime pins: Streamlit and Pandas. |
 | `tests/helpers.py` | Small deterministic DataFrame/CSV builders shared by tests. |
-| `tests/test_analysis.py` | Validation, metrics, benchmarks, sponsorship, recommendation and priority contracts. |
+| `tests/test_analysis.py` | Validation, metrics, benchmarks, contextual drivers, sponsorship/scenario math, 30-day strategy, recommendation and priority contracts. |
 | `tests/test_exports.py` | HTML/CSV safety, consistency and CLI contracts. |
 | `tests/test_storage.py` | Schema, transactions, idempotency, revisions and temporal comparison contracts. |
 | `tests/test_app.py` | Streamlit `AppTest` smoke and state/error behavior. |
@@ -65,6 +73,10 @@
 | CK-08–09 | Task 4 | SQLite transaction, idempotency, revision and temporal-comparison tests. |
 | CK-10 UI portion; CK-11 | Task 5 | Streamlit `AppTest` plus real-browser state and download flow. |
 | HR-01, HR-03–04; all final CK/HR | Task 6 | Timed human scenario, evidence matrix, clean setup and Git-scope audit. |
+| Refinamento: driver multivariado e estabilidade | Task 7 | Contextos orgânicos, pares mensais, materialidade, força e abstenção determinística. |
+| Refinamento: decisão financeira condicional | Task 8 | Fórmulas puras, validação de premissas e prova de não persistência. |
+| Refinamento: respostas e estratégia executiva | Tasks 9–10 | Três respostas completas, quatro semanas e paridade entre UI/HTML/Markdown/CSV. |
+| Refinamento: gate interno ≥9,5 | Task 11 | Matriz 15/15, reconciliação independente, medição e nota humana documentada. |
 
 ## Evaluator Coverage
 
@@ -661,3 +673,542 @@ git commit -m "docs(004): prove cockpit acceptance"
 ```
 
 Stop after the local handoff. Push, PR, merge and deployment require separate authorization and their own current gates.
+
+---
+
+## Refinamento executivo ≥9,5 — Tasks 7–11
+
+As tarefas abaixo são incrementais e começam somente após as Tasks 1–6 já concluídas. Ordem obrigatória: `Task 7 → Task 8 → Task 9 → Task 10 → Task 11`. Cada task encerra com teste focal, atualização contemporânea do diário e commit próprio. O preflight pesado continua fora do Mac; antes de PR/merge, executar o gate canônico via `codespace-manager` conforme as regras globais.
+
+Todos os comandos das Tasks 7–11 partem de `submissions/luis-roquette/solution/004-social`, salvo quando o próprio comando trouxer outro caminho explícito.
+
+### Task 7: Rankear drivers multivariados estáveis
+
+**Estimated active time:** 55 minutes.
+
+**Files:**
+- Modify: `submissions/luis-roquette/solution/004-social/analysis.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/helpers.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_analysis.py`
+- Modify: `submissions/luis-roquette/process-log/004-social.md`
+
+**Interfaces:**
+- Consumes: o DataFrame derivado dentro de `analyze`, limitado a posts orgânicos com `erv` definida, mais `source_hash` e `scope_identity`.
+- Produces: `_engagement_drivers(targets: pd.DataFrame, source_hash: str, scope: dict[str, object]) -> dict[str, object]` e `result["engagement_drivers"]` com `evidence_id`, `materiality_threshold_pp`, `contexts`, `leader`, `laggard`, `runner_up`, `verdict` e `change_trigger`.
+- Preserves: `_dimensions`, alertas e fila existentes continuam disponíveis; nenhuma média marginal vira prova causal.
+
+- [ ] **Step 1: Criar fixtures mensais determinísticas**
+
+Adicionar a `tests/helpers.py`:
+
+```python
+def driver_rows(month_deltas: list[float], *, concentrated: bool = False) -> list[dict[str, object]]:
+    """Cria alvo texto/tech e pares vídeo/tech na mesma plataforma/faixa/mês."""
+    # 30 posts e cinco creators por braço/mês; meses alternam dois grupos para somar dez creators.
+    # views=10_000 permite deltas inteiros precisos.
+
+def default_scope_all_history(rows: list[dict[str, object]]) -> dict[str, object]:
+    dates = [str(row["post_date"]) for row in rows]
+    return {"target_start": min(dates), "target_end": max(dates),
+            "reference_date": max(dates), "filters": {}, "include_post_alerts": False}
+```
+
+A fixture usa creators `target-a-0..4`/`target-b-0..4` e `peer-a-0..4`/`peer-b-0..4`, alternando `a` e `b` por mês, para satisfazer cinco creators em cada braço mensal e dez no contexto completo. Ela deve permitir três casos: sinal positivo estável e material; sinais mensais alternados; sinal estável abaixo do limiar prático. Com `concentrated=True`, mantém pelo menos dez creators no conjunto e cinco por braço/mês, mas concentra pelo menos 78 dos 90 posts elegíveis em um creator para reduzir somente o fator de concentração.
+
+- [ ] **Step 2: Escrever os testes vermelhos do contrato**
+
+Adicionar a `test_analysis.py`:
+
+```python
+def test_driver_ranking_requires_multivariate_peers_and_three_eligible_months(self):
+    rows = driver_rows([1.0, 1.2, 0.8])
+    result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+    leader = result["engagement_drivers"]["leader"]
+    self.assertEqual(leader["context"], {
+        "platform": "Instagram", "content_type": "text",
+        "content_category": "tech", "follower_band": "10,000–49,999",
+    })
+    self.assertEqual(leader["eligible_months"], 3)
+    self.assertGreaterEqual(leader["stability"], 2 / 3)
+    self.assertEqual(set(leader["volume_guard"]), {
+        "target_median_views", "peer_median_views", "delta_views",
+        "target_median_interactions", "peer_median_interactions", "delta_interactions",
+        "status",
+    })
+    self.assertEqual(result["engagement_drivers"]["laggard"]["context"]["content_type"], "video")
+
+def test_driver_ranking_abstains_for_unstable_or_immaterial_effect(self):
+    for deltas in ([1.0, -1.0, 1.0, -1.0], [0.01, 0.02, 0.01]):
+        rows = driver_rows(list(deltas))
+        ranking = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")["engagement_drivers"]
+        self.assertIsNone(ranking["leader"])
+        self.assertEqual(ranking["verdict"], "no_sustained_winner")
+
+def test_driver_strength_penalizes_creator_concentration(self):
+    balanced_rows = driver_rows([1, 1, 1])
+    concentrated_rows = driver_rows([1, 1, 1], concentrated=True)
+    balanced = analyze(frame_from_rows(balanced_rows), default_scope_all_history(balanced_rows), "hash")
+    concentrated = analyze(frame_from_rows(concentrated_rows), default_scope_all_history(concentrated_rows), "hash")
+    self.assertGreater(balanced["engagement_drivers"]["contexts"][0]["strength"],
+                       concentrated["engagement_drivers"]["contexts"][0]["strength"])
+
+def test_driver_ranking_is_stable_under_row_shuffle_and_exact_tie(self):
+    rows = driver_rows([1, 1, 1])
+    tied = duplicate_driver_context(rows, platform="TikTok")
+    first = analyze(frame_from_rows(rows + tied), default_scope_all_history(rows + tied), "hash")
+    shuffled = list(reversed(rows + tied))
+    second = analyze(frame_from_rows(shuffled), default_scope_all_history(shuffled), "hash")
+    self.assertEqual(first["engagement_drivers"], second["engagement_drivers"])
+```
+
+`duplicate_driver_context` copia alvo e par com IDs/creators exclusivos e troca a plataforma, preservando deltas, volumes e datas; assim, os conjuntos comparáveis permanecem isolados e o desempate final depende apenas de `context_signature`, não da ordem das linhas.
+
+- [ ] **Step 3: Executar os testes e confirmar o vermelho correto**
+
+Run:
+
+```bash
+uv run --with-requirements requirements.txt python -m unittest \
+  tests.test_analysis.ContextEvidenceTests.test_driver_ranking_requires_multivariate_peers_and_three_eligible_months \
+  tests.test_analysis.ContextEvidenceTests.test_driver_ranking_abstains_for_unstable_or_immaterial_effect \
+  tests.test_analysis.ContextEvidenceTests.test_driver_strength_penalizes_creator_concentration \
+  tests.test_analysis.ContextEvidenceTests.test_driver_ranking_is_stable_under_row_shuffle_and_exact_tie
+```
+
+Expected: FAIL porque `engagement_drivers` e `driver_rows` ainda não existem; nenhuma falha de parsing da fixture.
+
+- [ ] **Step 4: Implementar o ranking mínimo no motor existente**
+
+Implementar em `analysis.py` sem nova classe/dependência:
+
+```python
+DRIVER_KEYS = ("platform", "content_type", "content_category", "follower_band")
+organic = targets.loc[(~targets["is_sponsored"]) & targets["erv"].notna()]
+global_iqr = float(organic["erv"].quantile(.75) - organic["erv"].quantile(.25)) if len(organic) else 0.0
+materiality = max(0.10, 0.25 * global_iqr)
+monthly_delta = float(target_month["erv"].median() - peer_month["erv"].median())
+median_delta = float(pd.Series(monthly_deltas).median())
+same_sign_months = sum((value > 0) == (median_delta > 0) for value in monthly_deltas if value != 0)
+stability = same_sign_months / len(monthly_deltas)
+strength = min(_strength(context_rows)[0], _strength(peer_rows)[0])
+eligible = len(monthly_deltas) >= 3 and len(context_rows) >= 90 and context_rows["creator_id"].nunique() >= 10
+is_leader = eligible and median_delta >= materiality and stability >= 2 / 3 and strength >= 0.40
+is_laggard = eligible and median_delta <= -materiality and stability >= 2 / 3 and strength >= 0.40
+```
+
+Para cada mês, `target_month` contém o contexto completo; `peer_month` contém outros formatos/categorias da mesma plataforma/faixa/mês e exclui os IDs do alvo. Cada braço precisa de 30 taxas e cinco creators. `context_rows` e `peer_rows` concatenam somente os braços dos meses elegíveis; a força reutiliza `_strength` e toma o menor braço, sem fórmula paralela. Ordenar candidatos positivos por `is_leader desc, stability desc, strength desc, median_delta desc, posts desc, context_signature asc`; ordenar negativos separadamente por `is_laggard desc, stability desc, strength desc, median_delta asc, posts desc, context_signature asc`. `runner_up` é o segundo positivo elegível, mesmo quando não há vencedor; `laggard` só existe quando passa os gates negativos. Guardar amostras, creators, meses, ERv/volumes de alvo e par, deltas mensais e referências. `volume_guard` compara medianas por post de views e interações: `aligned` quando ambos os deltas são não negativos; `tradeoff` caso contrário. O guard não altera o ranking por ERv, mas aparece obrigatoriamente no veredicto para impedir que taxa maior seja comunicada como maior alcance absoluto.
+
+- [ ] **Step 5: Integrar ao resultado e versionar o método**
+
+Adicionar `"engagement_drivers": _engagement_drivers(...)` ao retorno de `analyze`. Alterar `METHOD_VERSION` para `2.5.0` e acrescentar `2.4.0` a `HISTORICAL_METHOD_VERSIONS`; comparações automáticas de outcomes entre 2.4.0 e 2.5.0 continuam bloqueadas.
+
+- [ ] **Step 6: Rodar regressões focais e commit**
+
+Run:
+
+```bash
+uv run --with-requirements requirements.txt python -m unittest \
+  tests.test_analysis.ContextEvidenceTests \
+  tests.test_reconstruction.ReconstructionTests
+python3 -m py_compile analysis.py
+git diff --check
+```
+
+Expected: verde; resultados antigos continuam determinísticos sob 2.5.0 e os novos contextos não removem alertas/dimensões.
+
+```bash
+git add -u -- analysis.py tests/helpers.py tests/test_analysis.py ../../process-log/004-social.md
+git commit -m "feat(004): rank stable engagement drivers"
+```
+
+### Task 8: Calcular decisão financeira condicional sem inventar ROI
+
+**Estimated active time:** 35 minutes.
+
+**Files:**
+- Modify: `submissions/luis-roquette/solution/004-social/analysis.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/helpers.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_analysis.py`
+- Modify: `submissions/luis-roquette/process-log/004-social.md`
+
+**Interfaces:**
+- Consumes: um estrato elegível escolhido explicitamente de `result["sponsorship"]["strata"]` e cinco entradas manuais não negativas.
+- Produces: `sponsorship_break_even(evidence: dict[str, object], assumptions: dict[str, float]) -> dict[str, object]` com `status`, `incremental_conversion_rate`, `incremental_conversions`, `incremental_value`, `max_sponsorship_cost`, `required_uplift_pp`, `missing` e `limitations`.
+- Does not: alterar `result`, persistir inputs ou chamar o cálculo de ROI observado.
+
+- [ ] **Step 1: Escrever os testes vermelhos de validação e fórmula**
+
+Adicionar `monthly_sponsorship_rows(months=3)` a `tests/helpers.py`: gerar somente os dois braços do mesmo contexto `YouTube + mixed + finance + 10,000–49,999`, deslocar `post_date` por mês e usar IDs exclusivos. Cada braço/mês conserva 30 taxas e cinco creators; a união usa dez creators por braço para também testar estabilidade sem inflar força por repetição. O braço orgânico tem ERv `4%` e o patrocinado `5%`. Não criar outro formato/categoria orgânico nessa plataforma: a fixture comprova patrocínio sem entrar no universo de pares do ranking de drivers.
+
+```python
+def test_break_even_calculates_thresholds_from_manual_assumptions(self):
+    evidence = {
+        "evidence_id": "sponsorship-test",
+        "context": {"platform": "YouTube", "content_type": "mixed",
+                    "content_category": "finance", "follower_band": "10,000–49,999",
+                    "period_month": "2025-01"},
+        "sponsored": {"median_views_per_post": 10_000},
+    }
+    scenario = sponsorship_break_even(evidence, {
+        "sponsorship_cost": 1_000, "incremental_production_cost": 200,
+        "value_per_conversion": 100, "organic_conversion_rate": .01,
+        "sponsored_conversion_rate": .013,
+    })
+    self.assertEqual(scenario["incremental_conversions"], 30)
+    self.assertEqual(scenario["max_sponsorship_cost"], 2_800)
+    self.assertEqual(scenario["required_uplift_pp"], 0.12)
+    self.assertEqual(scenario["status"], "meets_break_even_scenario")
+
+def test_break_even_abstains_on_missing_or_invalid_inputs(self):
+    invalid = {"sponsorship_cost": -1, "value_per_conversion": 0,
+               "organic_conversion_rate": 0, "sponsored_conversion_rate": 1.01}
+    scenario = sponsorship_break_even({"sponsored": {"median_views_per_post": 0}}, invalid)
+    self.assertEqual(scenario["status"], "invalid_or_missing_assumptions")
+    self.assertTrue(scenario["missing"])
+
+def test_sponsorship_answer_names_best_and_worst_comparable_contexts(self):
+    rows = monthly_sponsorship_rows(3)
+    result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+    answer = executive_answers(result)[1]
+    self.assertIn("melhor contexto comparável", answer["comparison"].lower())
+    self.assertIn("pior contexto comparável", answer["comparison"].lower())
+    self.assertIn("YouTube", answer["comparison"])
+```
+
+- [ ] **Step 2: Confirmar o vermelho**
+
+Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_analysis.ContextEvidenceTests.test_break_even_calculates_thresholds_from_manual_assumptions tests.test_analysis.ContextEvidenceTests.test_break_even_abstains_on_missing_or_invalid_inputs tests.test_analysis.ContextEvidenceTests.test_sponsorship_answer_names_best_and_worst_comparable_contexts`
+
+Expected: FAIL com import/função ausente.
+
+- [ ] **Step 3: Implementar validação e fórmulas puras**
+
+Usar exatamente:
+
+```python
+incremental_rate = sponsored_conversion_rate - organic_conversion_rate
+incremental_conversions = views_per_post * incremental_rate
+incremental_value = incremental_conversions * value_per_conversion
+max_sponsorship_cost = max(0.0, incremental_value - incremental_production_cost)
+required_uplift_pp = 100 * (sponsorship_cost + incremental_production_cost) / (views_per_post * value_per_conversion)
+```
+
+Taxas pertencem a `[0,1]`; custos são `>=0`; `views_per_post` e `value_per_conversion` precisam ser positivos. Status é `meets_break_even_scenario` somente quando o custo informado não supera `max_sponsorship_cost`; caso contrário, `below_break_even_scenario`. Incluir sempre “cenário manual, não ROI observado nem efeito causal”.
+
+Copiar para a saída o `evidence_id` e o contexto do estrato selecionado. Sem estrato elegível selecionado, retornar `invalid_or_missing_assumptions`; nunca misturar a mediana de views de um contexto com taxas digitadas para outro.
+
+- [ ] **Step 4: Provar imutabilidade e commit**
+
+Adicionar asserção de que `deepcopy(evidence)` permanece idêntica e que nenhuma chave de cenário aparece em `export_evidence(result, [])` ou em `decision_baseline` sem ação explícita da UI.
+
+```bash
+uv run --with-requirements requirements.txt python -m unittest \
+  tests.test_analysis.ContextEvidenceTests.test_break_even_calculates_thresholds_from_manual_assumptions \
+  tests.test_analysis.ContextEvidenceTests.test_break_even_abstains_on_missing_or_invalid_inputs \
+  tests.test_decision_evidence
+git diff --check
+git add -u -- analysis.py tests/helpers.py tests/test_analysis.py ../../process-log/004-social.md
+git commit -m "feat(004): add sponsorship break-even scenario"
+```
+
+### Task 9: Produzir estratégia de 30 dias e respostas executivas completas
+
+**Estimated active time:** 50 minutes.
+
+**Files:**
+- Modify: `submissions/luis-roquette/solution/004-social/analysis.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_analysis.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_exports.py`
+- Modify: `submissions/luis-roquette/process-log/004-social.md`
+
+**Interfaces:**
+- Consumes: `result["engagement_drivers"]`, patrocínio, recomendações e hipótese de frequência.
+- Produces: `content_strategy_30d(result: dict[str, object]) -> dict[str, object]` e `executive_answers(result, financial_scenario=None) -> list[dict[str, str]]`.
+- Produces: `executive_summary(result, decisions, financial_scenario=None) -> str`; `analysis_report` continua canônico e não recebe cenário manual.
+- Answer fields: `question`, `verdict`, `kpi`, `comparison`, `sample`, `action`, `strength`, `coverage`, `stability`, `evidence_id`, `change_trigger`.
+
+- [ ] **Step 1: Escrever testes vermelhos para as respostas e quatro semanas**
+
+Em `test_analysis.py`, criar `ExecutiveAnswerTests` e dois helpers locais: `result_with_stable_driver()` analisa `driver_rows([1.0, 1.2, 0.8])`; `result_without_stable_driver()` analisa `driver_rows([1.0, -1.0, 1.0, -1.0])`. Ambos usam `default_scope_all_history` e `source_hash="hash"`.
+
+```python
+def test_executive_answers_use_driver_ranking_and_disclose_decision_trigger(self):
+    answers = executive_answers(result_with_stable_driver())
+    self.assertEqual(len(answers), 3)
+    self.assertTrue(all(set(answer) == {
+        "question", "verdict", "kpi", "comparison", "sample", "action",
+        "strength", "coverage", "stability", "evidence_id", "change_trigger",
+    } for answer in answers))
+    self.assertIn("INSTAGRAM / TEXTO / TECH", answers[0]["verdict"])
+
+def test_strategy_has_four_ordered_weeks_and_no_automatic_scale(self):
+    strategy = content_strategy_30d(result_with_stable_driver())
+    self.assertEqual([item["week"] for item in strategy["weeks"]], [1, 2, 3, 4])
+    self.assertEqual([item["window"] for item in strategy["weeks"]], ["D1–D7", "D8–D14", "D15–D21", "D22–D30"])
+    self.assertTrue(all("cadence" in item for item in strategy["weeks"]))
+    self.assertEqual(strategy["mix_policy"], "preserve_current_mix_outside_tests")
+    self.assertTrue(all(item["owner"] == "Gestor de Social Media" for item in strategy["weeks"]))
+    self.assertFalse(strategy["automatic_publication_or_spend"])
+
+def test_no_stable_driver_yields_explicit_collection_strategy(self):
+    answers = executive_answers(result_without_stable_driver())
+    self.assertIn("NÃO EXISTE VENCEDOR SUSTENTADO", answers[0]["verdict"])
+    self.assertIn("mudaria", answers[0]["change_trigger"].lower())
+```
+
+- [ ] **Step 2: Confirmar o vermelho**
+
+Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_analysis.ExecutiveAnswerTests`
+
+Expected: FAIL porque os campos novos e `content_strategy_30d` ainda não existem.
+
+- [ ] **Step 3: Implementar o programa relativo de quatro semanas**
+
+Retornar esta estrutura mínima:
+
+```python
+driver = result["engagement_drivers"].get("leader")
+context = dict(driver["context"]) if driver else {}
+{
+    "mix_policy": "preserve_current_mix_outside_tests",
+    "context": context,
+    "weeks": [
+        {"week": 1, "window": "D1–D7", "phase": "baseline", "owner": "Gestor de Social Media",
+         "action": "Congelar o contexto e registrar o baseline orgânico comparável",
+         "metric": "ERv mediano, visualizações e interações por post",
+         "cadence": "manter o mix corrente fora do teste",
+         "gate": "30 taxas definidas e cinco creators em alvo e comparador"},
+        {"week": 2, "window": "D8–D14", "phase": "test", "owner": "Gestor de Social Media",
+         "action": "Testar o contexto vencedor sem alterar o mix fora do experimento",
+         "metric": "Delta de ERv contra pares da mesma plataforma e faixa",
+         "cadence": "usar a hipótese observada somente quando seu status for test",
+         "gate": "Efeito acima da materialidade e guards não negativos"},
+        {"week": 3, "window": "D15–D21", "phase": "replicate_or_revise", "owner": "Gestor de Social Media",
+         "action": "Replicar uma vez se o sinal persistir; revisar se divergir",
+         "metric": "Concordância entre duas janelas e concentração por creator",
+         "cadence": "repetir a cadência testada ou coletar sem número inventado",
+         "gate": "Duas janelas concordantes e força sem queda"},
+        {"week": 4, "window": "D22–D30", "phase": "decide", "owner": "Gestor de Social Media",
+         "action": "Escalar como novo teste, manter, revisar ou coletar",
+         "metric": "Confiança, materialidade, visualizações e interações",
+         "cadence": "manter até decisão humana registrada",
+         "gate": "C>=0,70, efeito material e duas janelas concordantes para propor escala"},
+    ],
+    "automatic_publication_or_spend": False,
+}
+```
+
+Semana 4 só permite propor ampliação como novo teste se `C>=0,70`, efeito acima da materialidade, duas janelas concordantes e guards de views/interações não negativos. Caso contrário, manter/revisar/coletar. Usar cadência observada apenas quando seu status for `test`; `collect` não recebe número inventado.
+
+- [ ] **Step 4: Reescrever as três respostas a partir dos novos contratos**
+
+Engajamento usa `engagement_drivers`, não a maior marginal de formato, e declara se views/interações estão alinhadas ou em trade-off. Patrocínio nomeia o melhor e o pior contexto comparável, com seus deltas, amostras e força; continua “não escalar” enquanto a cobertura/força forem insuficientes e, com cenário manual válido, acrescenta o ponto de equilíbrio sem mudar a classificação observacional. Estratégia resume as quatro semanas, incluindo janela e cadência. Cada resposta mostra força heurística, cobertura, estabilidade temporal, `evidence_id` e condição mensurável que mudaria o veredicto. Para patrocínio, agrupar os estratos por `platform + content_type + content_category + follower_band`, excluir `period_month` da chave e calcular, dentro de cada contexto, a mediana dos deltas e a proporção de meses com o mesmo sinal; somente contextos com pelo menos três meses elegíveis entram como estáveis. Melhor/pior contexto e `evidence_id` derivam desses agregados, sem misturar composição entre plataformas. Para estratégia, a estabilidade herda o driver que fundamenta o plano. Ausência de base produz “não mensurável”, nunca zero inventado.
+
+- [ ] **Step 5: Atualizar HTML e Markdown sem recalcular análise**
+
+`executive_summary` e `analysis_report` iteram os onze campos de `executive_answers`; HTML aplica `html.escape` em todos. Inserir a estratégia de quatro semanas antes da fila legada. O relatório vazio mantém três abstenções completas.
+
+Ampliar `_iter_export_rows` com registros `record_type="evidence"`: um por contexto de `engagement_drivers` (`metric_name="driver_context"`) e um por semana (`metric_name="strategy_week"`). Cada registro inclui `evidence_id`, método, fonte, escopo e payload JSON determinístico; nenhum campo do cenário manual entra no CSV.
+
+- [ ] **Step 6: Rodar regressões e commit**
+
+```bash
+uv run --with-requirements requirements.txt python -m unittest \
+  tests.test_analysis.ExecutiveAnswerTests \
+  tests.test_exports.ExportTests \
+  tests.test_reconstruction.ReconstructionTests \
+  tests.test_temporal_export.TemporalExportTests
+python3 -m py_compile analysis.py
+git diff --check
+git add -u -- analysis.py tests/test_analysis.py tests/test_exports.py ../../process-log/004-social.md
+git commit -m "feat(004): build thirty-day content strategy"
+```
+
+### Task 10: Integrar ranking, cenário e plano à dashboard
+
+**Estimated active time:** 45 minutes.
+
+**Files:**
+- Modify: `submissions/luis-roquette/solution/004-social/app.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_app.py`
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_exports.py`
+- Modify: `submissions/luis-roquette/process-log/004-social.md`
+
+**Interfaces:**
+- Consumes: respostas/estratégia do histórico completo já cacheado por `(source_hash, METHOD_VERSION)` e inputs manuais do cenário.
+- Produces: três cards ampliados, tabela “Drivers contextuais”, seção “Estratégia de 30 dias” e expander “Cenário financeiro manual”.
+- Preserves: filtros operacionais não alteram a síntese histórica; input financeiro não entra em SQLite nem no CSV de evidências.
+
+- [ ] **Step 1: Escrever AppTests vermelhos**
+
+Adicionar a `test_app.py` os helpers concretos abaixo. `driver_upload()` reutiliza `driver_rows`; `sponsorship_upload()` serializa `sponsorship_rows()` após remover apenas a coluna derivada que não pertence ao contrato de upload.
+
+Importar `deepcopy` de `copy`; `driver_rows` e `sponsorship_rows` de `tests.helpers`; e `export_evidence` de `analysis`. Não criar wrapper genérico de upload.
+
+```python
+def driver_upload() -> bytes:
+    return csv_bytes(driver_rows([1.0, 1.2, 0.8]))
+
+def sponsorship_upload() -> bytes:
+    rows = sponsorship_rows().drop(columns=["source_row_id"], errors="ignore")
+    return csv_bytes(rows.to_dict(orient="records"))
+```
+
+```python
+def test_dashboard_shows_multivariate_answers_and_four_week_strategy(self):
+    app = self.app()
+    app.file_uploader[0].set_value(("drivers.csv", driver_upload(), "text/csv")).run()
+    text = "\n".join(item.value for item in app.markdown)
+    for expected in ("Força", "Cobertura", "Estabilidade", "Evidência", "O que mudaria a decisão", "Semana 1", "Semana 4"):
+        self.assertIn(expected, text)
+
+def test_financial_scenario_is_manual_ephemeral_and_does_not_change_evidence(self):
+    app = self.app()
+    app.file_uploader[0].set_value(("sponsorship.csv", sponsorship_upload(), "text/csv")).run()
+    before = deepcopy(app.session_state["active_result"])
+    selected = before["sponsorship"]["strata"][0]["evidence_id"]
+    app.selectbox(key="scenario_sponsorship_stratum").set_value(selected)
+    for key, value in {
+        "scenario_sponsorship_cost": 1_000.0,
+        "scenario_production_cost": 200.0,
+        "scenario_value_per_conversion": 100.0,
+        "scenario_organic_rate": 0.01,
+        "scenario_sponsored_rate": 0.013,
+    }.items():
+        app.number_input(key=key).set_value(value)
+    app.button(key="calculate_sponsorship_scenario").click().run()
+    self.assertIn("Cenário manual", "\n".join(item.value for item in app.markdown))
+    self.assertEqual(app.session_state["active_result"], before)
+    self.assertNotIn(b"value_per_conversion", export_evidence(before, []))
+
+def test_operational_filters_do_not_recompute_full_history_answers(self):
+    app = self.app()
+    app.file_uploader[0].set_value(("drivers.csv", driver_upload(), "text/csv")).run()
+    answers = deepcopy(app.session_state["head_answers"])
+    app.multiselect(key="filter_content_category").set_value(["beauty"]).run()
+    self.assertEqual(app.session_state["head_answers"], answers)
+```
+
+- [ ] **Step 2: Confirmar o vermelho**
+
+Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_app.AppTests.test_dashboard_shows_multivariate_answers_and_four_week_strategy tests.test_app.AppTests.test_financial_scenario_is_manual_ephemeral_and_does_not_change_evidence tests.test_app.AppTests.test_operational_filters_do_not_recompute_full_history_answers`
+
+Expected: FAIL somente pela UI/inputs ausentes.
+
+- [ ] **Step 3: Renderizar o ranking e a estratégia com componentes existentes**
+
+Reutilizar CSS/cards, `st.dataframe`, `st.expander` e `st.number_input`; não criar componente ou dependência. A tabela mostra contexto, delta mediano mensal, estabilidade, força, meses, posts e creators. O plano mostra uma linha por semana, ação, métrica e gate.
+
+- [ ] **Step 4: Implementar o cenário manual isolado**
+
+Dentro do expander, selecionar primeiro um estrato elegível pelo `evidence_id` e contexto legível; depois mostrar cinco `number_input` com as chaves usadas no teste (`scenario_sponsorship_cost`, `scenario_production_cost`, `scenario_value_per_conversion`, `scenario_organic_rate`, `scenario_sponsored_rate`) e ajuda explícita. O botão `calculate_sponsorship_scenario` chama `sponsorship_break_even`; assim, custo zero continua válido sem disparar cálculo antes da ação humana. Exibir resultado como “cenário” e passá-lo opcionalmente a `executive_summary`; nunca gravar em `record_decision`, `record_outcome`, cache analítico ou `evidence.csv`. Trocar a fonte, o estrato ou qualquer premissa invalida o cenário anterior na mesma sessão.
+
+- [ ] **Step 5: Validar desktop, 390×844 e acessibilidade básica**
+
+Confirmar primeira viewport com os três veredictos, cards em uma coluna no mobile, foco visível, nenhuma dependência de cor e tabelas utilizáveis por teclado. Capturar somente estados reais e substituir evidência visual apenas se o novo estado for comprovado.
+
+- [ ] **Step 6: Rodar regressões e commit**
+
+```bash
+uv run --with-requirements requirements.txt python -m unittest \
+  tests.test_app.AppTests.test_dashboard_shows_multivariate_answers_and_four_week_strategy \
+  tests.test_app.AppTests.test_financial_scenario_is_manual_ephemeral_and_does_not_change_evidence \
+  tests.test_app.AppTests.test_operational_filters_do_not_recompute_full_history_answers \
+  tests.test_exports.ExportTests.test_executive_html_escapes_input_and_has_no_active_content
+python3 -m py_compile app.py analysis.py
+git diff --check
+git add -u -- app.py tests/test_app.py tests/test_exports.py ../../process-log/004-social.md
+git commit -m "feat(004): expose executive decision program"
+```
+
+### Task 11: Provar o gate global ≥9,5 e regenerar a entrega
+
+**Estimated active time:** 50 minutes plus human evaluation.
+
+**Files:**
+- Modify: `submissions/luis-roquette/solution/004-social/tests/test_acceptance.py`
+- Modify: `submissions/luis-roquette/solution/004-social/analysis.md`
+- Modify: `submissions/luis-roquette/solution/004-social/evidence.csv`
+- Modify: `submissions/luis-roquette/solution/004-social/README.md`
+- Modify: `submissions/luis-roquette/solution/004-social/SPEC.md`
+- Modify: `submissions/luis-roquette/solution/004-social/IMPLEMENTATION-PLAN.md`
+- Modify: `submissions/luis-roquette/process-log/004-social.md`
+- Modify only after real proof: `submissions/luis-roquette/process-log/evidence/004/cockpit-*-proof.png`
+
+**Interfaces:**
+- Consumes: método 2.5.0 completo, CSV real e matriz de avaliação abaixo.
+- Produces: artefatos regenerados, hashes, tempo/memória, matriz 15/15, nota humana e decisão explícita sobre o goal `≥9,5`.
+
+- [ ] **Step 1: Criar a regressão da matriz executiva**
+
+Em `test_acceptance.py`, exigir para cada pergunta os cinco critérios: resposta direta, sustentação multivariada, estabilidade temporal, decisão operacional e estratégia executável. O teste verifica presença/evidência; não atribui nota subjetiva sozinho.
+
+```python
+def test_three_executive_answers_cover_the_fifteen_item_matrix(self):
+    result = result_with_full_executive_evidence()
+    answers = executive_answers(result)
+    self.assertEqual(len(answers), 3)
+    for answer in answers:
+        self.assertTrue(answer["verdict"])                       # resposta direta
+        self.assertTrue(answer["comparison"] and answer["evidence_id"])  # sustentação
+        self.assertTrue(answer["stability"])                     # estabilidade temporal
+        self.assertTrue(answer["action"] and answer["change_trigger"])  # decisão
+    strategy = content_strategy_30d(result)
+    self.assertEqual(len(strategy["weeks"]), 4)                   # execução
+    self.assertTrue(all(item["owner"] and item["gate"] for item in strategy["weeks"]))
+```
+
+`result_with_full_executive_evidence()` analisa a união de `driver_rows([1.0, 1.2, 0.8])` com `monthly_sponsorship_rows(3)`, após prefixar identidades para evitar colisões. Assim, patrocínio usa pelo menos três meses comparáveis e `stability` não passa apenas por texto fixo. Acrescentar também um caso sem meses comparáveis que exige `stability="não mensurável"` e veredicto de não escalar.
+
+Atualizar no mesmo arquivo as provas publicadas existentes: `test_report_answers_the_heads_three_questions_with_kpis_and_actions` passa a exigir os veredictos, KPIs, estabilidade, evidência e ações realmente gerados pelo método 2.5; `test_every_evidence_id_cited_by_report_exists_in_export` amplia o padrão para IDs `driver-*` e `strategy-*`. Não apagar asserções para fazer a suíte passar: substituir apenas expectativas 2.4 comprovadamente obsoletas pelos valores reconciliados no Step 2.
+
+- [ ] **Step 2: Regenerar com o CSV real e reconciliar independentemente**
+
+Run:
+
+```bash
+uv run --with-requirements requirements.txt python analysis.py \
+  /tmp/social-dataset.tEuI48/social_media_dataset.csv \
+  --evidence evidence.csv --summary /tmp/004-social-summary-2.5.html --report analysis.md
+```
+
+Recalcular fora das funções sob teste: líder/abstenção multivariada, limiar prático, meses/sinais, força, cobertura de patrocínio e quatro semanas. Nenhuma divergência numérica é aceita.
+
+Expected: CLI retorna zero; `analysis.md`, `evidence.csv` e HTML compartilham método `2.5.0`, fonte, três veredictos e IDs; a reconciliação independente produz os mesmos deltas, gates e contextos.
+
+- [ ] **Step 3: Medir eficiência no caminho real**
+
+Medir upload + histórico completo até os cards: alvo frio `≤30 s` no Mac de referência; rerun com mesma fonte `≤1 s`; pico de memória sem swap. Se ultrapassar, perfilar primeiro e otimizar somente a causa medida, sem mudar resultado.
+
+Expected: os três limites são registrados com comando, máquina, horário e amostra no diário; qualquer limite excedido mantém a Task 11 aberta.
+
+- [ ] **Step 4: Aplicar a nota global sem autoengano**
+
+Usar cinco dimensões com pesos iguais: clareza, objetividade, eficiência, profundidade e capacidade decisória. O goal só passa com média `≥9,5`, nenhuma dimensão `<9,0`, matriz técnica `15/15` e justificativa textual para cada nota. A IA pode produzir avaliação preliminar; a nota final precisa de leitura humana de Luis ou avaliador designado. Ausência dessa leitura fica `PENDING`, nunca arredondada para sucesso.
+
+- [ ] **Step 5: Executar gates focais locais e gate pesado remoto antes de PR**
+
+No Mac: `py_compile`, `git diff --check` e testes focais afetados. Antes de abrir/atualizar PR, executar:
+
+```bash
+codespace-manager list
+codespace-manager run <nome-parado-limpo-do-mesmo-repo> -- 'python -m pip install -r submissions/luis-roquette/solution/004-social/requirements.txt && PYTHONWARNINGS=error python -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p "test_*.py" -v'
+```
+
+Expected: instalação sem conflito e suíte completa verde no mesmo commit/diff pretendido. Se o semáforo estiver congestionado e Luis mantiver o bypass, registrar a exceção e deixar Actions/Vercel fecharem os gates; nunca alegar preflight local completo.
+
+- [ ] **Step 6: Atualizar documentação, provas e hashes**
+
+Registrar resultados reais no diário, atualizar método/hashes/contagem de testes nos quatro documentos, substituir screenshots somente após inspeção real e verificar que `evidence.csv` não contém inputs manuais. Preservar HR-01 separadamente.
+
+Expected: matriz técnica `15/15`; nota humana `≥9,5` sem dimensão `<9,0`, ou status honesto `PENDING`; hashes recalculados; nenhum segredo, dataset bruto ou premissa manual versionada.
+
+- [ ] **Step 7: Commitar o handoff local**
+
+```bash
+git add -u -- analysis.md evidence.csv README.md SPEC.md IMPLEMENTATION-PLAN.md \
+  ../../process-log/004-social.md ../../process-log/evidence/004
+git commit -m "docs(004): prove executive quality gate"
+```
+
+Stop local: não fazer push, abrir PR, mergear ou publicar sem autorização explícita.
