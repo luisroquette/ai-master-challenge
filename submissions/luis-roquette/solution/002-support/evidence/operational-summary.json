@@ -1,0 +1,30 @@
+{
+  "analysis_scope": "sanitized_customer_train_plus_calibration_representatives",
+  "data_version": "d6523f702ee627f0475a6ab1bcd3c5ca009ae3918b36947da1af66e0c3b3e947",
+  "development_rows": 902,
+  "evidence_kind": "historical_observed",
+  "interval_exclusions": {
+    "invalid_timestamp": 0,
+    "missing": 0,
+    "negative": 17,
+    "not_closed": 881
+  },
+  "limitations": [
+    "post_response_hours mede somente resolução menos primeira resposta; primeira resposta e resolução total não são observáveis.",
+    "Excesso é proxy histórico não negativo, não economia realizada.",
+    "A quarentena de privacidade, a seleção de representantes canônicos e a escassez de avaliações podem enviesar esta amostra; associações não demonstram causalidade.",
+    "O teste permanece lacrado; este relatório é diagnóstico de desenvolvimento."
+  ],
+  "median_post_response_hours": 9.166666666666668,
+  "observed_excess_hours": null,
+  "reason": null,
+  "representative_rows": 1133,
+  "sanitized_rows": 1389,
+  "satisfaction_sample": 21,
+  "satisfaction_status": "no_reliable_signal",
+  "schema_version": 1,
+  "source_rows": 8469,
+  "status": "ready",
+  "supported_waste_groups": 0,
+  "valid_intervals": 4
+}

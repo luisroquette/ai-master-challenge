@@ -9,6 +9,7 @@ import csv
 import hashlib
 import io
 import json
+import re
 import runpy
 import socket
 import sqlite3
@@ -465,3 +466,30 @@ def test_missing_manifest_and_rejected_path_never_expose_local_absolute_path(pre
     rejected = ui.load_artifacts(root).get("models.customer")
     assert rejected.status == "incompatible"
     assert rejected.path == "manifest.json"
+
+
+def test_delivery_documentation_contract():
+    documents = (ROOT / "README.md", ROOT.parent.parent / "README.md")
+    technical, executive = (path.read_text(encoding="utf-8") for path in documents)
+
+    for command in ("make doctor", "make setup", "make data", "make reproduce",
+                    "make demo", "make test", "make lint"):
+        assert command in technical
+    for section in ("Histórico observado", "Desempenho medido", "Cenários projetados",
+                    "Evidências finais pendentes", "Protocolo humano de recuperação"):
+        assert section in technical
+    for answer in ("Onde estamos perdendo tempo?", "O que pode ser automatizado com IA?",
+                   "Como isso funciona na prática?"):
+        assert answer in executive
+    assert "LinkedIn:** Não informado" in executive
+    assert "insufficient_evidence" in technical and "zero consultas elegíveis" in technical
+    assert "pendente da etapa final" in executive
+
+    link_pattern = re.compile(r"\[[^]]+\]\(([^)]+)\)")
+    for document, content in zip(documents, (technical, executive), strict=True):
+        for target in link_pattern.findall(content):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            relative = target.split("#", 1)[0]
+            assert not relative.startswith(("data/raw/", "data/runtime/", "artifacts/"))
+            assert (document.parent / relative).resolve().exists(), (document, target)

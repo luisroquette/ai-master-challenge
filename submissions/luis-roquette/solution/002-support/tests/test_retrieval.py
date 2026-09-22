@@ -341,6 +341,37 @@ def test_final_review_read_only_threshold_and_failure_disables(dataset, tmp_path
                         model_locks=locks())
 
 
+def test_stale_provenance_cannot_reuse_lock_or_open_test(dataset, tmp_path):
+    retriever = fit(dataset)
+    packet(dataset, retriever, tmp_path)
+    lock_review(retriever, dataset["calibration"], artifacts=tmp_path,
+                rubric_path=rate(tmp_path))
+    stale = replace(retriever, provenance={**retriever.provenance,
+                                           "source_sha256": "d" * 64})
+    with pytest.raises(ValueError, match="provenance"):
+        load_retrieval_policy(stale, tmp_path)
+    with pytest.raises(ValueError, match="provenance"):
+        packet(dataset, stale, tmp_path, "test", model_locks=locks())
+    assert not (tmp_path / "review/retrieval-test-opened.json").exists()
+
+
+def test_final_review_preserves_opening_packet_and_calibration_lock_bytes(dataset, tmp_path):
+    retriever = fit(dataset)
+    packet(dataset, retriever, tmp_path)
+    lock_review(retriever, dataset["calibration"], artifacts=tmp_path,
+                rubric_path=rate(tmp_path))
+    packet(dataset, retriever, tmp_path, "test", model_locks=locks())
+    paths = [tmp_path / "review" / name for name in (
+        "retrieval-policy-lock.json",
+        "retrieval-test-opened.json",
+        "retrieval-test-packet.json",
+    )]
+    frozen = {path: path.read_bytes() for path in paths}
+    finalize_review(retriever, dataset["test"], rate(tmp_path, "test"),
+                    artifacts=tmp_path, model_locks=locks())
+    assert {path: path.read_bytes() for path in paths} == frozen
+
+
 def test_cli_reports_missing_artifacts_and_help(tmp_path, capsys):
     assert main(["prepare-review", "--artifacts", str(tmp_path)]) == 1
     assert "make reproduce" in capsys.readouterr().out

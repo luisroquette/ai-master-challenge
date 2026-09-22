@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "development_not_final",
+  "execution": {
+    "commit": "9f55bc9a56a0236ccbe99a7b37e775b71b899607",
+    "code_revision": "9f55bc9a56a0236ccbe99a7b37e775b71b899607+code.a6d82b833a38aa114aa117b83d1f1672dbcd1415012ed7d6cece4706f0c741af",
+    "configuration_sha256": "9458e1bd6b316f12fd63cec14b3f8f5831196600ca84acb9b8f9fe24ba8d7dce",
+    "requirements_lock_sha256": "0e9db579cfac4b14d713a3b76c2dab10a11d35cc13b2f6afef65d0847eda82fd",
+    "s07_test_sha256": "57ae4fd072bb4812acc27d903990c9656677d925cffa5121f4c66293bbb80be0"
+  },
+  "sources": {
+    "customer": {"input_rows": 8469, "sanitized_rows": 1389, "privacy_quarantine": 7080},
+    "it": {"input_rows": 47837, "sanitized_rows": 26472, "privacy_quarantine": 21365}
+  },
+  "development_models": {
+    "customer": {
+      "status": "supported",
+      "candidate": "lr",
+      "macro_f1_cv_mean": 0.1821592298656734,
+      "dummy_macro_f1_cv_mean": 0.07206717780211755,
+      "gain": 0.11009205206355585,
+      "automation_enabled": false,
+      "threshold": null,
+      "final_test_status": "sealed"
+    },
+    "it": {
+      "status": "supported",
+      "candidate": "svc",
+      "macro_f1_cv_mean": 0.8389670399611873,
+      "dummy_macro_f1_cv_mean": 0.054837279640073046,
+      "gain": 0.7841297603211143,
+      "automation_enabled": true,
+      "threshold": 0.55,
+      "final_test_status": "sealed"
+    }
+  },
+  "retrieval_evaluation": {
+    "status": "insufficient_evidence",
+    "population": 224,
+    "eligible": 0,
+    "sample": 0,
+    "reviewed": 0,
+    "complete": false,
+    "packet_id": "8454d75d55607694dd67287936d2d8be93b24848b3313b1d9013b7d4a32cf347",
+    "index_version": "1071c3b0e90c58a749ee7bda02ce14fee76282737c5d31df0d45d491e773d280",
+    "policy_version": null,
+    "threshold": null,
+    "reason": "Nenhuma consulta de calibração passou todos os gates; faltam 30 casos elegíveis e julgamento humano real.",
+    "test_opened": false,
+    "ck_12_complete": false
+  },
+  "claims": {
+    "human_ratings_present": false,
+    "final_model_metrics_present": false,
+    "retrieval_validated": false,
+    "draft_assistance_enabled": false
+  }
+}

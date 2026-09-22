@@ -191,6 +191,20 @@ def test_it_model_is_independent(trained):
     assert it.policy.risk_evidence["rationale"] == "semantic_risk_without_operational_outcomes"
 
 
+@pytest.mark.parametrize("domain", ["customer", "it"])
+def test_frozen_metrics_are_domain_specific_and_taxonomy_complete(domain):
+    raw = fixture_frame(domain, n=20)
+    split = make_split(raw, "target")
+    result = train_domain_model(domain, split)
+    test = raw[raw.ticket_id.isin(split.test.ticket_id)]
+    metrics = evaluate_frozen_test(result, test, result.policy)
+    assert metrics.domain == domain
+    assert set(metrics.classes) == set(TAXONOMIES[domain])
+    assert len(metrics.confusion) == len(TAXONOMIES[domain])
+    assert metrics.denominators["n_total"] == len(test)
+    assert metrics.denominators["n_predicted"] + metrics.denominators["n_excluded"] == len(test)
+
+
 def test_final_evaluation_is_pure_and_requires_lock(trained):
     split, result = trained
     raw_fixture = fixture_frame(n=20)

@@ -922,3 +922,49 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **S07 formalmente selado após a revisão:** `data/runtime/validation/phase2-57ae4fd072bb4812acc27d903990c9656677d925cffa5121f4c66293bbb80be0/test_workflow.py`, SHA-256 `57ae4fd072bb4812acc27d903990c9656677d925cffa5121f4c66293bbb80be0`. O candidato aprovado foi preservado sem reescrita: cópia byte a byte confirmada por `cmp`, permissão `0444`, ignore confirmado. Hash conferido antes/depois do teste isolado `test_reproduce_twice_same_inputs`, aprovado em 1,41 s a partir da solution. Este arquivo não deve ser editado na Phase 3; step 08 usa somente o snapshot, e step 10 valida o workflow final consolidado.
 - Fingerprints selados, reconferidos sem mudança: código `a6d82b833a38aa114aa117b83d1f1672dbcd1415012ed7d6cece4706f0c741af`; configuração `9458e1bd6b316f12fd63cec14b3f8f5831196600ca84acb9b8f9fe24ba8d7dce`; lock `0e9db579cfac4b14d713a3b76c2dab10a11d35cc13b2f6afef65d0847eda82fd`. Fechamento exclusivamente documental: nenhum código, configuração, lock, dado ou rubrica foi alterado; Ruff e diff-check leves passaram. O gate completo acima pertence ao SHA explícito, não é alegado como execução no commit documental seguinte.
 - Decisão: barreira Phase 2 encerrada; steps 08/09 podem ser despachados pelo orquestrador respeitando S07 e a separação de arquivos. Nenhum step da Phase 3 foi executado neste fechamento. Acompanhamento do Codespace do reviewer é somente leitura até `Shutdown`, preservando todas as sessões concorrentes.
+
+## I57 — Step 09: documentação executiva e reprodução — 2026-09-22
+
+- Decisão editorial: o README executivo segue o template oficial e responde diretamente
+  onde a operação perde tempo, o que pode ser automatizado e como o fluxo funciona. O
+  README técnico concentra setup, comandos, retomada manual dos CSVs, arquitetura,
+  privacidade, exportação e o protocolo humano cuja fonte normativa continua sendo o
+  docstring de `retrieval.py`.
+- Honestidade preservada: quatro intervalos válidos, nenhum grupo elegível de desperdício,
+  ausência de sinal confiável de satisfação e zero consultas elegíveis são limitações, não
+  resultados favoráveis. Screenshot, export correlacionado e gate final permanecem
+  marcados como pendentes; nenhuma métrica, avaliação humana ou publicação foi inventada.
+- Contrato documental: novo teste confere os sete comandos canônicos, as três naturezas de
+  evidência, as três respostas executivas, links locais existentes e ausência de links para
+  `raw`, `runtime` ou `artifacts` como evidência pública.
+- Verificação: teste documental isolado passou; no checkpoint conjunto, os testes dos
+  steps 08/09 somaram 67 aprovações em 3,21 s. Ruff dos três testes e `git diff --check`
+  passaram. O README executivo é novo e oculto pelo ignore raiz; seu staging deve ser
+  explícito e restrito a esse arquivo.
+
+## I58 — Step 08: avaliação real, freeze e evidência negativa — 2026-09-22
+
+- Base imutável: step iniciado no commit
+  `9f55bc9a56a0236ccbe99a7b37e775b71b899607`, usando o S07 formalmente selado. O teste
+  isolado de reprodução passou remotamente em 5,38 s; hash antes/depois permaneceu
+  `57ae4fd072bb4812acc27d903990c9656677d925cffa5121f4c66293bbb80be0`, wrapper terminou
+  com exit 0, worktree remoto ficou limpo e o Codespace voltou a `Shutdown`.
+- Resultados de desenvolvimento, não finais: Customer escolheu regressão logística com
+  macro-F1 CV `0,1822` contra dummy `0,0721`, ganho `0,1101`, mas automação permaneceu
+  desativada e sem threshold. IT escolheu LinearSVC com macro-F1 CV `0,8390` contra dummy
+  `0,0548`, ganho `0,7841` e threshold de desenvolvimento `0,55`. O teste final continuou
+  lacrado; esses valores não são métricas do teste congelado.
+- Avaliação de recuperação: população de calibração `224`, elegíveis `0`, amostra `0` e
+  revisados `0`. Os dois CSVs públicos conservam somente o cabeçalho da rubrica. Não houve
+  relaxamento, duplicação, preenchimento sintético ou avaliação humana fabricada;
+  `CK-12` permanece explicitamente pendente e drafts continuam bloqueados.
+- Evidência operacional: 8.469 linhas Customer de origem, 1.389 sanitizadas, 1.133
+  representantes e 902 linhas de desenvolvimento; quatro intervalos válidos, 21 notas de
+  satisfação, `no_reliable_signal` e zero grupos de desperdício com suporte mínimo. IT
+  manteve 47.837 linhas de origem e 26.472 sanitizadas. Associação não virou causalidade e
+  excesso/projeção não virou economia realizada.
+- Integridade acrescentada: regressões garantem taxonomia completa e denominadores por
+  domínio no teste congelado, impedem reaproveitar lock com provenance stale e preservam
+  byte a byte lock, marcador e pacote após a revisão final. Reprodução real e 66 testes
+  focados sustentaram o step; o checkpoint conjunto repetiu os 66 testes em 2,30 s, Ruff,
+  diff-check e S07 isolado em 1,28 s, mantendo o mesmo hash selado.
