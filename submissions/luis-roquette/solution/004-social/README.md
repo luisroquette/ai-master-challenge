@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após as correções documentadas em I38–I40, o gate acumulado aprovou **102/102 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `017588dfa23f032684066c049f2f5aac4a380e5615de029b80e57a29311b3f1e`, `analysis.md` `c65b42f631c3532433683b2cf2cbdcea1be74147cfc86cc38146b13f52859fe6` e HTML `a90d85f64b20e0d2c556cba2bcfda09378e16f07c4507f25927ad0a5f29f7fb1`. O resumo normal e a fixture adversarial permaneceram em uma página A4.
+Após as correções documentadas em I42–I43, o gate acumulado aprovou **109/109 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `3a91736cd23c52b2c1603f2ebb0d0324195a41997b6f15c331ad1f042626394b`, `analysis.md` `8fd5a1e524b798294553cfc4eb5e538001c258623b54cd6adf42281e224deba7` e HTML `a5cf43b65d561d13f65709da7334d1ca69c26b3536f2b7a4d704f3b479691f9b`. O resumo normal e a fixture adversarial permaneceram em uma página A4.
 
 ## Executar o cockpit
 
@@ -60,7 +60,9 @@ O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda 
 
 Cada decisão guarda o snapshot exato do motor: alvo, comparador, quartis/fallback, força, contexto e referências. Patrocínio mantém separados os braços e usa mediana das medianas por creator; editorial usa apenas o grupo orgânico definido; alertas preservam post/benchmark e um agregado contextual separado para acompanhamento. A observação posterior reaplica esse contrato à nova fonte; só a janela temporal muda, não categoria, audiência, patrocínio ou estatística. Creators sem taxa definida não satisfazem a amostra mínima.
 
-O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.0.0"` é o contrato ativo. Eventos `1.0.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`.
+O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.1.0"` é o contrato ativo. Eventos `1.0.0` e `2.0.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`. As capturas históricas/outcomes preservadas na submissão registram eventos criados sob 2.0.0; não são apresentadas como nova comparação 2.1.0.
+
+A entrada aceita somente ISO-8601 explícito ou `%m/%d/%y %I:%M %p`, dentro de 1971-01-01 a 2262-04-10. Datas relativas, timezone desconhecido e gramática inferida são rejeitados com linha/coluna. Inteiros são provados lexicalmente contra `int64`, sem alterar o limite global do Python. Sinal negativo com força abaixo de 0,40 gera coleta/teste; `review/stop` exige força suficiente.
 
 Datas de execução ou fim da observação futuras ficam pendentes (`execution_in_future` / `observation_in_future`); o timestamp enviado não pode adiantar o relógio real. Testes injetam relógio controlado após o fim observado. Para uma demonstração sintética/retrospectiva explícita, use banco separado e defina `SOCIAL_COCKPIT_SIMULATION_NOW=2025-01-22T18:00:00+00:00` ao iniciar o comando Streamlit acima. O app exibe **SIMULAÇÃO / REPLAY RETROSPECTIVO**, e eventos persistem essa marca. Remova a variável ao retornar à produção; simulação não autoriza datas futuras em relação ao relógio controlado.
 
@@ -70,7 +72,7 @@ As linhas analíticas conservam a fonte ativa. Cada `decision` conserva fonte, e
 
 As colunas históricas são acrescentadas somente quando há decisões; a exportação estática sem histórico permanece inalterada. O escopo de novos outcomes é persistido com a observação. Outcomes legados sem esse campo exportam escopo vazio, nunca o escopo do upload atual.
 
-Campos históricos acima de 32.768 caracteres ficam vazios na linha principal e são transportados por linhas `history_field`: agrupe por `decision_id`, `outcome_id` e `field_name`, ordene `field_chunk`, aplique `json.loads` a cada `field_value` e concatene. O resultado é a célula CSV original, incluindo eventual apóstrofo de proteção contra fórmulas; para `baseline`/`observed`/`comparison`, decodifique então o JSON recomposto. Os blocos mantêm leitura no limite padrão do Python. Referências analíticas `source_ref` continuam usando `reference_chunk`/`reference_index`, sem mudança de contrato.
+Para recompor o CSV, reconstrua primeiro linhas `export_field` pelo ordinal determinístico da linha-base; depois, `analysis_field` e `history_field`. Campos históricos acima de 32.768 caracteres ficam vazios na linha principal e são transportados por linhas `history_field`: agrupe por `decision_id`, `outcome_id` e `field_name`, ordene `field_chunk`, aplique `json.loads` a cada `field_value` e concatene. O resultado é a célula CSV original, incluindo eventual apóstrofo de proteção contra fórmulas; para `baseline`/`observed`/`comparison`, decodifique então o JSON recomposto. Os blocos mantêm leitura no limite padrão do Python. Referências analíticas `source_ref` continuam usando `reference_chunk`/`reference_index`, sem mudança de contrato.
 
 ## O que ler
 

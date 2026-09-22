@@ -30,17 +30,17 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 - Mediana ERv geral: 19,8992%; ERv ponderado: 19,9035%. As diferenças agregadas entre plataformas, formatos e categorias são pequenas e não justificam redistribuição isolada.
 - Patrocínio: 12 estratos mensais elegíveis, 5.216 sem contraparte/amostra suficiente e cobertura de 1,55897% dos posts, controlando plataforma, formato, categoria, faixa de creator e mês-calendário.
 - Maior associação patrocinada observada: YouTube / video / lifestyle / 500.000+ / abril de 2024, +0,160707 p.p. de ERv; menor: Bilibili / video / lifestyle / 500.000+ / setembro de 2023, −0,136225 p.p. Nenhuma é efeito causal ou ROI.
-- O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, bloqueia cronologia inválida, registra aceitar/rejeitar/editar e preserva revisões/outcomes após reinício. O CSV conserva proveniência e semântica de cada evento histórico; campos extensos usam linhas reconstruíveis `history_field`.
+- O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, bloqueia cronologia inválida, registra aceitar/rejeitar/editar e preserva revisões/outcomes após reinício. O CSV conserva proveniência e semântica de cada evento histórico; uma barreira `export_field` fecha qualquer célula extensa antes das camadas reconstruíveis de análise/histórico.
 
-![Fonte canônica, período, método 2.0.0 e diagnóstico de qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
+![Fonte canônica, período, método 2.1.0 e diagnóstico de qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
 
 ![Cobertura condicionada de audiência e primeira prioridade](./process-log/evidence/004/cockpit-audience-priority-proof.png)
 
 ![Prioridade com taxa-alvo, benchmark, quartis e amostra](./process-log/evidence/004/cockpit-priority-context-proof.png)
 
-![Snapshot histórico após reinício, sem CSV ativo, com reenvio exigido pelo mesmo hash](./process-log/evidence/004/cockpit-history-snapshot-proof.png)
+![Snapshot histórico após reinício; evento 2.0.0 preservado e legível, mas incompatível com nova comparação 2.1.0](./process-log/evidence/004/cockpit-history-snapshot-proof.png)
 
-![Replay observado rotulado SIMULAÇÃO e futuro pendente por observation_in_future](./process-log/evidence/004/cockpit-outcomes-proof.png)
+![Histórico 2.0.0: replay observado rotulado SIMULAÇÃO e futuro pendente por observation_in_future; sem nova comparação 2.1.0](./process-log/evidence/004/cockpit-outcomes-proof.png)
 
 ### Recomendações
 
@@ -69,7 +69,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 | Codex | Pesquisa, ondas socráticas, SDD, implementação, regressões, documentação e auditoria final |
 | Claude Code | Skill SDD e estruturação inicial dos artefatos de especificação |
 | Chrome automatizado | Validação do upload real, decisões, reinício, erros, downloads e prova visual |
-| Python/Pandas/unittest | Motor determinístico, reconciliação e 102 testes locais |
+| Python/Pandas/unittest | Motor determinístico, reconciliação e 109 testes locais |
 
 ### Workflow
 
