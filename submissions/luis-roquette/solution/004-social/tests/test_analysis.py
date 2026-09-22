@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import csv
+from copy import deepcopy
 import sys
 import time
 import unittest
 
 import pandas as pd
 
-from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, executive_answers, follower_band, load_csv
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, executive_answers, export_evidence, follower_band, load_csv, sponsorship_break_even
 from tests.helpers import (
     aggregate_effect_rows,
     alert_for_target,
@@ -22,6 +23,7 @@ from tests.helpers import (
     make_cohort,
     make_post,
     monthly_sponsorship_frequency_rows,
+    monthly_sponsorship_rows,
     sponsorship_frequency_rows,
     sponsorship_rows,
 )
@@ -336,6 +338,46 @@ class CsvBoundaryTests(unittest.TestCase):
 
 
 class ContextEvidenceTests(unittest.TestCase):
+    def test_break_even_calculates_thresholds_from_manual_assumptions(self):
+        evidence = {
+            "evidence_id": "sponsorship-test",
+            "context": {
+                "platform": "YouTube", "content_type": "mixed",
+                "content_category": "finance", "follower_band": "10,000–49,999",
+                "period_month": "2025-01",
+            },
+            "sponsored": {"median_views_per_post": 10_000},
+        }
+        original = deepcopy(evidence)
+        scenario = sponsorship_break_even(evidence, {
+            "sponsorship_cost": 1_000, "incremental_production_cost": 200,
+            "value_per_conversion": 100, "organic_conversion_rate": .01,
+            "sponsored_conversion_rate": .013,
+        })
+        self.assertEqual(scenario["incremental_conversions"], 30)
+        self.assertEqual(scenario["max_sponsorship_cost"], 2_800)
+        self.assertEqual(scenario["required_uplift_pp"], 0.12)
+        self.assertEqual(scenario["status"], "meets_break_even_scenario")
+        self.assertEqual(evidence, original)
+
+    def test_break_even_abstains_on_missing_or_invalid_inputs(self):
+        invalid = {
+            "sponsorship_cost": -1, "value_per_conversion": 0,
+            "organic_conversion_rate": 0, "sponsored_conversion_rate": 1.01,
+        }
+        scenario = sponsorship_break_even({"sponsored": {"median_views_per_post": 0}}, invalid)
+        self.assertEqual(scenario["status"], "invalid_or_missing_assumptions")
+        self.assertTrue(scenario["missing"])
+
+    def test_sponsorship_answer_names_best_and_worst_comparable_contexts(self):
+        rows = monthly_sponsorship_rows(3)
+        result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+        answer = executive_answers(result)[1]
+        self.assertIn("melhor contexto comparável", answer["comparison"].lower())
+        self.assertIn("pior contexto comparável", answer["comparison"].lower())
+        self.assertIn("YouTube", answer["comparison"])
+        self.assertNotIn(b"value_per_conversion", export_evidence(result, []))
+
     def test_driver_ranking_requires_multivariate_peers_and_three_eligible_months(self):
         rows = driver_rows([1.0, 1.2, 0.8])
         result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")

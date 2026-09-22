@@ -643,6 +643,124 @@ def _sponsorship(
     }
 
 
+def sponsorship_break_even(
+    evidence: dict[str, object], assumptions: dict[str, float]
+) -> dict[str, object]:
+    required = (
+        "sponsorship_cost",
+        "incremental_production_cost",
+        "value_per_conversion",
+        "organic_conversion_rate",
+        "sponsored_conversion_rate",
+    )
+    missing = [name for name in required if name not in assumptions]
+    evidence_id = evidence.get("evidence_id")
+    context = evidence.get("context")
+    sponsored = evidence.get("sponsored") if isinstance(evidence.get("sponsored"), dict) else {}
+    views_per_post = sponsored.get("median_views_per_post") if isinstance(sponsored, dict) else None
+    if not evidence_id:
+        missing.append("evidence_id")
+    if not isinstance(context, dict) or not context:
+        missing.append("context")
+    numeric: dict[str, float] = {}
+    for name in required:
+        value = assumptions.get(name)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            if name not in missing:
+                missing.append(name)
+        else:
+            numeric[name] = float(value)
+    if (
+        isinstance(views_per_post, bool)
+        or not isinstance(views_per_post, (int, float))
+        or not math.isfinite(float(views_per_post))
+        or float(views_per_post) <= 0
+    ):
+        missing.append("sponsored.median_views_per_post")
+    for name in ("sponsorship_cost", "incremental_production_cost"):
+        if name in numeric and numeric[name] < 0:
+            missing.append(name)
+    if "value_per_conversion" in numeric and numeric["value_per_conversion"] <= 0:
+        missing.append("value_per_conversion")
+    for name in ("organic_conversion_rate", "sponsored_conversion_rate"):
+        if name in numeric and not 0 <= numeric[name] <= 1:
+            missing.append(name)
+    limitations = ["Cenário manual; não é ROI observado nem efeito causal."]
+    if missing:
+        return {
+            "status": "invalid_or_missing_assumptions",
+            "evidence_id": evidence_id,
+            "context": deepcopy(context) if isinstance(context, dict) else {},
+            "incremental_conversion_rate": None,
+            "incremental_conversions": None,
+            "incremental_value": None,
+            "max_sponsorship_cost": None,
+            "required_uplift_pp": None,
+            "missing": sorted(set(missing)),
+            "limitations": limitations,
+        }
+    views = float(views_per_post)
+    incremental_rate = numeric["sponsored_conversion_rate"] - numeric["organic_conversion_rate"]
+    incremental_conversions = views * incremental_rate
+    incremental_value = incremental_conversions * numeric["value_per_conversion"]
+    max_sponsorship_cost = max(0.0, incremental_value - numeric["incremental_production_cost"])
+    required_uplift_pp = 100 * (
+        numeric["sponsorship_cost"] + numeric["incremental_production_cost"]
+    ) / (views * numeric["value_per_conversion"])
+    return {
+        "status": (
+            "meets_break_even_scenario"
+            if numeric["sponsorship_cost"] <= max_sponsorship_cost
+            else "below_break_even_scenario"
+        ),
+        "evidence_id": evidence_id,
+        "context": deepcopy(context),
+        "incremental_conversion_rate": round(incremental_rate, 9),
+        "incremental_conversions": round(incremental_conversions, 9),
+        "incremental_value": round(incremental_value, 9),
+        "max_sponsorship_cost": round(max_sponsorship_cost, 9),
+        "required_uplift_pp": round(required_uplift_pp, 9),
+        "missing": [],
+        "limitations": limitations,
+    }
+
+
+def _sponsorship_context_summaries(result: dict[str, object]) -> list[dict[str, object]]:
+    grouped: dict[tuple[object, ...], list[dict[str, object]]] = {}
+    for item in result.get("sponsorship", {}).get("strata", []):
+        context = item.get("context", {})
+        key = tuple(context.get(name) for name in GROUP_KEYS)
+        grouped.setdefault(key, []).append(item)
+    summaries: list[dict[str, object]] = []
+    for key, items in grouped.items():
+        ordered = sorted(items, key=lambda item: str(item.get("context", {}).get("period_month", "")))
+        deltas = [float(item["delta_erv_pp"]) for item in ordered]
+        median_delta = float(pd.Series(deltas).median())
+        same_sign = sum((value > 0) == (median_delta > 0) for value in deltas if value != 0)
+        context = dict(zip(GROUP_KEYS, key, strict=True))
+        summaries.append(
+            {
+                "evidence_id": _stable_id(
+                    "sponsorship-context",
+                    str(result.get("source", {}).get("source_hash", "")),
+                    {"context": context, "strata": [item["evidence_id"] for item in ordered]},
+                ),
+                "context": context,
+                "median_delta_erv_pp": median_delta,
+                "months": len(ordered),
+                "stability": same_sign / len(deltas),
+                "stable": len(ordered) >= 3,
+                "strength": min(float(item.get("strength", 0)) for item in ordered),
+                "posts": sum(int(item["organic"]["posts"]) + int(item["sponsored"]["posts"]) for item in ordered),
+                "strata_evidence_ids": [item["evidence_id"] for item in ordered],
+            }
+        )
+    return sorted(
+        summaries,
+        key=lambda item: (-float(item["median_delta_erv_pp"]), json.dumps(item["context"], sort_keys=True, default=str)),
+    )
+
+
 def _engagement_drivers(
     targets: pd.DataFrame, source_hash: str, scope: dict[str, object]
 ) -> dict[str, object]:
@@ -1903,15 +2021,26 @@ def executive_answers(result: dict[str, object]) -> list[dict[str, str]]:
     deltas = [float(item["delta_erv_pp"]) for item in strata]
     eligible = int(sponsorship.get("eligible_strata", 0))
     strong = sum(value >= 0.40 for value in strengths)
+    context_summaries = _sponsorship_context_summaries(result)
     delta_range = (
         f"ΔERv de {signed(min(deltas), 3)} a {signed(max(deltas), 3)} p.p."
         if deltas else "Nenhuma comparação elegível."
     )
+    if context_summaries:
+        best, worst = context_summaries[0], context_summaries[-1]
+        best_label = _short(" / ".join(str(best["context"][key]) for key in GROUP_KEYS), 120)
+        worst_label = _short(" / ".join(str(worst["context"][key]) for key in GROUP_KEYS), 120)
+        context_range = (
+            f"Melhor contexto comparável: {best_label} ({signed(best['median_delta_erv_pp'], 3)} p.p.); "
+            f"pior contexto comparável: {worst_label} ({signed(worst['median_delta_erv_pp'], 3)} p.p.)."
+        )
+    else:
+        context_range = delta_range
     sponsorship_answer = {
         "question": "Vale patrocinar influenciadores?",
         "verdict": "NÃO ESCALAR PATROCÍNIO AGORA",
         "kpi": f"Cobertura comparável: {decimal(100 * float(sponsorship.get('coverage', 0)), 2)}%",
-        "comparison": f"{strong}/{eligible} comparações com força ≥ 0,40; {delta_range}",
+        "comparison": f"{strong}/{eligible} comparações com força ≥ 0,40; {context_range}",
         "sample": (
             f"{eligible} estratos elegíveis; {count(sponsorship.get('uncovered_count', 0))} insuficientes; "
             "ROI indisponível por ausência de custos e conversões."

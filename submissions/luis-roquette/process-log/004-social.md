@@ -894,3 +894,11 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Feedback 1:** o teste de determinismo reserializava o CSV invertido e mudava corretamente o hash/IDs de origem. O harness foi corrigido para embaralhar o DataFrame já carregado, preservando identidades.
 - **Feedback 2:** a regressão ampla encontrou uma expectativa fixa em `2.4.0` e um rótulo externo ilimitado no resumo executivo. A expectativa migrou para `2.5.0`; a saída visível reutiliza `_short`, enquanto o valor integral permanece nos dados/export.
 - **Validação:** `ContextEvidenceTests + ReconstructionTests` aprovou **41/41**; `py_compile` e `git diff --check` passaram. Task 7 validada antes do avanço; sem preflight pesado, push, PR ou deploy.
+
+## I65 — Feedback looping, Task 8: decisão financeira condicional — 2026-09-22
+
+- **Planejamento e revisão:** o cenário financeiro foi mantido como função pura, vinculado a um estrato comparável explícito e separado de evidência observada, persistência e ROI alegado. A fixture mensal usa três meses, dez creators por braço e um contexto isolado do ranking orgânico.
+- **Teste vermelho:** os três testes falharam no import da função inexistente, confirmando o contrato antes da execução.
+- **Execução:** `sponsorship_break_even` valida custos, taxas, valor por conversão, views, contexto e evidência; calcula conversões/valor incrementais hipotéticos, custo máximo e uplift mínimo. A síntese de patrocínio passou a nomear melhor e pior contexto comparável sem misturar plataformas ou faixas.
+- **Feedback:** a primeira execução verde encontrou somente ruído binário (`2.799,999999999999`). As saídas financeiras passaram a nove casas decimais, preservando fórmula e decisão.
+- **Validação:** testes focais e de decisão aprovaram **7/7**; a regressão ampliada `ContextEvidenceTests + ReconstructionTests` aprovou **44/44**. `py_compile` e `git diff --check` passaram; inputs manuais não aparecem no CSV analítico. Task 8 validada antes do avanço.

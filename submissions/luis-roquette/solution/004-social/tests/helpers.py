@@ -286,3 +286,29 @@ def default_scope_all_history(rows: list[dict[str, object]]) -> dict[str, object
         "filters": {},
         "include_post_alerts": False,
     }
+
+
+def monthly_sponsorship_rows(months: int = 3) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for month in range(1, months + 1):
+        for sponsored, erv in ((False, 4.0), (True, 5.0)):
+            arm = "sponsored" if sponsored else "organic"
+            for index in range(30):
+                marker = f"finance-{month}-{arm}-{index}"
+                rows.append(
+                    make_post(
+                        id=marker,
+                        content_id=f"content-{marker}",
+                        creator_id=f"{arm}-{index % 10}",
+                        platform="YouTube",
+                        content_type="mixed",
+                        content_category="finance",
+                        post_date=f"2025-{month:02d}-{1 + index % 28:02d}T12:00:00",
+                        views=10_000,
+                        likes=int(erv * 100),
+                        shares=0,
+                        comments_count=0,
+                        is_sponsored=str(sponsored).upper(),
+                    )
+                )
+    return rows

@@ -836,7 +836,7 @@ git commit -m "feat(004): rank stable engagement drivers"
 - Produces: `sponsorship_break_even(evidence: dict[str, object], assumptions: dict[str, float]) -> dict[str, object]` com `status`, `incremental_conversion_rate`, `incremental_conversions`, `incremental_value`, `max_sponsorship_cost`, `required_uplift_pp`, `missing` e `limitations`.
 - Does not: alterar `result`, persistir inputs ou chamar o cálculo de ROI observado.
 
-- [ ] **Step 1: Escrever os testes vermelhos de validação e fórmula**
+- [x] **Step 1: Escrever os testes vermelhos de validação e fórmula**
 
 Adicionar `monthly_sponsorship_rows(months=3)` a `tests/helpers.py`: gerar somente os dois braços do mesmo contexto `YouTube + mixed + finance + 10,000–49,999`, deslocar `post_date` por mês e usar IDs exclusivos. Cada braço/mês conserva 30 taxas e cinco creators; a união usa dez creators por braço para também testar estabilidade sem inflar força por repetição. O braço orgânico tem ERv `4%` e o patrocinado `5%`. Não criar outro formato/categoria orgânico nessa plataforma: a fixture comprova patrocínio sem entrar no universo de pares do ranking de drivers.
 
@@ -875,13 +875,13 @@ def test_sponsorship_answer_names_best_and_worst_comparable_contexts(self):
     self.assertIn("YouTube", answer["comparison"])
 ```
 
-- [ ] **Step 2: Confirmar o vermelho**
+- [x] **Step 2: Confirmar o vermelho**
 
 Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_analysis.ContextEvidenceTests.test_break_even_calculates_thresholds_from_manual_assumptions tests.test_analysis.ContextEvidenceTests.test_break_even_abstains_on_missing_or_invalid_inputs tests.test_analysis.ContextEvidenceTests.test_sponsorship_answer_names_best_and_worst_comparable_contexts`
 
 Expected: FAIL com import/função ausente.
 
-- [ ] **Step 3: Implementar validação e fórmulas puras**
+- [x] **Step 3: Implementar validação e fórmulas puras**
 
 Usar exatamente:
 
@@ -897,7 +897,7 @@ Taxas pertencem a `[0,1]`; custos são `>=0`; `views_per_post` e `value_per_conv
 
 Copiar para a saída o `evidence_id` e o contexto do estrato selecionado. Sem estrato elegível selecionado, retornar `invalid_or_missing_assumptions`; nunca misturar a mediana de views de um contexto com taxas digitadas para outro.
 
-- [ ] **Step 4: Provar imutabilidade e commit**
+- [x] **Step 4: Provar imutabilidade e commit**
 
 Adicionar asserção de que `deepcopy(evidence)` permanece idêntica e que nenhuma chave de cenário aparece em `export_evidence(result, [])` ou em `decision_baseline` sem ação explícita da UI.
 
