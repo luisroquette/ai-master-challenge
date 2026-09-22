@@ -25,7 +25,7 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 
 #### Success Criteria
 
-- [x] bash scripts/preflight.sh passes at the exact intended diff and data/config identity in managed Codespace; the owner explicitly waived the duplicate heavy Mac execution on 2026-09-22 because AGENTS.md prohibits it without specific authorization.
+- [x] bash scripts/preflight.sh passed in managed Codespace at `e052e4e` (74/74); after the review fixes, the exact SHA `9228ffd` passed 6/6 focused regressions and the owner explicitly waived the new integral repetition. The duplicate heavy Mac execution remains prohibited by AGENTS.md.
 - [x] TC-44 blocks outbound runtime networking but permits loopback fixtures; TC-45 injects a failing required gate and observes nonzero; TC-46 proves clean setup/startup and child-only teardown without recursive preflight.
 - [x] Every TC-01..TC-46 resolves to real passing stable named tests, including all business matrix partitions; TC-47 is an explicit separate required live gate, never a silently skipped discovered test.
 - [x] Complete pipeline records four actual outcomes and rejects invalid/incomplete outputs; legitimately rejected probability candidates do not fail solely for underperformance.
@@ -36,8 +36,14 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 - [x] Implement scripts/preflight.sh with strict failure propagation, one disposable environment owner, locked install/browser setup, imports/tests/full real evaluation and local rendered journeys; disable spawned Streamlit telemetry.
 - [x] Add tests/test_app.py TC-44/45/46 for external-network denial, gate failure injection and safe server teardown; reuse tests/test_data.py loopback fixtures and avoid hidden installed dependencies.
 - [x] Implement tests/test_app.py live CLI and verify_live_revision with explicit URL/revision/source-digest/fingerprint arguments; write local positive/negative verifier tests without pretending they satisfy actual TC-47.
-- [x] Run all canonical gates via codespace-manager at verified exact source/diff using the pinned `uv`/Python 3.11 seeded bootstrap; integrate 03b with the real 03a bundle, inspect real and synthetic browser journeys and record actual evidence in docs/evaluation.md. The owner explicitly waived only the duplicate heavy Mac reproduction on 2026-09-22.
+- [x] Run the canonical gate via codespace-manager at `e052e4e` with pinned `uv`/Python 3.11 (74/74), then run the six post-review AppTest/Playwright and contract regressions at exact SHA `9228ffd` (6/6 in 26.818 s). The owner explicitly waived the post-review integral repetition and the duplicate heavy Mac reproduction; no full post-fix result is claimed.
 - [x] Write README.md setup/run/test/recovery commands and docs/evaluation.md TC/CK coverage map with actual test method names and statuses; resolve every local deterministic failure, re-run the canonical gate and retain honest global/route rejection diagnostics.
+
+#### Post-review evidence (2026-09-22)
+
+- RED at `7d023604c318264d2e85005652c65c49c7a5620a`: 6 tests, 2 failures and 4 errors, exposing all five review gaps.
+- GREEN at `9228ffdf3ff760efe0ecfb9b107d9a537c26789b`: 6 focused tests in 26.818 s, all passing, including rendered AppTest and Playwright journeys.
+- The last completed full preflight remains 74/74 at `e052e4e226a8962fc338380e6cebb2e6446dc86b`. A post-fix full run was started but interrupted by explicit owner order and is not evidence of an integral pass. TC-47 remains out of scope.
 
 #### Blockers & Risks
 

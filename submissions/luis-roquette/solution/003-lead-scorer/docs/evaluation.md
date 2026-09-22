@@ -5,16 +5,17 @@
 | Campo | Evidência |
 |---|---|
 | Comando canônico | `bash scripts/preflight.sh` |
-| Ambiente gerenciado | `codex-preflight-657v7q4ggx7f5557`, via `codespace-manager` |
+| Ambientes gerenciados | integral: `codex-preflight-657v7q4ggx7f5557`; focais pós-revisão: `codex-preflight-pwq7q4pr75pfx5q`; ambos via `codespace-manager` |
 | Reprodução no Mac | Não executada: gates pesados são exclusivos do Codespace por regra operacional |
 | Python | `Python 3.11.15`, provisionado por `uv==0.10.10` |
-| Revisão Git validada | `e052e4e226a8962fc338380e6cebb2e6446dc86b` |
-| Diff | Limpo; `EXACT_SHA` conferido antes do gate |
+| Revisão Git do último preflight integral concluído | `e052e4e226a8962fc338380e6cebb2e6446dc86b` |
+| Revisão Git dos focais pós-revisão | `9228ffdf3ff760efe0ecfb9b107d9a537c26789b` |
+| Diff | Limpo; `EXACT_SHA` conferido antes de cada execução registrada |
 | SHA-256 de `requirements.txt` | `43a420f22b5e31ceadf0946434689dca39359c7a69d358e4636ee6c0fb344843` |
-| Fingerprint dados/modelo | `515a0c991c0fc58c705463ed8067d01860e3338d563b88e3987c411b1a18c0fd` |
-| Source digest | `8c65922c2654ed480e7d8024f27c6f9936e6ab207817a4b3ef0fe5eefe3390f2` |
+| Fingerprint dados/modelo do último integral | `515a0c991c0fc58c705463ed8067d01860e3338d563b88e3987c411b1a18c0fd` |
+| Source digest do último integral | `8c65922c2654ed480e7d8024f27c6f9936e6ab207817a4b3ef0fe5eefe3390f2` |
 
-O preflight canônico terminou com `PREFLIGHT OK`: 74 testes em 92,458 s, avaliação real, startup e jornada Playwright renderizada. O focal da jornada gestor passou 2/2 em 9,824 s no mesmo SHA. TC-47 continua não executado e só poderá ser marcado depois do deploy da mesma revisão.
+O último preflight canônico integral concluído terminou com `PREFLIGHT OK`: 74 testes em 92,458 s, avaliação real, startup e jornada Playwright renderizada no SHA `e052e4e`. Após o retrabalho da revisão, seis focais passaram em 26,818 s no SHA exato `9228ffd`: ordenação canônica, seleção nativa, pin/horário localizado, identidade única da fonte e jornadas AppTest/Playwright para rotas rejeitadas e portfólio vazio. Não existe resultado integral pós-correção: o owner determinou o bypass explícito dessa repetição; uma execução já iniciada foi interrompida e não é contabilizada. TC-47 continua não executado.
 
 ## Snapshot real já congelado
 
@@ -37,7 +38,7 @@ São 6.711 oportunidades fechadas e 2.089 ativas. O split temporal validado usa 
 | TC-28–39 | `test_TC28_logistic_raw_and_calibrated_affine_reconstruct_outputs`; `test_TC29_boosting_tree_paths_reconstruct_raw_margin`; `test_TC30_factor_summary_preserves_value_sign_and_absent_direction`; `test_TC31_TC32_versioned_playbook_uses_only_actionable_evidence`; famílias `test_TC33_*` a `test_TC39_*`, incluindo AppTest e `test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys` |
 | TC-40–46 | famílias `test_TC40_*`; `test_TC41_cached_bundle_reuses_training_for_same_identity`; `test_TC42_seeded_active_scores_are_deterministic_and_stage_safe`; família `test_TC43_*`; `test_TC44_offline_runtime_denies_external_and_permits_loopback`; `test_TC45_preflight_failure_injection_returns_nonzero`; `test_TC46_clean_startup_owns_only_its_child_without_recursion` |
 
-Status: TC-01–46 verdes na suíte canônica (74/74). O método `test_live_verifier_local_contract_is_not_TC47` testa localmente os erros do verificador, mas não reivindica o TC-47.
+Status: TC-01–46 ficaram verdes no último preflight integral anterior ao retrabalho (74/74, SHA `e052e4e`). O delta pós-revisão está verde nos seis focais do SHA `9228ffd`; não se reivindica um novo 79/79 integral por causa do bypass explícito do owner. O método `test_live_verifier_local_contract_is_not_TC47` testa localmente os erros do verificador, mas não reivindica o TC-47.
 
 ## Mapa de cobertura CK
 
@@ -67,7 +68,8 @@ As 2.089 oportunidades ativas ficaram em prioridade `relative`; zero ficaram em 
 
 - Vendedor: ambas as abas, portfólio próprio, detalhe e linha `Dados insuficientes` sem probabilidade/receita esperada.
 - Gestor: equipe, filtros exatos, detalhe, prioridade temporária com autor/horário e limpeza por recálculo.
-- A lista usa no máximo 25 linhas por página e cada linha possui botão nativo acessível `Abrir <opportunity_id>`; o resumo `Filtros aplicados` confirma o estado final antes da ação.
+- A lista usa no máximo 25 linhas por página, seleção única no `st.dataframe` nativo e botão acessível `Abrir <opportunity_id>` como fallback; o resumo `Filtros aplicados` confirma o estado final antes da ação.
+- As jornadas pós-revisão provaram que rotas probabilísticas rejeitadas não expõem probabilidade/receita esperada em nenhuma superfície e que um portfólio realmente vazio não exibe detalhes nem pin.
 - App real: startup e identidade completa (`revision`, `fingerprint`, `source_digest`) verificadas pelo gate `startup`.
 - O texto renderizado confirmou título, aviso do protótipo, filtro do vendedor e identidade completa. Não há captura versionada; nenhuma imagem é reivindicada.
 
