@@ -835,3 +835,11 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Erro e correção:** o primeiro teste tentou importar `scripts.reproduce` como pacote. Como `scripts/` não é pacote e não precisa virar um, o teste passou a carregar o script por `runpy`, repetindo o padrão mínimo já usado no workflow.
 - **Teste local focado:** Ruff passou; `pytest tests/test_analytics.py tests/test_workflow.py -q` concluiu 18 testes em 2,44 s; `git diff --check` passou.
 - **Motivo para repetir:** suíte completa e reprodução real ainda precisam confirmar no Codespace que o SHA corrigido conserva as contagens honestas anteriores e não reabre os defeitos da revisão.
+
+## I48 — Step 03: correções validadas no ambiente gerenciado — 2026-09-21 21:49 BRT
+
+- **SHA corrigido:** `ca17ede6b79ce0640fd62865543d363c87d466c5`, conferido após fetch/fast-forward em checkout remoto limpo.
+- **Concorrência preservada:** a primeira tentativa foi recusada em `ShuttingDown`; nenhum processo externo foi interrompido. A execução aguardou `Shutdown` e reutilizou o Codespace limpo.
+- **Gates:** Ruff passou; suíte completa concluiu 24 testes em 24,61 s; `make reproduce` passou com as duas fontes reais; assertions dos relatórios passaram. O checkout remoto permaneceu limpo.
+- **Regressão real:** o diagnóstico continua com 904 linhas de desenvolvimento, quatro intervalos válidos, 21 notas, `no_reliable_signal` e zero grupos elegíveis para excesso. O ganho é robustez nos casos escassos, não criação de sinal novo.
+- **Decisão:** os três achados High/Medium da revisão estão fechados sem alterar contratos de dados dos steps 01/02, relaxar privacidade ou ampliar o escopo funcional.
