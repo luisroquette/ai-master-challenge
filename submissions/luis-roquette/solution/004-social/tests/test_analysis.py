@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import unittest
 
 import pandas as pd
@@ -54,6 +55,19 @@ class CsvBoundaryTests(unittest.TestCase):
         frame, errors = load_csv(b"x" * (50 * 1024 * 1024 + 1))
         self.assertIsNone(frame)
         self.assertEqual(errors[0]["problem"], "file_too_large")
+
+    def test_load_csv_accepts_large_optional_text_and_restores_field_limit(self):
+        original_limit = csv.field_size_limit()
+        csv.field_size_limit(131_072)
+        try:
+            raw = csv_bytes([make_post(comments_text="x" * 140_000)])
+            frame, errors = load_csv(raw)
+            self.assertEqual(errors, [])
+            self.assertIsNotNone(frame)
+            self.assertEqual(len(frame.iloc[0]["comments_text"]), 140_000)
+            self.assertEqual(csv.field_size_limit(), 131_072)
+        finally:
+            csv.field_size_limit(original_limit)
 
     def test_load_csv_rejects_mixed_timezone_semantics(self):
         raw = csv_bytes(
@@ -137,6 +151,40 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual(float(result.iloc[0]["erv"]), 10.0)
         self.assertTrue(pd.isna(result.iloc[1]["erv"]))
 
+    def test_int64_boundaries_do_not_wrap_derived_or_aggregate_metrics(self):
+        maximum = 2**63 - 1
+        frame, errors = load_csv(
+            csv_bytes(
+                [
+                    make_post(
+                        id=f"boundary-{index}",
+                        content_id=f"boundary-content-{index}",
+                        creator_id=f"boundary-creator-{index}",
+                        views=maximum,
+                        likes=maximum,
+                        shares=1,
+                        comments_count=0,
+                        follower_count=maximum,
+                    )
+                    for index in range(2)
+                ]
+            )
+        )
+        self.assertEqual(errors, [])
+        derived = derive_metrics(frame)
+        self.assertEqual(int(derived.iloc[0]["interactions"]), maximum + 1)
+        self.assertGreater(float(derived.iloc[0]["erv"]), 99.0)
+
+        result = analyze(frame, default_scope(), str(frame.iloc[0]["source_hash"]))
+        self.assertEqual(result["metrics"]["views"], 2 * maximum)
+        self.assertEqual(result["metrics"]["interactions"], 2 * (maximum + 1))
+        self.assertEqual(result["metrics"]["creator_exposure"], 2 * maximum)
+        self.assertGreater(result["metrics"]["weighted_erv"], 99.0)
+        platform = result["dimensions"]["platform"][0]
+        self.assertEqual(platform["views"], 2 * maximum)
+        self.assertEqual(platform["interactions"], 2 * (maximum + 1))
+        self.assertEqual(platform["creator_exposure"], 2 * maximum)
+
     def test_follower_band_boundaries(self):
         values = [0, 9_999, 10_000, 49_999, 50_000, 99_999, 100_000, 499_999, 500_000]
         self.assertEqual(
@@ -191,7 +239,33 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(len(result["sponsorship"]["strata"]), 1)
         self.assertGreater(len(result["sponsorship"]["uncovered_strata"]), 0)
         self.assertLess(result["sponsorship"]["coverage"], 1.0)
+        self.assertEqual(result["sponsorship"]["period_granularity"], "calendar_month")
+        self.assertEqual(result["sponsorship"]["strata"][0]["context"]["period_month"], "2025-01")
         self.assertEqual(result["sponsorship"]["strata"][0]["delta_erv_pp"], 4.0)
+
+    def test_sponsorship_requires_both_arms_in_the_same_month(self):
+        organic = make_cohort(5, 6, [4], sponsored=False, start="2025-01-01T12:00:00")
+        sponsored = make_cohort(5, 6, [14], sponsored=True, start="2025-02-01T12:00:00")
+        organic.loc[:, "post_date"] = pd.Timestamp("2025-01-05T12:00:00")
+        sponsored.loc[:, "post_date"] = pd.Timestamp("2025-02-05T12:00:00")
+        frame = pd.concat([organic, sponsored], ignore_index=True)
+        frame["id"] = [f"temporal-{index}" for index in range(len(frame))]
+        frame["content_id"] = [f"temporal-content-{index}" for index in range(len(frame))]
+        frame["source_row_id"] = [f"hash:temporal-{index}" for index in range(len(frame))]
+
+        result = analyze(
+            frame,
+            default_scope(target_start="2025-01-01", target_end="2025-02-28", reference_date="2025-02-28"),
+            "hash",
+        )
+        sponsorship = result["sponsorship"]
+        self.assertEqual(sponsorship["eligible_strata"], 0)
+        self.assertEqual(sponsorship["coverage"], 0.0)
+        self.assertEqual(sponsorship["uncovered_count"], 2)
+        self.assertEqual(
+            {(item["period_month"], item["organic_posts"], item["sponsored_posts"]) for item in sponsorship["uncovered_strata"]},
+            {("2025-01", 30, 0), ("2025-02", 0, 30)},
+        )
 
     def test_sponsorship_recency_uses_sponsored_target_group_median_date(self):
         frame = sponsorship_rows()

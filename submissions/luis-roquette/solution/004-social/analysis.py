@@ -59,6 +59,7 @@ OPTIONAL_COLUMNS = (
 METRIC_COLUMNS = ("views", "likes", "shares", "comments_count", "follower_count")
 CORE_KEYS = ("platform", "content_type", "content_category", "follower_band", "is_sponsored")
 GROUP_KEYS = ("platform", "content_type", "content_category", "follower_band")
+SPONSORSHIP_KEYS = (*GROUP_KEYS, "period_month")
 AUDIENCE_KEYS = (
     "audience_age_distribution",
     "audience_gender_distribution",
@@ -91,19 +92,24 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
     except UnicodeDecodeError as exc:
         return None, [_error(exc.start, None, "invalid_encoding", "UTF-8 ou UTF-8-BOM")]
 
+    prior_field_limit = csv.field_size_limit()
     try:
-        reader = csv.reader(io.StringIO(text), strict=True)
-        rows = []
-        physical_lines = []
-        while True:
-            start_line = reader.line_num + 1
-            record = next(reader, None)
-            if record is None:
-                break
-            rows.append(record)
-            physical_lines.append(start_line)
-    except csv.Error as exc:
-        return None, [_error(None, None, "malformed_csv", str(exc))]
+        csv.field_size_limit(MAX_CSV_BYTES)
+        try:
+            reader = csv.reader(io.StringIO(text), strict=True)
+            rows = []
+            physical_lines = []
+            while True:
+                start_line = reader.line_num + 1
+                record = next(reader, None)
+                if record is None:
+                    break
+                rows.append(record)
+                physical_lines.append(start_line)
+        except csv.Error as exc:
+            return None, [_error(None, None, "malformed_csv", str(exc))]
+    finally:
+        csv.field_size_limit(prior_field_limit)
     if not rows or not rows[0]:
         return None, [_error(None, None, "missing_header", "cabeçalho CSV")]
     header = rows[0]
@@ -225,13 +231,34 @@ def follower_band(followers: int) -> str:
 
 
 def derive_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    interactions = df[["likes", "shares", "comments_count"]].sum(axis=1)
-    views = df["views"].astype(float)
-    followers = df["follower_count"].astype(float)
+    interactions = pd.Series(
+        (
+            int(likes) + int(shares) + int(comments)
+            for likes, shares, comments in df[["likes", "shares", "comments_count"]].itertuples(index=False, name=None)
+        ),
+        index=df.index,
+        dtype="object",
+    )
+    erv = pd.Series(
+        (
+            100.0 * int(interaction) / int(view) if int(view) > 0 else None
+            for interaction, view in zip(interactions, df["views"], strict=True)
+        ),
+        index=df.index,
+        dtype="float64",
+    )
+    erf = pd.Series(
+        (
+            100.0 * int(interaction) / int(followers) if int(followers) > 0 else None
+            for interaction, followers in zip(interactions, df["follower_count"], strict=True)
+        ),
+        index=df.index,
+        dtype="float64",
+    )
     return df.assign(
         interactions=interactions,
-        erv=(100 * interactions / views).where(views > 0),
-        erf=(100 * interactions / followers).where(followers > 0),
+        erv=erv,
+        erf=erf,
         follower_band=df["follower_count"].map(lambda value: follower_band(int(value))),
         period_month=df["post_date"].dt.strftime("%Y-%m"),
     )
@@ -258,12 +285,18 @@ def _strength_label(value: float) -> str:
     return "strong"
 
 
+def _integer_sum(values: Iterable[object]) -> int:
+    return sum(int(value) for value in values)
+
+
 def _summary(rows: pd.DataFrame) -> dict[str, object]:
     rates = rows["erv"].dropna()
     eligible = rows.loc[rows["views"] > 0]
-    views = int(rows["views"].sum())
-    interactions = int(rows["interactions"].sum())
-    creator_exposure = int(rows.groupby("creator_id")["follower_count"].max().sum()) if len(rows) else 0
+    views = _integer_sum(rows["views"])
+    interactions = _integer_sum(rows["interactions"])
+    creator_exposure = _integer_sum(rows.groupby("creator_id")["follower_count"].max()) if len(rows) else 0
+    eligible_views = _integer_sum(eligible["views"])
+    eligible_interactions = _integer_sum(eligible["interactions"])
     return {
         "posts": int(len(rows)),
         "creators": int(rows["creator_id"].nunique()),
@@ -276,7 +309,7 @@ def _summary(rows: pd.DataFrame) -> dict[str, object]:
         "median_erv": float(rates.median()) if len(rates) else None,
         "q1_erv": float(rates.quantile(0.25)) if len(rates) else None,
         "q3_erv": float(rates.quantile(0.75)) if len(rates) else None,
-        "weighted_erv": float(100 * eligible["interactions"].sum() / eligible["views"].sum()) if int(eligible["views"].sum()) else None,
+        "weighted_erv": float(100.0 * eligible_interactions / eligible_views) if eligible_views else None,
     }
 
 
@@ -389,12 +422,24 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
     strata: list[dict[str, object]] = []
     uncovered: list[dict[str, object]] = []
     comparable_posts = 0
-    for key, group in targets.groupby(list(GROUP_KEYS), dropna=False, sort=True):
-        context = dict(zip(GROUP_KEYS, key, strict=True))
+    for key, group in targets.groupby(list(SPONSORSHIP_KEYS), dropna=False, sort=True):
+        context = dict(zip(SPONSORSHIP_KEYS, key, strict=True))
         arms = {flag: group.loc[group["is_sponsored"] == flag].dropna(subset=["erv"]) for flag in (False, True)}
         eligible = all(len(arm) >= 30 and arm["creator_id"].nunique() >= 5 for arm in arms.values())
         if not eligible:
-            uncovered.append({**context, "posts": int(len(group)), "reason": "missing_or_insufficient_arm"})
+            uncovered.append(
+                {
+                    **context,
+                    "posts": int(len(group)),
+                    "organic_posts": int((~group["is_sponsored"]).sum()),
+                    "sponsored_posts": int(group["is_sponsored"].sum()),
+                    "organic_defined_rates": int(len(arms[False])),
+                    "sponsored_defined_rates": int(len(arms[True])),
+                    "organic_creators": int(arms[False]["creator_id"].nunique()),
+                    "sponsored_creators": int(arms[True]["creator_id"].nunique()),
+                    "reason": "missing_or_insufficient_contemporaneous_arm",
+                }
+            )
             continue
         creator_medians = {
             flag: arms[flag].groupby("creator_id")["erv"].median() for flag in (False, True)
@@ -428,6 +473,7 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
         "strata": strata,
         "uncovered_strata": uncovered,
         "coverage": comparable_posts / len(targets) if len(targets) else 0.0,
+        "period_granularity": "calendar_month",
         "required_financial_data": ["investment", "production_cost", "revenue_or_conversion_value"],
         "source_row_ids": sorted(targets["source_row_id"].astype(str)),
     }
@@ -447,16 +493,16 @@ def _aggregate_normalization(targets: pd.DataFrame) -> dict[tuple[str, str], dic
     pools: dict[tuple[str, str], list[dict[str, float]]] = {}
     specifications = (
         ("editorial", targets.loc[~targets["is_sponsored"]], (*GROUP_KEYS, *AUDIENCE_KEYS)),
-        ("sponsorship", targets.loc[targets["is_sponsored"]], GROUP_KEYS),
+        ("sponsorship", targets.loc[targets["is_sponsored"]], SPONSORSHIP_KEYS),
     )
     for kind, rows, keys in specifications:
         for _, group in rows.groupby(list(keys), dropna=False, sort=True):
             platform = str(group.iloc[0]["platform"])
             pools.setdefault((kind, platform), []).append(
                 {
-                    "views": float(group["views"].sum()),
-                    "interactions": float(group["interactions"].sum()),
-                    "followers": float(group.groupby("creator_id")["follower_count"].max().sum()),
+                    "views": float(_integer_sum(group["views"])),
+                    "interactions": float(_integer_sum(group["interactions"])),
+                    "followers": float(_integer_sum(group.groupby("creator_id")["follower_count"].max())),
                 }
             )
     return {
