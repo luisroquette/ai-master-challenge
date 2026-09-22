@@ -380,7 +380,9 @@ render_portfolio(bundle_fixture(), st.session_state)
         field = page.get_by_label(label, exact=True)
         expect(field).to_be_visible()
         field.click()
-        page.get_by_role("option", name=value, exact=True).click()
+        field.press("Control+A")
+        field.press_sequentially(value)
+        field.press("Enter")
         expect(page.get_by_label(label, exact=True)).to_have_value(value)
 
     def test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys(self):
