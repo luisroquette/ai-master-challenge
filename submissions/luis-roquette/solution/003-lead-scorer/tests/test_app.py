@@ -382,6 +382,8 @@ render_portfolio(bundle_fixture(), st.session_state)
         expect(page.get_by_label(label, exact=True)).to_have_value(value)
 
     def test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys(self):
+        from playwright.sync_api import expect
+
         seller_context = self.browser.new_context()
         seller = seller_context.new_page()
         seller.goto(self.base_url)
@@ -405,7 +407,7 @@ render_portfolio(bundle_fixture(), st.session_state)
         manager.get_by_role("button", name="Prioridade temporária do gestor").click()
         manager.get_by_text("Gestor Mara ·", exact=False).wait_for()
         manager.get_by_role("button", name="Recalcular prioridades").click()
-        self.assertEqual(manager.get_by_text("Gestor Mara ·", exact=False).count(), 0)
+        expect(manager.get_by_text("Gestor Mara ·", exact=False)).to_have_count(0)
         manager_context.close()
 
 
