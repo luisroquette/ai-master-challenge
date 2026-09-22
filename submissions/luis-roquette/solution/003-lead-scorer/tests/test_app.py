@@ -191,6 +191,30 @@ def bundle_fixture(fingerprint="fixture"):
         {"revision": "fixture-revision", "source_digest": "fixture-source"})
 
 
+def rejected_bundle_fixture():
+    evaluations = tuple(replace(_evaluation(candidate, route), status="rejected",
+        reasons=("fewer_than_two_supported_bands",))
+        for candidate in ("logistic", "boosting") for route in ("full", "fallback"))
+    scores = (
+        _score("E-R", "Engaging", state="relative", route="fallback",
+               origin="historical_evidence"),
+        _score("P-R", "Prospecting", state="relative"),
+        _score("P-BAD", "Prospecting", state="insufficient_data"),
+    )
+    return s.ScoringBundle("fixture-rejected", s.DEFAULT_CONFIG.version, evaluations,
+        tuple(s.select_route(evaluations, route) for route in ("full", "fallback")), scores, (),
+        {"revision": "fixture-rejected", "source_digest": "fixture-source"})
+
+
+def empty_stage_bundle_fixture():
+    evaluations = tuple(_evaluation(candidate, route) for candidate in ("logistic", "boosting")
+                        for route in ("full", "fallback"))
+    scores = (_score("P-EMPTY", "Prospecting", seller="Vazio", state="relative"),)
+    return s.ScoringBundle("fixture-empty", s.DEFAULT_CONFIG.version, evaluations,
+        tuple(s.select_route(evaluations, route) for route in ("full", "fallback")), scores, (),
+        {"revision": "fixture-empty", "source_digest": "fixture-source"})
+
+
 class PortfolioContractTests(unittest.TestCase):
     def setUp(self):
         import app
@@ -208,6 +232,22 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertIn("Corrija product", bad["Correção"])
         self.assertNotIn("Probabilidade", bad)
         self.assertNotIn("Receita esperada", bad)
+
+    def test_C4_sections_delegate_all_ordering_to_canonical_rank_stage(self):
+        rows = self.app.portfolio_rows(self.bundle, "Gestor", "Mara")
+        with patch.object(self.app, "rank_stage", wraps=s.rank_stage) as canonical:
+            sections = self.app.stage_sections(rows, "Engaging", None)
+        canonical.assert_called_once_with(rows, "Engaging")
+        self.assertEqual([row.opportunity_id for row in sections["calibrated"]], ["E-A", "E-B"])
+
+    def test_C4_native_table_selection_maps_the_displayed_section_positions(self):
+        rows = [next(row for row in self.bundle.scores if row.opportunity_id == "E-A")]
+        event = {"selection": {"rows": [0]}}
+        with patch.object(self.app.st, "dataframe", return_value=event) as dataframe:
+            positions = self.app.render_selectable_table(rows, "calibrated", None, "fixture-grid")
+        self.assertEqual(positions, [0])
+        self.assertEqual(dataframe.call_args.kwargs["on_select"], "rerun")
+        self.assertEqual(dataframe.call_args.kwargs["selection_mode"], "single-row")
 
     def test_TC33_unassigned_rows_stay_in_quality_view_without_a_portfolio_owner(self):
         unassigned = next(row for row in self.bundle.scores if row.opportunity_id == "UNASSIGNED")
@@ -258,6 +298,8 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual([r.opportunity_id for r in sections["pinned"]], ["E-B"])
         self.assertEqual(pin.manager, "Mara")
         self.assertEqual(pin.created_at_utc, now)
+        self.assertEqual(self.app.format_pin_timestamp(pin),
+                         "22/09/2026 12:30:00 (America/Sao_Paulo)")
         self.assertEqual(before, next(r for r in self.bundle.scores if r.opportunity_id == "E-B").to_dict())
 
     def test_TC39_pin_lifetime_filter_retention_and_resets(self):
@@ -287,6 +329,18 @@ class PortfolioContractTests(unittest.TestCase):
                             self.app.bundle_cache_key(one, s.DEFAULT_CONFIG,
                                                       {"revision": None, "source_digest": "source-b"}))
 
+    def test_TC40_app_and_bundle_reuse_one_canonical_source_identity(self):
+        from data import Snapshot
+        snapshot = Snapshot((("x.csv", b"one"),), "{}", "deps")
+        identity = dict(s.source_identity(ROOT))
+        self.assertEqual(dict(self.app.source_identity(ROOT)), identity)
+        self.app._cached_bundle.clear()
+        with patch.object(self.app, "load_dataset", return_value=object()), \
+             patch.object(self.app, "source_identity", return_value=identity), \
+             patch.object(self.app, "build_scoring_bundle", return_value=self.bundle) as build:
+            self.app.cached_bundle(snapshot, s.DEFAULT_CONFIG)
+        self.assertEqual(dict(build.call_args.args[2]), identity)
+
     def test_TC41_cached_bundle_reuses_training_for_same_identity(self):
         from data import Snapshot
         snapshot = Snapshot((("x.csv", b"one"),), "{}", "deps")
@@ -301,7 +355,7 @@ class PortfolioContractTests(unittest.TestCase):
 
 
 class StreamlitFixtureTests(unittest.TestCase):
-    def fixture_app(self):
+    def fixture_app(self, factory="bundle_fixture"):
         from streamlit.testing.v1 import AppTest
         tests = Path(__file__).parent
         return AppTest.from_string(f"""\
@@ -309,8 +363,8 @@ import sys
 sys.path.insert(0, {str(tests)!r})
 import streamlit as st
 from app import render_portfolio
-from test_app import bundle_fixture
-render_portfolio(bundle_fixture(), st.session_state)
+from test_app import {factory}
+render_portfolio({factory}(), st.session_state)
 """).run(timeout=20)
 
     def test_TC33_TC34_fixture_app_renders_two_tabs_and_suppresses_failed_values(self):
@@ -323,6 +377,26 @@ render_portfolio(bundle_fixture(), st.session_state)
         rendered = "\n".join(item.value for item in at.markdown)
         self.assertIn("Dados insuficientes", rendered)
         self.assertIn("Corrija product", rendered)
+
+    def test_C5_rejected_routes_and_empty_portfolio_are_honest_in_apptest(self):
+        rejected = self.fixture_app("rejected_bundle_fixture")
+        self.assertFalse(rejected.exception)
+        self.assertGreaterEqual(len(rejected.dataframe), 3)
+        surfaces = "\n".join(
+            [item.value for item in list(rejected.markdown) + list(rejected.caption)]
+            + [frame.value.to_string() for frame in rejected.dataframe])
+        self.assertNotIn("Probabilidade", surfaces)
+        self.assertNotIn("Receita esperada", surfaces)
+        next(button for button in rejected.button if button.label == "Abrir E-R").click().run()
+        details = "\n".join(item.value for item in rejected.markdown)
+        self.assertIn("Índice relativo", details)
+        self.assertNotIn("Probabilidade", details)
+        self.assertNotIn("Receita esperada", details)
+
+        empty = self.fixture_app("empty_stage_bundle_fixture")
+        self.assertTrue(any(item.value == "Nenhuma oportunidade neste filtro" for item in empty.info))
+        self.assertFalse(any(item.value == "### Detalhes" for item in empty.markdown))
+        self.assertFalse(any(button.label == "Prioridade temporária do gestor" for button in empty.button))
 
     def test_TC35_TC37_TC38_TC39_apptest_manager_filter_pin_and_reset(self):
         at = self.fixture_app()
@@ -354,8 +428,11 @@ import sys
 sys.path.insert(0, {str(Path(__file__).parent)!r})
 import streamlit as st
 from app import render_portfolio
-from test_app import bundle_fixture
-render_portfolio(bundle_fixture(), st.session_state)
+from test_app import bundle_fixture, empty_stage_bundle_fixture, rejected_bundle_fixture
+factories = {{"default": bundle_fixture, "empty": empty_stage_bundle_fixture,
+             "rejected": rejected_bundle_fixture}}
+render_portfolio(factories.get(st.query_params.get("scenario", "default"), bundle_fixture)(),
+                 st.session_state)
 """, encoding="utf-8")
         cls.server_context = managed_streamlit_server(path, timeout=20)
         cls.server, cls.base_url = cls.server_context.__enter__()
@@ -420,6 +497,29 @@ render_portfolio(bundle_fixture(), st.session_state)
         manager.get_by_role("button", name="Recalcular prioridades").click()
         expect(manager.get_by_text(re.compile(r"^Gestor Mara ·"))).to_have_count(0)
         manager_context.close()
+
+    def test_C5_rejected_routes_and_empty_portfolio_are_honest_in_browser(self):
+        from playwright.sync_api import expect
+
+        rejected = self.browser.new_page()
+        rejected.goto(f"{self.base_url}?scenario=rejected")
+        rejected.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+        expect(rejected.locator('[data-testid="stDataFrame"]')).not_to_have_count(0)
+        expect(rejected.locator("body")).not_to_contain_text("Probabilidade")
+        expect(rejected.locator("body")).not_to_contain_text("Receita esperada")
+        self.open_details(rejected, "E-R")
+        rejected.get_by_text("Índice relativo:", exact=False).wait_for()
+        expect(rejected.locator("body")).not_to_contain_text("Probabilidade")
+        expect(rejected.locator("body")).not_to_contain_text("Receita esperada")
+        rejected.close()
+
+        empty = self.browser.new_page()
+        empty.goto(f"{self.base_url}?scenario=empty")
+        empty.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+        empty.get_by_text("Nenhuma oportunidade neste filtro", exact=True).wait_for()
+        expect(empty.get_by_role("heading", name="Detalhes", exact=True)).to_have_count(0)
+        expect(empty.get_by_role("button", name="Prioridade temporária do gestor")).to_have_count(0)
+        empty.close()
 
 
 class VerificationGateTests(unittest.TestCase):
