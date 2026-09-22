@@ -1051,3 +1051,46 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   cenários permanecem parametrizados e o proxy não é economia realizada. Phase 3 não foi
   marcada como reviewed/done neste alinhamento; o próximo gate deve revisar o estado
   corrigido, não reutilizar o parecer baseado na SPEC sobre-especificada.
+
+## I63 — Step 10: fechamento canônico e demonstração real — 2026-09-22
+
+- **Autoridade e escopo:** a validação final voltou ao Challenge 002 e ao guia de
+  submissão. CK-12, S07 e approve/edit são extensões opcionais, não blockers do briefing.
+  Os controles de segurança permanecem: `eligible=0`, `reviewed=0`, threshold nulo,
+  drafts desativados e nenhuma rubrica ou aprovação fabricada.
+- **Reprodução desde zero:** no commit
+  `6ebd9e89799c8ae49f474d859b4a6d4f11c009b3`, o Codespace limpo removeu somente
+  `.venv`, `artifacts`, `data/raw` e `data/runtime`, todos ignorados e não rastreados.
+  `make setup`, `make data`, checksums, `make doctor` e `make reproduce` passaram.
+  Customer: `b06a9cde...bf8bea`; IT: `044fdace...dd4d4`. O tar transferido teve SHA-256
+  `4425cfed...a602a`, sem alteração rastreada.
+- **Abertura segura para demo:** o fluxo documentado `lock-review --decision disabled`
+  congelou a política como `insufficient_evidence`, `drafts_enabled=false` e
+  `threshold=null`; nova reprodução liberou a fila final sem S07. Estado real:
+  `released_after_locks`, Customer `n=231`, IT `n=5.301`, população de recuperação 224 e
+  zero elegíveis. O pacote transportado teve SHA-256 `e11a2179...d4a6a9`.
+- **Demonstração operacional real:** a fila abriu com 231 tickets e os botões de
+  aprovação/edição corretamente bloqueados. O escalonamento de `customer:2787` foi
+  persistido e relido como `audit_id=1`; após reiniciar o Streamlit, reapareceu no banco e
+  no painel. O export persistido possui uma linha, ação `escalate`, e SHA-256
+  `5d832e99...357e5b`. O Laboratório IT classificou o texto sanitizado como Hardware,
+  confiança `0,9701`, e `auto_route` no threshold `0,55`.
+- **Prova visual e diagnóstico:** a captura restrita à aba, sem dados pessoais, registra o
+  scorecard real em `2832×974`, PNG SHA-256 `bea793bc...6428cc`: 8.469 linhas, 1.404
+  intervalos e mediana pós-resposta de `6,34 h`, além dos gargalos já documentados. O CSV,
+  a imagem e os números foram vinculados em `evidence/metrics.json`; o resumo operacional
+  publicado deriva byte a byte de `artifacts/analytics/operational-summary.json`.
+- **Falhas e correções do loop:** o primeiro preflight encontrou Python diferente de 3.12;
+  o runtime 3.12 foi instalado somente no Codespace. Em seguida, as fontes estavam
+  ausentes; `make data` restaurou-as com checksums verificados. Uma asserção auxiliar
+  consultou o campo errado (`models.customer.status`); foi corrigida para o contrato real
+  (`status=released_after_locks`, `domains.customer.status=evaluated`), sem mudar produto.
+  Na demo, o primeiro motivo em português foi recusado pela quarentena conservadora; a
+  tentativa não gravou linha e foi repetida com `Critical priority requires human review.`,
+  que passou pela mesma sanitização. Nenhum gate foi relaxado.
+- **Limitações preservadas:** CK-12 continua opcional e incompleto; nenhuma avaliação
+  humana independente existe e nenhum draft seguro foi habilitado. A captura prova a UI
+  local, não envio externo. O proxy de excesso não é economia realizada; custo e moeda não
+  são observados. O gate integral do novo SHA publicado será registrado somente após
+  executar setup, dados, doctor, suíte, Ruff, reprodução, workflow, documentação e diff
+  no Codespace limpo.
