@@ -1345,3 +1345,25 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   temporária de CPU na camada gratuita; depois disso, a aplicação permaneceu funcional.
 - **URL:** https://support-decision-copilot-luis.streamlit.app/
 - **Entrega:** PR permanece aberto; nenhum merge ou envio final aos avaliadores foi feito.
+
+## I74 — Redesign UI/UX com Frontend Design — 2026-09-22
+
+- **Diagnóstico do owner:** a interface funcional ainda estava visualmente muito aquém do
+  produto; esta rodada passa a tratar UI/UX como parte explícita da qualidade da entrega.
+- **Método:** aplicação da skill `frontend-design`, preservando o fluxo e os contratos já
+  testados. Direção escolhida: central de operações editorial, com fundo marfim técnico,
+  navegação escura, verde-lima como sinal operacional e coral para alertas.
+- **Implementação:** sistema visual responsivo e acessível, hierarquia editorial, heróis,
+  indicadores, seções numeradas, estados de foco, tabelas, filtros e ações reorganizados
+  nas quatro superfícies: Fila diária, Scorecard, Laboratório IT e Evidências.
+- **Validação local leve:** `py_compile`, Ruff e `git diff --check` passaram; os 45 testes
+  focados de workflow e deploy passaram em 8,09 segundos.
+- **Commit publicado:** `d480e92 feat(support): redesign Streamlit operations cockpit`.
+  O preflight pesado permanece deliberadamente não executado/não verde por decisão do
+  owner. O PR segue aberto, sem merge e sem entrega final aos avaliadores.
+- **Evidência visual:** a checagem do deploy público foi iniciada; a validação final das
+  quatro telas será registrada assim que a versão publicada estiver visível no navegador.
+- **Falha de deploy encontrada na validação:** após o reinício no SHA `d480e92`, as páginas
+  secundárias falharam com `ModuleNotFoundError: support_copilot`. O runner multipágina do
+  Streamlit não preservou o `sys.path` preparado pelo entrypoint; a correção passa a
+  inicializar `src` em cada página e inclui teste de regressão desse contrato.

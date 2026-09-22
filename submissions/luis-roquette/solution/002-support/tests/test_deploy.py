@@ -2,8 +2,17 @@ from __future__ import annotations
 
 import io
 import zipfile
+from pathlib import Path
 
 import deploy_app
+
+
+def test_streamlit_pages_bootstrap_src_before_package_import():
+    pages = Path(__file__).parents[1] / "pages"
+
+    for page in pages.glob("*.py"):
+        source = page.read_text()
+        assert source.index("sys.path.insert") < source.index("from support_copilot.ui")
 
 
 def test_download_csv_extracts_expected_member_atomically(tmp_path, monkeypatch):
