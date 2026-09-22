@@ -792,6 +792,21 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Feedback e verificação focal:** **2/2 testes focais** e **3/3 controles dirigidos** passaram; eles cobrem mês, abreviação, identidade preservada, reuso/invalidação do cache e nova tentativa após falha de persistência. `py_compile` e `git diff --check` passaram.
 - **Contrato e limites:** `METHOD_VERSION = "2.4.0"` e artefatos permanecem inalterados. Pelo bypass autorizado, não foram executados suíte completa, CLI real, A4, preflight ou nova sessão de navegador. Os **122/122** de I48 seguem como última evidência pesada. HR-01 e branch de publicação permanecem externos; sem push, PR, deploy ou API paga.
 
+## I56 — Lapidação e melhoria/otimização, passada 5: primeira passagem limpa — 2026-09-22
+
+- **Estado da passada:** `clean=true`, zero melhorias relevantes e executáveis; contador em **1 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-5-20260922-144932.md`; o HEAD de fechamento foi `0cfdfeb`, cujo avanço durante a revisão continha somente o diário da Passada 4.
+- **Superfícies revisitadas:** literalização de captions, precisão numérica, contexto/mês/identidade, cache e invalidações de sessão, histórico, exports, layout nativo e limites de acessibilidade. Não surgiu justificativa para redesign, nova dependência, cache global ou refatoração adicional.
+- **Probes mínimos:** **3/3 testes focais** passaram em 1,210 s. Eles cobriram rótulos adversariais como texto literal com valor integral preservado, pequeno positivo/negativo sintético/zero real e reutilização/invalidação da análise com decisão imediatamente presente no download.
+- **Bypass explícito:** sem suíte completa, CLI real, A4, preflight, instalação ou nova sessão de navegador. Os **122/122** de I48 permanecem a última evidência pesada, não prova nova desta passada. HR-01 e branch de publicação continuam externos.
+
+## I57 — Lapidação e melhoria/otimização, passada 6: segunda passagem limpa e objetivo atingido — 2026-09-22
+
+- **Estado da passada:** `clean=true`, zero melhorias relevantes e executáveis; contador em **2 de 2 passadas limpas consecutivas**. O objetivo de **Lapidação e melhoria/otimização foi atingido** no escopo autorizado. A revisão permaneceu no HEAD `0cfdfeb`, sem mudança versionada entre as passadas limpas.
+- **Probes de estado pós-otimização:** upload, decisão aceita e revisão editada mantiveram apenas uma execução do motor; CSV e HTML refletiram imediatamente os dois eventos append-only, com `revision_of` correto. Uma falha injetada de proveniência não ativou a fonte nem o cache; no rerun seguinte, a importação foi revalidada, persistida e analisada normalmente.
+- **Transparência do feedback:** o primeiro probe de retry consultou um atributo interno indisponível do AppTest; corrigido para a interface pública, terminou com código 0 em 0,707 s. O erro do harness não foi atribuído ao produto. Não surgiu regressão de histórico, retry, identidade, apresentação ou segurança textual.
+- **Decisão de fechamento:** duas passadas consecutivas não identificaram correção ou otimização mínima restante. Isso encerra o goal de lapidação sem prometer ausência absoluta de defeitos, validar HR-01 ou ampliar o MVP.
+- **Bypass e limites:** sem suíte completa, CLI real, A4, preflight, instalação ou nova prova visual. Os **122/122**, determinismo e impressão de I48 continuam a última evidência pesada. HR-01 humano e publicação na branch exigida permanecem externos; sem push, PR, deploy ou API paga.
+
 ## I55 — Lapidação e melhoria/otimização, passada 4: valores externos como texto literal — 2026-09-22
 
 - **Estado da passada:** `clean=false`, uma melhoria relevante corrigida; contador reiniciado/mantido em **0 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-4-20260922-144143.md`.
