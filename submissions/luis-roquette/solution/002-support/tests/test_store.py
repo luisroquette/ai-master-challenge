@@ -15,6 +15,8 @@ from uuid import uuid4
 import pytest
 
 from support_copilot import store
+from support_copilot.decision import TAXONOMIES, base_policy, decide_route, derive_signals
+from support_copilot.modeling import Prediction
 from support_copilot.store import (
     DecisionEvent,
     StoredDecision,
@@ -31,7 +33,7 @@ def event(**changes):
         data_version="data-v1", model_version="model-v1", rules_version="rules-v1",
         retrieval_version="retrieval-v1", threshold=0.8, retrieval_threshold=0.7,
         prediction_status="ok", suggested_label="Technical issue", confidence=0.95,
-        gate_action="auto_route", reason_codes=("confidence_eligible",),
+        gate_action="auto_route", reason_codes=("validated_threshold",),
         source_ids=("customer:2", "customer:3"), human_action="approve", human_reason=None,
         suggestion_text="restart the device", final_text="restart the device",
     )
@@ -223,6 +225,59 @@ def test_low_routing_confidence_still_allows_safe_retrieval_draft(database):
             gate_action="human_review", reason_codes=("below_threshold",), confidence=0.6,
         ))
         assert saved.human_action == "approve"
+
+
+@pytest.mark.parametrize("gate_action,reasons", [
+    ("auto_route", ()),
+    ("auto_route", ("confidence_eligible",)),
+    ("auto_route", ("below_threshold",)),
+    ("auto_route", ("automation_disabled",)),
+    ("auto_route", ("classification_unsupported",)),
+    ("auto_route", ("no_eligible_threshold",)),
+    ("auto_route", ("model_unavailable",)),
+    ("auto_route", ("validated_threshold", "automation_disabled")),
+    ("human_review", ("validated_threshold",)),
+    ("human_review", ("validated_threshold", "critical_priority")),
+])
+def test_gate_reason_contradictions_preserve_previous_record(database, gate_action, reasons):
+    with closing(sqlite3.connect(database)) as connection:
+        prior = record_decision(connection, event())
+        with pytest.raises(ValueError, match=f"invalid_snapshot:{gate_action}"):
+            record_decision(connection, event(gate_action=gate_action, reason_codes=reasons))
+        assert not connection.in_transaction
+        assert list_decisions(connection) == [prior]
+
+
+@pytest.mark.parametrize("confidence,priority,enabled,expected_reason", [
+    (.95, "Low", True, "validated_threshold"),
+    (.60, "Low", True, "below_threshold"),
+    (.95, "Critical", True, "critical_priority"),
+    (.95, "Low", False, "automation_disabled"),
+])
+def test_real_gate_outputs_persist_unchanged(database, confidence, priority, enabled,
+                                          expected_reason):
+    probabilities = dict.fromkeys(TAXONOMIES["customer"], (1 - confidence) / 4)
+    probabilities["Technical issue"] = confidence
+    prediction = Prediction("customer", "ok", "Technical issue", confidence,
+                            probabilities, "model-v1", False)
+    policy = replace(base_policy("customer", "model-v1"), automation_enabled=enabled,
+                     threshold=.8, disabled_reason=None if enabled else "automation_disabled")
+    signals = derive_signals("device stopped working", domain="customer", ticket_id="customer:1",
+                             priority=priority, prediction=prediction, policy=policy,
+                             artifact_valid=True, privacy_passed=True)
+    route = decide_route(prediction, signals, policy)
+    assert route.reason_codes == (expected_reason,)
+    submission = event(gate_action=route.action, reason_codes=route.reason_codes,
+                       threshold=route.threshold, rules_version=route.rules_version,
+                       confidence=confidence)
+    if priority == "Critical":
+        submission = replace(submission, suggestion_text=None, final_text=None,
+                             human_action="escalate", human_reason="manual review")
+    with closing(sqlite3.connect(database)) as connection:
+        saved = record_decision(connection, submission)
+    with closing(sqlite3.connect(database)) as restarted:
+        assert list_decisions(restarted) == [saved]
+        assert (saved.gate_action, saved.reason_codes) == (route.action, route.reason_codes)
 
 
 def test_export_round_trips_every_field_and_real_bytes(database, tmp_path):

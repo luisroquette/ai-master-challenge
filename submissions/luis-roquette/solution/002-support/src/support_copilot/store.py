@@ -193,10 +193,12 @@ def _validate(event: DecisionEvent) -> DecisionEvent:
     if event.gate_action == "auto_route":
         if (event.prediction_status != "ok" or event.threshold is None
                 or event.confidence < event.threshold or event.rules_version is None
-                or risk_blocked):
+                or event.reason_codes != ("validated_threshold",)):
             raise ValueError("invalid_snapshot:auto_route")
     elif not event.reason_codes:
         raise ValueError("invalid_snapshot:missing_reasons")
+    elif "validated_threshold" in event.reason_codes:
+        raise ValueError("invalid_snapshot:human_review")
     if event.suggestion_text is not None:
         if (event.domain != "customer" or event.prediction_status != "ok"
                 or event.retrieval_version is None or event.retrieval_threshold is None

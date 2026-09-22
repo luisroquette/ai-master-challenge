@@ -64,7 +64,7 @@ class ArtifactBundle:
 
     def get(self, key: str) -> FeatureState:
         return self.features.get(key, FeatureState(
-            "missing", None, str(self.root / "manifest.json"), "artifact_not_registered"))
+            "missing", None, "manifest.json", "artifact_not_registered"))
 
 
 def logical_payload(value):
@@ -201,7 +201,7 @@ def load_artifacts(root: Path) -> ArtifactBundle:
             raise ValueError("manifest_entries_incompatible")
     except (OSError, ValueError, TypeError):
         state = FeatureState("missing" if not manifest_path.exists() else "incompatible",
-                             None, str(manifest_path), "manifest_missing_or_incompatible")
+                             None, "manifest.json", "manifest_missing_or_incompatible")
         return ArtifactBundle({}, {key: state for key in (
             "queue.customer", "models.customer", "models.it", "analytics.operational_summary",
             "analytics.satisfaction_model", "manifest")}, "unavailable", root)
@@ -215,7 +215,7 @@ def load_artifacts(root: Path) -> ArtifactBundle:
         if key in states:
             return states[key]
         entry = entries.get(key)
-        path = str(manifest_path)
+        path = "manifest.json"
         status, reason = "incompatible", "artifact_schema_incompatible"
         try:
             if stale:
@@ -232,9 +232,9 @@ def load_artifacts(root: Path) -> ArtifactBundle:
             if entry.get("status") != "ready" or not isinstance(entry.get("dependencies"), list):
                 raise ValueError(reason)
             relative = Path(entry["path"])
-            path = str(root / relative)
             if relative.is_absolute() or ".." in relative.parts:
                 raise ValueError("artifact_path_outside_root")
+            path = relative.as_posix()
             target = (root / relative).resolve()
             if not target.is_relative_to(root) or target == manifest_path:
                 raise ValueError("artifact_path_outside_root")
@@ -303,7 +303,7 @@ def load_artifacts(root: Path) -> ArtifactBundle:
 
     for key in entries:
         load(key)
-    states["manifest"] = FeatureState("ready", manifest, str(manifest_path))
+    states["manifest"] = FeatureState("ready", manifest, "manifest.json")
     return ArtifactBundle(manifest, states, hashlib.sha256(raw).hexdigest(), root)
 
 
@@ -374,6 +374,9 @@ def render_queue(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Fila diária")
     st.caption("Decisões locais; nenhuma mensagem é enviada ou ticket externo fechado.")
+    model_state = bundle.get("models.customer")
+    if model_state.status != "ready":
+        _show_state(model_state)
     state = bundle.get("queue.customer")
     if state.status != "ready":
         _show_state(state)

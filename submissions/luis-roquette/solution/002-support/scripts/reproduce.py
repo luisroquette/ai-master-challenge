@@ -310,7 +310,8 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
                                            row["ticket_id"]))
                 save("queue.customer", "queue/customer-test.json", queue, domain="customer",
                      dependencies=("data.customer.test", "policies.customer",
-                                   "retrieval.customer", "retrieval.policy"))
+                                   "retrieval.customer", "retrieval.policy")
+                     + (("models.customer",) if results[domain].model is not None else ()))
                 _atomic_csv(pd.DataFrame([{"ticket_id": row["ticket_id"],
                                           "text": row["text"], "priority": row["priority"],
                                           "gate_action": row["route"]["action"]}

@@ -162,7 +162,9 @@ def test_release_only_after_explicit_lock_preserves_runtime(prepared, tmp_path):
     assert (root / "review/retrieval-test-opened.json").exists()
     assert (root / "review/retrieval-test-template.csv").exists()
     assert sentinel.read_bytes() == b"unrelated runtime preserved"
-    assert ui.load_artifacts(root).get("queue.customer").status == "ready"
+    released = ui.load_artifacts(root)
+    assert released.get("queue.customer").status == "ready"
+    assert "models.customer" in released.manifest["artifacts"]["queue.customer"]["dependencies"]
     before = canonical_run(root)
     REPRODUCE(customer, it, root)
     assert canonical_run(root) == before
@@ -413,3 +415,53 @@ def test_pipeline_sanitizer_checks_final_whitespace_normalized_form(tmp_path):
     frame = load_customer_tickets(customer)
     assert frame.attrs["quality"]["excluded"]["privacy_quarantine"] == 1
     assert all(sanitize_text(text) == text for text in frame.text)
+
+
+def test_corrupt_customer_model_blocks_queue_with_actionable_relative_path(prepared, tmp_path,
+                                                                         monkeypatch):
+    import shutil
+
+    root = tmp_path / "private-home" / "artifacts"
+    shutil.copytree(prepared[0], root)
+    bundle = ui.load_artifacts(root)
+    lock_review(bundle.get("retrieval.customer").value,
+                pd.DataFrame(bundle.get("data.customer.calibration").value),
+                artifacts=root, decision="pending_review")
+    REPRODUCE(prepared[1], prepared[2], root)
+    assert ui.load_artifacts(root).get("queue.customer").status == "ready"
+    (root / "models/customer.joblib").write_bytes(b"corrupt")
+    bundle = ui.load_artifacts(root)
+    assert bundle.get("models.customer").status == "corrupt"
+    assert bundle.get("queue.customer").status == "stale"
+    assert bundle.get("queue.customer").reason == "dependency_unavailable:models.customer"
+    assert bundle.get("analytics.operational_summary").status == "ready"
+    assert bundle.get("models.it").status == "ready"
+    assert all(not Path(state.path).is_absolute() and ".." not in Path(state.path).parts
+               for state in bundle.features.values())
+    app = app_for(bundle, tmp_path / "runtime", monkeypatch)
+    assert not app.exception and not app.button
+    warnings = "\n".join(warning.value for warning in app.warning)
+    assert "models/customer.joblib" in warnings
+    assert "artifact_hash_mismatch" in warnings and "make reproduce" in warnings
+    assert str(tmp_path) not in warnings and "private-home" not in warnings
+    app.switch_page("pages/evidence.py").run()
+    assert not app.exception
+    resource_table = app.dataframe[0].value
+    assert "models/customer.joblib" in resource_table["caminho"].tolist()
+    assert all(not Path(path).is_absolute() for path in resource_table["caminho"])
+
+
+def test_missing_manifest_and_rejected_path_never_expose_local_absolute_path(prepared, tmp_path):
+    import shutil
+
+    missing = ui.load_artifacts(tmp_path / "private-home" / "missing")
+    assert missing.get("manifest").path == "manifest.json"
+    assert missing.get("unregistered").path == "manifest.json"
+    root = tmp_path / "artifacts"
+    shutil.copytree(prepared[0], root)
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["artifacts"]["models.customer"]["path"] = str(tmp_path / "private-model.joblib")
+    atomic_json(manifest, root / "manifest.json")
+    rejected = ui.load_artifacts(root).get("models.customer")
+    assert rejected.status == "incompatible"
+    assert rejected.path == "manifest.json"
