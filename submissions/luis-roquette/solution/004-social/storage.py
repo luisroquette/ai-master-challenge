@@ -188,7 +188,18 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
         return "pending", "same_source", comparison
     if str(event["method_version"]) != str(decision["method_version"]):
         return "pending", "method_mismatch", comparison
-    if event.get("scope", decision["scope"]) != decision["scope"]:
+    decision_scope = decision["scope"]
+    event_scope = event.get("scope", decision_scope)
+    assert isinstance(decision_scope, dict) and isinstance(event_scope, dict)
+    decision_controls = {
+        "filters": decision_scope.get("filters", decision_scope),
+        "strict_audience": decision_scope.get("strict_audience", False),
+    }
+    event_controls = {
+        "filters": event_scope.get("filters", event_scope),
+        "strict_audience": event_scope.get("strict_audience", False),
+    }
+    if event_controls != decision_controls:
         return "pending", "incompatible_scope", comparison
     if observed.get("metric") != baseline.get("metric"):
         return "pending", "metric_mismatch", comparison
