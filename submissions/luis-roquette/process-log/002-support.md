@@ -1617,3 +1617,11 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   compartilhamento de telemetria.
 - **Conclusão:** nenhum outro código de segurança é indispensável antes da avaliação. O
   sistema permanece aceitável somente como demonstração pública, sanitizada e sem escrita.
+
+## I87 — Materiais finais consolidados — 2026-09-22
+
+- **Decisão:** manter poucos arquivos e concentrar a entrada do avaliador no README.
+- **Vídeo:** a gravação legendada do método construtivo foi preservada sem alteração de
+  conteúdo e comprimida para `72 MB`, dentro do limite do GitHub.
+- **Auditoria:** não foi encontrado vídeo demonstrativo nem Arcade específico do Challenge
+  002; materiais de outros desafios não foram reutilizados como evidência.

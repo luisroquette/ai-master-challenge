@@ -163,6 +163,7 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 
 ## Evidências
 
+- [x] [Vídeo do método construtivo](solution/002-support/evidence/construction-method.mp4)
 - [x] [Narrativa contemporânea e decisões](process-log/002-support.md)
 - [x] [Pesquisa técnica e prova mínima](research/002-support.md)
 - [x] [Código e instruções reproduzíveis](solution/002-support/README.md)
