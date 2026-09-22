@@ -1409,3 +1409,49 @@ Luis decidiu não autorizar ainda o envio da branch ou do bundle para backup ext
 O ciclo de auditoria de segurança foi encerrado com **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. O único item pendente — backup externo — permanece assim por decisão explícita do owner. A implementação local pertinente foi concluída, validada e documentada; nenhum push, deploy, PR ou contato com avaliadores ocorreu.
 
 **Regra de reabertura:** revisar novamente o checklist imediatamente antes de publicação, adoção de dados privados, autenticação, banco ou integração com CRM.
+
+## I25 — Auditoria final das regras de entrega — 2026-09-22
+
+Antes de executar a embalagem final, as regras do Challenge 003, o guia de submissão, o README raiz, o `CONTRIBUTING.md` e o template oficial foram confrontados novamente com o plano.
+
+### Achados incorporados
+
+- A aplicação funcional continua sendo a entrega principal; tour, DOCX e mapa visual são evidências complementares.
+- O arquivo obrigatório `submissions/luis-roquette/README.md` deve funcionar como porta de entrada e seguir o template oficial.
+- O README precisa indexar solução, setup, resultados, limitações, ferramentas de IA, erros corrigidos, contribuição humana, iterações e evidências.
+- A submissão final aceita somente um PR para `upstream/main`, com título `[Submission] Luis Roquette — Challenge 003`, e não pode alterar arquivos fora de `submissions/luis-roquette/`.
+- Screenshots, gravação e export do chat são formatos opcionais; a narrativa escrita e o histórico Git já constituem evidências aceitas.
+- A branch `submission/seu-nome` é o padrão documentado, mas já existe no fork para outro trabalho; o nome final será resolvido sem sobrescrever histórico e sem publicação antecipada.
+
+### Correção de estado externo
+
+O PR anterior `#140` está **fechado**, não foi mergeado, e a branch remota do Challenge 003 permanece removida. A leitura foi apenas verificatória. Nenhum novo push, deploy, PR ou contato com avaliadores ocorreu.
+
+## I26 — Início da execução do plano de entrega — 2026-09-22
+
+Luis autorizou a execução local do plano. O escopo inclui README raiz, resumo metodológico em Markdown e DOCX, curadoria de prompts, roteiro do tour, mapa visual e gates finais. Deploy, push, PR e qualquer transmissão externa continuam fora do escopo até autorização expressa posterior.
+
+O nome de trabalho adotado para a metodologia é **Método de Construção Cognitiva em Loops (MCCL)**. A documentação será concisa, baseada em uma fonte Markdown e orientada a três movimentos para o avaliador: usar o sistema, compreender o método e verificar a evolução.
+
+## I27 — Execução local da embalagem final — 2026-09-22
+
+### Artefatos produzidos
+
+- `submissions/luis-roquette/README.md`: porta de entrada baseada no template oficial, com solução, setup, resultados, recomendações, limitações, processo e evidências.
+- `docs/metodologia-construcao-cognitiva-em-loops.md`: fonte textual única do método MCCL.
+- `docs/metodologia-construcao-cognitiva-em-loops.docx`: versão executiva de três páginas.
+- `docs/do-prompt-ao-produto.png`: mapa visual 1920 × 1080 da evolução do briefing à entrega.
+- `docs/prompts-chave.md`: doze intervenções humanas e a mudança produzida por cada uma.
+- `docs/roteiro-tour-guiado.md`: roteiro de sete cenas, com percursos de vendedor e gestor e fallback em vídeo ou GIF.
+- `docs/filosofia-visual.md`: direção estética usada para o mapa.
+
+### Feedback looping da documentação
+
+1. O primeiro mapa visual apresentava a sequência inferior em direção cronológica invertida. A composição foi corrigida e reinspecionada em resolução original.
+2. O primeiro render do DOCX mostrou linha decorativa sob o título, duas páginas com vazio excessivo e numeração continuada em 7–9. O gerador foi corrigido e o segundo render condensou o conteúdo em três páginas sem defeitos visíveis.
+3. A auditoria de acessibilidade detectou uma imagem sem texto alternativo. O atributo foi incorporado ao OOXML; a nova auditoria terminou com **0 achados altos, médios ou baixos**.
+4. As três páginas finais foram renderizadas novamente e inspecionadas integralmente após a correção de acessibilidade.
+
+### Gate local e limite externo
+
+A raiz do repositório ignora `submissions/` por padrão; por isso, os novos arquivos precisam de inclusão explícita com `git add -f`, sem alterar o `.gitignore` e sem tocar arquivos fora da pasta autorizada. O tour publicado, a URL pública, o TC-47 remoto, o push e o PR continuam pendentes por dependerem de autorização externa expressa.
