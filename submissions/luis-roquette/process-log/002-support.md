@@ -843,3 +843,13 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Gates:** Ruff passou; suíte completa concluiu 24 testes em 24,61 s; `make reproduce` passou com as duas fontes reais; assertions dos relatórios passaram. O checkout remoto permaneceu limpo.
 - **Regressão real:** o diagnóstico continua com 904 linhas de desenvolvimento, quatro intervalos válidos, 21 notas, `no_reliable_signal` e zero grupos elegíveis para excesso. O ganho é robustez nos casos escassos, não criação de sinal novo.
 - **Decisão:** os três achados High/Medium da revisão estão fechados sem alterar contratos de dados dos steps 01/02, relaxar privacidade ou ampliar o escopo funcional.
+
+## I49 — Phase 1: Feedback Looping fechado — 2026-09-21 22:00 BRT
+
+- **Arquiteto:** definiu o marco como diagnóstico executável sobre dados sanitizados, com teste lacrado, denominadores reconciliáveis, ausência de sinal visível e capacidades futuras indisponíveis.
+- **Engenheiro:** entregou os steps 01–03 — ambiente reproduzível, contratos de dados/privacidade e diagnóstico operacional com relatórios, cenários e página mínima.
+- **Juiz, primeira revisão:** `3,5/5`; encontrou dois High e um Medium, todos localizados no step 03. O blast radius foi confirmado como local: folds sem intervalos, parsing temporal misto e split insuficiente. Steps 01/02 permaneceram intactos.
+- **Correção em loop:** cada achado ganhou um reproduzidor permanente, correção mínima, teste focado, suíte completa e reprodução real no SHA publicado. Nenhuma correção relaxou privacidade, abriu o teste ou fabricou sinal.
+- **Prova:** SHA funcional `ca17ede6b79ce0640fd62865543d363c87d466c5`; Ruff verde, 24 testes e reprodução real verde. O diário e o estado final foram sincronizados em `328c429390e94efcebe9c47073c951a5727f7575` e revalidados no mesmo gate.
+- **Juiz, segunda revisão:** `4,0/5`, sem issues. O ciclo `arquiteto → engenheiro → juiz → correção → prova` encerrou a Phase 1 com Feedback Looping completo.
+- **Estado SDD:** steps 01, 02 e 03 marcados `[DONE]`; `Phase 1 [REVIEWED]`. A barreira de fase foi satisfeita antes de qualquer implementação da Phase 2.

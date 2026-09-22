@@ -515,9 +515,9 @@ Snapshot S07 é saída obrigatória de 07, selada após a revisão da fase 2: `d
 
 | Step | Phase | Model | Agent | Depends on | Parallel with | Sub-Task File |
 |---|---|---|---|---|---|---|
-| 01 | 1 | sonnet | sdd:developer | None | None | `.specs/sub-tasks/implement-support-decision-copilot/01-environment-proof.md` |
-| 02 | 1 | opus | sdd:data-engineer | 01 | None | `.specs/sub-tasks/implement-support-decision-copilot/02-sanitized-data-contracts.md` |
-| 03 | 1 | sonnet | sdd:data-engineer | 02 | None | `.specs/sub-tasks/implement-support-decision-copilot/03-operational-diagnostic.md` |
+| 01 [DONE] | 1 | sonnet | sdd:developer | None | None | `.specs/sub-tasks/implement-support-decision-copilot/01-environment-proof.md` |
+| 02 [DONE] | 1 | opus | sdd:data-engineer | 01 | None | `.specs/sub-tasks/implement-support-decision-copilot/02-sanitized-data-contracts.md` |
+| 03 [DONE] | 1 | sonnet | sdd:data-engineer | 02 | None | `.specs/sub-tasks/implement-support-decision-copilot/03-operational-diagnostic.md` |
 | 04 | 2 | opus | sdd:ml-engineer | 02 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/04-models-and-risk-gate.md` |
 | 05 | 2 | opus | sdd:developer | 02 | 04, 06 | `.specs/sub-tasks/implement-support-decision-copilot/05-transactional-audit.md` |
 | 06 | 2 | opus | sdd:ml-engineer | 02, 04 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/06-safe-retrieval-and-review.md` |
@@ -530,7 +530,7 @@ Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revi
 
 ### Phase Overview
 
-#### Phase 1
+#### Phase 1 [REVIEWED]
 
 **Steps:** 01, 02, 03.
 
