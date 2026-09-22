@@ -19,6 +19,21 @@ O último preflight canônico integral concluído terminou com `PREFLIGHT OK`: 7
 
 O segundo retrabalho residual adicionou regressões em `2dbc3e5` e implementação em `af046c4` para seleção única entre grades e transparência do suporte histórico em Prospecting. Por bypass explícito do owner e ausência de Codespace limpo do repositório, esses quatro testes foram revisados estaticamente, mas não executados. Os únicos gates pós-mudança são `py_compile`, `bash -n scripts/preflight.sh` e `git diff --check`, todos aprovados; não se reivindica GREEN executado.
 
+## Entrega Git e tentativa de publicação — 2026-09-22
+
+| Campo | Evidência |
+|---|---|
+| Branch publicada | `submission/luis-roquette-003-lead-scorer` |
+| Revisão publicada | `aa70dc6435e9df85c512007e3d1c008e4cf78876` |
+| Pull request | [#140 — [Submission] Luis Roquette — Challenge 003](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/140) |
+| Base / estado inicial | `upstream/main`; aberto e mergeable; nenhum check configurado ou pendente |
+| Regras verificadas | sem workflows versionados; rulesets vazios; `main` do fork sem branch protection |
+| Identidade calculada pelo app | fonte `f765d497c5fd992d0dd3bb7fa96caf81c78c77b30111f07b8c5cd82ce71a32e3`; fingerprint `fa97e0da30b8ce873461690d493d1a8ce02759a0664da57ab77bd6fdcaf3d2a4` |
+| Streamlit Community Cloud | tentativa chegou ao consentimento OAuth do GitHub; publicação não submetida sem a autorização interativa do owner |
+| URL / TC-47 / screenshots | pendentes; nenhuma URL, prova live ou captura é reivindicada |
+
+O owner dispensou explicitamente apenas a repetição do preflight integral. Essa exceção não substitui a publicação, a renderização live nem o TC-47. Assim que o OAuth for autorizado, o deploy deve usar o fork `luisroquette/ai-master-challenge`, a branch acima e o entrypoint `submissions/luis-roquette/solution/003-lead-scorer/app.py`; depois, o verificador deve receber a identidade efetivamente renderizada.
+
 ## Snapshot real já congelado
 
 | Tabela | Linhas |

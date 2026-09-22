@@ -33,10 +33,17 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 
 #### Subtasks
 
-- [ ] Revalidate intended diff/revision, source and data/config fingerprints plus actual workflow/branch-check/provider requirements, then coordinate scoped Git inclusion and the single `[Submission] Luis Roquette — Challenge 003` PR targeting upstream `main` with the orchestrator.
+- [x] Revalidate intended diff/revision, source and data/config fingerprints plus actual workflow/branch-check/provider requirements, then coordinate scoped Git inclusion and the single `[Submission] Luis Roquette — Challenge 003` PR targeting upstream `main` with the orchestrator.
 - [ ] Publish the gated source to Streamlit Community Cloud with Python 3.11, repository root as working directory, the actual nested solution `app.py` entrypoint and requirements.txt containing `protobuf<6`; follow provider runs to terminal result without bypassing checks.
 - [ ] Write the concrete live browser verification cases/results in docs/evaluation.md, execute TC-47 and seller/manager journeys, include wrong-identity rejection evidence from the existing verifier tests, and capture the two required screenshots.
 - [ ] Record actual URL, revision/digest/fingerprint, commands/status and deployment identity in docs/evaluation.md; if runtime source changes, return to canonical verification and repeat live proof before delivery.
+
+#### Implementation evidence — 2026-09-22
+
+- Git: branch `submission/luis-roquette-003-lead-scorer` publicada no fork na revisão `aa70dc6435e9df85c512007e3d1c008e4cf78876`; PR upstream [#140](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/140), base `main`, título exato e estado inicial mergeable.
+- Checks: não há workflow versionado, ruleset ou check pendente; a exceção explícita do owner ao preflight integral repetido está registrada no corpo do PR e em `docs/evaluation.md`.
+- Provider: tentativa no Streamlit Community Cloud chegou ao consentimento OAuth do GitHub. Nenhum deploy foi submetido porque essa autorização interativa exige confirmação do owner no momento do clique.
+- Pendente sem falsa reivindicação: URL, estado terminal do deploy, TC-47, jornadas seller/manager e duas capturas reais.
 
 #### Blockers & Risks
 
