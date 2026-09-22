@@ -1566,3 +1566,18 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   operar no Microsoft 365.
 - **Limite:** esta decisão adia a ativação; não classifica autenticação como desnecessária
   nem autoriza liberar escrita anônima.
+
+## I84 — Backup adiado sem estado operacional — 2026-09-22
+
+- **Constatação:** sem OIDC configurado, nenhum visitante cria, lê ou exporta decisões; o
+  teste de regressão comprova que o SQLite nem sequer é criado no modo anônimo.
+- **Estado preservado:** o CSV demonstrativo é sanitizado e versionado no Git; os
+  artefatos analíticos são reproduzíveis a partir das fontes públicas. Não há decisão
+  operacional mutável no deploy que possa ser legitimamente chamada de backup.
+- **Decisão:** não criar cópia de um SQLite efêmero e vazio. Isso adicionaria mecanismo
+  sem dado recuperável e produziria uma garantia enganosa.
+- **Bloqueador futuro:** OIDC e escrita operacional só podem ser ativados depois de mover
+  decisões para armazenamento durável gerenciado, definir retenção, automatizar backups
+  e executar um teste documentado de restauração.
+- **Risco residual:** aceito apenas para o protótipo público e somente leitura; continua
+  crítico para qualquer uso real.

@@ -21,7 +21,7 @@ está configurado e o armazenamento continua efêmero e sem backup.
 | 4 | Segredo e chave API no frontend | Rejeitado como desenho | Crítico se feito | Frontend público não guarda segredo. Usar segredo apenas no servidor; frontend recebe somente identificador público com escopo mínimo. |
 | 5 | WAF e detecção avançada de bots (Cloudflare) | Ausente | Médio | Deploy usa domínio do Streamlit; nenhum WAF/bot rule próprio foi encontrado. Avaliar proxy/domínio controlado somente após autenticação. |
 | 6 | Logs de auditoria | Parcial | Alto | SQLite registra decisões sanitizadas, versões e timestamps. Faltam ator autenticado, login/falha, leitura, export, administração, IP/UA protegido, retenção e trilha imutável central. |
-| 7 | Backup e recuperação | Ausente | Crítico | `data/runtime/decisions.sqlite3` está ignorado e no filesystem efêmero do Streamlit. Reinício pode apagar decisões; não há snapshot, retenção, restore testado nem runbook. Artefatos analíticos são reproduzíveis, decisões não. |
+| 7 | Backup e recuperação | Adiado; sem estado operacional | Aceito no protótipo; crítico antes de escrita | Sem OIDC, visitantes não criam o SQLite. O CSV demonstrativo está versionado e os artefatos são reproduzíveis. Banco durável, retenção, backup automático e restore testado bloqueiam qualquer ativação operacional. |
 | 8 | Sentry | Ausente | Médio | Nenhum SDK/DSN/configuração. Antes de instalar, definir redaction para não enviar texto de tickets, PII ou segredos. |
 | 9 | Alertas de custo | Ausente / baixa exposição atual | Baixo | Não há API paga; treino é local no boot. Faltam alertas do provedor e limites de CPU/storage/reboot. |
 | 10 | Ocultar chaves de API | Coberto por ausência | Baixo hoje | Não foram encontradas chaves ou `.env` rastreados. Se surgir integração, segredo deve ficar no cofre do provedor e nunca no browser/log. |
@@ -85,3 +85,15 @@ teste de regressão, evidência no diário e nova medição de risco residual.
 - Próxima ativação: instalar `Authlib>=1.3.2`; criar o cliente no Google Identity — ou no
   Microsoft Entra ID se o ambiente corporativo usar Microsoft 365 — e armazenar todas as
   credenciais somente no cofre do provedor.
+
+## Tratamento 02 — backup e recuperação
+
+- Estado: conscientemente adiado enquanto o protótipo permanecer sem escrita operacional.
+- Evidência: modo anônimo não cria `data/runtime/decisions.sqlite3`; o demonstrativo
+  sanitizado `evidence/decisions-demo.csv` está versionado; artefatos são reproduzíveis.
+- Decisão: não tratar cópia de SQLite efêmero como backup. Não existe dado operacional
+  mutável no deploy atual.
+- Gate obrigatório para ativar OIDC: armazenamento durável gerenciado, retenção definida,
+  backup automático, runbook e teste de restauração com evidência.
+- Risco residual: aceito somente para avaliação pública em modo fail-closed; crítico para
+  produção, piloto com operadores ou dados reais.
