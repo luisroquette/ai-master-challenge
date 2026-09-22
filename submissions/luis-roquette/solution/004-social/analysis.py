@@ -16,15 +16,15 @@ import sys
 import tempfile
 import unicodedata
 from collections.abc import Iterable
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 
-METHOD_VERSION = "2.1.0"
-HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0")
+METHOD_VERSION = "2.2.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0")
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
 MIN_OPERATIONAL_DATE = pd.Timestamp("1971-01-01T00:00:00")
@@ -686,25 +686,26 @@ def _frequency_hypothesis(
     coverage_end: pd.Timestamp,
     period_month: object | None = None,
 ) -> dict[str, object]:
+    coverage_start_date = coverage_start.date()
+    coverage_end_date = coverage_end.date()
     if period_month is not None:
-        month_start = pd.Timestamp(f"{period_month}-01")
-        if coverage_start.tzinfo is not None:
-            month_start = month_start.tz_localize(coverage_start.tzinfo)
-        next_month = month_start + pd.offsets.MonthBegin(1)
-        coverage_start = max(coverage_start, month_start)
-        coverage_end = min(coverage_end, next_month - timedelta(days=1))
+        year, month = (int(part) for part in str(period_month).split("-", maxsplit=1))
+        month_start = date(year, month, 1)
+        next_month = date(year + (month == 12), month % 12 + 1, 1)
+        coverage_start_date = max(coverage_start_date, month_start)
+        coverage_end_date = min(coverage_end_date, next_month - timedelta(days=1))
 
-    first_monday = coverage_start.normalize() + timedelta(days=(-coverage_start.weekday()) % 7)
-    last_sunday = coverage_end.normalize() - timedelta(days=(coverage_end.weekday() + 1) % 7)
-    week_starts: list[pd.Timestamp] = []
+    first_monday = coverage_start_date + timedelta(days=(-coverage_start_date.weekday()) % 7)
+    last_sunday = coverage_end_date - timedelta(days=(coverage_end_date.weekday() + 1) % 7)
+    week_starts: list[date] = []
     cursor = first_monday
-    while cursor + timedelta(days=6) <= last_sunday:
+    while cursor <= last_sunday:
         week_starts.append(cursor)
         cursor += timedelta(days=7)
 
     observed = rows.assign(
         week_start=rows["post_date"].map(
-            lambda value: value.normalize() - timedelta(days=value.weekday())
+            lambda value: value.date() - timedelta(days=value.weekday())
         )
     )
     observed = observed.loc[observed["week_start"].isin(week_starts)]
@@ -726,12 +727,19 @@ def _frequency_hypothesis(
         "sample_creators": int(observed["creator_id"].nunique()),
         "complete_weeks_available": len(week_starts),
         "observed_complete_weeks": observed_weeks,
-        "window_start": week_starts[0].isoformat() if week_starts else None,
-        "window_end": (week_starts[-1] + timedelta(days=6)).isoformat() if week_starts else None,
+        "window_start": _calendar_midnight_iso(week_starts[0], coverage_start.tzinfo) if week_starts else None,
+        "window_end": _calendar_midnight_iso(week_starts[-1] + timedelta(days=6), coverage_start.tzinfo) if week_starts else None,
         "action_type": "test_observed_cadence" if sufficient else "collect_two_complete_weeks",
         "collection_requirement_weeks": 2,
         "limitation": "frequência observada é hipótese de teste, não efeito causal",
     }
+
+
+def _calendar_midnight_iso(value: date, timezone: object | None) -> str:
+    timestamp = pd.Timestamp(value)
+    if timezone is not None:
+        timestamp = timestamp.tz_localize(timezone)
+    return timestamp.isoformat()
 
 
 def _context_rows(rows: pd.DataFrame, context: dict[str, object], sponsored: bool | None = None) -> pd.DataFrame:
@@ -843,7 +851,7 @@ def _editorial(
                 "delta_views_per_post": delta_views,
                 "delta_interactions_per_post": delta_interactions,
                 "strength": min(current_strength, previous_strength),
-                "representative_date": now["post_date"].sort_values().iloc[len(now) // 2],
+                "representative_date": now["post_date"].median(),
                 "source_row_ids": sorted(now["source_row_id"].astype(str)),
                 "creator_overlap": int(len(set(now["creator_id"]) & set(before["creator_id"]))),
             }
@@ -1178,7 +1186,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         )
 
     candidates.sort(key=lambda item: (-float(item["priority"]), -abs(float(item["delta_erv_pp"])), -pd.Timestamp(item["representative_date"]).value, str(item["evidence_id"])))
-    recommendations: list[dict[str, object]] = []
+    all_recommendations: list[dict[str, object]] = []
     seen: set[tuple[object, ...]] = set()
     for item in candidates:
         context = item["context"]
@@ -1186,12 +1194,12 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         if key in seen:
             continue
         seen.add(key)
-        recommendations.append(item)
-        if len(recommendations) == 3:
-            break
+        all_recommendations.append(item)
+
+    recommendations = all_recommendations[:3]
 
     evidence_by_id = {item["evidence_id"]: item for item in [*alerts, *editorial, *sponsorship["strata"]]}
-    for recommendation in recommendations:
+    for recommendation in all_recommendations:
         snapshot = deepcopy(recommendation["evidence_snapshot"])
         family = snapshot["family"]
         evidence = evidence_by_id[snapshot["evidence_id"]]
@@ -1275,8 +1283,9 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         "alerts": alerts,
         "sponsorship": sponsorship,
         "recommendations": recommendations,
+        "all_recommendations": all_recommendations,
         "evidence_snapshots": {
-            str(item["evidence_id"]): item["evidence_snapshot"] for item in recommendations
+            str(item["evidence_id"]): item["evidence_snapshot"] for item in all_recommendations
         },
         "pending": pending,
         "row_references": {str(row["source_row_id"]): int(row["source_line"]) for _, row in frame.iterrows()},

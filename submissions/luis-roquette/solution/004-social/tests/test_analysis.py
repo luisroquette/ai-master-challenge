@@ -529,6 +529,48 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(frequency["observed_complete_weeks"], 1)
         self.assertEqual(frequency["action_type"], "collect_two_complete_weeks")
 
+    def test_frequency_hypothesis_does_not_overflow_at_upper_date_boundary(self):
+        boundary = "2262-04-09T12:00:00"
+        sponsorship = frame_from_rows([
+            make_post(
+                id=f"{flag}-{index}",
+                content_id=f"{flag}-content-{index}",
+                creator_id=f"{flag}-creator-{index % 5}",
+                is_sponsored=flag,
+                post_date=boundary,
+                likes=8 if flag == "TRUE" else 4,
+            )
+            for flag in ("TRUE", "FALSE")
+            for index in range(30)
+        ])
+        editorial = aggregate_effect_rows(creators=20)
+        editorial.loc[editorial["id"].str.startswith("before-"), "post_date"] = pd.Timestamp("2262-04-08T12:00:00")
+        editorial.loc[editorial["id"].str.startswith("now-"), "post_date"] = pd.Timestamp(boundary)
+        post = frame_with_target(
+            make_cohort(20, 5, [2, 4, 6, 8, 10], start="2262-03-01T12:00:00"),
+            30,
+            post_date=boundary,
+        )
+        cases = (
+            (sponsorship, "aggregate", "sponsorship"),
+            (editorial, "aggregate", "editorial"),
+            (post, "post", "post"),
+        )
+        scope = default_scope(target_start="2262-04-09", target_end="2262-04-09", reference_date=boundary)
+        for frame, evidence_type, family in cases:
+            with self.subTest(family=family):
+                result = analyze(frame, scope, family)
+                recommendation = next(
+                    item for item in result["recommendations"]
+                    if item["evidence_type"] == evidence_type and item["evidence_snapshot"]["family"] == family
+                )
+                frequency = recommendation["frequency_hypothesis"]
+                self.assertEqual(frequency["status"], "collect")
+                self.assertEqual(frequency["complete_weeks_available"], 0)
+                self.assertEqual(frequency["observed_complete_weeks"], 0)
+                self.assertIsNone(frequency["window_start"])
+                self.assertIsNone(frequency["window_end"])
+
     def test_month_frequency_excludes_boundary_weeks_and_other_months(self):
         scope = default_scope(
             target_start="2025-03-01", target_end="2025-04-30", reference_date="2025-04-30"
@@ -615,7 +657,7 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(first_id, equivalent["dimensions"]["platform"][0]["evidence_id"])
         self.assertNotEqual(first_id, changed["dimensions"]["platform"][0]["evidence_id"])
         self.assertEqual(first["scope"]["method_version"], METHOD_VERSION)
-        self.assertEqual(METHOD_VERSION, "2.1.0")
+        self.assertEqual(METHOD_VERSION, "2.2.0")
 
     def test_insufficiency_diagnostics_and_source_rate_warning_are_preserved(self):
         frame = frame_with_target(make_cohort(4, 6, [4]), 20)
@@ -687,6 +729,53 @@ class ContextEvidenceTests(unittest.TestCase):
         for result in (positive, negative, conflicting):
             self.assertTrue(all(item["topic"] in allowed_topics for item in result["recommendations"]))
             self.assertTrue(all(item["evidence_id"] for item in result["recommendations"]))
+
+    def test_editorial_recency_uses_true_even_sample_datetime_median(self):
+        frame = aggregate_effect_rows(creators=20)
+        current_indices = frame.index[frame["id"].str.startswith("now-")].tolist()
+        frame.loc[current_indices[:50], "post_date"] = pd.Timestamp("2025-01-08T12:00:00")
+        frame.loc[current_indices[50:], "post_date"] = pd.Timestamp("2025-01-14T12:00:00")
+        result = analyze(
+            frame,
+            default_scope(target_start="2025-01-08", target_end="2025-01-14", reference_date="2025-01-14"),
+            "editorial-median",
+        )
+        evidence = result["cohorts"]["editorial"][0]
+        recommendation = next(
+            item for item in result["recommendations"] if item["evidence_id"] == evidence["evidence_id"]
+        )
+        expected_recency = 2 ** (-3 / 7)
+        self.assertEqual(pd.Timestamp(evidence["representative_date"]), pd.Timestamp("2025-01-11T12:00:00"))
+        self.assertEqual(pd.Timestamp(recommendation["representative_date"]), pd.Timestamp("2025-01-11T12:00:00"))
+        self.assertAlmostEqual(recommendation["priority_components"]["recency"], expected_recency)
+        self.assertAlmostEqual(recommendation["priority"], 100 * 0.95 * expected_recency)
+
+    def test_all_recommendations_preserves_complete_deduplicated_queue(self):
+        frames = []
+        for category in ("one", "two", "three", "four"):
+            frame = aggregate_effect_rows(creators=20)
+            frame["content_category"] = category
+            frame["id"] = [f"{category}-{value}" for value in frame["id"]]
+            frame["content_id"] = [f"{category}-{value}" for value in frame["content_id"]]
+            frame["source_row_id"] = [f"hash:{value}" for value in frame["id"]]
+            frames.append(frame)
+        result = analyze(
+            pd.concat(frames, ignore_index=True),
+            default_scope(target_start="2025-01-08", target_end="2025-01-14", reference_date="2025-01-14"),
+            "all-editorial",
+        )
+        self.assertEqual(len(result["recommendations"]), 3)
+        self.assertEqual(len(result["all_recommendations"]), 4)
+        self.assertEqual(result["recommendations"], result["all_recommendations"][:3])
+        self.assertEqual(
+            {item["context"]["content_category"] for item in result["all_recommendations"]},
+            {"one", "two", "three", "four"},
+        )
+        self.assertTrue(all(item["evidence_snapshot"] for item in result["all_recommendations"]))
+        self.assertEqual(
+            set(result["evidence_snapshots"]),
+            {item["evidence_id"] for item in result["all_recommendations"]},
+        )
 
 
 if __name__ == "__main__":
