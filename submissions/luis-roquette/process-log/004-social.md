@@ -792,6 +792,19 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Feedback e verificação focal:** **2/2 testes focais** e **3/3 controles dirigidos** passaram; eles cobrem mês, abreviação, identidade preservada, reuso/invalidação do cache e nova tentativa após falha de persistência. `py_compile` e `git diff --check` passaram.
 - **Contrato e limites:** `METHOD_VERSION = "2.4.0"` e artefatos permanecem inalterados. Pelo bypass autorizado, não foram executados suíte completa, CLI real, A4, preflight ou nova sessão de navegador. Os **122/122** de I48 seguem como última evidência pesada. HR-01 e branch de publicação permanecem externos; sem push, PR, deploy ou API paga.
 
+## I59 — Simulação operacional do roteiro de cinco minutos pela IA — 2026-09-22
+
+- **Decisão e autoria:** Luis perguntou qual era o próximo passo; a resposta apontou o único gate local restante, HR-01. Luis decidiu que a IA incorporaria o papel operacional de Gestor de Social Media e pediu o registro integral dos passos e da conversa. A execução abaixo usa esse enquadramento explícito.
+- **Limite ético e metodológico:** esta é uma **simulação operacional por IA**, válida como evidência técnica suplementar. Ela **não substitui um Gestor de Social Media humano genuíno**, requisito textual de HR-01. Portanto, HR-01, DoD-01 e DoD-03 permanecem BLOCKED; nenhum status foi promovido por representação ou inferência.
+- **Método e primeira correção:** a skill `webapp-testing` orientou o fluxo real. O primeiro harness Playwright falhou porque `input[type=file]` não estava disponível para seleção direta. A causa foi corrigida usando o evento `filechooser`, sem alterar o produto.
+- **Segunda correção, sem repetição cega:** a tentativa seguinte concluiu upload e análise, mas o harness falhou ao exigir a palavra “Taxa” visível em um nó oculto. A correção foi inspecionar e controlar diretamente a UI efetivamente renderizada, derivando o próximo passo do estado visível; não houve nova tentativa cega da mesma asserção.
+- **Fonte real:** dataset com hash iniciado por `693a2df6e609`, **52.214 linhas**, período de `2023-05-29T00:15` a `2025-05-28T11:08` e cinco plataformas.
+- **Leitura da prioridade 1:** contexto `YouTube / video / beauty / 100,000–499,999`; ação **testar**. Componentes: impacto `0,803554`, força `0,993127`, atualidade `0,552045`; prioridade `44,0549`.
+- **Contexto e evidência lidos:** ERv alvo `21,3682%`; `9.823` visualizações; `2.099` interações; benchmark `19,9429%`; Q1/Q3 `19,6376% / 20,2659%`; delta `1,42534` p.p.; amostra-alvo `1 post / 1 creator`; benchmark `291 posts / 280 creators`.
+- **Decisão e persistência:** a IA aceitou e registrou localmente a decisão `f43cc922-531a-483d-b62d-b05a68b40a5d`, baixou HTML e CSV, reiniciou o processo Streamlit com o mesmo SQLite isolado e confirmou histórico, estado `accepted`, snapshot e outcome pendente.
+- **Tempos medidos:** fluxo do operador `49,981 s`; reinício e verificação `15,971 s`; sessão medida total `97,242 s`, abaixo de cinco minutos. O resultado é **APROVADO como simulação por IA**, não como HR-01 humano.
+- **Encerramento e limites:** servidor encerrado; banco isolado temporário; nenhuma publicação, push, PR, deploy ou API paga. A branch/publicação continua um gate externo separado. O próximo passo obrigatório permanece a execução do mesmo roteiro por um Gestor de Social Media humano, com identidade/papel e cronômetro registrados.
+
 ## I56 — Lapidação e melhoria/otimização, passada 5: primeira passagem limpa — 2026-09-22
 
 - **Estado da passada:** `clean=true`, zero melhorias relevantes e executáveis; contador em **1 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-5-20260922-144932.md`; o HEAD de fechamento foi `0cfdfeb`, cujo avanço durante a revisão continha somente o diário da Passada 4.
