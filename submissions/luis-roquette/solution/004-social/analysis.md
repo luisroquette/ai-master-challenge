@@ -4,9 +4,9 @@
 
 Fila única: as recomendações abaixo vêm de `result[recommendations]`, na mesma ordem do HTML e do CSV. São propostas para decisão humana; não executam gasto, publicação ou interrupção.
 
-1. YouTube / video / lifestyle / 500,000+ / 2025-04: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 0.424558; impacto 1; força 0.3; atualidade 0.0141519; ΔERv +0.0270584 p.p.; data representativa 2025-04-15T19:41:00. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-93a467ffd9919121. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2025-04; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 18 creator-semanas, 18 creators; 3 semanas completas disponíveis, 3 semanas observadas; janela 2025-04-07T00:00:00 a 2025-04-27T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
-2. RedNote / video / beauty / 500,000+ / 2025-03: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 0.0190582; impacto 1; força 0.29; atualidade 0.000657178; ΔERv -0.0628742 p.p.; data representativa 2025-03-15T02:43:30. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-36711ab0619490d7. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2025-03; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 27 creator-semanas, 27 creators; 4 semanas completas disponíveis, 4 semanas observadas; janela 2025-03-03T00:00:00 a 2025-03-30T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
-3. YouTube / video / beauty / 500,000+ / 2024-12: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 2.93375e-06; impacto 1; força 0.3; atualidade 9.77916e-08; ΔERv +0.111229 p.p.; data representativa 2024-12-16T02:14:00. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-1859a20bddf0e6f8. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2024-12; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 28 creator-semanas, 28 creators; 4 semanas completas disponíveis, 4 semanas observadas; janela 2024-12-02T00:00:00 a 2024-12-29T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
+1. YouTube / video / lifestyle / 500,000+ / 2025-04: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 0.424558; impacto 1; força 0.3; atualidade 0.0141519; ΔERv +0.0270584 p.p.; data representativa 2025-04-15T19:41:00. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-9bc1a9a0add291a4. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2025-04; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 18 creator-semanas, 18 creators; 3 semanas completas disponíveis, 3 semanas observadas; janela 2025-04-07T00:00:00 a 2025-04-27T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
+2. RedNote / video / beauty / 500,000+ / 2025-03: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 0.0190582; impacto 1; força 0.29; atualidade 0.000657178; ΔERv -0.0628742 p.p.; data representativa 2025-03-15T02:43:30. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-311c45798ab57cdf. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2025-03; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 27 creator-semanas, 27 creators; 4 semanas completas disponíveis, 4 semanas observadas; janela 2025-03-03T00:00:00 a 2025-03-30T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
+3. YouTube / video / beauty / 500,000+ / 2024-12: Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento. Prioridade 2.93375e-06; impacto 1; força 0.3; atualidade 9.77916e-08; ΔERv +0.111229 p.p.; data representativa 2024-12-16T02:14:00. Responsável: Gestor de Social Media; execução: próximos 7 dias; revisão: 7 dias após o teste; métrica: ERv, views e interações por post. Evidência: sponsorship-d2421615bf5d4277. Frequência: Testar 1 posts por creator por semana ISO completa; status test; unidade posts_per_creator_per_complete_iso_week; mês 2024-12; regra complete_iso_weeks_within_calendar_month_and_scope; método median_observed_posts_per_creator_week; 28 creator-semanas, 28 creators; 4 semanas completas disponíveis, 4 semanas observadas; janela 2024-12-02T00:00:00 a 2024-12-29T00:00:00; ação test_observed_cadence; mínimo de 2 semanas completas observadas. Limite: frequência observada é hipótese de teste, não efeito causal; ausência de linha não equivale a zero.
 
 Atualidade = 2^(−idade em dias/7), ancorada na data de referência do dataset. Em grupos agregados, a data representativa é a mediana das datas do grupo-alvo (posts patrocinados na comparação de patrocínio). Um escopo de dois anos pode produzir scores muito pequenos: isso preserva a regra de recência e não demonstra uma oportunidade atual. A ordem é prioridade decrescente, |ΔERv| decrescente, data representativa decrescente e evidence_id crescente, após deduplicação contextual.
 
@@ -14,7 +14,7 @@ Força limitada (<0,40) exige coleta/teste, sem ampliação de investimento. As 
 
 ## O que os dados permitem afirmar
 
-Método 2.1.0. Escopo efetivo: 2023-05-29T00:00:00 a 2025-05-28T00:00:00; referência 2025-05-28T11:08:00; filtros {}. 52214 posts-alvo de 52214 linhas na fonte.
+Método 2.2.0. Escopo efetivo: 2023-05-29T00:00:00 a 2025-05-28T00:00:00; referência 2025-05-28T11:08:00; filtros {}. 52214 posts-alvo de 52214 linhas na fonte.
 
 Cobertura parcial: patrocínio 1.56% dos posts, 12 estratos elegíveis, 5216 insuficientes. Benchmarks: 0 níveis tentados; 0 alvos sem referência elegível; alertas post a post desativados. 0 avisos de qualidade; detalhes e motivos completos no CSV.
 
@@ -23,7 +23,7 @@ Cobertura parcial: patrocínio 1.56% dos posts, 12 estratos elegíveis, 5216 ins
 
 - Nenhuma decisão registrada nesta fonte.
 
-52214 posts; 5000 creators; 527376193 views; 104966242 interações. Mediana ERv: 19.8992%; ERv ponderado: 19.9035%. Proporção de posts com zero interação: 0; taxas indefinidas: 0. Evidência: `summary-79f258a4d88b6e07`.
+52214 posts; 5000 creators; 527376193 views; 104966242 interações. Mediana ERv: 19.8992%; ERv ponderado: 19.9035%. Proporção de posts com zero interação: 0; taxas indefinidas: 0. Evidência: `summary-2ed469f03e18a2db`.
 
 ERv = 100 × (likes + shares + comments_count) / views; views=0 deixa a taxa indefinida e preserva volume. A mediana usa taxas por post; a taxa ponderada usa totais apenas onde views>0. Views não são alcance único; interações não são pessoas únicas.
 
@@ -35,100 +35,100 @@ As tabelas descrevem cada recorte; não criam uma segunda fila de prioridades. D
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| Bilibili | 10598 | 4540 | 107039049 | 21307767 | 19.9046 | `dimension-a09e6f2db52cbc43` |
-| Instagram | 10423 | 4510 | 105275939 | 20946950 | 19.889 | `dimension-84d47db7d095c094` |
-| RedNote | 10402 | 4514 | 105068336 | 20916853 | 19.901 | `dimension-bd59216ce018c192` |
-| TikTok | 10296 | 4494 | 103995686 | 20699400 | 19.9019 | `dimension-e041ddb4d1c3dc7b` |
-| YouTube | 10495 | 4540 | 105997183 | 21095272 | 19.9001 | `dimension-c8b30d71b1cd9d4b` |
+| Bilibili | 10598 | 4540 | 107039049 | 21307767 | 19.9046 | `dimension-c99e3b7bd5f783c5` |
+| Instagram | 10423 | 4510 | 105275939 | 20946950 | 19.889 | `dimension-f3ce96e45730562a` |
+| RedNote | 10402 | 4514 | 105068336 | 20916853 | 19.901 | `dimension-e8c4de7d811d7007` |
+| TikTok | 10296 | 4494 | 103995686 | 20699400 | 19.9019 | `dimension-116ed3a5e737eb14` |
+| YouTube | 10495 | 4540 | 105997183 | 21095272 | 19.9001 | `dimension-9f5537722287b147` |
 
 ### Formato
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| image | 10303 | 4475 | 104071566 | 20712300 | 19.9007 | `dimension-656688a33555913d` |
-| mixed | 5213 | 3327 | 52652595 | 10484160 | 19.9038 | `dimension-aac0f7dfeb477c94` |
-| text | 5198 | 3329 | 52490501 | 10452520 | 19.9122 | `dimension-b3c7036ba8319d77` |
-| video | 31500 | 4999 | 318161531 | 63317262 | 19.8955 | `dimension-0a34f136a28c1f77` |
+| image | 10303 | 4475 | 104071566 | 20712300 | 19.9007 | `dimension-a8f56ef8b99d1fad` |
+| mixed | 5213 | 3327 | 52652595 | 10484160 | 19.9038 | `dimension-2aaadef9c20dadda` |
+| text | 5198 | 3329 | 52490501 | 10452520 | 19.9122 | `dimension-543cae2a3f2eaff9` |
+| video | 31500 | 4999 | 318161531 | 63317262 | 19.8955 | `dimension-eb8f5789ed8b841b` |
 
 ### Categoria
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| beauty | 21023 | 4977 | 212331201 | 42261477 | 19.8996 | `dimension-d1c6e9d0b651bba1` |
-| lifestyle | 20761 | 4969 | 209686263 | 41740052 | 19.9013 | `dimension-59f025ecbfe4173c` |
-| tech | 10430 | 4523 | 105358729 | 20964713 | 19.8954 | `dimension-06b56280dcecc251` |
+| beauty | 21023 | 4977 | 212331201 | 42261477 | 19.8996 | `dimension-2d04fdd3b80ca67b` |
+| lifestyle | 20761 | 4969 | 209686263 | 41740052 | 19.9013 | `dimension-14a84ca498868a47` |
+| tech | 10430 | 4523 | 105358729 | 20964713 | 19.8954 | `dimension-112a40e9f9bc6121` |
 
 ### Faixa de seguidores
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| 0–9,999 | 454 | 436 | 4581119 | 911451 | 19.8765 | `dimension-298461bfdf0cd89b` |
-| 10,000–49,999 | 2110 | 1758 | 21313743 | 4243070 | 19.9009 | `dimension-e336375b48f09a0e` |
-| 100,000–499,999 | 21025 | 4982 | 212345820 | 42266183 | 19.904 | `dimension-6f05c5e18811d9ed` |
-| 50,000–99,999 | 2596 | 2091 | 26215136 | 5219513 | 19.91 | `dimension-ae4e841e0cb4a1fd` |
-| 500,000+ | 26029 | 4994 | 262920375 | 52326025 | 19.8936 | `dimension-1a4d96dffb1e170f` |
+| 0–9,999 | 454 | 436 | 4581119 | 911451 | 19.8765 | `dimension-d232e145473b3240` |
+| 10,000–49,999 | 2110 | 1758 | 21313743 | 4243070 | 19.9009 | `dimension-39472959aaf77d66` |
+| 100,000–499,999 | 21025 | 4982 | 212345820 | 42266183 | 19.904 | `dimension-e1fbeb166424cf23` |
+| 50,000–99,999 | 2596 | 2091 | 26215136 | 5219513 | 19.91 | `dimension-0be266588b0fba69` |
+| 500,000+ | 26029 | 4994 | 262920375 | 52326025 | 19.8936 | `dimension-8f08929b7352d371` |
 
 ### Idade
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| 13-18 | 7852 | 4056 | 79321127 | 15782684 | 19.8956 | `dimension-9c90e196e161ef93` |
-| 19-25 | 18276 | 4947 | 184595589 | 36749614 | 19.9009 | `dimension-41bb00e7cf2fe264` |
-| 26-35 | 15700 | 4866 | 158563615 | 31557172 | 19.9001 | `dimension-ddca16f73e8aaba6` |
-| 36-50 | 7736 | 4072 | 78130652 | 15547930 | 19.8989 | `dimension-98ba076032d9aebc` |
-| 50+ | 2650 | 2073 | 26765210 | 5328842 | 19.8989 | `dimension-530701852bdf63dd` |
+| 13-18 | 7852 | 4056 | 79321127 | 15782684 | 19.8956 | `dimension-2c8c67e53c96eb71` |
+| 19-25 | 18276 | 4947 | 184595589 | 36749614 | 19.9009 | `dimension-25881df24cae63f5` |
+| 26-35 | 15700 | 4866 | 158563615 | 31557172 | 19.9001 | `dimension-739e41123c163ee3` |
+| 36-50 | 7736 | 4072 | 78130652 | 15547930 | 19.8989 | `dimension-350871c07cfdfe40` |
+| 50+ | 2650 | 2073 | 26765210 | 5328842 | 19.8989 | `dimension-1e551ceb08e480a4` |
 
 ### Gênero
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| female | 20743 | 4979 | 209503458 | 41698343 | 19.8944 | `dimension-bdbc0bc46545fce8` |
-| male | 20987 | 4977 | 211972319 | 42190194 | 19.9003 | `dimension-14b8470298a8c20c` |
-| non-binary | 5249 | 3353 | 53019133 | 10552457 | 19.9067 | `dimension-b17ef346275a6d00` |
-| unknown | 5235 | 3364 | 52881283 | 10525248 | 19.905 | `dimension-3172f75745e0feb2` |
+| female | 20743 | 4979 | 209503458 | 41698343 | 19.8944 | `dimension-38cd73511c7d6cd3` |
+| male | 20987 | 4977 | 211972319 | 42190194 | 19.9003 | `dimension-7710d3f4d8425d95` |
+| non-binary | 5249 | 3353 | 53019133 | 10552457 | 19.9067 | `dimension-d623a1bec5458afd` |
+| unknown | 5235 | 3364 | 52881283 | 10525248 | 19.905 | `dimension-d137d1e8c87fd729` |
 
 ### Localização
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| Brazil | 6505 | 3724 | 65693721 | 13079528 | 19.9015 | `dimension-8d1a4bbe7c9416d9` |
-| China | 6648 | 3818 | 67156444 | 13367265 | 19.9036 | `dimension-1aa50df23b6ab139` |
-| Germany | 6497 | 3734 | 65632058 | 13058763 | 19.8976 | `dimension-a3dc5e9907250442` |
-| India | 6484 | 3780 | 65500057 | 13029391 | 19.8872 | `dimension-e3d36c30539d76b4` |
-| Japan | 6553 | 3738 | 66182343 | 13172600 | 19.8964 | `dimension-5593f847ab9e3c74` |
-| Russia | 6459 | 3757 | 65229927 | 12982754 | 19.8982 | `dimension-03338b86e79d6331` |
-| UK | 6570 | 3796 | 66354996 | 13213549 | 19.9048 | `dimension-4afb1fea143cef5f` |
-| USA | 6498 | 3726 | 65626647 | 13062392 | 19.9035 | `dimension-a701a0a98d63683d` |
+| Brazil | 6505 | 3724 | 65693721 | 13079528 | 19.9015 | `dimension-7b11766552ef1399` |
+| China | 6648 | 3818 | 67156444 | 13367265 | 19.9036 | `dimension-610e6298a37f0e81` |
+| Germany | 6497 | 3734 | 65632058 | 13058763 | 19.8976 | `dimension-f51f2b7ca12ac4f2` |
+| India | 6484 | 3780 | 65500057 | 13029391 | 19.8872 | `dimension-a6955c56c3f9696c` |
+| Japan | 6553 | 3738 | 66182343 | 13172600 | 19.8964 | `dimension-1c76793cde56fa36` |
+| Russia | 6459 | 3757 | 65229927 | 12982754 | 19.8982 | `dimension-2374e7289fd933fd` |
+| UK | 6570 | 3796 | 66354996 | 13213549 | 19.9048 | `dimension-df1818b4506cbd9f` |
+| USA | 6498 | 3726 | 65626647 | 13062392 | 19.9035 | `dimension-059ab0ba9cc987dc` |
 
 ### Mês
 
 | Recorte | Posts | Creators | Views | Interações | Mediana ERv (%) | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| 2023-05 | 188 | 187 | 1898818 | 377813 | 19.8931 | `dimension-380d24ea4c451485` |
-| 2023-06 | 2241 | 1811 | 22636496 | 4505008 | 19.8951 | `dimension-7a4436a372158289` |
-| 2023-07 | 2221 | 1831 | 22425828 | 4465405 | 19.9107 | `dimension-c706ba4df5292e1a` |
-| 2023-08 | 2233 | 1837 | 22555419 | 4486031 | 19.8795 | `dimension-022c2ac9437cccff` |
-| 2023-09 | 2092 | 1741 | 21132335 | 4207344 | 19.913 | `dimension-41f3210b8e663cb5` |
-| 2023-10 | 2186 | 1812 | 22078142 | 4393121 | 19.8941 | `dimension-02f95c697a4a2bfa` |
-| 2023-11 | 2168 | 1808 | 21897271 | 4359592 | 19.9102 | `dimension-855d8730271cfa75` |
-| 2023-12 | 2177 | 1801 | 21982940 | 4377864 | 19.9073 | `dimension-1cd6f849a3744ef4` |
-| 2024-01 | 2192 | 1804 | 22140371 | 4408052 | 19.9032 | `dimension-a8149aaa15f9cfe9` |
-| 2024-02 | 2099 | 1737 | 21199664 | 4218973 | 19.8981 | `dimension-c8b5d239b71e0354` |
-| 2024-03 | 2210 | 1792 | 22322168 | 4442533 | 19.8918 | `dimension-6fdf9e65b57fc282` |
-| 2024-04 | 2121 | 1761 | 21425517 | 4261036 | 19.8774 | `dimension-436440a1a45441d2` |
-| 2024-05 | 2195 | 1820 | 22167277 | 4413864 | 19.9028 | `dimension-38cbe7568663fc5f` |
-| 2024-06 | 2165 | 1786 | 21866512 | 4352679 | 19.906 | `dimension-89a970f29b30f030` |
-| 2024-07 | 2229 | 1820 | 22519508 | 4481034 | 19.8965 | `dimension-18a6b7d4a8a76c16` |
-| 2024-08 | 2347 | 1916 | 23702162 | 4719291 | 19.911 | `dimension-2f6712c00e618b92` |
-| 2024-09 | 2139 | 1741 | 21607668 | 4299942 | 19.8955 | `dimension-69e7237d002915a7` |
-| 2024-10 | 2212 | 1833 | 22348182 | 4444786 | 19.8886 | `dimension-1371974a19f418da` |
-| 2024-11 | 2151 | 1790 | 21724203 | 4325675 | 19.8963 | `dimension-c98a0f4b5b193926` |
-| 2024-12 | 2228 | 1862 | 22500047 | 4480727 | 19.9155 | `dimension-6e35c99efb0de487` |
-| 2025-01 | 2146 | 1773 | 21672074 | 4314145 | 19.8876 | `dimension-c9ab85cd4bbc726c` |
-| 2025-02 | 1914 | 1601 | 19332056 | 3848371 | 19.8969 | `dimension-83cb48b45931306f` |
-| 2025-03 | 2213 | 1813 | 22351748 | 4444840 | 19.8846 | `dimension-4cb16b22d5a3e6ec` |
-| 2025-04 | 2173 | 1807 | 21954870 | 4369314 | 19.901 | `dimension-166def15ec7cddb9` |
-| 2025-05 | 1974 | 1626 | 19934917 | 3968802 | 19.9019 | `dimension-eeea05d49ad5e068` |
+| 2023-05 | 188 | 187 | 1898818 | 377813 | 19.8931 | `dimension-3c1b3863333d2004` |
+| 2023-06 | 2241 | 1811 | 22636496 | 4505008 | 19.8951 | `dimension-f176419b50ecdf37` |
+| 2023-07 | 2221 | 1831 | 22425828 | 4465405 | 19.9107 | `dimension-6e00124e42999466` |
+| 2023-08 | 2233 | 1837 | 22555419 | 4486031 | 19.8795 | `dimension-0f13dbede3f4f99f` |
+| 2023-09 | 2092 | 1741 | 21132335 | 4207344 | 19.913 | `dimension-416e6bacd68e0be7` |
+| 2023-10 | 2186 | 1812 | 22078142 | 4393121 | 19.8941 | `dimension-df2afe4ab170d27e` |
+| 2023-11 | 2168 | 1808 | 21897271 | 4359592 | 19.9102 | `dimension-a93a63f83cd49ff8` |
+| 2023-12 | 2177 | 1801 | 21982940 | 4377864 | 19.9073 | `dimension-cb42621a0fcb8904` |
+| 2024-01 | 2192 | 1804 | 22140371 | 4408052 | 19.9032 | `dimension-9a1aa48fd082905a` |
+| 2024-02 | 2099 | 1737 | 21199664 | 4218973 | 19.8981 | `dimension-4c3a651475855673` |
+| 2024-03 | 2210 | 1792 | 22322168 | 4442533 | 19.8918 | `dimension-5e963a7f13753c0c` |
+| 2024-04 | 2121 | 1761 | 21425517 | 4261036 | 19.8774 | `dimension-23aac44716a3c894` |
+| 2024-05 | 2195 | 1820 | 22167277 | 4413864 | 19.9028 | `dimension-21a4ef2c7dbae807` |
+| 2024-06 | 2165 | 1786 | 21866512 | 4352679 | 19.906 | `dimension-b0165e9a2b55d06b` |
+| 2024-07 | 2229 | 1820 | 22519508 | 4481034 | 19.8965 | `dimension-6e40b05d16f1668d` |
+| 2024-08 | 2347 | 1916 | 23702162 | 4719291 | 19.911 | `dimension-f6be2614541d9575` |
+| 2024-09 | 2139 | 1741 | 21607668 | 4299942 | 19.8955 | `dimension-a112c2cb05e7c11d` |
+| 2024-10 | 2212 | 1833 | 22348182 | 4444786 | 19.8886 | `dimension-b57cbe486833b3f3` |
+| 2024-11 | 2151 | 1790 | 21724203 | 4325675 | 19.8963 | `dimension-beead09a7dc5372b` |
+| 2024-12 | 2228 | 1862 | 22500047 | 4480727 | 19.9155 | `dimension-ba0acf612016225d` |
+| 2025-01 | 2146 | 1773 | 21672074 | 4314145 | 19.8876 | `dimension-2cb51e2813a9c0e1` |
+| 2025-02 | 1914 | 1601 | 19332056 | 3848371 | 19.8969 | `dimension-0b6980b86f2581bc` |
+| 2025-03 | 2213 | 1813 | 22351748 | 4444840 | 19.8846 | `dimension-0912c3cc87b3a8e2` |
+| 2025-04 | 2173 | 1807 | 21954870 | 4369314 | 19.901 | `dimension-fd87562ecc2b086e` |
+| 2025-05 | 1974 | 1626 | 19934917 | 3968802 | 19.9019 | `dimension-80d042eee1cb7f04` |
 
 ## Audiência condicionada: elegibilidade, efeito e cobertura
 
@@ -136,19 +136,19 @@ Para cada rótulo de idade, gênero ou localização, comparamos pares dentro da
 
 | Dimensão | Estratos elegíveis/total | Células elegíveis/total | Maior amostra de taxas por célula | Posts cobertos/total | Cobertura | Evidência |
 |---|---:|---:|---:|---:|---:|---|
-| audience_age_distribution | 0/8749 | 0/21644 | 19 | 0/52214 | 0% | `audience-overview-930c8060d09bc7cd` |
-| audience_gender_distribution | 0/8749 | 0/19024 | 23 | 0/52214 | 0% | `audience-overview-8ae53549b349228a` |
-| audience_location | 0/8749 | 0/28638 | 12 | 0/52214 | 0% | `audience-overview-02111c41a8041c99` |
+| audience_age_distribution | 0/8749 | 0/21644 | 19 | 0/52214 | 0% | `audience-overview-692c923ccc362ffe` |
+| audience_gender_distribution | 0/8749 | 0/19024 | 23 | 0/52214 | 0% | `audience-overview-51ca80bbbd7117c6` |
+| audience_location | 0/8749 | 0/28638 | 12 | 0/52214 | 0% | `audience-overview-3f4f9a61242c6e95` |
 
 ## Patrocínio e o que não funciona
 
-12 estratos elegíveis; 5216 sem amostra/contraparte suficiente; cobertura de 1.55897% dos posts. Evidência: `sponsorship-overview-822967abdd60153f`.
+12 estratos elegíveis; 5216 sem amostra/contraparte suficiente; cobertura de 1.55897% dos posts. Evidência: `sponsorship-overview-d7110ab641a4fa71`.
 
 Controle: mesma plataforma, formato, categoria, faixa de creator e mês-calendário. Cada mês exige contrapartes contemporâneas; orgânicos de um mês não são comparados a patrocinados de outro. Cada braço exige 30 taxas definidas e cinco creators; o efeito é a diferença entre medianas das medianas de ERv por creator. Cobertura baixa restringe as conclusões aos meses/contextos elegíveis; não sustenta uma política geral de patrocínio. Patrocínio é associação observacional, não causalidade. Custo implícito e retorno financeiro não podem ser calculados: faltam investimento, custo de produção, receita/conversão. Nenhum threshold de seguidores justifica desembolso sozinho.
 
-Menor associação de ERv: Bilibili / video / lifestyle / 500,000+ / 2023-09; ΔERv -0.136225 p.p.; força 0.36; orgânicos/patrocinados: 37/38 posts, 372753/383650 views, 74407/76011 interações. Evidência: `sponsorship-0c0c799c01ac92f7`.
+Menor associação de ERv: Bilibili / video / lifestyle / 500,000+ / 2023-09; ΔERv -0.136225 p.p.; força 0.36; orgânicos/patrocinados: 37/38 posts, 372753/383650 views, 74407/76011 interações. Evidência: `sponsorship-a6c7dac78464a9af`.
 
-Maior associação de ERv: YouTube / video / lifestyle / 500,000+ / 2024-04; ΔERv +0.160707 p.p.; força 0.29; orgânicos/patrocinados: 34/30 posts, 343605/302197 views, 68090/60132 interações. Evidência: `sponsorship-370b122be27f869c`.
+Maior associação de ERv: YouTube / video / lifestyle / 500,000+ / 2024-04; ΔERv +0.160707 p.p.; força 0.29; orgânicos/patrocinados: 34/30 posts, 343605/302197 views, 68090/60132 interações. Evidência: `sponsorship-4a6c61fae74910e0`.
 
 Esses extremos são achados descritivos, não prioridades adicionais nem ordens para suspender renovação. Sinal negativo isolado ou força insuficiente exige investigação; interromper investimento requer sinais concordantes, evidência forte e decisão humana. Ausência de zeros observados, quando indicada acima, limita a avaliação do fracasso: não prova inexistência de posts sem engajamento.
 
@@ -166,7 +166,7 @@ Responsável sugerido: Gestor de Social Media. Executar nos próximos 7 dias; re
 
 ## Auditabilidade e limites
 
-Fonte SHA-256: `693a2df6e609d1c099f3430d9a5b894b224fe12b2420c0d93e6defe90d15f18e`; método `2.1.0`. Cada evidência está em [evidence.csv](./evidence.csv), com escopo, fórmula e referências.
+Fonte SHA-256: `693a2df6e609d1c099f3430d9a5b894b224fe12b2420c0d93e6defe90d15f18e`; método `2.2.0`. Cada evidência está em [evidence.csv](./evidence.csv), com escopo, fórmula e referências.
 
 Regeração conjunta: `python3 analysis.py /caminho/social_media_dataset.csv --evidence evidence.csv --summary summary.html --report analysis.md`.
 

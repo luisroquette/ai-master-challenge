@@ -1585,7 +1585,16 @@ def _short(value: object, limit: int = 180) -> str:
 
 def _scope_text(result: dict[str, object]) -> str:
     scope, source = result.get("scope", {}), result.get("source", {})
-    return (f"Método {scope.get('method_version', METHOD_VERSION)}. Escopo efetivo: "
+    temporal = ""
+    if "period_mode" in scope:
+        partial = scope.get("partial_period")
+        coverage = ("parcial (janela incompleta)" if partial is True else
+                    "completa no intervalo solicitado" if partial is False else "não informada")
+        temporal = (f"Seleção temporal: {_short(scope['period_mode'], 40)}; janela solicitada "
+                    f"{_short(scope.get('requested_start', 'não informada'), 35)} a "
+                    f"{_short(scope.get('requested_end', 'não informada'), 35)}; "
+                    f"cobertura temporal {coverage}. ")
+    return (f"{temporal}Método {scope.get('method_version', METHOD_VERSION)}. Escopo efetivo: "
             f"{scope.get('target_start', 'não informado')} a {scope.get('target_end', 'não informado')}; "
             f"referência {scope.get('reference_date', 'não informada')}; "
             f"filtros {json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True)}. "

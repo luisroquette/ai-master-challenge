@@ -31,6 +31,8 @@ def verify(canonical_html: Path, output: Path) -> None:
             raise RuntimeError(f"{command} is required for the actual print gate")
     output.mkdir(parents=True, exist_ok=False)
     label, result = long_label_result()
+    result["scope"].update(period_mode="Mês calendário", requested_start="2025-01-01T00:00:00",
+                           requested_end="2025-01-31T00:00:00", partial_period=True)
     payloads = {
         "normal": canonical_html.read_bytes(),
         "adversarial": executive_summary(result, adversarial_decisions(result["source"]["source_hash"])).encode(),
@@ -57,7 +59,8 @@ def verify(canonical_html: Path, output: Path) -> None:
         for required in ("Resumo executivo social", "Prioridades", "Limite:", "sem investimento", "causalidade"):
             assert required in content, (name, required)
         if name == "adversarial":
-            for required in ("REVISÃO RECENTE", "SUPERADA", "outras fontes", "Plataforma", "…"):
+            for required in ("REVISÃO RECENTE", "SUPERADA", "outras fontes", "Plataforma", "…",
+                             "Mês calendário", "2025-01-31T00:00:00", "cobertura temporal parcial"):
                 assert required in content, required
             assert label not in content
             assert "P" * 700 not in content
