@@ -12,6 +12,7 @@ from support_copilot.analytics import (
     _signal_status,
     add_operational_fields,
     grouped_bottlenecks,
+    median_confidence_interval,
     operational_summary,
     recoverable_excess_hours,
     satisfaction_associations,
@@ -83,6 +84,26 @@ def test_intervals_use_closed_valid_ordered_rows_and_reconcile_denominators() ->
         ))
         assert row.interval_name == "post_response_hours"
         assert not row.first_response_observable and not row.total_resolution_observable
+
+
+def test_bottleneck_support_and_median_interval_are_explicit() -> None:
+    values = pd.Series(range(1, 31), dtype=float)
+    low, high = median_confidence_interval(values)
+    assert low is not None and high is not None and low <= values.median() <= high
+    assert median_confidence_interval(pd.Series([1.0, 2.0, 3.0, 4.0])) == (None, None)
+
+    supported = grouped_bottlenecks(operational_frame([
+        {"Time to Resolution": f"2026-01-01T{hour % 24:02d}:00:00Z"}
+        for hour in range(30)
+    ]))
+    one_way = supported.loc[supported["grouping"].eq("Ticket Channel")].iloc[0]
+    assert one_way["support_status"] == "supported"
+    assert one_way["median_ci95_low"] <= one_way["median_hours"] <= one_way[
+        "median_ci95_high"
+    ]
+
+    exploratory = grouped_bottlenecks(operational_frame([{}, {}, {}, {}, {}]))
+    assert set(exploratory["support_status"]) == {"exploratory"}
 
 
 @pytest.mark.parametrize("reverse", [False, True])
@@ -285,6 +306,7 @@ def test_real_customer_diagnostic_has_traceable_denominators_and_rankings() -> N
     )
     assert worst["n_eligible"] == 15
     assert worst["median_hours"] == pytest.approx(13.233333333333333)
+    assert worst["support_status"] == "exploratory"
 
     top_waste = waste.loc[waste["status"].eq("supported")].iloc[0]
     assert (top_waste["target"], top_waste["Ticket Priority"]) == (

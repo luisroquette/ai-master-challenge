@@ -27,8 +27,9 @@ MIN_MAE_IMPROVEMENT = 0.02
 BOTTLENECK_COLUMNS = (
     "grouping", *GROUP_COLUMNS, "n_total", "n_eligible", "n_excluded",
     "excluded_not_closed", "excluded_missing", "excluded_invalid_timestamp",
-    "excluded_negative", "median_hours", "q1_hours", "q3_hours", "iqr_hours",
-    "rank_worst", "interval_name", "first_response_observable",
+    "excluded_negative", "median_hours", "median_ci95_low", "median_ci95_high",
+    "q1_hours", "q3_hours", "iqr_hours", "support_status", "rank_worst",
+    "interval_name", "first_response_observable",
     "total_resolution_observable",
 )
 WASTE_COLUMNS = (
@@ -143,6 +144,18 @@ def _finite(value: float | int | np.number | None) -> float | None:
     return result if math.isfinite(result) else None
 
 
+def median_confidence_interval(values: pd.Series) -> tuple[float | None, float | None]:
+    """Return a deterministic distribution-free approximation for the median's 95% CI."""
+    ordered = np.sort(pd.to_numeric(values, errors="coerce").dropna().to_numpy(dtype=float))
+    size = len(ordered)
+    if size < 5:
+        return None, None
+    half_width = 1.96 * math.sqrt(size) / 2
+    lower = max(0, math.floor(size / 2 - half_width))
+    upper = min(size - 1, math.ceil(size / 2 + half_width))
+    return _finite(ordered[lower]), _finite(ordered[upper])
+
+
 def add_operational_fields(frame: pd.DataFrame) -> pd.DataFrame:
     """Add the observable post-response interval and one exclusive status per row."""
     _require_sanitized_customer(
@@ -206,12 +219,19 @@ def grouped_bottlenecks(frame: pd.DataFrame) -> pd.DataFrame:
                 }
                 for status in INTERVAL_STATUSES[1:]:
                     row[f"excluded_{status}"] = int(group["interval_status"].eq(status).sum())
+                ci_low, ci_high = median_confidence_interval(values)
                 row.update({
                     "median_hours": _finite(values.median()) if len(values) else None,
+                    "median_ci95_low": ci_low,
+                    "median_ci95_high": ci_high,
                     "q1_hours": _finite(values.quantile(0.25)) if len(values) else None,
                     "q3_hours": _finite(values.quantile(0.75)) if len(values) else None,
                     "iqr_hours": _finite(values.quantile(0.75) - values.quantile(0.25))
                     if len(values) else None,
+                    "support_status": (
+                        "supported" if len(values) >= MIN_WASTE_SUPPORT
+                        else "exploratory" if len(values) else "unavailable"
+                    ),
                     "interval_name": "post_response_hours",
                     "first_response_observable": False,
                     "total_resolution_observable": False,

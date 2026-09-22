@@ -1437,3 +1437,17 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Validação:** 45 testes de workflow passaram em `7,43 s`; Ruff e `py_compile` passaram.
 - **Medição após a frente:** diagnóstico `9,0`, automação `7,7`, prova funcional `8,8`;
   média simples `8,5/10`. Crescimento: `+0,5`. O Goal ainda não foi atingido.
+
+## I77 — Goal ≥ 9,5 · Frente 2: confiabilidade diagnóstica — 2026-09-22
+
+- **Implementação:** o Scorecard agora expõe cobertura válida, tamanho de amostra,
+  intervalo de confiança de 95% da mediana e situação de suporte de cada combinação.
+- **Decisão metodológica:** achados com `n ≥ 30` sustentam o ranking principal; grupos
+  menores aparecem separados como exploratórios. O pior grupo observado com `n=15`
+  deixou de ser apresentado como conclusão operacional suportada.
+- **Evidência:** o intervalo é calculado deterministicamente por estatísticas de ordem;
+  amostras com menos de cinco observações não recebem falsa precisão.
+- **Validação:** `61` testes de analytics e workflow passaram em `7,96 s`; Ruff,
+  `py_compile` e `git diff --check` passaram.
+- **Medição após a frente:** diagnóstico `9,5`, automação `7,7`, prova funcional `8,8`;
+  média simples `8,7/10`. Crescimento: `+0,2`. O Goal ainda não foi atingido.

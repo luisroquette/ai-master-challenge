@@ -823,7 +823,8 @@ def _bundle(bundle=None):
 _LABELS = {
     "ready": "Disponível", "missing": "Ausente", "corrupt": "Corrompido",
     "incompatible": "Incompatível", "stale": "Desatualizado", "unavailable": "Indisponível",
-    "supported": "Com suporte", "insufficient_support": "Suporte insuficiente",
+    "supported": "Com suporte", "exploratory": "Exploratório",
+    "insufficient_support": "Suporte insuficiente",
     "insufficient_evidence": "Evidência insuficiente", "pending_review": "Revisão pendente",
     "no_reliable_signal": "Sem sinal confiável", "disabled": "Desativado", "enabled": "Ativado",
     "sealed": "Lacrado", "released_after_locks": "Aberto após congelamento",
@@ -1222,6 +1223,13 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         "Indisponível" if summary.median_post_response_hours is None
         else _number(summary.median_post_response_hours),
     )
+    analysis_rows = summary.analysis_rows or summary.development_rows
+    coverage = summary.valid_intervals / analysis_rows if analysis_rows else 0.0
+    st.info(
+        f"Cobertura temporal utilizável: {summary.valid_intervals}/{analysis_rows} "
+        f"({_number(coverage, percent=True)}). Os demais registros não sustentam comparação "
+        "de tempo e não entram nos rankings."
+    )
     st.write("Exclusões mutuamente exclusivas: " + "; ".join(
         f"{_label(key)}: {value}" for key, value in summary.interval_exclusions.items()))
     st.caption(
@@ -1234,11 +1242,17 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     bottleneck_columns = {
         "grouping": "Agrupamento", "Ticket Channel": "Canal", "Ticket Priority": "Prioridade",
         "target": "Tipo", "n_total": "Total", "n_eligible": "Intervalos válidos",
-        "median_hours": "Mediana (h)", "q1_hours": "Primeiro quartil (h)",
+        "median_hours": "Mediana (h)", "median_ci95_low": "IC95% inferior (h)",
+        "median_ci95_high": "IC95% superior (h)", "support_status": "Confiabilidade",
+        "q1_hours": "Primeiro quartil (h)",
         "q3_hours": "Terceiro quartil (h)",
     }
-    category_columns = ("grouping", "Ticket Channel", "Ticket Priority", "target")
-    hour_columns = ("median_hours", "q1_hours", "q3_hours")
+    category_columns = (
+        "grouping", "Ticket Channel", "Ticket Priority", "target", "support_status"
+    )
+    hour_columns = (
+        "median_hours", "median_ci95_low", "median_ci95_high", "q1_hours", "q3_hours"
+    )
     bottleneck_state = bundle.get("analytics.bottlenecks")
     if bottleneck_state.status == "ready":
         bottlenecks = pd.DataFrame(bottleneck_state.value)
@@ -1251,12 +1265,25 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
                numbers=hour_columns)
         worst = bottlenecks.loc[
             bottlenecks["grouping"].eq("Ticket Channel+Ticket Priority+target")
-            & bottlenecks["n_eligible"].gt(0)
+            & bottlenecks["support_status"].eq("supported")
         ].sort_values(["rank_worst", "n_eligible"], ascending=[True, False]).head(5)
-        st.markdown("**Piores combinações com intervalo válido**")
+        st.markdown("**Piores combinações com suporte mínimo de 30 intervalos**")
         _table(worst, {key: value for key, value in bottleneck_columns.items()
                        if key != "grouping"},
                categories=category_columns, numbers=hour_columns)
+        exploratory = bottlenecks.loc[
+            bottlenecks["grouping"].eq("Ticket Channel+Ticket Priority+target")
+            & bottlenecks["support_status"].eq("exploratory")
+        ].sort_values(["rank_worst", "n_eligible"], ascending=[True, False]).head(3)
+        if not exploratory.empty:
+            st.warning(
+                "Combinações com menos de 30 intervalos são exploratórias e não definem "
+                "prioridade operacional sem nova amostra."
+            )
+            with st.expander("Achados exploratórios"):
+                _table(exploratory, {key: value for key, value in bottleneck_columns.items()
+                                     if key != "grouping"},
+                       categories=category_columns, numbers=hour_columns)
     waste_state = bundle.get("analytics.waste_opportunities")
     if waste_state.status == "ready":
         waste = pd.DataFrame(waste_state.value)
