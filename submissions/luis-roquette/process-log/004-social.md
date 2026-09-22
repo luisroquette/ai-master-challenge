@@ -792,6 +792,14 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Feedback e verificação focal:** **2/2 testes focais** e **3/3 controles dirigidos** passaram; eles cobrem mês, abreviação, identidade preservada, reuso/invalidação do cache e nova tentativa após falha de persistência. `py_compile` e `git diff --check` passaram.
 - **Contrato e limites:** `METHOD_VERSION = "2.4.0"` e artefatos permanecem inalterados. Pelo bypass autorizado, não foram executados suíte completa, CLI real, A4, preflight ou nova sessão de navegador. Os **122/122** de I48 seguem como última evidência pesada. HR-01 e branch de publicação permanecem externos; sem push, PR, deploy ou API paga.
 
+## I55 — Lapidação e melhoria/otimização, passada 4: valores externos como texto literal — 2026-09-22
+
+- **Estado da passada:** `clean=false`, uma melhoria relevante corrigida; contador reiniciado/mantido em **0 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-4-20260922-144143.md`.
+- **L4-01 — fronteira Markdown:** valores válidos vindos do CSV podiam chegar aos captions como sintaxe ativa de imagem, link, autolink ou ênfase. `313e611` passa a literalizar a pontuação ASCII relevante somente na fronteira dos captions, inclusive contexto da recomendação e plataformas da fonte ativa.
+- **Escopo exato:** o conteúdo continua abreviado quando exibido, mas não é interpretado como Markdown. Seletores permanecem texto nativo; valores integrais, DataFrame, contexto, snapshot, baseline, identidade, decisão e exports não são modificados nem rejeitados.
+- **Feedback e verificação focal:** **3/3 testes focais** passaram, cobrindo categoria/plataforma adversariais, mês, abreviação, identidade integral e precisão numérica. `py_compile` e `git diff --check` passaram. Não se alegou XSS ou requisição de rede; a correção fecha a interpretação visual indevida comprovada.
+- **Contrato e limites:** `METHOD_VERSION = "2.4.0"` e artefatos permanecem inalterados. Pelo bypass autorizado, não foram executados suíte completa, CLI real, A4, preflight ou nova sessão de navegador. Os **122/122** de I48 seguem como última evidência pesada. HR-01 e branch de publicação permanecem externos; sem push, PR, deploy ou API paga.
+
 ## I54 — Lapidação e melhoria/otimização, passada 3: preservar prioridades pequenas na leitura — 2026-09-22
 
 - **Estado da passada:** `clean=false`, uma melhoria relevante corrigida; contador reiniciado/mantido em **0 de 2 passadas limpas consecutivas**. A auditoria está em `.specs/scratchpad/polish-pass-3-20260922-1436.md`.
