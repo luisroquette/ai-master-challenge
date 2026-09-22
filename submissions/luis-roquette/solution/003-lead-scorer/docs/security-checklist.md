@@ -78,3 +78,15 @@ Camada local concluída e validada em 22 de setembro de 2026; camada externa con
 - O arquivo deve ser regenerado após cada novo commit relevante. Ele protege contra dano ao checkout, mas não contra perda do computador ou disco.
 
 **Bloqueio restante:** copiar o bundle para armazenamento externo ou recriar a branch remota seria transmissão externa. O embargo vigente proíbe essa ação sem autorização específica de Luis; por isso, o item permanece **NÃO FEITO**.
+
+## Encerramento do ciclo
+
+Luis decidiu não autorizar o backup externo neste momento para preservar o embargo enquanto a entrega final continua sendo lapidada. O ciclo de auditoria de segurança foi encerrado **com uma pendência aceita e documentada**:
+
+- todos os 19 itens foram classificados e certificados em duas passadas;
+- o único gap implementável localmente, auditoria persistente, foi corrigido e validado;
+- um bundle local completo foi criado, verificado e restaurado;
+- o backup externo permanece **NÃO FEITO por decisão consciente do owner**, não por omissão técnica;
+- nenhuma publicação, push, deploy ou comunicação externa foi realizada.
+
+O checklist deverá ser reaberto imediatamente antes de qualquer autorização de publicação, troca para dados privados, autenticação, banco ou integração com CRM.

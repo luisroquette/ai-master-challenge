@@ -1401,3 +1401,11 @@ O segundo item foi atacado até o limite autorizado, sem violar o embargo extern
 - O bundle local protege contra corrupção ou perda do checkout, mas permanece no mesmo Mac e não cobre falha física do equipamento.
 
 O item continua **NÃO FEITO** quanto à cópia externa. Push da branch, upload do bundle ou qualquer outra transmissão permanece proibido até Luis autorizar especificamente o destino e a ação, sem confundir backup com envio aos avaliadores.
+
+## I24 — Encerramento consciente do ciclo de segurança — 2026-09-22
+
+Luis decidiu não autorizar ainda o envio da branch ou do bundle para backup externo, pois a entrega final continuará em lapidação e o embargo deve ser preservado.
+
+O ciclo de auditoria de segurança foi encerrado com **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. O único item pendente — backup externo — permanece assim por decisão explícita do owner. A implementação local pertinente foi concluída, validada e documentada; nenhum push, deploy, PR ou contato com avaliadores ocorreu.
+
+**Regra de reabertura:** revisar novamente o checklist imediatamente antes de publicação, adoção de dados privados, autenticação, banco ou integração com CRM.
