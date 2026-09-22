@@ -1056,3 +1056,36 @@ Cada etapa seguirá a cascata:
 - O `/goal` mantém o objetivo global; cascatas de `/loop` controlam a convergência de cada etapa sem inventar novos checkpoints humanos.
 
 **Critério de saída:** somente avançar quando a etapa estiver implementada, revisada e validada; caso contrário, permanecer no feedback loop até corrigir ou identificar um impedimento externo concreto.
+
+## I10 — Da intenção arquitetural à construção da fundação — 2026-09-21
+
+Esta etapa registra a jornada construtiva proposta por Luis: documentar não apenas o resultado, mas como o arquiteto define a intenção, como o engenheiro a transforma em evidência executável e como cada correção melhora a solução. Essa autoria metodológica é parte central do trabalho. As decisões, descobertas, falhas e correções têm a mesma importância documental que o artefato final.
+
+### Feedback looping aplicado ao passo 01
+
+O ciclo obrigatório permaneceu:
+
+`Planejamento → Revisão → Execução → Teste`
+
+- **Planejamento — intenção do arquiteto:** criar um snapshot imutável e verificado dos dados reais, apoiado por uma fundação reproduzível em Python 3.11.
+- **Revisão — contrato antes da construção:** conferir arquivos, contagens, origem, checksums, recuperação e o gate limpo de Codespace antes de aceitar a etapa.
+- **Execução — construção do engenheiro:** incorporar os quatro CSVs reais, com 85 contas, 7 produtos, 35 equipes e 8.800 oportunidades; gerar manifesto e checksums; implementar os testes de integridade e reprodução.
+- **Teste — evidência para o próximo ciclo:** executar o gate canônico em Codespace limpo, corrigir qualquer falha e repetir o ciclo completo antes de avançar.
+
+### Iterações e correções registradas
+
+1. A primeira rodada chegou a **12 de 13 testes aprovados**. A falha estava no carregamento de datas opcionais: o pandas representava a ausência como `NaN`, e o contrato esperava um valor opcional normalizado.
+2. A causa foi corrigida na fronteira de dados com `pd.isna`, seguida de um teste de regressão específico. O conjunto passou a conter **14 testes**, todos aprovados: **14/14 PASS**.
+3. A infraestrutura também entrou no loop. O transporte de um payload longo em Base64 falhou no PTY; a correção foi dividir o conteúdo em blocos de 1.000 caracteres e validar o resultado por SHA antes da execução.
+4. Durante a passagem da arquitetura para a engenharia, descobriu-se que o ZIP oficial contém `metadata.csv`, além dos quatro CSVs exigidos. A recuperação passou a usar quatro URLs públicas, diretas e versionadas. O allowlist estrito do ZIP foi preservado nas fixtures para continuar rejeitando conteúdo inesperado.
+
+### Estado factual do gate
+
+- Os quatro downloads diretos foram comparados localmente e são byte a byte idênticos ao snapshot versionado.
+- A revalidação remota do manifesto alterado **ainda não passou**: a competição pelo Codespace compartilhado e seu ciclo de vida encerraram a execução com `exit 73`.
+- Portanto, o passo 01 ainda não pode ser declarado validado, apesar do resultado local e dos 14 testes aprovados. O loop permanece na própria etapa até o gate remoto terminar verde.
+- Em paralelo, o passo `02b` está implementando a evidência temporal. Ele ainda não concluiu seu gate e não é tratado como etapa aprovada.
+
+### Princípio preservado
+
+O diário registra o desenho e a construção: intenção, hipótese, evidência, erro, causa, correção e novo teste. A metodologia criada por Luis transforma documentação em instrumento ativo de engenharia — os registros alimentam o próximo loop e impedem que uma decisão arquitetural se perca entre planejamento e implementação.

@@ -24,19 +24,19 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 
 #### Success Criteria
 
-- [ ] TC-08 through TC-14, TC-16 through TC-21 and TC-43 pass for this step's temporal/features/evaluation scope; active-routing assertions of TC-08/12/16/20 are completed by 03a.
-- [ ] Every real evaluation returns exactly logistic/full, logistic/fallback, boosting/full, boosting/fallback passed/rejected/failed records with exact split IDs/counts, feature identities, losses/baseline, band coverage and unavailable reasons.
-- [ ] Training transformations/estimators, intermediate calibrators and final evaluation use disjoint global date groups; unseen product/series and unsupported full-route year values are excluded with exact reasons under train-frozen support.
-- [ ] Selection compares identical route test IDs using declared K values and valid financial labels; invalid or inconsistent boosting cannot win; no eligible candidate is an explicit supported outcome.
-- [ ] C3 serializers omit probability/expected_revenue keys from relative and insufficient variants; concrete test fixtures make app/scoring parallel work independent of unfinished model implementation.
+- [x] TC-08 through TC-14, TC-16 through TC-21 and TC-43 pass for this step's temporal/features/evaluation scope; active-routing assertions of TC-08/12/16/20 are completed by 03a.
+- [x] Every real evaluation returns exactly logistic/full, logistic/fallback, boosting/full, boosting/fallback passed/rejected/failed records with exact split IDs/counts, feature identities, losses/baseline, band coverage and unavailable reasons.
+- [x] Training transformations/estimators, intermediate calibrators and final evaluation use disjoint global date groups; unseen product/series and unsupported full-route year values are excluded with exact reasons under train-frozen support.
+- [x] Selection compares identical route test IDs using declared K values and valid financial labels; invalid or inconsistent boosting cannot win; no eligible candidate is an explicit supported outcome.
+- [x] C3 serializers omit probability/expected_revenue keys from relative and insufficient variants; concrete test fixtures make app/scoring parallel work independent of unfinished model implementation.
 
 #### Subtasks
 
-- [ ] Define all C2 config values and C3 immutable record/serialization fields in scoring.py and tests/test_scoring.py fixtures; freeze feature, cutoff, seed, playbook and dependency identities before real holdout use.
-- [ ] Implement split_closed_history with global tied-date 60/80 cumulative cutoffs and route-specific train-frozen support; implement allowlists and provenance checks excluding dates/stage/outcomes/seller/team/price from predictors.
-- [ ] Implement train-only full/fallback preprocessors and logistic/boosting fit_candidate adapters, controlled convergence/fitting failures and intermediate-only frozen sigmoid calibration.
-- [ ] Implement evaluate_candidate and select_route for exact losses/support/bands, ranking and financial concentration comparisons, segmented diagnostics, common cohort checks and four completed outcomes; record fixed holdout reuse/transportability limitations.
-- [ ] Write tests/test_scoring.py TC-08–14/16–21/43 with named boundary neighbors, forbidden-field mutations, synthetic loss/selection decision tables and one real four-CSV evaluation; run all currently implemented scoring tests.
+- [x] Define all C2 config values and C3 immutable record/serialization fields in scoring.py and tests/test_scoring.py fixtures; freeze feature, cutoff, seed, playbook and dependency identities before real holdout use.
+- [x] Implement split_closed_history with global tied-date 60/80 cumulative cutoffs and route-specific train-frozen support; implement allowlists and provenance checks excluding dates/stage/outcomes/seller/team/price from predictors.
+- [x] Implement train-only full/fallback preprocessors and logistic/boosting fit_candidate adapters, controlled convergence/fitting failures and intermediate-only frozen sigmoid calibration.
+- [x] Implement evaluate_candidate and select_route for exact losses/support/bands, ranking and financial concentration comparisons, segmented diagnostics, common cohort checks and four completed outcomes; record fixed holdout reuse/transportability limitations.
+- [x] Write tests/test_scoring.py TC-08–14/16–21/43 with named boundary neighbors, forbidden-field mutations, synthetic loss/selection decision tables and one real four-CSV evaluation; run all currently implemented scoring tests.
 
 #### Blockers & Risks
 
