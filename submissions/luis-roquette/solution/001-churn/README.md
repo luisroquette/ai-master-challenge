@@ -103,3 +103,5 @@ As datas contraditórias limitam inferência; feedback textual é usado apenas r
 ## Processo
 
 O método completo está nos diários [pré-início](../../process-log/000-pre-inicio.md), [descoberta socrática](../../process-log/001-descoberta-socratica.md), [otimização do plano](../../process-log/002-otimizacao-plano-loop.md) e [implementação em feedback looping](../../process-log/003-implementacao-feedback-looping.md).
+
+O parecer de segurança proporcional ao beta está em [docs/security-beta-audit.md](docs/security-beta-audit.md). Ele classifica os 19 controles solicitados, registra as evidências atuais e define os gatilhos que obrigam uma nova auditoria.

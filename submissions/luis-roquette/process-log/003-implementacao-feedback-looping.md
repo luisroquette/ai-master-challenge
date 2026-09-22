@@ -959,3 +959,15 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Contribuição humana:** Luis definiu a pergunta central como autoridade, impôs o limiar 9,5, exigiu medição após cada incremento e determinou o bypass quando a espera operacional deixou de agregar evidência. A IA executou a decomposição, implementação, testes, publicação e auditoria dentro desses gates.
 
 **Estado:** Goal 9,5 atingido com nota interna 9,9/10; SPEC concluída. PR e merge permanecem fora desta decisão.
+
+### Auditoria de segurança proporcional ao beta
+
+**Decisão de Luis:** auditar integralmente o checklist de segurança, mas implementar somente controles indispensáveis ao beta. Itens dispensáveis devem ser registrados para o futuro, sem transformar uma aplicação local em uma arquitetura de produção prematura. O critério obrigatório é esforço × benefício, preservando o método SDD e o princípio Ponytail.
+
+**Superfície real:** o Challenge 001 é um dashboard Streamlit local, estático e somente leitura. Não possui login, cadastro, email, API própria, banco, senha, sessão de aplicação, mutação ou chamada paga. O processo auditado escuta somente em `127.0.0.1:8503`; artefatos inválidos fecham a interface; valores dinâmicos em HTML são escapados.
+
+**Verificações:** código e histórico não apresentaram padrões de segredos; GitHub Secret Scanning e Push Protection estão ativos e sem alertas. As seis dependências fixadas retornaram zero vulnerabilidades conhecidas no OSV. O commit local e a branch remota coincidem. Dependabot Alerts está desativado e foi registrado como melhoria obrigatória antes de hospedagem pública persistente.
+
+**Parecer:** nenhum dos controles ausentes é indispensável para o beta local. Login, CAPTCHA, email, WAF, banco, RLS, cookies, hash de senha e autenticação server-side não têm superfície correspondente. Sentry, logs de auditoria persistentes e alertas de custo também não agregam benefício agora. Segredos fora do Git, execução em loopback, validação dos artefatos e recuperação pelo GitHub já atendem o risco atual.
+
+**Gate futuro:** internet pública, dados reais, autenticação, banco, escrita ou API paga reabrem a auditoria e bloqueiam a entrega até os controles aplicáveis serem tratados. O parecer completo e a matriz dos 19 itens estão em `solution/001-churn/docs/security-beta-audit.md`.
