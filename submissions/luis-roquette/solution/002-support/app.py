@@ -10,6 +10,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from support_copilot.ui import render_scorecard
+
 RUNTIME_DIR = Path(os.environ.get("SUPPORT_COPILOT_RUNTIME", "data/runtime"))
 DATABASE_PATH = RUNTIME_DIR / "environment-proof.sqlite3"
 EXPORT_PATH = RUNTIME_DIR / "environment-proof.csv"
@@ -115,6 +117,7 @@ def render_proof() -> None:
         file_name=EXPORT_PATH.name,
         mime="text/csv",
     )
+    render_scorecard()
 
 
 def main() -> None:
