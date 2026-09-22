@@ -1,10 +1,46 @@
+# Resposta executiva canônica
+
+A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. Nenhum mecanismo passou todos os gates.
+
+## 1. O que mudou
+
+A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.
+
+- **C-churn-change:** A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.
+
+## 2. Onde está concentrado
+
+country / US teve risco relativo descritivo de 1.08x.
+
+- **C-top-segment:** country / US teve risco relativo descritivo de 1.08x.
+
+## 3. Mecanismo mais forte
+
+auto_renew_off está associado ao churn futuro de 30 dias. Estado: plausible_hypothesis.
+
+- **M-strongest:** auto_renew_off está associado ao churn futuro de 30 dias. Estado: plausible_hypothesis.
+
+## 4. O que ainda não sabemos
+
+Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.
+
+- **C-satisfaction-coverage:** Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.
+
+## 5. Próximas ações
+
+Auditar cobertura e testar prospectivamente a hipótese mais plausível.
+
+- **A-validate:** Auditar cobertura e testar prospectivamente a hipótese mais plausível.
+
+---
+
 # Diagnóstico executivo de churn
 
 ## Decisão executiva
 
 Evidência insuficiente para priorizar uma causa
 
-**Leitura em uma frase:** uso aumentou no agregado e caiu na coorte que churnará em 30 dias; satisfação exige atenção, mas nenhuma hipótese causal passou todos os gates.
+**Leitura em uma frase:** uso aumentou no agregado e caiu na coorte que churnará em 30 dias; satisfação exige atenção; nenhuma hipótese passou todos os gates.
 
 ## O que não bate
 
@@ -35,7 +71,7 @@ Evidência insuficiente para priorizar uma causa
 | Queda de uso | Instável entre cronologias |
 | Erros de produto | Instável entre cronologias |
 | Downgrade comercial | Amostra ou cobertura insuficiente |
-| Baixa satisfação | Modelo estatístico instável |
+| Baixa satisfação | Modelo estatístico inválido |
 | Escalações de suporte | Amostra ou cobertura insuficiente |
 
 ## Segmentos descritivos

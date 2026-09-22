@@ -54,7 +54,7 @@
     "subscriptions": 0,
     "support_tickets": 0
   },
-  "label_policy": "first_non_reactivation_event",
+  "label_policy": "first_valid_non_reactivation_event",
   "nulls": {
     "accounts": {
       "account_id": 0,
