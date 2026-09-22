@@ -348,11 +348,11 @@ Anchors:
 
 **Definition of Done:**
 
-- [ ] CK-1–11 e CK-13–20 possuem evidência; checks/testes passam no estado pretendido e limitações legítimas aparecem como funções desativadas, sem simular sucesso. CK-12 registra honestamente a validação futura opcional ou a insuficiência que mantém drafts bloqueados.
-- [ ] Ambos os domínios são demonstrados com dados reais independentes; diagnóstico e métricas têm fontes/denominadores/versões; oportunidades/projeções expõem premissas. Rubricas humanas são opcionais e só habilitam assistência futura.
-- [ ] Um escalonamento humano real persiste após reinício, exporta dados sanitizados e corresponde ao audit ID/screenshot documentado. Aprovação/edição real só é exigida quando houver draft seguro; seus controles permanecem validados por testes.
-- [ ] READMEs, pesquisa, diário e evidências cumprem desafio/template; dados brutos, PII, segredos, modelos gerados e banco runtime não integram a entrega pública.
-- [ ] SPEC foi aprovada antes da implementação; revisões/testes fecharam os loops; publicação/deploy não são presumidos pela prontidão local e nenhum gate obrigatório permanece ocultamente pendente. A rubrica humana opcional pode permanecer não executada com drafts bloqueados e limitação explícita.
+- [X] CK-1–11 e CK-13–20 possuem evidência; checks/testes passam no estado pretendido e limitações legítimas aparecem como funções desativadas, sem simular sucesso. CK-12 registra honestamente a validação futura opcional ou a insuficiência que mantém drafts bloqueados.
+- [X] Ambos os domínios são demonstrados com dados reais independentes; diagnóstico e métricas têm fontes/denominadores/versões; oportunidades/projeções expõem premissas. Rubricas humanas são opcionais e só habilitam assistência futura.
+- [X] Um escalonamento humano real persiste após reinício, exporta dados sanitizados e corresponde ao audit ID/screenshot documentado. Aprovação/edição real só é exigida quando houver draft seguro; seus controles permanecem validados por testes.
+- [X] READMEs, pesquisa, diário e evidências cumprem desafio/template; dados brutos, PII, segredos, modelos gerados e banco runtime não integram a entrega pública.
+- [X] SPEC foi aprovada antes da implementação; revisões/testes fecharam os loops; publicação/deploy não são presumidos pela prontidão local e nenhum gate obrigatório permanece ocultamente pendente. A rubrica humana opcional pode permanecer não executada com drafts bloqueados e limitação explícita.
 
 ## Architecture Overview
 

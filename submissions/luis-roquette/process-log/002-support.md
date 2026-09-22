@@ -1125,3 +1125,24 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - Correção restrita à documentação: Hardware, confiança `0,9701`, `auto_route` no threshold
   `0,55`, conforme a evidência final. Nenhum código, teste, evidence ou checkbox do DoD foi
   alterado; o item deve ser reavaliado após este checkpoint.
+
+## I65 — Definition of Done verificada — 2026-09-22
+
+- **Primeira rodada:** o verificador independente encontrou `4/5` itens aprovados. O único
+  desvio era factual e documental: o README técnico descrevia a observação IT anterior de
+  `0,5464` com revisão humana, enquanto a demonstração final registrava Hardware com
+  confiança `0,9701` e `auto_route` no threshold `0,55`.
+- **Correção e nova rodada:** I65a alinhou somente o README à evidência final. A
+  reverificação no SHA `9f5acae66ed3fd6b1b01f1d6d186d0bb426589ea` confirmou `5/5` itens
+  do DoD: evidência canônica, domínios independentes, escalonamento persistido, entrega
+  pública sanitizada e processo SDD aprovado.
+- **Checks da reverificação:** os dois testes de documentação/evidência passaram em
+  `1,41 s`; os links locais são verificados pelo contrato documental; Ruff do teste e
+  `git diff --check` passaram. Os hashes públicos permaneceram `bea793bc...6428cc` para
+  o screenshot e `5d832e99...357e5b` para o CSV; o diff continua restrito a
+  `submissions/luis-roquette/` e nenhum raw, runtime, modelo gerado ou banco foi rastreado.
+- **Limites preservados:** CK-12 continua opcional, com zero consultas elegíveis e drafts
+  desativados. O preflight terminal do SHA final foi pulado por instrução do owner e não é
+  declarado verde; essa decisão permanece visível, sem ocultar gate ou simular execução.
+- **Resultado:** os cinco checkboxes do DoD foram marcados `[X]`. A task permanece em
+  `in-progress`; movimentação para `done`, PR ou publicação não fazem parte deste checkpoint.
