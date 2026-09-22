@@ -1,4 +1,8 @@
 .specs/scratchpad/
+.streamlit/secrets.toml
+.env
+.env.*
+!.env.example
 .venv/
 artifacts/
 data/raw/

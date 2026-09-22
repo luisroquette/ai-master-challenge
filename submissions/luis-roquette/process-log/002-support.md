@@ -1523,3 +1523,18 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   conhecidos; resultado não é certificação porque `gitleaks` não está instalado.
 - **Próxima correção recomendada:** autenticação servidor-side + autorização de mutações e
   export. Nenhum código foi alterado nesta fase de parecer.
+
+## I82 — Segurança 01: autenticação e autorização fail-closed — 2026-09-22
+
+- **Decisão:** preservar diagnóstico público para avaliação, mas exigir identidade OIDC
+  autorizada para qualquer decisão, leitura do SQLite ou export.
+- **Autorização:** comparação exata de `issuer` e `subject` contra allowlists server-side;
+  e-mail e aliases não concedem acesso. Nenhum segredo ou token vai para o frontend.
+- **Falha segura:** sem configuração OIDC, o produto permanece somente leitura; a página
+  Evidências não inicializa o banco e nenhuma das quatro ações pode ser executada.
+- **Higiene:** `.streamlit/secrets.toml` e arquivos `.env` passaram a ser ignorados; um
+  exemplo sem credenciais documenta as chaves necessárias no cofre do provedor.
+- **Regressão local:** `50` testes de workflow passaram em `7,23 s`; Ruff, `py_compile`
+  e `git diff --check` passaram.
+- **Pendente externo:** cadastrar cliente no IdP, guardar secrets no Streamlit Cloud e
+  informar os `sub` autorizados. Nenhuma credencial foi criada ou inferida.

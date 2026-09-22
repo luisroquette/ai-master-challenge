@@ -8,15 +8,14 @@ Streamlit observado. Nenhuma configuração privada do provedor foi presumida.
 
 **Risco atual: alto para uso operacional; aceitável somente como demo pública sem dados
 reais.** A solução foi construída como protótipo offline/fail-closed, não como sistema
-multiusuário. Ela não possui identidade, autorização ou armazenamento persistente de
-produção. O maior risco não é uma senha fraca: é qualquer visitante poder registrar
-decisões e baixar todos os registros do SQLite compartilhado.
+multiusuário. O código agora bloqueia decisões e registros anônimos, mas o IdP ainda não
+está configurado e o armazenamento continua efêmero e sem backup.
 
 ## Checklist
 
 | # | Controle | Estado | Risco | Parecer |
 |---:|---|---|---|---|
-| 1 | Rate limit no login | Não aplicável hoje | — | Não existe login. Passa a P0 quando autenticação for criada. |
+| 1 | Rate limit no login | Pendente no IdP | Alto | O fluxo OIDC foi preparado, mas o provedor ainda não está configurado. Rate limit deve ser aplicado no IdP e na borda, sem inventar contador local por processo. |
 | 2 | CAPTCHA + normalização de e-mail no cadastro | Não aplicável hoje | — | Não existe cadastro nem e-mail de usuário. CAPTCHA só após abuso mensurável; normalização precisa preservar identidade do provedor. |
 | 3 | Rate limit de e-mail e defesa contra alias | Não aplicável hoje | — | Não há envio de e-mail. Futuro limite deve usar conta, IP, destino canônico e janela temporal; alias não pode criar cota nova. |
 | 4 | Segredo e chave API no frontend | Rejeitado como desenho | Crítico se feito | Frontend público não guarda segredo. Usar segredo apenas no servidor; frontend recebe somente identificador público com escopo mínimo. |
@@ -30,16 +29,15 @@ decisões e baixar todos os registros do SQLite compartilhado.
 | 12 | Chave pública para banco | Não aplicável | — | O banco é SQLite local e não usa chave. Em banco remoto, chave pública não substitui autorização; credencial privilegiada fica somente no servidor. |
 | 13 | Row-Level Security | Não aplicável hoje | Crítico numa migração multiusuário | SQLite não oferece RLS e não há tenants/usuários. Banco remoto deve negar por padrão e testar políticas por organização e papel. |
 | 14 | Criptografia de dados sensíveis | Parcial | Alto | A aplicação sanitiza PII e pretende não persistir dado sensível, mas o SQLite não tem criptografia de aplicação nem chave gerenciada. TLS/criptografia do provedor não foram verificados. |
-| 15 | Autenticação no servidor | Ausente | Crítico | App público não autentica servidor-side. Ocultar navegação não resolveria; toda mutação e export precisam exigir identidade validada no servidor. |
-| 16 | Restringir acesso aos registros | Ausente | Crítico | A página Evidências lista e exporta todo o banco compartilhado para qualquer visitante. Não há ownership, papel ou escopo por organização. |
-| 17 | Impedir adulteração de campos | Parcial forte | Alto residual | SQL parametrizado, validação fechada, UUID idempotente e schemas reduzem adulteração. Sem ator autenticado, qualquer visitante ainda pode criar uma decisão válida. |
+| 15 | Autenticação no servidor | Implementada no código; IdP pendente | Alto até configurar | OIDC nativo valida identidade no servidor e exige allowlist exata de issuer + subject. Sem secrets, ações ficam bloqueadas. Falta cadastrar o cliente no IdP e configurar o deploy. |
+| 16 | Restringir acesso aos registros | Implementado para decisões | Médio residual | Visitante anônimo não cria, lista nem exporta o SQLite. Diagnóstico e fila sanitizada continuam públicos por decisão de produto; ainda não existem papéis ou organizações. |
+| 17 | Impedir adulteração de campos | Parcial forte | Médio residual | SQL parametrizado, validação fechada, UUID idempotente e schemas reduzem adulteração. Mutações anônimas foram bloqueadas; ainda falta vincular o ator ao evento imutável. |
 | 18 | Proteger cookies de sessão | Não verificável / sem sessão de auth | Alto ao adicionar auth | A aplicação não emite cookie de autenticação próprio. Flags `Secure`, `HttpOnly`, `SameSite`, rotação, expiração e CSRF devem ser verificadas quando houver sessão. |
 | 19 | Hash de senhas | Não aplicável | — | Não há senha local. Preferir IdP/OIDC; se senha existir, usar Argon2id com parâmetros versionados, salt automático e proteção contra credential stuffing. |
 
 ## Ordem de tratamento
 
-1. **P0 — fronteira de confiança:** autenticação servidor-side, autorização e bloqueio de
-   mutações/exports anônimos.
+1. **P0 — configurar a fronteira:** cadastrar IdP, guardar secrets e validar login real.
 2. **P0 — persistência:** banco durável, backup automático, retenção e restore testado.
 3. **P1 — auditoria:** ator, evento, alvo, resultado e correlação em log append-only com
    redaction e acesso restrito.
@@ -59,6 +57,16 @@ decisões e baixar todos os registros do SQLite compartilhado.
 
 ## Gate para produção
 
-Não usar dados reais nem decisões operacionais antes de fechar P0. O protótipo público
+Não usar dados reais nem decisões operacionais antes de configurar o IdP e fechar o P0
+de persistência. O protótipo público
 deve continuar limitado a dados sanitizados de demonstração. Cada correção futura exige
 teste de regressão, evidência no diário e nova medição de risco residual.
+
+## Tratamento 01 — autenticação e autorização
+
+- Estado: código concluído; configuração do provedor pendente.
+- Identidade: OIDC nativo do Streamlit, sem senha local e sem token exposto.
+- Autorização: allowlist simultânea de `iss` e `sub`; e-mail/alias não concede acesso.
+- Falha segura: sem IdP, segredo ou allowlist, mutações, leitura e export ficam desativados.
+- Regressão: modo anônimo não cria SQLite; quatro ações ficam desabilitadas; issuer ou
+  subject divergente é rejeitado.

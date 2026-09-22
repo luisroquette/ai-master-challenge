@@ -202,6 +202,17 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
 - SQLite usa transação atômica e idempotência por UUID. Falha não apaga registros antigos
   nem anuncia sucesso.
 
+## Acesso operacional
+
+Diagnóstico, métricas e fila sanitizada permanecem públicos para avaliação. Decisões,
+leitura do SQLite e export são **fail-closed**: exigem login OIDC e combinação exata de
+`iss` + `sub` nas allowlists do servidor. Sem configuração de autenticação, nenhuma ação
+sensível é habilitada e o banco nem sequer é criado pela página de evidências.
+
+Copie apenas a estrutura de `.streamlit/secrets.example.toml` para o cofre de secrets do
+Streamlit Cloud. Nunca versione `secrets.toml`. `client_secret` e `cookie_secret` ficam no
+servidor; nenhum token é exposto ao frontend.
+
 ## Evidências finais
 
 - [Screenshot sanitizado real](evidence/screenshot.png): Scorecard com o diagnóstico

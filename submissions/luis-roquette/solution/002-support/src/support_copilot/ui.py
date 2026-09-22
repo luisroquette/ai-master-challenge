@@ -17,6 +17,7 @@ from uuid import uuid4
 import joblib
 import pandas as pd
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
 from support_copilot.analytics import (
     OperationalSummary,
@@ -1052,6 +1053,37 @@ def _runtime():
     return Path(os.environ.get("SUPPORT_COPILOT_RUNTIME", "data/runtime"))
 
 
+def authorized_operator() -> str | None:
+    """Return a stable OIDC subject only when issuer and subject are allowlisted."""
+    try:
+        if not st.user.is_logged_in:
+            return None
+        claims = st.user.to_dict()
+        authorization = st.secrets.get("authorization", {})
+    except (AttributeError, StreamlitSecretNotFoundError):
+        return None
+    issuer, subject = claims.get("iss"), claims.get("sub")
+    allowed_issuers = authorization.get("allowed_issuers", [])
+    allowed_subjects = authorization.get("allowed_subjects", [])
+    if (not isinstance(issuer, str) or not isinstance(subject, str)
+            or issuer not in allowed_issuers or subject not in allowed_subjects):
+        return None
+    return f"{issuer}#{subject}"
+
+
+def _login_available() -> bool:
+    try:
+        return bool(st.secrets.get("auth"))
+    except StreamlitSecretNotFoundError:
+        return False
+
+
+def _access_notice() -> None:
+    st.warning("Acesso somente leitura. Decisões e export exigem operador autorizado via OIDC.")
+    if _login_available():
+        st.button("Entrar como operador", on_click=st.login)
+
+
 def persist_decision(path, event):
     initialize_store(path)
     with closing(sqlite3.connect(path, isolation_level=None)) as connection:
@@ -1077,6 +1109,7 @@ def _remember_ticket():
 
 def render_queue(bundle=None) -> None:
     bundle = _bundle(bundle)
+    operator = authorized_operator()
     st.title("Fila diária")
     _page_intro(
         "Operação assistida · humano no controle",
@@ -1159,6 +1192,8 @@ def render_queue(bundle=None) -> None:
     retrieval = row["retrieval"] or {}
     sources = retrieval.get("sources", [])
     _section_label("04 · Precedentes e decisão")
+    if operator is None:
+        _access_notice()
     st.caption("Similaridade dos precedentes não é probabilidade de correção.")
     _table(sources, {"ticket_id": "Ticket de origem", "similarity": "Similaridade",
                      "resolution": "Resolução sanitizada"}, percentages=("similarity",))
@@ -1195,26 +1230,34 @@ def render_queue(bundle=None) -> None:
     # Outside a form: edits reach session_state on blur, before selection/navigation reruns.
     with st.container():
         final = st.text_area("Resposta final", key=f"final-{version}",
-                             disabled=not draft or bool(saved["confirmed"]),
+                             disabled=operator is None or not draft or bool(saved["confirmed"]),
                              on_change=_remember_ticket)
         reason = st.text_area("Motivo (obrigatório para rejeitar ou escalonar)",
-                              key=f"reason-{version}", disabled=bool(saved["confirmed"]),
+                              key=f"reason-{version}",
+                              disabled=operator is None or bool(saved["confirmed"]),
                               on_change=_remember_ticket)
         confirmed = saved["confirmed"]
         approve_col, edit_col, reject_col, escalate_col = st.columns(4)
         with approve_col:
-            approve = st.button("Aprovar", disabled=not draft or bool(confirmed),
+            approve = st.button("Aprovar", disabled=operator is None or not draft
+                                or bool(confirmed),
                                 use_container_width=True)
         with edit_col:
-            edit = st.button("Editar e aprovar", disabled=not draft or bool(confirmed),
+            edit = st.button("Editar e aprovar", disabled=operator is None or not draft
+                             or bool(confirmed),
                              use_container_width=True)
         with reject_col:
-            reject = st.button("Rejeitar", disabled=bool(confirmed), use_container_width=True)
+            reject = st.button("Rejeitar", disabled=operator is None or bool(confirmed),
+                               use_container_width=True)
         with escalate_col:
-            escalate = st.button("Escalonar", disabled=bool(confirmed), use_container_width=True)
+            escalate = st.button("Escalonar", disabled=operator is None or bool(confirmed),
+                                 use_container_width=True)
     action = next((name for name, clicked in (("approve", approve), ("edit_approve", edit),
                   ("reject", reject), ("escalate", escalate)) if clicked), None)
     if action:
+        if authorized_operator() is None:
+            st.error("Sessão não autorizada; nenhuma decisão foi gravada.")
+            return
         prediction, route = row["prediction"], row["route"]
         event = DecisionEvent(
             submission_id=st.session_state["submission_id"], ticket_id=selected, domain="customer",
@@ -1533,6 +1576,10 @@ def render_evidence(bundle=None) -> None:
             for key, state in bundle.features.items()],
            {"recurso": "Recurso", "estado": "Estado", "causa": "Causa",
             "caminho": "Arquivo", "correção": "Correção"}, categories=("estado", "causa"))
+    if authorized_operator() is None:
+        _section_label("02 · Trilha de decisões")
+        _access_notice()
+        return
     path = _runtime() / "decisions.sqlite3"
     try:
         initialize_store(path)

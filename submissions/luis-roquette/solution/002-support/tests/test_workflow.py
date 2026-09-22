@@ -241,12 +241,25 @@ def fixture_bundle(prepared, *, priority="Low", text=None):
     return replace(bundle, features=states)
 
 
-def app_for(bundle, runtime, monkeypatch):
+def app_for(bundle, runtime, monkeypatch, *, operator="fixture-operator"):
     monkeypatch.setenv("SUPPORT_COPILOT_RUNTIME", str(runtime))
     monkeypatch.setattr(ui, "load_artifacts", lambda _: bundle)
+    monkeypatch.setattr(ui, "authorized_operator", lambda: operator)
     monkeypatch.setattr(socket, "create_connection", lambda *args, **kwargs: pytest.fail("network"))
     app = AppTest.from_file(str(ROOT / "app.py")).run()
     return app.switch_page("pages/queue.py").run()
+
+
+def test_anonymous_user_cannot_mutate_or_read_decisions(prepared, tmp_path, monkeypatch):
+    app = app_for(fixture_bundle(prepared), tmp_path, monkeypatch, operator=None)
+    for label in ("Aprovar", "Editar e aprovar", "Rejeitar", "Escalonar"):
+        assert button(app, label).disabled
+    assert not (tmp_path / "decisions.sqlite3").exists()
+    evidence = app.switch_page("pages/evidence.py").run()
+    assert not evidence.exception
+    assert "somente leitura" in evidence.warning[-1].value.lower()
+    assert all(widget.label != "Persistir export CSV" for widget in evidence.button)
+    assert not (tmp_path / "decisions.sqlite3").exists()
 
 
 def director_app_for(bundle, runtime, monkeypatch):
@@ -258,6 +271,23 @@ def director_app_for(bundle, runtime, monkeypatch):
 
 def button(app, label):
     return next(widget for widget in app.button if widget.label == label)
+
+
+@pytest.mark.parametrize("issuer,subject,expected", [
+    ("https://idp.example", "operator-1", "https://idp.example#operator-1"),
+    ("https://evil.example", "operator-1", None),
+    ("https://idp.example", "operator-2", None),
+    (None, "operator-1", None),
+])
+def test_operator_requires_exact_oidc_issuer_and_subject(monkeypatch, issuer, subject, expected):
+    user = SimpleNamespace(is_logged_in=True,
+                           to_dict=lambda: {"iss": issuer, "sub": subject})
+    secrets = {"authorization": {
+        "allowed_issuers": ["https://idp.example"],
+        "allowed_subjects": ["operator-1"],
+    }}
+    monkeypatch.setattr(ui, "st", SimpleNamespace(user=user, secrets=secrets))
+    assert ui.authorized_operator() == expected
 
 
 @pytest.mark.parametrize("label,action", [("Aprovar", "approve"),
