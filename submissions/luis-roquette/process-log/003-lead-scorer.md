@@ -1089,3 +1089,31 @@ O ciclo obrigatório permaneceu:
 ### Princípio preservado
 
 O diário registra o desenho e a construção: intenção, hipótese, evidência, erro, causa, correção e novo teste. A metodologia criada por Luis transforma documentação em instrumento ativo de engenharia — os registros alimentam o próximo loop e impedem que uma decisão arquitetural se perca entre planejamento e implementação.
+
+## I11 — Redundância Necessária e lapidação — 2026-09-22
+
+### Redundância Necessária — método padrão de Luis
+
+Padrão autoral aplicado depois do primeiro resultado integral da implementação. O `/goal` conduz revisões completas em cascatas de `/loop` até que pelo menos duas passagens consecutivas não encontrem erros, falhas, lacunas, melhorias relevantes nem otimizações.
+
+- Cada achado zera o contador de passagens limpas.
+- O achado é corrigido e retestado pelo ciclo `Planejamento → Revisão → Execução → Teste`.
+- Todo o escopo relevante é então revisado novamente; ausência de achados exige evidência, nunca presunção.
+- O objetivo é comprovar assimilação integral e implementação exaustiva, sem lacunas entre intenção e entrega.
+
+**Estado atual:** o método global ainda não começou, pois a implementação está apenas na Fase 1 de 3. A Fase 1 obteve duas passagens técnicas limpas, mas seu relatório de revisão SDD permanece formalmente inválido após três tentativas: falta o campo literal `combined_score`, embora existam evidência numérica equivalente e **42/42 testes aprovados**.
+
+### Revisão atual da Fase 1
+
+A primeira revisão formal encontrou e levou à correção de quatro pontos: lacuna na inicialização da recuperação, mocks internos, funções grandes demais e teste top-K sem poder discriminatório. Os gates limpos de **42/42 testes** foram executados duas vezes. Entretanto, três emissões do relatório falharam na nomenclatura exata do schema; por isso, a Fase 1 ainda não está marcada como revisada.
+
+### Lapidação e melhoria contínua — método padrão de Luis
+
+Este método começa somente quando a implementação estiver completa e a Redundância Necessária alcançar duas passagens globais limpas. Um `/goal` com cascatas de `/loop` fará uma busca exaustiva por gargalos, erros, bugs, melhorias, otimizações, refinamentos técnicos e oportunidades em layout, design, UI/UX, código e segurança.
+
+- Os achados serão listados e implementados pelo ciclo `Planejamento → Revisão → Execução → Teste`.
+- Cada correção ou otimização reinicia a contagem e exige nova revisão do escopo relevante.
+- A saída exige pelo menos duas passagens consecutivas sem correção ou otimização relevante.
+- O objetivo é elevar um sistema já funcional ao próximo nível, sem confundir lapidação com implementação ainda incompleta.
+
+**Estado atual:** 0 rodadas globais; método ainda não iniciado.
