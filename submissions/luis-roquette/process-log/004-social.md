@@ -491,6 +491,8 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Atualização da Redundância Passada 3:** I42–I43 elevaram o contrato ativo a `2.1.0`, fecharam datas e inteiros nas bordas, impediram ação forte sobre sinal negativo fraco e criaram a barreira final `export_field`. O gate vigente é **109/109**; hashes atuais: CSV `3a91736cd23c…`, Markdown `8fd5a1e524b7…`, HTML `a5cf43b65d56…`. A prova focal de fonte/qualidade foi renovada em I44; históricos 2.0.0 permanecem apenas como eventos legíveis e incompatíveis. HR-01 continua pendente.
 - **Atualização da Redundância Passada 4:** a auditoria encontrou quatro lacunas e, portanto, foi **clean=false**: mediana temporal incorreta no editorial, overflow derivado no limite de 2262, perda da fila além do top 3 e ausência de metadados de período parcial no export. Os commits `d2d5c879`, `92a05dc` e `6499f7c` corrigiram os quatro pontos, elevaram o método a `2.2.0` e o gate a **116/116**. Hashes atuais: CSV `9fb2d4dbc769…`, Markdown `4038018d466e…`, HTML `99a493cbc7cd…`. Esta passada reinicia o contador: **0 de 2 passadas limpas**.
 - **Atualização da Redundância Passada 5:** a auditoria encontrou duas lacunas e, portanto, foi **clean=false**: o CSV perdia recomendações além do top 3 e a cronologia de outcomes misturava calendário civil da fonte com UTC. `d2d2dbe` e `56546aa` fecharam fila/baseline integral e calendário `+14:00`/`-12:00`/naive, elevaram o método a `2.3.0` e o gate a **119/119**. O CSV agora contém seis recomendações e 6.703 registros. Esta passada reinicia o contador: **0 de 2 passadas limpas**; I46 preserva os hashes e a prova completa.
+- **Redundância Passada 6:** `clean=true`, zero achados e contador **1 de 2 passadas limpas**. A auditoria independente confrontou contrato, código, três probes adversariais, correções recentes, CSV real e imagens sem editar a entrega; I47 preserva a evidência.
+- **Atualização da Redundância Passada 7:** `clean=false`, dois achados médios e contador reiniciado em **0 de 2**. `138f803`/`bdeb546` introduziram `analysis_state` (`ready`/`empty_scope`), impediram KPIs/prioridades/downloads em recorte vazio e distinguiram delta ausente de zero medido. Método `2.4.0`, **122/122 testes**; I48 registra correções e gates.
 - **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
 
 ### Matriz de aceitação final
@@ -501,17 +503,17 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 | CK-02 | pass | fórmula/zeros/faixas em testes e `analysis.md` |
 | CK-03 | pass | fallback, IQR, creators e abstinência em `test_analysis.py` |
 | CK-04 | pass | estratos controlados também por mês-calendário, contraparte contemporânea e cobertura explícita; I32–I35 |
-| CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
-| CK-06 | pass | prioridade recomposta com mediana temporal real, ordem estável, seis ações exportadas e fila completa decidível; `test_analysis.py`, `test_queue_export.py`, I45–I46 |
+| CK-05 | pass | dimensões, audiência, tempo e estado `empty_scope` sem KPI falso; `test_app.py`, `test_exports.py`, I48 |
+| CK-06 | pass | prioridade recomposta com mediana temporal real, ordem estável, seis ações exportadas e fila completa decidível; `test_analysis.py`, `test_queue_export.py`, I45–I48 |
 | CK-07 | pass | esforço, público, frequência mensal por semanas completas, patrocínio, creators, interrupção e quick wins; I34–I35 |
 | CK-08 | pass | decisão/revisão preservam texto, envelope integral, snapshot alvo/comparador, IDs por papel, idempotência, reinício e ação adicional; `test_storage.py`, `test_queue_export.py`, I38–I46 |
 | CK-09 | pass | contrato observado reaplica segmento/estatística; calendário da fonte governa cronologia/futuro, replay é SIMULAÇÃO e método antigo é incompatível; I40–I46 |
-| CK-10 | pass | HTML normal/adversarial em uma A4; período solicitado/efetivo/parcial exportado; CSV integral reconstruído na ordem `export_field` → `analysis_field` → `history_field`; cinco provas focais fiéis; I39–I46 |
-| CK-11 | pass | app local/teclado, fila completa, sem conta, API ou ação automática; I26–I46 |
+| CK-10 | pass | HTML normal/adversarial em uma A4; estado vazio e delta ausente preservados; CSV integral reconstruído na ordem `export_field` → `analysis_field` → `history_field`; I39–I48 |
+| CK-11 | pass | app local/teclado, fila completa, recorte vazio honesto, sem conta, API ou ação automática; I26–I48 |
 | HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
 | HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
-| HR-03 | pass | I01–I46 preservam pesquisa, 24 ondas, decisões, falhas, correções e limites |
-| HR-04 | pass | setup, cinco provas focais, remoção do diário 001 e auditoria Git restrita à submissão; I37, I45 e I46 |
+| HR-03 | pass | I01–I48 preservam pesquisa, 24 ondas, decisões, falhas, correções e limites |
+| HR-04 | pass | setup, provas focais, remoção do diário 001 e auditoria Git restrita à submissão; I37, I45–I48 |
 
 ### Rubricas finais
 
@@ -731,3 +733,20 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Determinismo e artefatos:** duas CLIs reais terminaram em 19,23 s e 18,63 s, pico RSS até 553.877.504 bytes e zero swap. CSV/Markdown/HTML foram idênticos byte a byte entre execuções; CSV e Markdown coincidiram com os publicados. Hashes: CSV `7e94c3352f596bb912ccad74346b4aa3796e7290a748d36ac06300653f80e2fc`, Markdown `10e043722772a349676194febcbed1a8a4b9bed2864e0c60da1352ea47831fe0`, HTML `8098fa88096e252782636a548b29b5a9b2e748f3ad3179fa5f3833efa36cacef`.
 - **Reconstrução, A4 e prova visual:** o leitor padrão independente recompôs 6.703 registros, 679.596 vínculos e 52.214 IDs; maior campo 4.500 e limite 131.072. Normal/adversarial permaneceram em uma página A4, visualmente sem corte, hashes PDF `d67573f574ab…` / `a65934ea2637…`. Chrome real recebeu o CSV canônico e renovou três capturas 2550×918: fonte/qualidade 2.3.0 `6a093fe50c97…`, quarta ação `c125589d2243…` e contexto prioritário `339a3a564c32…`. Snapshot/outcomes 2.0.0 permanecem históricos, legíveis e incompatíveis com 2.3.0.
 - **Limites:** HR-01 continua reservado a um Gestor de Social Media humano cronometrado; publicação na branch exigida depende de autorização. Sem push, PR, deploy ou API paga.
+
+## I47 — Redundância Necessária, passada 6: primeira passagem limpa — 2026-09-22
+
+- **Estado da passada:** `clean=true`, nenhum erro, falha, lacuna, melhoria ou otimização executável; contador em **1 de 2 passadas limpas consecutivas**. O relatório independente está em `.specs/scratchpad/redundancy-pass-6-20260922-131341.md`.
+- **Revisão em cascata:** o arquiteto confrontou contrato, fronteiras temporais, troca de fonte, filtros vazios, fila integral, exports e outcomes; o engenheiro não encontrou correção responsável a executar. Probes dirigidos e reconstrução independente sustentaram o resultado, sem transformar ausência de achado em garantia abstrata.
+- **Jornada de Luis:** a obra só avança quando planejamento, revisão, execução e teste concordam. Esta foi a primeira confirmação limpa; ainda não encerrou o goal de duas passadas consecutivas.
+
+## I48 — Redundância Necessária, passada 7: estado vazio e delta ausente — 2026-09-22
+
+- **Estado da passada:** `clean=false`, dois achados corrigidos; contador reiniciado em **0 de 2 passadas limpas consecutivas**. O relatório independente está em `.specs/scratchpad/redundancy-pass-7-20260922-132225.md`.
+- **R7-01 — interseção vazia:** filtros/período incompatíveis exibiam KPIs zerados e downloads, embora não houvesse população analisável. `138f803` introduziu `analysis_state = ready | empty_scope`; `bdeb546` mantém fonte, filtros e histórico visíveis, mas remove KPIs, prioridades e downloads do estado vazio e apresenta orientação explícita ao operador.
+- **R7-02 — ausência não é zero:** delta sem comparador elegível aparecia como `+0`. O método `2.4.0` preserva `None` e renderiza “não definido — sem comparador elegível”; zero real continua zero. Eventos `1.0.0`–`2.3.0` permanecem legíveis, sem comparação automática com o método atual.
+- **Arquiteto → engenheiro → feedback → evidência:** a revisão encontrou semântica enganosa em algo tecnicamente estável; a correção voltou às camadas de análise e apresentação; regressões, UI real e exports decidiram o fechamento. Como houve correções, a passagem não avança o goal.
+- **Gate pós-correção:** venv novo `/tmp/ai-master-004-s4-r7.zQ4Wka`, Python 3.14.2, `pip check` verde e **122/122 testes** com `PYTHONWARNINGS=error` em 16,909 s (27,58 s total), pico RSS 377.815.040 bytes e zero swap. `compileall` e `git diff --check` passaram.
+- **Determinismo e reconstrução:** duas CLIs reais (18,81 s e 18,47 s; zero swap) produziram CSV/Markdown/HTML idênticos byte a byte. Hashes: CSV `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`; Markdown `a1a1692f3e448169b612a83d2006657173feb26eced0eecf592138d2414d6dbc`; HTML `40e7d9ea711c630512c6a48fcfc4aba13cb0a0734b3f0e6b6f064a12027fca77`. O leitor padrão recompôs 6.703 registros, 679.596 vínculos e 52.214 IDs; maior campo 4.500, limite padrão 131.072.
+- **A4 e provas visuais:** normal/adversarial permaneceram em uma página A4, visualmente sem corte; hashes PDF `5f75dcc5ded58404e164eca9f06d17bb5c064ec5d4bf8534c3abb6f03b06d6ad` / `8a1c507feb571b4ae3113ad19a8bfa88d98ce6ba57d8be1cf67800e3c8070a37`. O Chrome real renovou fonte/qualidade, fila integral e contexto no método 2.4.0. As capturas históricas 2.0.0 continuam rotuladas como história incompatível.
+- **Limites honestos:** a prova automatizada cobre o estado vazio e delta ausente por regressão e inspeção do contrato; não substitui HR-01. O teste humano cronometrado e a publicação na branch exigida continuam externos. Sem push, PR, deploy ou API paga.
