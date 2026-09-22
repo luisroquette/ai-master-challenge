@@ -230,6 +230,7 @@ def _segment_metrics(snapshot: pd.DataFrame) -> pd.DataFrame:
         for value, group in data.groupby(dimension, dropna=False, observed=True):
             churn = group["churn_next_30d"].astype(int)
             churn_count = int(churn.sum())
+            lost_mrr = group.get("mrr_lost_next_30d", group["mrr_active"]).loc[churn.eq(1)]
             rows.append(
                 {
                     "dimension": dimension,
@@ -242,11 +243,7 @@ def _segment_metrics(snapshot: pd.DataFrame) -> pd.DataFrame:
                     "relative_risk": (
                         float(churn.mean() / overall_churn_rate) if overall_churn_rate else np.nan
                     ),
-                    "mrr_lost": float(
-                        group.get("mrr_lost_next_30d", group["mrr_active"])
-                        .where(churn.eq(1), 0)
-                        .sum()
-                    ),
+                    "mrr_lost": (np.nan if lost_mrr.isna().any() else float(lost_mrr.sum())),
                     "mrr_exposed": float(group["mrr_active"].sum()),
                     "coverage": float(group["churn_next_30d"].notna().mean()),
                     "confidence": (

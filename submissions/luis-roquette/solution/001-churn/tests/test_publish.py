@@ -38,6 +38,16 @@ def test_manifest_rejects_modified_artifact(analysis_result, tmp_path) -> None:
         validate_artifact_set(tmp_path)
 
 
+def test_manifest_uses_quality_label_policy(analysis_result, tmp_path) -> None:
+    analysis_result.quality_report["label_policy"] = "first_valid_non_reactivation_event"
+
+    publish_artifacts(analysis_result, tmp_path)
+    manifest = validate_artifact_set(tmp_path)
+
+    assert manifest["parameters"]["label_policy"] == "first_valid_non_reactivation_event"
+    assert manifest["parameters"]["observation_end"] == "2024-12-31"
+
+
 def test_manifest_rejects_missing_artifact_entry(analysis_result, tmp_path) -> None:
     publish_artifacts(analysis_result, tmp_path)
     manifest_path = tmp_path / "run_manifest.json"

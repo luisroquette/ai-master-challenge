@@ -3,27 +3,86 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from .config import DEFAULT_WINDOWS, SCORING_CUTOFF
+from .config import DEFAULT_WINDOWS, OBSERVATION_END, SCORING_CUTOFF
 from .contracts import _coerce_table, _coerce_tables
 
 
-def first_terminal_churn(churn_events: pd.DataFrame) -> pd.Series:
+def select_first_terminal_events(
+    accounts: pd.DataFrame,
+    churn_events: pd.DataFrame,
+    observation_end: pd.Timestamp,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    parsed_accounts = _coerce_table("accounts", accounts)
     churn = _coerce_table("churn_events", churn_events)
-    terminal = churn.loc[~churn["is_reactivation"].fillna(False)]
-    return terminal.groupby("account_id")["churn_date"].min().sort_index()
+    joined = churn.merge(
+        parsed_accounts[["account_id", "signup_date"]],
+        on="account_id",
+        how="left",
+        validate="many_to_one",
+        indicator=True,
+    )
+    end = pd.Timestamp(observation_end)
+    reasons = (
+        ("unknown_account", joined["_merge"].ne("both")),
+        ("missing_signup_date", joined["signup_date"].isna()),
+        ("missing_churn_date", joined["churn_date"].isna()),
+        (
+            "before_signup",
+            joined["signup_date"].notna()
+            & joined["churn_date"].notna()
+            & joined["churn_date"].lt(joined["signup_date"]),
+        ),
+        ("after_observation_end", joined["churn_date"].gt(end)),
+        ("unknown_reactivation_flag", joined["is_reactivation"].isna()),
+        ("reactivation", joined["is_reactivation"].eq(True).fillna(False)),
+    )
+    invalid = pd.Series(False, index=joined.index)
+    exclusion_parts = []
+    for reason, mask in reasons:
+        invalid |= mask
+        excluded = joined.loc[mask, ["churn_event_id", "account_id"]].copy()
+        excluded["exclusion_reason"] = reason
+        exclusion_parts.append(excluded)
+
+    selected = (
+        joined.loc[~invalid, list(churn.columns)]
+        .sort_values(["account_id", "churn_date", "churn_event_id"])
+        .drop_duplicates("account_id", keep="first")
+        .reset_index(drop=True)
+    )
+    exclusions = pd.concat(exclusion_parts, ignore_index=True).sort_values(
+        ["churn_event_id", "exclusion_reason"]
+    )
+    return selected, exclusions.reset_index(drop=True)
+
+
+def first_terminal_churn(
+    churn_events: pd.DataFrame,
+    accounts: pd.DataFrame,
+    observation_end: pd.Timestamp,
+) -> pd.Series:
+    selected, _ = select_first_terminal_events(accounts, churn_events, observation_end)
+    if selected.empty:
+        return pd.Series(dtype="datetime64[ns]", name="churn_date")
+    return selected.set_index("account_id")["churn_date"].sort_index()
 
 
 def mrr_lost_at_churn(subscriptions: pd.DataFrame, terminal_churn: pd.Series) -> pd.Series:
     parsed = _coerce_table("subscriptions", subscriptions)
     lost = {}
     for account_id, churn_date in terminal_churn.items():
+        account_history = parsed.loc[parsed["account_id"].eq(account_id)]
+        if account_history.empty:
+            lost[account_id] = pd.NA
+            continue
         day_before = pd.Timestamp(churn_date) - pd.Timedelta(days=1)
-        active = parsed.loc[
-            parsed["account_id"].eq(account_id)
-            & parsed["start_date"].le(day_before)
-            & (parsed["end_date"].isna() | parsed["end_date"].gt(day_before))
+        active = account_history.loc[
+            account_history["start_date"].le(day_before)
+            & (account_history["end_date"].isna() | account_history["end_date"].gt(day_before))
         ]
-        lost[account_id] = int(active["mrr_amount"].sum())
+        lost[account_id] = (
+            pd.NA if active["mrr_amount"].isna().any() else int(active["mrr_amount"].sum())
+        )
     return pd.Series(lost, name="mrr_lost", dtype="Int64")
 
 
@@ -227,7 +286,7 @@ def build_account_panel(
         ]
         tickets = tickets.loc[tickets["submitted_at"].ge(tickets["signup_date"])]
 
-    terminal = first_terminal_churn(parsed["churn_events"])
+    terminal = first_terminal_churn(parsed["churn_events"], accounts, OBSERVATION_END)
     lost_at_churn = mrr_lost_at_churn(subscriptions, terminal)
     usage_by_account = {key: value for key, value in usage.groupby("account_id")}
     tickets_by_account = {key: value for key, value in tickets.groupby("account_id")}
@@ -317,8 +376,13 @@ def build_account_panel(
                     and terminal_date > cutoff
                     and terminal_date <= cutoff + pd.Timedelta(days=30)
                 )
+                lost_mrr = lost_at_churn.get(account_id, pd.NA)
                 row["mrr_lost_next_30d"] = (
-                    int(lost_at_churn.get(account_id, 0)) if row["churn_next_30d"] else 0
+                    pd.NA
+                    if row["churn_next_30d"] and pd.isna(lost_mrr)
+                    else int(lost_mrr)
+                    if row["churn_next_30d"]
+                    else 0
                 )
             rows.append(row)
 

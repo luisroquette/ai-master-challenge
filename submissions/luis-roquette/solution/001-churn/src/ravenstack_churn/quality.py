@@ -2,7 +2,9 @@ from typing import Any
 
 import pandas as pd
 
+from .config import OBSERVATION_END
 from .contracts import FOREIGN_KEYS, PRIMARY_KEYS, _coerce_tables
+from .panel import select_first_terminal_events
 
 
 def _orphan_counts(tables: dict[str, pd.DataFrame]) -> dict[str, int]:
@@ -49,9 +51,8 @@ def build_quality_report(tables: dict[str, pd.DataFrame]) -> dict[str, Any]:
         validate="many_to_one",
     )
 
-    terminal_accounts = set(
-        churn.loc[~churn["is_reactivation"].fillna(False), "account_id"].dropna()
-    )
+    terminal_events, _ = select_first_terminal_events(accounts, churn, OBSERVATION_END)
+    terminal_accounts = set(terminal_events["account_id"].dropna())
     account_terminal = accounts["account_id"].isin(terminal_accounts)
     subscription_account_flag = (
         subscriptions.groupby("account_id")["churn_flag"].any().reindex(accounts["account_id"])
@@ -103,5 +104,5 @@ def build_quality_report(tables: dict[str, pd.DataFrame]) -> dict[str, Any]:
         },
         "orphan_counts": _orphan_counts(parsed),
         "contradictions": contradictions,
-        "label_policy": "first_non_reactivation_event",
+        "label_policy": "first_valid_non_reactivation_event",
     }

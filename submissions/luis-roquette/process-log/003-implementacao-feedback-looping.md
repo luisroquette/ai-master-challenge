@@ -793,3 +793,15 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 - avançar apenas com gate verde; caso contrário, reiniciar o ciclo na mesma task.
 
 **Estado:** Task 1 iniciada. Objetivo local: seleção terminal, QA e MRR compartilharem a mesma política válida, com regressões verdes e nenhum caller legado.
+
+### Task 1 — primeiro ciclo de feedback
+
+**Planejamento:** rastreamos todos os callers da seleção terminal e do MRR perdido. O menor ponto comum identificado foi `panel.py`, consumido pelo painel e pelo relatório de qualidade. Não adicionamos dependências nem uma política paralela.
+
+**Revisão:** confirmamos três riscos do plano: deduplicar antes de validar podia descartar um evento posterior legítimo; flag de reativação ausente podia virar churn; e soma nullable podia transformar receita desconhecida em zero.
+
+**Execução:** criamos uma seleção compartilhada `valid-before-first`, propagamos a mesma `label_policy` ao QA e ao manifesto, centralizamos o limite de observação e preservamos MRR desconhecido como nulo. Regressões cobrem inválido seguido de válido, reativação, flag ausente, desempate, datas inválidas e MRR conhecido versus desconhecido.
+
+**Teste e retorno ao loop:** a primeira execução remota chegou a `24 passed, 2 failed`. As duas falhas estavam nas novas fixtures — import ausente de pandas e coluna booleana não-nullable — e foram corrigidas. A revisão seguinte encontrou que `_segment_metrics` ainda somava nulos como zero; corrigimos o consumidor e adicionamos regressão. A nova validação ainda não foi concluída porque os dois slots globais de Codespaces permaneceram ocupados ou em transição. Nenhum gate foi contornado e a Task 1 continua aberta até teste e lint verdes.
+
+**Fechamento do loop:** o Codespace correto foi alinhado ao SHA remoto `f7b82ea`, recebeu o diff exato e executou o gate direcionado. Resultado final: `37 passed in 12.46s`, Ruff lint sem erros e `9 files already formatted`. O patch de validação foi revertido no ambiente remoto. Com o ciclo `Planejamento → Revisão → Execução → Teste` verde, a Task 1 foi validada e a SPEC passou de `todo` para `in-progress`.

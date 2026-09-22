@@ -16,10 +16,15 @@ RAW_TABLE_NAMES = tuple(
 DEFAULT_WINDOWS = (7, 30, 90)
 DEFAULT_CUTOFFS = pd.date_range("2023-04-30", "2024-11-30", freq="ME")
 SCORING_CUTOFF = pd.Timestamp("2024-12-31")
+OBSERVATION_END = pd.Timestamp("2024-12-31")
+HISTORICAL_START = pd.Timestamp("2023-04-01")
+REFERENCE_PERIOD = (pd.Timestamp("2023-07-01"), pd.Timestamp("2023-12-31"))
+RECENT_PERIOD = (pd.Timestamp("2024-06-01"), pd.Timestamp("2024-11-30"))
 MIN_SEGMENT_ACCOUNTS = 30
 MIN_SEGMENT_CHURNS = 10
 MIN_COVERAGE = 0.70
 RANDOM_SEED = 42
+BOOTSTRAP_REPLICATES = 2_000
 
 
 def sha256_file(path: Path) -> str:

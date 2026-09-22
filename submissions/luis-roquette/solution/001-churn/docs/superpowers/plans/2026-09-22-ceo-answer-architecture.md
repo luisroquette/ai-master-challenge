@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12, pandas, NumPy, SciPy, statsmodels, pytest e Streamlit já instalados.
 
-**Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/todo/implement-ceo-answer-architecture.feature.md`
+**Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/in-progress/implement-ceo-answer-architecture.feature.md`
 
 ## Global Constraints
 
@@ -53,7 +53,7 @@
 - Produces: `first_terminal_churn(churn_events, accounts, observation_end) -> pd.Series`.
 - Preserves: `mrr_lost_at_churn(subscriptions, terminal_churn) -> pd.Series`, com dtype nullable.
 
-- [ ] **Step 1: escrever os testes RED da seleção**
+- [x] **Step 1: escrever os testes RED da seleção**
 
 ```python
 def test_first_terminal_churn_uses_valid_event_after_invalid_event(): ...
@@ -61,13 +61,13 @@ def test_missing_reactivation_flag_is_not_terminal(): ...
 def test_mrr_unknown_is_not_zero(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_panel.py tests/test_quality.py`
 
 Expected: FAIL nos novos casos porque a implementação atual deduplica antes de validar e não possui a nova assinatura.
 
-- [ ] **Step 3: implementar o contrato mínimo**
+- [x] **Step 3: implementar o contrato mínimo**
 
 ```python
 def select_first_terminal_events(
@@ -79,7 +79,7 @@ def select_first_terminal_events(
 
 Migrar todos os callers; QA usa a mesma seleção e mantém contagens das linhas brutas excluídas.
 
-- [ ] **Step 4: confirmar GREEN e callers únicos**
+- [x] **Step 4: confirmar GREEN e callers únicos**
 
 Run: `.venv/bin/python -m pytest -q tests/test_panel.py tests/test_quality.py`
 
@@ -87,7 +87,7 @@ Run: `rg -n "first_terminal_churn|select_first_terminal_events|mrr_lost_at_churn
 
 Expected: PASS; nenhum consumidor mantém a política antiga.
 
-- [ ] **Step 5: entregar o diff; o orquestrador registra o checkpoint**
+- [x] **Step 5: entregar o diff; o orquestrador registra o checkpoint**
 
 ```bash
 git add src/ravenstack_churn/config.py src/ravenstack_churn/panel.py src/ravenstack_churn/quality.py src/ravenstack_churn/publish.py tests/test_panel.py tests/test_quality.py

@@ -2,6 +2,7 @@ import pandas as pd
 
 from ravenstack_churn.diagnosis import (
     _reason_corroborates,
+    _segment_metrics,
     build_claim_checks,
     build_diagnostic_snapshot,
     evaluate_candidates,
@@ -86,6 +87,17 @@ def test_segment_metrics_include_relative_risk(candidate_frames) -> None:
     observed, strict, churn_events = candidate_frames
     _, segments = evaluate_candidates(observed, strict, churn_events)
     assert {"overall_churn_rate", "churn_rate_delta", "relative_risk"}.issubset(segments)
+
+
+def test_segment_metrics_preserve_unknown_mrr_lost(candidate_frames) -> None:
+    observed, _, _ = candidate_frames
+    snapshot = observed.loc[observed["account_id"].isin(["A-000", "A-001"])].copy()
+    snapshot["mrr_lost_next_30d"] = [pd.NA, 0]
+
+    segments = _segment_metrics(snapshot)
+
+    assert segments.loc[segments["churn_count"].eq(1), "mrr_lost"].isna().all()
+    assert segments.loc[segments["churn_count"].eq(0), "mrr_lost"].eq(0).all()
 
 
 def test_zero_variance_candidate_is_inconclusive(candidate_frames) -> None:
