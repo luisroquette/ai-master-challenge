@@ -1455,3 +1455,31 @@ O nome de trabalho adotado para a metodologia é **Método de Construção Cogni
 ### Gate local e limite externo
 
 A raiz do repositório ignora `submissions/` por padrão; por isso, os novos arquivos precisam de inclusão explícita com `git add -f`, sem alterar o `.gitignore` e sem tocar arquivos fora da pasta autorizada. O tour publicado, a URL pública, o TC-47 remoto, o push e o PR continuam pendentes por dependerem de autorização externa expressa.
+
+## I28 — Correção da arquitetura de entrega visual — 2026-09-22
+
+Luis rejeitou uma embalagem centrada em sete arquivos de texto e uma imagem estática. O diagnóstico foi direto: os READMEs estavam confusos, faltava uma narrativa audiovisual da construção, não existiam mapa mental e infográfico adequados e o sistema precisava de um wizard demonstrativo no padrão Arcade.
+
+### Decisão de entrega
+
+- Uma única porta de entrada visual passa a preceder a documentação.
+- O README raiz vira um índice curto; detalhes técnicos e metodológicos ficam recolhidos como evidência.
+- NotebookLM será usado para produzir vídeo explicativo, mapa mental e infográfico a partir de uma fonte curada e sem segredos.
+- Arcade será usado para capturar o produto real como tour interativo, com hotspots e orientação passo a passo.
+- Os artefatos longos continuam preservados, mas deixam de competir pela atenção inicial do avaliador.
+
+A transmissão permanece limitada às ferramentas autorizadas por Luis para criação desses artefatos. Nenhum conteúdo será enviado aos avaliadores, publicado, submetido em PR ou implantado sem autorização expressa posterior.
+
+## I29 — Produção visual no NotebookLM e portal guiado — 2026-09-22
+
+Uma fonte única, curta e sem segredos foi preparada para impedir que os materiais visuais herdassem a dispersão dos documentos longos. O NotebookLM recebeu somente essa fonte e foi orientado a não inventar métricas, publicação, autenticação ou integração com CRM.
+
+### Feedback looping visual
+
+1. O primeiro mapa mental foi exportado com os ramos recolhidos. Todos os nós foram expandidos e a versão útil substituiu a inicial.
+2. O primeiro infográfico usou a legenda ambígua “Falhas de Probabilidade 0”, apesar de quatro rotas terem sido rejeitadas. Uma segunda geração foi instruída com os contratos exatos: **4 de 4 rotas rejeitadas** e **0 probabilidades indevidas publicadas**.
+3. O segundo infográfico corrigiu a afirmação e foi adotado como artefato final.
+4. A experiência guiada local passou de nove para onze telas e incorporou as duas peças reais do NotebookLM.
+5. A validação no navegador confirmou onze telas, cinco imagens carregadas em resolução nativa e zero erros ou avisos de console.
+
+O vídeo explicativo foi solicitado em português, no formato abrangente, com foco no produto, nas decisões de integridade, na evolução MCCL, na contribuição humana e nos limites. O NotebookLM entregou uma versão de **5min48s**, baixada e incorporada diretamente à experiência guiada. O portal final passou a ter doze telas, incluindo reprodução nativa do vídeo.
