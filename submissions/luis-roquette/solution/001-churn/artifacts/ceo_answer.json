@@ -30,10 +30,62 @@
           },
           "unit": "percentage_points_fraction",
           "value": 0.07045838469616034
+        },
+        {
+          "comparator_id": null,
+          "counterevidence": null,
+          "denominator": null,
+          "evidence_ids": [
+            "claim:C-usage-growth:overall"
+          ],
+          "evidence_level": "confirmed_fact",
+          "id": "C-usage-overall",
+          "limitation": "Tendência descritiva; não identifica causa.",
+          "numerator": null,
+          "period_end": "2024-11-30",
+          "period_start": "2024-06-30",
+          "population": "accounts_with_usage_coverage",
+          "statement": "Uso diário por conta no agregado: 0.336→0.493.",
+          "status": "up",
+          "uncertainty": {
+            "high": null,
+            "level": null,
+            "low": null,
+            "method": "not_estimated",
+            "reason": null
+          },
+          "unit": "usage_events/account/day",
+          "value": 0.1576047904191617
+        },
+        {
+          "comparator_id": null,
+          "counterevidence": null,
+          "denominator": null,
+          "evidence_ids": [
+            "claim:C-usage-growth:churn_next_30d"
+          ],
+          "evidence_level": "confirmed_fact",
+          "id": "C-usage-churn-next-30d",
+          "limitation": "Coorte retrospectiva; descreve seleção, não causa.",
+          "numerator": null,
+          "period_end": "2024-11-30",
+          "period_start": "2024-06-30",
+          "population": "retrospective_churn_next_30d",
+          "statement": "Uso diário por conta entre futuros churners de 30 dias: 0.349→0.304.",
+          "status": "down",
+          "uncertainty": {
+            "high": null,
+            "level": null,
+            "low": null,
+            "method": "not_estimated",
+            "reason": null
+          },
+          "unit": "usage_events/account/day",
+          "value": -0.04495614035087725
         }
       ],
       "id": "what_changed",
-      "summary": "A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.",
+      "summary": "A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304).",
       "title": "O que mudou"
     },
     {
@@ -115,14 +167,14 @@
             "claim:C-satisfaction-ok:overall"
           ],
           "evidence_level": "confirmed_fact",
-          "id": "C-satisfaction-coverage",
-          "limitation": "Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.",
+          "id": "C-satisfaction-overall",
+          "limitation": "Média ponderada somente entre tickets com resposta.",
           "numerator": null,
           "period_end": "2024-11-30",
-          "period_start": "2023-04-30",
+          "period_start": "2024-06-30",
           "population": "support_ticket_respondents",
-          "statement": "Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.",
-          "status": "limitation",
+          "statement": "Satisfação geral entre tickets respondidos: 3.96→4.02.",
+          "status": "concern",
           "uncertainty": {
             "high": null,
             "level": null,
@@ -130,12 +182,38 @@
             "method": "not_estimated",
             "reason": null
           },
-          "unit": "covered_responses_share",
-          "value": 0.6332574031890661
+          "unit": "satisfaction_points/response",
+          "value": 4.020833333333333
+        },
+        {
+          "comparator_id": null,
+          "counterevidence": null,
+          "denominator": null,
+          "evidence_ids": [
+            "claim:C-satisfaction-ok:churn_next_30d"
+          ],
+          "evidence_level": "confirmed_fact",
+          "id": "C-satisfaction-churn-next-30d",
+          "limitation": "Coorte retrospectiva e restrita a tickets com resposta.",
+          "numerator": null,
+          "period_end": "2024-11-30",
+          "period_start": "2024-06-30",
+          "population": "support_ticket_respondents_churn_next_30d",
+          "statement": "Satisfação entre respondentes que churnariam em 30 dias: 4.50→3.67.",
+          "status": "concern",
+          "uncertainty": {
+            "high": null,
+            "level": null,
+            "low": null,
+            "method": "not_estimated",
+            "reason": null
+          },
+          "unit": "satisfaction_points/response",
+          "value": 3.6666666666666665
         }
       ],
       "id": "unknowns",
-      "summary": "Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.",
+      "summary": "A satisfação geral dos respondentes subiu de 3.96→4.02; entre futuros churners, caiu de 4.50→3.67. São apenas tickets respondidos; não representam toda a base.",
       "title": "O que ainda não sabemos"
     },
     {
@@ -206,6 +284,27 @@
       ],
       "unit": "account_churn/account_month"
     },
+    "claim:C-satisfaction-ok:churn_next_30d": {
+      "artifact": "claim_checks.csv",
+      "calculation": "published_table",
+      "columns": [
+        "start_value",
+        "end_value",
+        "coverage",
+        "status"
+      ],
+      "period_end": "2024-11-30",
+      "period_start": "2024-06-30",
+      "population": "declared_population",
+      "row_key": {
+        "claim_id": "C-satisfaction-ok",
+        "cohort": "churn_next_30d"
+      },
+      "source_tables": [
+        "claim_checks.csv"
+      ],
+      "unit": "declared_unit"
+    },
     "claim:C-satisfaction-ok:overall": {
       "artifact": "claim_checks.csv",
       "calculation": "published_table",
@@ -215,11 +314,53 @@
         "coverage",
         "status"
       ],
-      "period_end": null,
-      "period_start": null,
+      "period_end": "2024-11-30",
+      "period_start": "2024-06-30",
       "population": "declared_population",
       "row_key": {
         "claim_id": "C-satisfaction-ok",
+        "cohort": "overall"
+      },
+      "source_tables": [
+        "claim_checks.csv"
+      ],
+      "unit": "declared_unit"
+    },
+    "claim:C-usage-growth:churn_next_30d": {
+      "artifact": "claim_checks.csv",
+      "calculation": "published_table",
+      "columns": [
+        "start_value",
+        "end_value",
+        "coverage",
+        "status"
+      ],
+      "period_end": "2024-11-30",
+      "period_start": "2024-06-30",
+      "population": "declared_population",
+      "row_key": {
+        "claim_id": "C-usage-growth",
+        "cohort": "churn_next_30d"
+      },
+      "source_tables": [
+        "claim_checks.csv"
+      ],
+      "unit": "declared_unit"
+    },
+    "claim:C-usage-growth:overall": {
+      "artifact": "claim_checks.csv",
+      "calculation": "published_table",
+      "columns": [
+        "start_value",
+        "end_value",
+        "coverage",
+        "status"
+      ],
+      "period_end": "2024-11-30",
+      "period_start": "2024-06-30",
+      "population": "declared_population",
+      "row_key": {
+        "claim_id": "C-usage-growth",
         "cohort": "overall"
       },
       "source_tables": [
@@ -274,9 +415,11 @@
       "unit": "declared_unit"
     }
   },
-  "headline": "A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. Nenhum mecanismo passou todos os gates.",
+  "headline": "A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304). Nenhum mecanismo passou todos os gates.",
   "headline_claim_ids": [
-    "C-churn-change"
+    "C-churn-change",
+    "C-usage-overall",
+    "C-usage-churn-next-30d"
   ],
   "mechanism_status": "inconclusive",
   "parameters": {

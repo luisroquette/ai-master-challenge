@@ -1,12 +1,14 @@
 # Resposta executiva canônica
 
-A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. Nenhum mecanismo passou todos os gates.
+A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304). Nenhum mecanismo passou todos os gates.
 
 ## 1. O que mudou
 
-A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.
+A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304).
 
 - **C-churn-change:** A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.
+- **C-usage-overall:** Uso diário por conta no agregado: 0.336→0.493.
+- **C-usage-churn-next-30d:** Uso diário por conta entre futuros churners de 30 dias: 0.349→0.304.
 
 ## 2. Onde está concentrado
 
@@ -22,9 +24,10 @@ auto_renew_off está associado ao churn futuro de 30 dias. Estado: plausible_hyp
 
 ## 4. O que ainda não sabemos
 
-Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.
+A satisfação geral dos respondentes subiu de 3.96→4.02; entre futuros churners, caiu de 4.50→3.67. São apenas tickets respondidos; não representam toda a base.
 
-- **C-satisfaction-coverage:** Satisfação representa apenas tickets respondidos e não pode ser generalizada para toda a base sem cobertura suficiente.
+- **C-satisfaction-overall:** Satisfação geral entre tickets respondidos: 3.96→4.02.
+- **C-satisfaction-churn-next-30d:** Satisfação entre respondentes que churnariam em 30 dias: 4.50→3.67.
 
 ## 5. Próximas ações
 
