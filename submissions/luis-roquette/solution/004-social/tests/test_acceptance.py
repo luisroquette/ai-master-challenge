@@ -28,7 +28,7 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(cited, [row["evidence_id"] for row in rows])
         for rank, row in enumerate(rows, 1):
-            self.assertEqual(row["method_version"], "2.0.0")
+            self.assertEqual(row["method_version"], "2.1.0")
             self.assertEqual(int(row["rank"]), rank)
             values, normalization = json.loads(row["priority_values"]), json.loads(row["normalization"])
             impact = sum(min(value / normalization[key], 1) if normalization[key] else 0 for key, value in values.items()) / 3

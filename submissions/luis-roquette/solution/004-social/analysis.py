@@ -1349,7 +1349,7 @@ def _reference_chunks(source_ids: list[str], lines: dict[str, int]) -> Iterable[
         yield {"reference_chunk": chunk, "reference_index": indices, "source_row_id": ids, "source_line": physical}
 
 
-def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
+def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
     source = result.get("source", {})
     scope = result.get("scope", {})
     source_hash = source.get("source_hash", "")
@@ -1390,7 +1390,7 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         yield exported
         yield from chunks
 
-    yield row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
+    yield from analytical_row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
     summary_id = _stable_id("summary", str(source_hash), scope)
     evidence: list[dict[str, object]] = [{
         "evidence_id": summary_id,
@@ -1451,7 +1451,7 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
                 yield from analytical_row("evidence_detail", evidence_id, reference_role=role, statistics=item[role])
         for role, source_row_ids in roles.items():
             for chunk in _reference_chunks(source_row_ids, result.get("row_references", {})):
-                yield row("source_ref", evidence_id, scope=None, reference_role=role, **chunk)
+                yield from analytical_row("source_ref", evidence_id, scope=None, reference_role=role, **chunk)
 
     quality = result.get("quality", {})
     yield from analytical_row("quality", statistics={key: value for key, value in quality.items() if key not in ("benchmark_diagnostics", "warnings")})
@@ -1499,6 +1499,28 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
                 comparable=outcome.get("status") == "observed", non_causal=True,
                 text="Associação observacional; não demonstra causalidade ou ROI financeiro.",
             )
+
+
+def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
+    """Final size boundary, including metadata inherited by existing fragments.
+
+    Ordinary exports retain their exact shape. Exceptional oversized metadata is
+    joined by deterministic 1-based base-row ordinal (exclude export_field rows).
+    This also bounds IDs/provenance on fragment rows without recursive metadata.
+    """
+    for ordinal, exported in enumerate(_iter_export_rows(result, decisions), 1):
+        chunks = []
+        for name, value in exported.items():
+            if isinstance(value, str) and len(value) > 32_768:
+                exported[name] = ""
+                for offset in range(0, len(value), 4096):
+                    fragment = dict.fromkeys(exported, "")
+                    fragment.update(record_type="export_field", evidence_id=f"export-row-{ordinal}",
+                                    field_name=name, field_chunk=offset // 4096 + 1,
+                                    field_value=json.dumps(value[offset:offset + 4096], ensure_ascii=False))
+                    chunks.append(fragment)
+        yield exported
+        yield from chunks
 
 
 def export_evidence(result: dict[str, object], decisions: list[dict[str, object]]) -> bytes:
@@ -1601,7 +1623,8 @@ def _decision_lines(result: dict[str, object], decisions: list[dict[str, object]
 
 
 def executive_summary(result: dict[str, object], decisions: list[dict[str, object]]) -> str:
-    source = result.get("source", {})
+    source = dict(result.get("source", {}))
+    source["source_hash"] = _short(source.get("source_hash", ""), 64)
     metrics = result.get("metrics", {})
     recommendations = result.get("recommendations", [])
     dimensions = [item for items in result.get("dimensions", {}).values() for item in items]
@@ -1614,11 +1637,11 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
                    f"Prioridade {item.get('priority', 0):.6g}; força {item.get('priority_components', {}).get('strength', 0):.3g}; "
                    f"ΔERv {item.get('delta_erv_pp', 0):+.4g} p.p. Responsável {_short(item.get('owner', 'Gestor'), 45)}; "
                    f"execução {_short(item.get('execution_window', 'coletar'), 45)}; revisão {_short(item.get('review_window', 'após coleta'), 45)}. "
-                   f"Cadência observacional: {cadence.get('value', 'N/A')} posts/creator/semana; estado {cadence.get('status', 'collect')}. "
-                   f"Evidência {item.get('evidence_id', '')}.")
+                   f"Cadência observacional: {_short(cadence.get('value', 'N/A'), 20)} posts/creator/semana; estado {_short(cadence.get('status', 'collect'), 20)}. "
+                   f"Evidência {_short(item.get('evidence_id', ''), 60)}.")
         priorities += f"<li>{html.escape(compact)}<details><summary>Detalhe auditável</summary>{html.escape(_recommendation_text(item))}</details></li>"
     findings = "".join(
-        f"<li>{html.escape(str(item.get('dimension', 'segmento')))} = {html.escape(str(item.get('value', '')))}: {int(item.get('posts', 0))} posts; mediana ERv {format(float(item['median_erv']), '.2f') + '%' if item.get('median_erv') is not None else 'não definida (views=0: sem denominador para ERv)'} <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
+        f"<li>{html.escape(_short(item.get('dimension', 'segmento'), 35))} = {html.escape(_short(item.get('value', ''), 80))}: {int(item.get('posts', 0))} posts; mediana ERv {format(float(item['median_erv']), '.2f') + '%' if item.get('median_erv') is not None else 'não definida (views=0: sem denominador para ERv)'} <small>{html.escape(_short(item.get('evidence_id', ''), 60))}</small></li>"
         for item in sorted(dimensions, key=lambda value: (-int(value.get("posts", 0)), str(value.get("evidence_id", ""))))[:5]
     )
     decisions_html = "".join(f"<li>{html.escape(line)}</li>" for line in _decision_lines(result, decisions))
@@ -1764,6 +1787,10 @@ def analysis_report(result: dict[str, object], decisions: list[dict[str, object]
               "`analysis_field`: agrupar evidence_id/reference_role/field_name, ordenar field_chunk e concatenar "
               "json.loads(field_value); field_name tem formato record_type.campo para evitar colisões entre evidência e recomendação. "
               "O mesmo princípio vale para `history_field` no histórico, usando decision_id/outcome_id. "
+              "A barreira final também limita campos/metadados de qualquer linha. Se necessário, emite `export_field`: "
+              "evidence_id=export-row-N aponta para a N-ésima linha-base (base 1, excluindo export_field); "
+              "agrupar por essa chave/field_name e concatenar json.loads(field_value) na ordem field_chunk. "
+              "Reconstruir essa camada primeiro, depois analysis_field/history_field; campos normais não mudam. "
               "A neutralização de fórmulas é preservada no texto recomposto.", "",
               "A CLI publica todo o histórico, sem alertas post a post. Ausência de período anterior igualmente "
               "longo pode impedir comparações editoriais; não se inventa tendência. O monitoramento recente "

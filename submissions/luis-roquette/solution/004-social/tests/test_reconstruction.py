@@ -6,8 +6,9 @@ import io
 import json
 import sqlite3
 import unittest
+from unittest.mock import patch
 
-from analysis import ACTION_TEXT, analyze, analysis_report, executive_summary, export_evidence
+from analysis import ACTION_TEXT, EXPORT_COLUMNS, HISTORY_EXPORT_COLUMNS, analyze, analysis_report, executive_summary, export_evidence
 from storage import initialize, list_decisions, record_decision, record_import
 from tests.helpers import (aggregate_effect_rows, default_scope, frame_from_rows,
                            frame_with_target, make_cohort, make_post)
@@ -41,7 +42,87 @@ def adversarial_decisions(source="abc"):
     return events + [{**events[0], "decision_id": "foreign", "source_hash": "other", "original_text": "NÃO EXIBIR OUTRA FONTE"}]
 
 
+def long_label_result():
+    label = "Plataforma" + "P" * 140000
+    fields = ("platform", "content_type", "content_category", "audience_age_distribution",
+              "audience_gender_distribution", "audience_location")
+    frame = frame_from_rows([make_post(**dict.fromkeys(fields, label))])
+    result = analyze(frame, default_scope(filters={"platform": [label]}), str(frame["source_hash"].iloc[0]))
+    return label, result
+
+
 class ReconstructionTests(unittest.TestCase):
+    def test_real_long_filter_scope_round_trips_including_summary(self):
+        label = "Plataforma" + "P" * 140000
+        result = analyze(frame_from_rows([make_post(platform=label)]), default_scope(filters={"platform": [label]}), "hash")
+        limit = csv.field_size_limit()
+        payload = export_evidence(result, [])
+        rows = list(csv.DictReader(io.StringIO(payload.decode())))
+        summary = rows[0]
+        self.assertEqual(summary["record_type"], "summary")
+        self.assertEqual(summary["scope"], "")
+        fragments = [row for row in rows if row["record_type"] == "analysis_field" and row["evidence_id"] == "" and row["field_name"] == "summary.scope"]
+        scope = json.loads("".join(json.loads(row["field_value"]) for row in fragments))
+        self.assertEqual(scope, result["scope"])
+        self.assertEqual(scope["filters"]["platform"], [label])
+        self.assertLessEqual(max(len(value) for row in rows for value in row.values()), 32768)
+        self.assertEqual(csv.field_size_limit(), limit)
+        self.assertEqual(limit, 131072)
+        self.assertEqual(payload, export_evidence(result, []))
+
+    def test_final_export_boundary_bounds_every_column_even_fragment_metadata(self):
+        columns = EXPORT_COLUMNS + HISTORY_EXPORT_COLUMNS
+        original = {name: "'\n=" + name + "á" * 140000 for name in columns}
+        with patch("analysis._iter_export_rows", return_value=iter([dict(original)])):
+            payload = export_evidence(sample_result(), [{}])
+        rows = list(csv.DictReader(io.StringIO(payload.decode())))
+        restored = dict(rows[0])
+        for name in columns:
+            parts = [row for row in rows[1:] if row["field_name"] == name]
+            self.assertTrue(parts)
+            self.assertEqual({row["record_type"] for row in parts}, {"export_field"})
+            self.assertEqual({row["evidence_id"] for row in parts}, {"export-row-1"})
+            restored[name] = "".join(json.loads(row["field_value"]) for row in parts)
+        self.assertEqual(restored, original)
+        self.assertLessEqual(max(len(value) for row in rows for value in row.values()), 32768)
+        self.assertEqual(csv.field_size_limit(), 131072)
+
+    def test_printed_source_labels_are_bounded_and_full_values_remain_in_csv(self):
+        from html.parser import HTMLParser
+
+        class PrintedText(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.hidden = 0
+                self.text = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag in ("details", "style"):
+                    self.hidden += 1
+
+            def handle_endtag(self, tag):
+                if tag in ("details", "style"):
+                    self.hidden -= 1
+
+            def handle_data(self, value):
+                if not self.hidden:
+                    self.text.append(value)
+
+        label, result = long_label_result()
+        content = executive_summary(result, adversarial_decisions(result["source"]["source_hash"]))
+        printed = PrintedText()
+        printed.feed(content)
+        text = " ".join(printed.text)
+        self.assertNotIn(label, text)
+        self.assertIn(label[:79] + "…", text)
+        self.assertLess(len(text), 6500)
+        for required in ("REVISÃO RECENTE", "SUPERADA", "outras fontes", "sem investimento", "não há ROI financeiro nem causalidade"):
+            self.assertIn(required, text)
+        dimension = next(item for item in result["dimensions"]["platform"] if item["value"] == label)
+        rows = exported(result)
+        parts = [row for row in rows if row["record_type"] == "analysis_field" and row["evidence_id"] == dimension["evidence_id"] and row["field_name"] == "evidence.text"]
+        self.assertEqual("".join(json.loads(row["field_value"]) for row in parts), label)
+
     def test_large_analytical_fields_reconstruct_safely_with_default_reader(self):
         result = sample_result()
         text = " =" + "á" * 140000
