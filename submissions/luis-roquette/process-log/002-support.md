@@ -1328,3 +1328,20 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Verificação:** 4 testes passaram; Ruff e `git diff --check` passaram. O preflight
   terminal continua pulado por decisão do owner e explicitamente `não executado/não verde`.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
+
+## I73 — Deploy público de demonstração — 2026-09-22
+
+- **Decisão do owner:** publicar o output para inspeção, sem concluir nem enviar a entrega
+  aos avaliadores.
+- **Destino:** Streamlit Community Cloud, branch
+  `submission/luis-roquette-002-support`, entrypoint `deploy_app.py`.
+- **Falha encontrada:** o bootstrap lia todas as versões de `requirements.lock`, mas o
+  deploy instalava somente quatro dependências. A correção fez `requirements.txt`
+  consumir o lock completo.
+- **Evidência:** a demo pública carregou Fila diária, Scorecard, Laboratório IT e
+  Evidências. Uma entrada sem PII foi classificada como Armazenamento, com confiança de
+  `95,31%` e encaminhamento automático.
+- **Limite observado:** o primeiro boot levou cerca de 10 minutos e sofreu redução
+  temporária de CPU na camada gratuita; depois disso, a aplicação permaneceu funcional.
+- **URL:** https://support-decision-copilot-luis.streamlit.app/
+- **Entrega:** PR permanece aberto; nenhum merge ou envio final aos avaliadores foi feito.

@@ -10,6 +10,7 @@ validação humana opcional que habilitaria essa capacidade.
 - [Pesquisa técnica](../../research/002-support.md)
 - [Diário contemporâneo](../../process-log/002-support.md)
 - [Challenge 002 oficial](../../../../challenges/process-002-support/README.md)
+- [Demo pública](https://support-decision-copilot-luis.streamlit.app/)
 
 ## Resposta curta às três perguntas
 
