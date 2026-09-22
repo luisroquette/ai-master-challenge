@@ -1195,6 +1195,17 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Próximo critério:** a streak permanece em `0/2`; são necessárias duas rodadas limpas
   consecutivas para encerrar a Lapidação.
 
+## I76 — Lapidação R2: CLEAN — 2026-09-22
+
+- **Base auditada:** SHA `d0b89ecc15a430055904f5c06fea7c5de4a65b35`.
+- **Resultado:** `CLEAN`; a regressão da UI não encontrou nova correção, melhoria ou
+  otimização relevante.
+- **Verificação:** 4 testes passaram e Ruff passou; `git diff --check` permaneceu sem
+  erros no checkpoint documental.
+- **Boundary preservado:** nenhum preflight remoto nem navegador foi executado nesta
+  rodada; nenhuma alegação de evidência visual ou gate verde foi acrescentada.
+- **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Lapidação.
+
 ## I74 — Lapidação R1: checkpoint de UI, NOT CLEAN — 2026-09-22
 
 - **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação `0/2`. Este checkpoint corrige a UI, não encerra a rodada nem substitui nova inspeção visual. A captura atualizada continua pendente para o agente de evidence; nenhum screenshot foi produzido ou alterado aqui.
