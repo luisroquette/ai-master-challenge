@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import sys
 import time
 import unittest
 
@@ -122,6 +123,76 @@ class CsvBoundaryTests(unittest.TestCase):
                 rejected, diagnostics = load_csv(csv_bytes([make_post(views=value)]))
                 self.assertIsNone(rejected)
                 self.assertEqual(diagnostics[0]["problem"], "invalid_nonnegative_integer")
+
+    def test_integer_range_is_checked_lexically_before_python_conversion(self):
+        digit_limit = sys.get_int_max_str_digits()
+        huge_zero = "0" * 5_000
+        frame, errors = load_csv(csv_bytes([make_post(views=huge_zero)]))
+        self.assertEqual(errors, [])
+        self.assertEqual(int(frame.iloc[0]["views"]), 0)
+
+        frame, errors = load_csv(csv_bytes([make_post(views="9" * 5_000)]))
+        self.assertIsNone(frame)
+        self.assertEqual(errors[0]["row"], 2)
+        self.assertEqual(errors[0]["column"], "views")
+        self.assertEqual(errors[0]["problem"], "integer_out_of_range")
+        frame, errors = load_csv(csv_bytes([make_post(views="0" * 5_000 + str(2**63))]))
+        self.assertIsNone(frame)
+        self.assertEqual(errors[0]["problem"], "integer_out_of_range")
+        self.assertEqual(sys.get_int_max_str_digits(), digit_limit)
+
+    def test_date_grammar_rejects_relative_and_unknown_timezone_values(self):
+        for value in ("today", "now", "2025-01-15 12:00 XYZ", "2025-01-15T12:00:00+15:00"):
+            with self.subTest(value=value):
+                frame, errors = load_csv(csv_bytes([make_post(post_date=value)]))
+                self.assertIsNone(frame)
+                self.assertEqual(errors[0]["row"], 2)
+                self.assertEqual(errors[0]["column"], "post_date")
+                self.assertEqual(errors[0]["problem"], "invalid_date")
+
+        accepted = (
+            "05/29/23 12:15 AM",
+            "2025-01-15",
+            "2025-01-15T12:00:00.123456789",
+            "2025-01-15T12:00:00.123456789+02:00",
+            "2025-01-15T12:00:00Z",
+            "2025-01-15T12:00:00-0300",
+        )
+        for value in accepted:
+            with self.subTest(value=value):
+                frame, errors = load_csv(csv_bytes([make_post(post_date=value)]))
+                self.assertEqual(errors, [])
+                self.assertIsNotNone(frame)
+
+    def test_operational_date_range_supports_all_derived_windows(self):
+        lower = "1971-01-01T12:00:00"
+        upper = "2262-04-10T12:00:00"
+        for rejected in ("1677-09-22T12:00:00", "2262-04-11T12:00:00"):
+            with self.subTest(rejected=rejected):
+                frame, errors = load_csv(csv_bytes([make_post(post_date=rejected)]))
+                self.assertIsNone(frame)
+                self.assertEqual(errors[0]["problem"], "date_out_of_operational_range")
+
+        lower_frame, errors = load_csv(csv_bytes([make_post(post_date=lower)]))
+        self.assertEqual(errors, [])
+        self.assertEqual(analyze(lower_frame, {}, "lower")["metrics"]["posts"], 1)
+
+        upper_frame, errors = load_csv(csv_bytes([make_post(post_date=upper)]))
+        self.assertEqual(errors, [])
+        custom = default_scope(target_start="2262-04-10", target_end="2262-04-10")
+        self.assertEqual(analyze(upper_frame, custom, "upper")["metrics"]["posts"], 1)
+
+        history, errors = load_csv(csv_bytes([
+            make_post(id="lower", content_id="lower", post_date=lower),
+            make_post(id="upper", content_id="upper", post_date=upper),
+        ]))
+        self.assertEqual(errors, [])
+        result = analyze(
+            history,
+            default_scope(target_start="1971-01-01", target_end="2262-04-10", reference_date=upper),
+            "history",
+        )
+        self.assertEqual(result["metrics"]["posts"], 2)
 
     def test_load_csv_rejects_dates_outside_nanosecond_range(self):
         for value in ("0001-01-01", "9999-01-01"):
@@ -276,6 +347,22 @@ class ContextEvidenceTests(unittest.TestCase):
         extreme = analyze(frame_with_target(frame, 20), default_scope(), "hash")
         self.assertFalse(alert_for_target(ordinary)["is_outlier"])
         self.assertTrue(alert_for_target(extreme)["is_outlier"])
+
+    def test_post_action_applies_strength_guard_before_negative_direction(self):
+        weak = analyze(
+            frame_with_target(make_cohort(5, 6, [20, 21, 22, 23, 24]), 0),
+            default_scope(),
+            "weak",
+        )["recommendations"][0]
+        strong = analyze(
+            frame_with_target(make_cohort(20, 5, [20, 21, 22, 23, 24]), 0),
+            default_scope(),
+            "strong",
+        )["recommendations"][0]
+        self.assertLess(weak["priority_components"]["strength"], 0.40)
+        self.assertEqual((weak["action_type"], weak["topic"]), ("test", "creator"))
+        self.assertGreaterEqual(strong["priority_components"]["strength"], 0.40)
+        self.assertEqual((strong["action_type"], strong["topic"]), ("review", "stop"))
 
     def test_benchmark_fallback_and_sufficiency(self):
         base = make_cohort(5, 6, [4], audience_location="US")
@@ -507,7 +594,7 @@ class ContextEvidenceTests(unittest.TestCase):
         alert = next(item for item in first_result["alerts"] if item["evidence_id"] == first[0]["evidence_id"])
         self.assertEqual(set(snapshot["comparator"]["source_row_ids"]), set(alert["benchmark"]["source_row_ids"]))
 
-    def test_evidence_ids_use_canonical_scope_and_method_v2(self):
+    def test_evidence_ids_use_canonical_scope_and_current_method(self):
         frame = frame_from_rows([
             make_post(id="a", content_id="a", post_date="2025-01-01T12:00:00"),
             make_post(id="b", content_id="b", post_date="2025-01-15T12:00:00"),
@@ -528,7 +615,7 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(first_id, equivalent["dimensions"]["platform"][0]["evidence_id"])
         self.assertNotEqual(first_id, changed["dimensions"]["platform"][0]["evidence_id"])
         self.assertEqual(first["scope"]["method_version"], METHOD_VERSION)
-        self.assertEqual(METHOD_VERSION, "2.0.0")
+        self.assertEqual(METHOD_VERSION, "2.1.0")
 
     def test_insufficiency_diagnostics_and_source_rate_warning_are_preserved(self):
         frame = frame_with_target(make_cohort(4, 6, [4]), 20)

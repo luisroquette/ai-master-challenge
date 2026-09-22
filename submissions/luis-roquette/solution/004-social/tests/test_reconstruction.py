@@ -147,8 +147,18 @@ class ReconstructionTests(unittest.TestCase):
     def test_post_review_and_collection_actions_are_visible(self):
         result = analyze(frame_with_target(make_cohort(5, 6, [20, 21, 22, 23, 24]), 0), default_scope(), "hash")
         item = result["recommendations"][0]
-        self.assertEqual(item["action"], ACTION_TEXT["review"])
-        self.assertIn(ACTION_TEXT["review"], executive_summary(result, []))
+        self.assertEqual(item["action_type"], "test")
+        self.assertEqual(item["topic"], "creator")
+        self.assertEqual(item["action"], ACTION_TEXT["test"])
+        self.assertIn(ACTION_TEXT["test"], executive_summary(result, []))
+        conn = sqlite3.connect(":memory:")
+        try:
+            initialize(conn)
+            record_import(conn, import_event())
+            record_decision(conn, decision_event(original_text=item["action"]))
+            self.assertEqual(list_decisions(conn)[0]["original_text"], ACTION_TEXT["test"])
+        finally:
+            conn.close()
         sparse = analyze(frame_from_rows([make_post()]), default_scope(), "hash")
         self.assertEqual(sparse["pending"][0]["action"], ACTION_TEXT["collect"])
         self.assertIn(ACTION_TEXT["collect"], analysis_report(sparse))

@@ -11,22 +11,32 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 import unicodedata
 from collections.abc import Iterable
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 
-METHOD_VERSION = "2.0.0"
-HISTORICAL_METHOD_VERSIONS = ("1.0.0",)
+METHOD_VERSION = "2.1.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0")
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
-DATE_TIME_POLICY = "datas todas sem offset ou todas com o mesmo offset UTC explícito"
+MIN_OPERATIONAL_DATE = pd.Timestamp("1971-01-01T00:00:00")
+MAX_OPERATIONAL_DATE = pd.Timestamp("2262-04-10T23:59:59.999999999")
+DATE_TIME_POLICY = (
+    "ISO-8601 entre 1971-01-01 e 2262-04-10 ou %m/%d/%y %I:%M %p; "
+    "datas todas sem offset ou todas com o mesmo offset UTC explícito"
+)
+ISO_DATE_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:[zZ]|[+-]\d{2}:?\d{2})?)?$"
+)
+LEGACY_DATE_RE = re.compile(r"^\d{1,2}/\d{1,2}/\d{2} \d{1,2}:\d{2} [AP]M$")
 REQUIRED_COLUMNS = (
     "id",
     "platform",
@@ -81,6 +91,26 @@ DIMENSION_KEYS = {
 
 def _error(row: int | None, column: str | None, problem: str, expected: str) -> dict[str, object]:
     return {"row": row, "column": column, "problem": problem, "expected": expected}
+
+
+def _parse_post_date(value: str) -> pd.Timestamp:
+    if LEGACY_DATE_RE.fullmatch(value):
+        parsed = pd.Timestamp(datetime.strptime(value, "%m/%d/%y %I:%M %p"))
+    elif ISO_DATE_RE.fullmatch(value):
+        parsed = pd.Timestamp(value)
+    else:
+        raise ValueError("unsupported date grammar")
+    parsed = parsed.as_unit("ns")
+    if pd.isna(parsed):
+        raise ValueError("NaT is not an analytical date")
+    if parsed.tzinfo is not None:
+        offset = parsed.utcoffset()
+        if offset is None or abs(offset.total_seconds()) > 14 * 60 * 60:
+            raise ValueError("unsupported UTC offset")
+    civil = parsed.tz_localize(None) if parsed.tzinfo is not None else parsed
+    if civil < MIN_OPERATIONAL_DATE or civil > MAX_OPERATIONAL_DATE:
+        raise OverflowError("date outside operational range")
+    return parsed
 
 
 def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
@@ -157,6 +187,7 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         )
 
     numeric_columns: dict[str, pd.Series] = {}
+    maximum_integer = str(MAX_INT64)
     for column in METRIC_COLUMNS:
         parsed_integers: list[int | None] = []
         for index, value in frame[column].items():
@@ -171,12 +202,16 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
                     )
                 )
                 continue
-            integer = int(value)
-            parsed_integers.append(integer)
-            if integer > MAX_INT64:
+            canonical = value.lstrip("0") or "0"
+            if len(canonical) > len(maximum_integer) or (
+                len(canonical) == len(maximum_integer) and canonical > maximum_integer
+            ):
+                parsed_integers.append(None)
                 errors.append(
                     _error(physical_line(index), column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
                 )
+                continue
+            parsed_integers.append(int(canonical))
         numeric_columns[column] = pd.Series(parsed_integers, index=frame.index, dtype="object")
 
     allowed_flags = {"TRUE": True, "FALSE": False, "true": True, "false": False}
@@ -186,25 +221,30 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
         for index in frame.index[invalid_flags]
     )
 
-    timezone_flags = frame["post_date"].astype(str).str.contains(r"(?:[zZ]|[+-]\d{2}:?\d{2})$", regex=True)
-    if timezone_flags.any() and not timezone_flags.all():
-        errors.append(_error(None, "post_date", "mixed_timezone_semantics", DATE_TIME_POLICY))
     parsed_dates: list[pd.Timestamp | None] = []
     timezone_offsets: list[tuple[int, float]] = []
+    timezone_awareness: list[tuple[int, bool]] = []
     for index, value in frame["post_date"].items():
         try:
-            parsed = pd.Timestamp(value).as_unit("ns")
-            if pd.isna(parsed):
-                raise ValueError("NaT is not an analytical date")
+            parsed = _parse_post_date(value)
+            timezone_awareness.append((int(index), parsed.tzinfo is not None))
             if parsed.tzinfo is not None:
                 offset = parsed.utcoffset()
                 if offset is None:
                     raise ValueError("timezone has no UTC offset")
                 timezone_offsets.append((int(index), offset.total_seconds()))
             parsed_dates.append(parsed)
-        except (ValueError, TypeError, OverflowError):
+        except (ValueError, TypeError):
             parsed_dates.append(None)
-            errors.append(_error(physical_line(index), "post_date", "invalid_date", "ISO-8601 ou %m/%d/%y %I:%M %p"))
+            errors.append(_error(physical_line(index), "post_date", "invalid_date", DATE_TIME_POLICY))
+        except OverflowError:
+            parsed_dates.append(None)
+            errors.append(
+                _error(physical_line(index), "post_date", "date_out_of_operational_range", DATE_TIME_POLICY)
+            )
+    awareness = [aware for _, aware in timezone_awareness]
+    if awareness and any(awareness) and not all(awareness):
+        errors.append(_error(None, "post_date", "mixed_timezone_semantics", DATE_TIME_POLICY))
     if timezone_offsets:
         expected_offset = timezone_offsets[0][1]
         errors.extend(
@@ -370,8 +410,10 @@ def align_scope_timestamp(value: object, post_dates: pd.Series) -> pd.Timestamp:
     dataset_timezone = post_dates.dt.tz
     timestamp = pd.Timestamp(value)
     if dataset_timezone is None:
-        return timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
-    return timestamp.tz_localize(dataset_timezone) if timestamp.tzinfo is None else timestamp.tz_convert(dataset_timezone)
+        aligned = timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
+    else:
+        aligned = timestamp.tz_localize(dataset_timezone) if timestamp.tzinfo is None else timestamp.tz_convert(dataset_timezone)
+    return aligned
 
 
 def _scope_dates(frame: pd.DataFrame, scope: dict[str, object]) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
@@ -1005,13 +1047,15 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             continue
         platform = str(alert["context"]["platform"])
         score, components = _priority(alert["values"], platform_denominators[platform], float(alert["strength"]), pd.Timestamp(alert["post_date"]), reference)
-        action_type = "test" if alert["direction"] == "high" else "review"
+        limited = float(alert["strength"]) < 0.40
+        action_type = "test" if limited or alert["direction"] == "high" else "review"
+        topic = "creator" if limited else "quick_win" if alert["direction"] == "high" else "stop"
         candidates.append(
             {
                 "recommendation_key": alert["evidence_id"],
                 "evidence_id": alert["evidence_id"],
                 "evidence_type": "post",
-                "topic": "quick_win" if alert["direction"] == "high" else "stop",
+                "topic": topic,
                 "action_type": action_type,
                 "action": ACTION_TEXT[action_type],
                 "owner": "Gestor de Social Media",
