@@ -330,6 +330,9 @@ render_portfolio(bundle_fixture(), st.session_state)
         at.selectbox[0].set_value("Gestor").run()
         at.selectbox[2].set_value("Norte").run()
         at.selectbox[3].set_value("Beto").run()
+        self.assertTrue(any(
+            caption.value == "Filtros aplicados: Gestor Mara · Região Norte · Vendedor Beto"
+            for caption in at.caption))
         next(button for button in at.button if button.label == "Abrir E-B").click().run()
         pin = next(button for button in at.button if button.label == "Prioridade temporária do gestor")
         pin.click().run()
@@ -375,7 +378,7 @@ render_portfolio(bundle_fixture(), st.session_state)
         page.get_by_role("button", name=f"Abrir {value}", exact=True).click()
 
     @staticmethod
-    def choose_filter(page, label, value):
+    def choose_filter(page, label, value, applied_summary):
         from playwright.sync_api import expect
         field = page.get_by_label(label, exact=True)
         expect(field).to_be_visible()
@@ -383,7 +386,7 @@ render_portfolio(bundle_fixture(), st.session_state)
         field.press("Control+A")
         field.press_sequentially(value)
         field.press("Enter")
-        expect(page.get_by_label(label, exact=True)).to_have_value(value)
+        expect(page.get_by_text(applied_summary, exact=True)).to_be_visible()
 
     def test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys(self):
         from playwright.sync_api import expect
@@ -403,9 +406,12 @@ render_portfolio(bundle_fixture(), st.session_state)
         manager = manager_context.new_page()
         manager.goto(self.base_url)
         manager.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
-        self.choose_filter(manager, "Contexto demonstrado", "Gestor")
-        self.choose_filter(manager, "Escritório regional", "Norte")
-        self.choose_filter(manager, "Vendedor da equipe", "Beto")
+        self.choose_filter(manager, "Contexto demonstrado", "Gestor",
+            "Filtros aplicados: Gestor Mara · Região Todas as regiões · Vendedor Todos da equipe")
+        self.choose_filter(manager, "Escritório regional", "Norte",
+            "Filtros aplicados: Gestor Mara · Região Norte · Vendedor Todos da equipe")
+        self.choose_filter(manager, "Vendedor da equipe", "Beto",
+            "Filtros aplicados: Gestor Mara · Região Norte · Vendedor Beto")
         self.open_details(manager, "E-B")
         manager.get_by_text("Origem:", exact=False).wait_for()
         manager.get_by_role("button", name="Prioridade temporária do gestor").click()

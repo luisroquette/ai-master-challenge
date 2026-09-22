@@ -310,6 +310,9 @@ def render_portfolio(bundle, session):
         region = st.selectbox("Escritório regional", ["Todas as regiões"] + sorted({row.regional_office for row in team}))
         regional_team = team if region == "Todas as regiões" else [row for row in team if row.regional_office == region]
         seller = st.selectbox("Vendedor da equipe", ["Todos da equipe"] + sorted({row.sales_agent for row in regional_team}))
+        st.caption(f"Filtros aplicados: Gestor {identity} · Região {region} · Vendedor {seller}")
+    else:
+        st.caption(f"Filtros aplicados: Vendedor {identity}")
     if st.button("Recalcular prioridades"):
         recalculate(session)
     rows = portfolio_rows(bundle, role, identity, region, seller)
