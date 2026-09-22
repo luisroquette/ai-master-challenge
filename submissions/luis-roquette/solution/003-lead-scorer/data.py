@@ -16,6 +16,7 @@ import uuid
 import zipfile
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, build_opener
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date
 from pathlib import Path
@@ -170,40 +171,40 @@ def _iso_date(value):
         return None
 
 
-def load_dataset(snapshot):
-    manifest = json.loads(snapshot.manifest_json)
-    tables = {}
-    for name, content in snapshot.files:
-        try:
-            text = content.decode("utf-8-sig")
-            rows = list(csv.reader(io.StringIO(text), strict=True))
-            header = rows[0]
-            if len(header) != len(set(header)) or any(len(row) != len(header) for row in rows[1:]):
-                raise ValueError("colunas duplicadas ou quantidade de células irregular")
-            if header != manifest["files"][name]["headers"]:
-                _block("manifest_schema_mismatch", name, None,
-                       "Cabeçalhos divergem do manifesto", "Restaure o esquema registrado")
-            missing = set(SCHEMA[name]) - set(header)
-            if missing:
-                _block("missing_columns", name, ",".join(sorted(missing)),
-                       f"Colunas obrigatórias ausentes: {sorted(missing)}", "Corrija o cabeçalho")
-            frame = pd.read_csv(io.StringIO(text), dtype=str, keep_default_na=False)
-        except DataValidationError:
-            raise
-        except (UnicodeError, ValueError, csv.Error, IndexError, pd.errors.ParserError) as exc:
-            _block("unreadable_csv", name, None, f"CSV inválido ({exc})", "Restaure o CSV original")
-        for column in frame:
-            frame[column] = frame[column].map(lambda v: v.strip() or None)
-        if "product" in frame:
-            frame["product"] = frame["product"].replace({"GTXPro": "GTX Pro"})
-        key = KEYS[name]
-        if frame[key].isna().any() or frame[key].duplicated().any():
-            _block("invalid_primary_key", name, key,
-                   "Chave primária vazia ou duplicada após normalização",
-                   f"Preencha e torne {key} único")
-        tables[name] = frame
-    if set(tables) != set(SCHEMA):
-        _block("missing_file", None, None, "Snapshot incompleto", "Forneça os quatro CSVs")
+def _parse_table(name, content, expected_headers):
+    """Parse and normalize one owned frame before checking its identity."""
+    try:
+        text = content.decode("utf-8-sig")
+        rows = list(csv.reader(io.StringIO(text), strict=True))
+        header = rows[0]
+        if len(header) != len(set(header)) or any(len(row) != len(header) for row in rows[1:]):
+            raise ValueError("colunas duplicadas ou quantidade de células irregular")
+        if header != expected_headers:
+            _block("manifest_schema_mismatch", name, None,
+                   "Cabeçalhos divergem do manifesto", "Restaure o esquema registrado")
+        missing = set(SCHEMA[name]) - set(header)
+        if missing:
+            _block("missing_columns", name, ",".join(sorted(missing)),
+                   f"Colunas obrigatórias ausentes: {sorted(missing)}", "Corrija o cabeçalho")
+        frame = pd.read_csv(io.StringIO(text), dtype=str, keep_default_na=False)
+    except DataValidationError:
+        raise
+    except (UnicodeError, ValueError, csv.Error, IndexError, pd.errors.ParserError) as exc:
+        _block("unreadable_csv", name, None, f"CSV inválido ({exc})", "Restaure o CSV original")
+    for column in frame:
+        frame[column] = frame[column].map(lambda v: v.strip() or None)
+    if "product" in frame:
+        frame["product"] = frame["product"].replace({"GTXPro": "GTX Pro"})
+    key = KEYS[name]
+    if frame[key].isna().any() or frame[key].duplicated().any():
+        _block("invalid_primary_key", name, key,
+               "Chave primária vazia ou duplicada após normalização",
+               f"Preencha e torne {key} único")
+    return frame
+
+
+def _join_opportunities(tables):
+    """Enrich each opportunity without dropping or multiplying identities."""
     opportunities = tables["sales_pipeline.csv"]
     count = len(opportunities)
     for name, key, indicator in (("products.csv", "product", "product_match"),
@@ -212,68 +213,95 @@ def load_dataset(snapshot):
         opportunities = opportunities.merge(tables[name], on=key, how="left",
                                               validate="many_to_one", indicator=indicator)
         assert len(opportunities) == count, "A junção alterou a quantidade de oportunidades"
+    return opportunities
+
+
+def _normalize_context(record, issue):
+    """Validate portfolio/catalog support and choose the account route."""
+    if record["deal_stage"] not in ACTIVE | CLOSED:
+        issue("invalid_stage", "deal_stage", "Estágio desconhecido",
+              "Use Prospecting, Engaging, Won ou Lost")
+    for field, indicator in (("product", "product_match"), ("sales_agent", "seller_match")):
+        if record[indicator] != "both":
+            issue("unknown_key", field, f"{field} ausente ou sem correspondência",
+                  f"Corrija {field} usando uma chave do cadastro")
+    price = _number(record.get("sales_price"))
+    if price is None or price <= 0:
+        issue("invalid_price", "sales_price", "Preço de catálogo não é finito e positivo",
+              "Corrija sales_price no catálogo para um número maior que zero")
+    if pd.isna(record.get("series")):
+        issue("missing_series", "series", "Série do produto ausente", "Preencha series no catálogo")
+    for field in ("manager", "regional_office"):
+        if pd.isna(record.get(field)):
+            issue("missing_team_field", field, f"{field} ausente",
+                  f"Preencha {field} no cadastro do vendedor")
+    year = _number(record.get("year_established"))
+    full = record["account_match"] == "both" and year is not None and year > 0 and year.is_integer()
+    if not full:
+        issue("account_fallback", "year_established" if record["account_match"] == "both" else "account",
+              "Conta ausente, não cadastrada ou ano de fundação inválido; rota sem conta",
+              "Confira account e um year_established inteiro positivo", blocking=False)
+    record["year_established"] = int(year) if full else None
+    record["sales_price"] = price
+    record["route"] = "full" if full else "fallback"
+
+
+def _normalize_dates(record, issue):
+    """Keep optional active dates distinct from required closed history dates."""
+    stage = record["deal_stage"]
+    for field in ("engage_date", "close_date"):
+        raw = record[field]
+        parsed = _iso_date(raw)
+        required = stage in CLOSED or (stage == "Engaging" and field == "engage_date")
+        if (not pd.isna(raw) and parsed is None) or (required and parsed is None):
+            issue("invalid_date", field, f"{field} ausente ou fora do formato ISO YYYY-MM-DD",
+                  f"Corrija {field} para uma data válida", blocking=stage in CLOSED or field == "engage_date")
+        record[field] = parsed
+    if stage in CLOSED and record["close_date"] and record["engage_date"] and record["close_date"] < record["engage_date"]:
+        issue("date_order", "close_date", "Fechamento anterior ao engajamento",
+              "Corrija a sequência engage_date <= close_date")
+
+
+def _normalize_opportunity(record, diagnostics):
+    """Account for one owned row, preserving label/financial eligibility separation."""
+    oid, stage = record["opportunity_id"], record["deal_stage"]
+    supported = True
+
+    def issue(code, field, reason, correction, blocking=True):
+        nonlocal supported
+        diagnostics.append(Diagnostic(code, "row", "sales_pipeline.csv", oid,
+                                      field, reason, correction))
+        if blocking:
+            supported = False
+
+    _normalize_context(record, issue)
+    _normalize_dates(record, issue)
+    value = _number(record["close_value"])
+    financial = stage in CLOSED and value is not None and ((stage == "Won" and value >= 0) or (stage == "Lost" and value == 0))
+    if stage in CLOSED and not financial:
+        issue("invalid_financial_label", "close_value",
+              "Valor de fechamento inválido; excluído apenas da avaliação financeira",
+              "Won requer valor finito não negativo; Lost requer zero", blocking=False)
+    record["close_value"] = value
+    record["eligible_history"] = supported and stage in CLOSED
+    record["eligible_active"] = supported and stage in ACTIVE
+    record["financial_eligible"] = financial and record["eligible_history"]
+    record["input_status"] = ("supported_active" if record["eligible_active"] else
+                              "supported_history" if record["eligible_history"] else
+                              "unsupported_active" if stage in ACTIVE else "excluded_history_or_stage")
+    return record
+
+
+def load_dataset(snapshot):
+    manifest = json.loads(snapshot.manifest_json)
+    tables = {name: _parse_table(name, content, manifest["files"][name]["headers"])
+              for name, content in snapshot.files}
+    if set(tables) != set(SCHEMA):
+        _block("missing_file", None, None, "Snapshot incompleto", "Forneça os quatro CSVs")
+    opportunities = _join_opportunities(tables)
     diagnostics = []
-    normalized = []
-    for record in opportunities.to_dict("records"):
-        oid, stage = record["opportunity_id"], record["deal_stage"]
-        supported = True
-        def issue(code, field, reason, correction, blocking=True):
-            nonlocal supported
-            diagnostics.append(Diagnostic(code, "row", "sales_pipeline.csv", oid,
-                                          field, reason, correction))
-            if blocking:
-                supported = False
-        if stage not in ACTIVE | CLOSED:
-            issue("invalid_stage", "deal_stage", "Estágio desconhecido",
-                  "Use Prospecting, Engaging, Won ou Lost")
-        for field, indicator in (("product", "product_match"), ("sales_agent", "seller_match")):
-            if record[indicator] != "both":
-                issue("unknown_key", field, f"{field} ausente ou sem correspondência",
-                      f"Corrija {field} usando uma chave do cadastro")
-        price = _number(record.get("sales_price"))
-        if price is None or price <= 0:
-            issue("invalid_price", "sales_price", "Preço de catálogo não é finito e positivo",
-                  "Corrija sales_price no catálogo para um número maior que zero")
-        if pd.isna(record.get("series")):
-            issue("missing_series", "series", "Série do produto ausente", "Preencha series no catálogo")
-        for field in ("manager", "regional_office"):
-            if pd.isna(record.get(field)):
-                issue("missing_team_field", field, f"{field} ausente",
-                      f"Preencha {field} no cadastro do vendedor")
-        year = _number(record.get("year_established"))
-        full = record["account_match"] == "both" and year is not None and year > 0 and year.is_integer()
-        if not full:
-            issue("account_fallback", "year_established" if record["account_match"] == "both" else "account",
-                  "Conta ausente, não cadastrada ou ano de fundação inválido; rota sem conta",
-                  "Confira account e um year_established inteiro positivo", blocking=False)
-        record["year_established"] = int(year) if full else None
-        record["sales_price"] = price
-        record["route"] = "full" if full else "fallback"
-        for field in ("engage_date", "close_date"):
-            raw = record[field]
-            parsed = _iso_date(raw)
-            required = stage in CLOSED or (stage == "Engaging" and field == "engage_date")
-            if (not pd.isna(raw) and parsed is None) or (required and parsed is None):
-                issue("invalid_date", field, f"{field} ausente ou fora do formato ISO YYYY-MM-DD",
-                      f"Corrija {field} para uma data válida", blocking=stage in CLOSED or field == "engage_date")
-            record[field] = parsed
-        if stage in CLOSED and record["close_date"] and record["engage_date"] and record["close_date"] < record["engage_date"]:
-            issue("date_order", "close_date", "Fechamento anterior ao engajamento",
-                  "Corrija a sequência engage_date <= close_date")
-        value = _number(record["close_value"])
-        financial = stage in CLOSED and value is not None and ((stage == "Won" and value >= 0) or (stage == "Lost" and value == 0))
-        if stage in CLOSED and not financial:
-            issue("invalid_financial_label", "close_value",
-                  "Valor de fechamento inválido; excluído apenas da avaliação financeira",
-                  "Won requer valor finito não negativo; Lost requer zero", blocking=False)
-        record["close_value"] = value
-        record["eligible_history"] = supported and stage in CLOSED
-        record["eligible_active"] = supported and stage in ACTIVE
-        record["financial_eligible"] = financial and record["eligible_history"]
-        record["input_status"] = ("supported_active" if record["eligible_active"] else
-                                  "supported_history" if record["eligible_history"] else
-                                  "unsupported_active" if stage in ACTIVE else "excluded_history_or_stage")
-        normalized.append(record)
+    normalized = [_normalize_opportunity(record, diagnostics)
+                  for record in opportunities.to_dict("records")]
     frame = pd.DataFrame(normalized, columns=list(opportunities.columns) + [
         "route", "eligible_history", "eligible_active", "financial_eligible", "input_status"])
     if frame.empty or not frame["eligible_history"].any():
@@ -317,6 +345,25 @@ def _download(url):
     return content
 
 
+def _archive_content(content, name, entries):
+    entry = entries[name]
+    if entry["archive_member"] != name:
+        raise RecoveryError("Membro ZIP deve ser o nome exato do CSV")
+    allowed = {n for n, item in entries.items() if item["download_url"] == entry["download_url"]
+               and item.get("archive_member") == n}
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        members = archive.infolist()
+        if len(members) != len(allowed) or {item.filename for item in members} != allowed:
+            raise RecoveryError("ZIP contém membros ausentes, duplicados ou não autorizados")
+        for item in members:
+            mode = item.external_attr >> 16
+            if (item.is_dir() or stat.S_ISLNK(mode) or
+                    stat.S_IFMT(mode) not in (0, stat.S_IFREG) or
+                    item.file_size > 10 * 1024 * 1024 or item.flag_bits & 1):
+                raise RecoveryError("ZIP contém membro inseguro ou acima de 10 MiB")
+        return archive.read(name)
+
+
 def _stage_files(stage, manifest):
     entries = manifest["files"]
     downloads = {}
@@ -325,23 +372,8 @@ def _stage_files(stage, manifest):
         if url not in downloads:
             downloads[url] = _download(url)
         content = downloads[url]
-        member = entry.get("archive_member")
-        if member is not None:
-            if member != name:
-                raise RecoveryError("Membro ZIP deve ser o nome exato do CSV")
-            allowed = {n for n, item in entries.items()
-                       if item["download_url"] == url and item.get("archive_member") == n}
-            with zipfile.ZipFile(io.BytesIO(content)) as archive:
-                members = archive.infolist()
-                if len(members) != len(allowed) or {item.filename for item in members} != allowed:
-                    raise RecoveryError("ZIP contém membros ausentes, duplicados ou não autorizados")
-                for item in members:
-                    mode = item.external_attr >> 16
-                    if (item.is_dir() or stat.S_ISLNK(mode) or
-                            stat.S_IFMT(mode) not in (0, stat.S_IFREG) or
-                            item.file_size > 10 * 1024 * 1024 or item.flag_bits & 1):
-                        raise RecoveryError("ZIP contém membro inseguro ou acima de 10 MiB")
-                content = archive.read(member)
+        if entry.get("archive_member") is not None:
+            content = _archive_content(content, name, entries)
         if hashlib.sha256(content).hexdigest() != entry["sha256"]:
             raise RecoveryError(f"SHA-256 divergente: {name}; original preservado")
         (stage / name).write_bytes(content)
@@ -408,8 +440,7 @@ def _clear_transaction(marker, paths):
     marker.rename(completed)
 
 
-def recover_dataset(manifest_path, raw_dir, *, resume=False):
-    """Explicit verified replacement; interrupted transactions restore originals first."""
+def _recovery_scope(manifest_path, raw_dir):
     raw, manifest_path = Path(raw_dir).absolute(), Path(manifest_path).absolute()
     parent = raw.parent.resolve(strict=True)
     if (raw.name != "raw" or raw.is_symlink() or manifest_path.is_symlink() or
@@ -417,78 +448,110 @@ def recover_dataset(manifest_path, raw_dir, *, resume=False):
         raise RecoveryError("Use raw e manifesto regulares no mesmo diretório data")
     raw, manifest_path = parent / "raw", parent / manifest_path.name
     marker = parent / ".recovery.lock"
-    hint = (f"Execute: .venv/bin/python data.py recover --resume --manifest "
-            f"{str(manifest_path)!r} --raw-dir {str(raw)!r}")
     if marker.is_symlink():
         raise RecoveryError("Marcador simbólico rejeitado; nenhum arquivo alterado")
-    if resume:
-        if not marker.is_dir():
-            raise RecoveryError("Não há recuperação interrompida para retomar")
-    else:
-        try:
-            marker.mkdir(mode=0o700)
-        except FileExistsError as exc:
-            raise RecoveryError(f"Recuperação já registrada. {hint}") from exc
-    owner = marker / "owner"
-    record_path = marker / "transaction.json"
-    if owner.is_symlink() or record_path.is_symlink():
+    return raw, manifest_path, marker
+
+
+@contextmanager
+def _recovery_owner(parent):
+    """Keep one stable advisory-lock inode, including before marker publication."""
+    owner_dir = parent / ".recovery-owner"
+    if owner_dir.is_symlink():
+        raise RecoveryError("Diretório de controle simbólico rejeitado")
+    owner_dir.mkdir(mode=0o700, exist_ok=True)
+    owner = owner_dir / "owner"
+    if owner.is_symlink():
         raise RecoveryError("Arquivo de controle simbólico rejeitado")
     with owner.open("a+b") as handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise RecoveryError("Outra recuperação ainda está executando") from exc
-        if resume:
-            try:
-                if record_path.stat().st_size > 8192:
-                    raise RecoveryError("Registro de transação excede 8 KiB")
-                record = json.loads(record_path.read_text(encoding="utf-8"))
-                paths = _transaction_paths(parent, record)
-                _restore_original(paths, record["original"])
-                _clear_transaction(marker, paths)
-                return {"status": "original_restored", "original": record["original"]}
-            except (OSError, ValueError, TypeError, KeyError) as exc:
-                raise RecoveryError(f"Retomada não concluída; marcador/backup preservados: {exc}. {hint}") from exc
-        record = None
+        yield
+
+
+def _publish_transaction(raw, marker):
+    identity = uuid.uuid4().hex
+    record = {"version": 1, "id": identity, "raw": "raw",
+              **{role: f".recovery-{identity}-{role}"
+                 for role in ("stage", "backup", "displaced")},
+              "original": _directory_digests(raw)}
+    paths = _transaction_paths(raw.parent, record)
+    if any(paths[role].exists() for role in ("stage", "backup", "displaced")):
+        raise RecoveryError("Destino exclusivo já existe")
+    prepared = raw.parent / f".recovery-{identity}-init"
+    prepared.mkdir(mode=0o700)
+    with (prepared / "transaction.json").open("x", encoding="utf-8") as transaction:
+        transaction.write(_canonical(record))
+        transaction.flush()
+        os.fsync(transaction.fileno())
+    # Publish a complete record and read guard together, never an empty marker.
+    prepared.rename(marker)
+    return record, paths
+
+
+def _resume_recovery(raw, marker):
+    if not marker.exists():
+        # Interrupted private initialization cannot have changed raw.
+        return {"status": "no_published_transaction", "original": _directory_digests(raw)}
+    record_path = marker / "transaction.json"
+    if record_path.is_symlink() or record_path.stat().st_size > 8192:
+        raise RecoveryError("Registro de transação simbólico ou excede 8 KiB")
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    paths = _transaction_paths(raw.parent, record)
+    _restore_original(paths, record["original"])
+    _clear_transaction(marker, paths)
+    return {"status": "original_restored", "original": record["original"]}
+
+
+def _promote_snapshot(raw, manifest_path, manifest, record, paths):
+    paths["stage"].mkdir()
+    _stage_files(paths["stage"], manifest)
+    load_dataset(_read_snapshot(paths["stage"], manifest_path, recovery=True))
+    if _directory_digests(raw) != record["original"]:
+        raise RecoveryError("Original mudou durante o download; substituição recusada")
+    # Two guarded renames, not one atomic transaction.
+    raw.rename(paths["backup"])
+    paths["stage"].rename(raw)
+    result = load_dataset(_read_snapshot(raw, manifest_path, recovery=True))
+    return {"status": "recovered", "fingerprint": result.data_fingerprint,
+            "backup": str(paths["backup"])}
+
+
+def _replace_with_rollback(raw, manifest_path, marker, hint):
+    manifest = _read_manifest(manifest_path)
+    record, paths = _publish_transaction(raw, marker)
+    try:
+        result = _promote_snapshot(raw, manifest_path, manifest, record, paths)
+        _clear_transaction(marker, paths)
+        return result
+    except Exception as exc:
+        # Every ordinary failure after publication must attempt verified rollback.
+        # Interruptions retain the complete record for the explicit resume command.
         try:
-            manifest = _read_manifest(manifest_path)
-            identity = uuid.uuid4().hex
-            record = {"version": 1, "id": identity, "raw": "raw",
-                      **{role: f".recovery-{identity}-{role}"
-                         for role in ("stage", "backup", "displaced")},
-                      "original": _directory_digests(raw)}
-            paths = _transaction_paths(parent, record)
-            if any(paths[role].exists() for role in ("stage", "backup", "displaced")):
-                raise RecoveryError("Destino exclusivo já existe")
-            with record_path.open("x", encoding="utf-8") as transaction:
-                transaction.write(_canonical(record))
-                transaction.flush()
-                os.fsync(transaction.fileno())
-            paths["stage"].mkdir()
-            _stage_files(paths["stage"], manifest)
-            load_dataset(_read_snapshot(paths["stage"], manifest_path, recovery=True))
-            if _directory_digests(raw) != record["original"]:
-                raise RecoveryError("Original mudou durante o download; substituição recusada")
-            # Two guarded renames, not one atomic transaction.
-            raw.rename(paths["backup"])
-            paths["stage"].rename(raw)
-            result = load_dataset(_read_snapshot(raw, manifest_path, recovery=True))
+            _restore_original(paths, record["original"])
             _clear_transaction(marker, paths)
-            return {"status": "recovered", "fingerprint": result.data_fingerprint,
-                    "backup": str(paths["backup"])}
-        except Exception as exc:
-            try:
-                if record is not None and record_path.exists():
-                    paths = _transaction_paths(parent, record)
-                    _restore_original(paths, record["original"])
-                    _clear_transaction(marker, paths)
-                else:
-                    owner.unlink()
-                    marker.rmdir()
-            except Exception as rollback:
-                raise RecoveryError(f"Recuperação falhou ({exc}); rollback pendente ({rollback}). "
-                                    f"Backup e marcador preservados. {hint}") from exc
-            raise RecoveryError(f"Recuperação recusada; bytes originais preservados: {exc}") from exc
+        except Exception as rollback:
+            raise RecoveryError(f"Recuperação falhou ({exc}); rollback pendente ({rollback}). "
+                                f"Backup e marcador preservados. {hint}") from exc
+        raise RecoveryError(f"Recuperação recusada; bytes originais preservados: {exc}") from exc
+
+
+def recover_dataset(manifest_path, raw_dir, *, resume=False):
+    """Explicit verified replacement; interrupted transactions restore originals first."""
+    raw, manifest_path, marker = _recovery_scope(manifest_path, raw_dir)
+    hint = (f"Execute: .venv/bin/python data.py recover --resume --manifest "
+            f"{str(manifest_path)!r} --raw-dir {str(raw)!r}")
+    with _recovery_owner(raw.parent):
+        if not resume:
+            if marker.exists():
+                raise RecoveryError(f"Recuperação já registrada. {hint}")
+            return _replace_with_rollback(raw, manifest_path, marker, hint)
+        try:
+            return _resume_recovery(raw, marker)
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise RecoveryError(f"Retomada não concluída; marcador/backup preservados: {exc}. {hint}") from exc
 
 
 def main(argv=None):

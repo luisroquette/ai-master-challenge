@@ -343,16 +343,31 @@ class PublicationPolicyTests(unittest.TestCase):
         self.assertEqual(s.select_route((replace(logistic,status="rejected"),boosting),"full").candidate,"boosting")
 
     def test_TC21_top_k_band_then_expected_catalog_revenue_financial_validity(self):
-        rows = history_fixture(10)
-        for row in rows:
-            row["deal_stage"] = "Lost"
-            row["close_value"] = 0.
-        rows[0].update(deal_stage="Won",close_value=50.,sales_price=1.)
-        rows[1].update(deal_stage="Won",close_value=50.,sales_price=10000.)
-        probabilities = (.8,.6)+(.1,)*8
-        top = s.ranking_metrics(rows,probabilities)
-        self.assertEqual((top[0].k,top[0].precision,top[0].realized_value_share),(1,1.,.5))
-        self.assertEqual((top[1].k,top[1].realized_value_share),(2,1.))
+        cases = (
+            # Cheap high-band Won must beat an expensive middle-band Lost.
+            ("band_before_value", (1., 10000.), (.8, .6), 0),
+            # Same band: 0.7 * 200 > 0.9 * 100, despite lower probability.
+            ("same_band_expected_revenue_before_probability", (100., 200.), (.9, .7), 1),
+            # Same band: 0.99 * 150 > 0.7 * 200, despite lower catalog price.
+            ("same_band_expected_revenue_before_catalog_price", (150., 200.), (.99, .7), 0),
+        )
+        for name, prices, pair_probabilities, expected_first in cases:
+            with self.subTest(ordering=name):
+                rows = history_fixture(10)
+                for row in rows:
+                    row.update(deal_stage="Lost", close_value=0., sales_price=1.)
+                for row, price in zip(rows[:2], prices):
+                    row["sales_price"] = price
+                rows[expected_first].update(deal_stage="Won", close_value=30.)
+                # A lower-band Won establishes a total of 100 without entering top 2.
+                rows[2].update(deal_stage="Won", close_value=70.)
+                probabilities = pair_probabilities+(.1,)*8
+                top = s.ranking_metrics(rows, probabilities)
+                # Reversing the competitors now gives precision 0 and value share 0.
+                self.assertEqual((top[0].k, top[0].precision, top[0].realized_value_share),
+                                 (1, 1., .3))
+                self.assertEqual((top[1].k, top[1].precision, top[1].realized_value_share),
+                                 (2, .5, .3))
         rows[5]["financial_eligible"] = False
         self.assertTrue(all(item.realized_value_share is None and item.financial_unavailable_reason == "incomplete_financial_labels"
             for item in s.ranking_metrics(rows,probabilities)))

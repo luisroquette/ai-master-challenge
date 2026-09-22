@@ -251,7 +251,7 @@ class DataTests(unittest.TestCase):
 
 
 @contextlib.contextmanager
-def recovery_source(snapshot, archive=False, extra=None):
+def recovery_source(snapshot, archive=False, extra=None, on_request=None):
     """Real loopback transport; no successful external-network stub."""
     payloads = dict(snapshot.files)
     if archive:
@@ -268,6 +268,8 @@ def recovery_source(snapshot, archive=False, extra=None):
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             requests.append(self.path)
+            if on_request is not None:
+                on_request(self.path)
             content = payloads.get(self.path.removeprefix("/"))
             self.send_response(200 if content is not None else 404)
             self.end_headers()
@@ -331,20 +333,15 @@ class RecoveryTests(unittest.TestCase):
                     raw, manifest = write_fixture(directory, snapshot)
                     (raw / "accounts.csv").write_bytes(b"original needing recovery")
                     original = data._directory_digests(raw)
-                    rename, load = Path.rename, data.load_dataset
-                    calls = []
+                    rename = Path.rename
                     def fail_rename(path, target):
-                        if path.name.endswith("-stage"):
+                        if path.name.endswith("-stage") and fault == "second_rename":
                             raise OSError("injected second rename failure")
-                        return rename(path, target)
-                    def fail_load(value):
-                        calls.append(value)
-                        if len(calls) == 2:
-                            raise ValueError("injected final validation failure")
-                        return load(value)
-                    with patch.object(Path, "rename", fail_rename if fault == "second_rename" else rename), \
-                            patch.object(data, "load_dataset", fail_load if fault == "final_validation" else load), \
-                            self.assertRaises(data.RecoveryError):
+                        result = rename(path, target)
+                        if path.name.endswith("-stage") and fault == "final_validation":
+                            (Path(target) / "accounts.csv").write_bytes(b"corruption after promotion")
+                        return result
+                    with patch.object(Path, "rename", fail_rename), self.assertRaises(data.RecoveryError):
                         data.recover_dataset(manifest, raw)
                     self.assertEqual(data._directory_digests(raw), original)
                     self.assertFalse((raw.parent / ".recovery.lock").exists())
@@ -382,17 +379,20 @@ class RecoveryTests(unittest.TestCase):
                     raw, manifest = write_fixture(directory, snapshot)
                     (raw / "accounts.csv").write_bytes(b"original before interrupt")
                     original = data._directory_digests(raw)
-                    rename, download = Path.rename, data._download
+                    rename, mkdir = Path.rename, Path.mkdir
                     def interrupt_rename(path, target):
                         result = rename(path, target)
                         if ((point == "after_first_rename" and Path(target).name.endswith("-backup")) or
                                 (point == "after_promotion" and path.name.endswith("-stage"))):
                             raise KeyboardInterrupt()
                         return result
-                    def interrupt_download(url):
-                        raise KeyboardInterrupt()
+                    def interrupt_mkdir(path, *args, **kwargs):
+                        result = mkdir(path, *args, **kwargs)
+                        if point == "staging" and path.name.endswith("-stage"):
+                            raise KeyboardInterrupt()
+                        return result
                     with patch.object(Path, "rename", interrupt_rename), \
-                            patch.object(data, "_download", interrupt_download if point == "staging" else download), \
+                            patch.object(Path, "mkdir", interrupt_mkdir), \
                             self.assertRaises(KeyboardInterrupt):
                         data.recover_dataset(manifest, raw)
                     self.assertTrue((raw.parent / ".recovery.lock").exists())
@@ -404,7 +404,7 @@ class RecoveryTests(unittest.TestCase):
         symbolic = zipfile.ZipInfo("accounts.csv")
         symbolic.create_system = 3
         symbolic.external_attr = (stat.S_IFLNK | 0o777) << 16
-        for extra in (("../escape.csv", b"bad"), ("metadata.csv", b"unlisted"),
+        for extra in (("../escape.csv", b"bad"), ("metadata.csv", b"unlisted"), ("accounts.csv", b"duplicate"),
                       (symbolic, b"/tmp/outside")):
             with self.subTest(member=str(extra[0])), recovery_source(fixture_snapshot(), True, extra) as (snapshot, _):
                 with tempfile.TemporaryDirectory() as directory:
@@ -469,17 +469,90 @@ class RecoveryTests(unittest.TestCase):
                         self.assertEqual(data._directory_digests(backup), original)
 
     def test_TC03_active_recovery_excludes_resume_and_readers(self):
-        with recovery_source(fixture_snapshot()) as (snapshot, _), tempfile.TemporaryDirectory() as directory:
+        requested, release = threading.Event(), threading.Event()
+        def pause_response(_):
+            requested.set()
+            if not release.wait(5):
+                raise TimeoutError("test did not release HTTP response")
+        with recovery_source(fixture_snapshot(), on_request=pause_response) as (snapshot, _), \
+                tempfile.TemporaryDirectory() as directory:
             raw, manifest = write_fixture(directory, snapshot)
-            download = data._download
-            def check_during_download(url):
+            results, errors = [], []
+            def recover():
+                try:
+                    results.append(data.recover_dataset(manifest, raw))
+                except BaseException as exc:
+                    errors.append(exc)
+            worker = threading.Thread(target=recover)
+            worker.start()
+            try:
+                self.assertTrue(requested.wait(5), "recovery did not reach the real HTTP fixture")
                 with self.assertRaises(data.RecoveryError):
                     data.recover_dataset(manifest, raw, resume=True)
                 with self.assertRaises(data.DataValidationError):
                     data.read_snapshot(raw, manifest)
-                return download(url)
-            with patch.object(data, "_download", check_during_download):
-                data.recover_dataset(manifest, raw)
+            finally:
+                release.set()
+                worker.join(timeout=10)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(errors, [])
+            self.assertEqual(results[0]["status"], "recovered")
+
+    def test_TC03_initialization_interruptions_never_strand_readers(self):
+        for point in ("initial_directory", "partial_record_write", "published_marker"):
+            with self.subTest(point=point), recovery_source(fixture_snapshot()) as (snapshot, requests):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    original = data._directory_digests(raw)
+                    mkdir, open_file, rename = Path.mkdir, Path.open, Path.rename
+                    def interrupt_mkdir(path, *args, **kwargs):
+                        result = mkdir(path, *args, **kwargs)
+                        if point == "initial_directory" and path.name.endswith("-init"):
+                            raise KeyboardInterrupt()
+                        return result
+                    def interrupt_rename(path, target):
+                        result = rename(path, target)
+                        if point == "published_marker" and Path(target).name == ".recovery.lock":
+                            raise KeyboardInterrupt()
+                        return result
+                    class PartialWrite:
+                        def __init__(self, handle):
+                            self.handle = handle
+                        def __enter__(self):
+                            return self
+                        def __exit__(self, *_):
+                            self.handle.close()
+                        def write(self, content):
+                            self.handle.write(content[:10])
+                            self.handle.flush()
+                            raise KeyboardInterrupt()
+                    def interrupt_open(path, *args, **kwargs):
+                        handle = open_file(path, *args, **kwargs)
+                        if (point == "partial_record_write" and path.name == "transaction.json"
+                                and path.parent.name.endswith("-init")):
+                            return PartialWrite(handle)
+                        return handle
+                    with patch.object(Path, "mkdir", interrupt_mkdir), \
+                            patch.object(Path, "open", interrupt_open), \
+                            patch.object(Path, "rename", interrupt_rename), \
+                            self.assertRaises(KeyboardInterrupt):
+                        data.recover_dataset(manifest, raw)
+                    self.assertEqual(requests, [])
+                    self.assertEqual(data._directory_digests(raw), original)
+                    marker = raw.parent / ".recovery.lock"
+                    if point == "published_marker":
+                        self.assertTrue(marker.exists())
+                        with self.assertRaises(data.DataValidationError):
+                            data.read_snapshot(raw, manifest)
+                    else:
+                        self.assertFalse(marker.exists())
+                        data.load_dataset(data.read_snapshot(raw, manifest))
+                    result = data.recover_dataset(manifest, raw, resume=True)
+                    self.assertEqual(result["status"], "original_restored" if point == "published_marker"
+                                     else "no_published_transaction")
+                    self.assertEqual(data._directory_digests(raw), original)
+                    self.assertFalse(marker.exists())
+                    self.assertEqual(data.recover_dataset(manifest, raw)["status"], "recovered")
 
 
 if __name__ == "__main__":
