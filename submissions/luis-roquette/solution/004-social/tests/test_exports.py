@@ -129,7 +129,8 @@ class ExportTests(unittest.TestCase):
                 for report in (analysis_report(result), executive_summary(result, [])):
                     self.assertIn(item["evidence_id"], report)
                     self.assertIn(f"status {expected_status}", report)
-                    for key in ("unit", "method", "action_type", "window_start", "window_end", "limitation"):
+                    self.assertIn(f"mês {frequency['period_month']}", report)
+                    for key in ("unit", "method", "action_type", "window_start", "window_end", "limitation", "coverage_rule"):
                         self.assertIn(str(frequency[key]), report)
                     for label, key in (("creator-semanas", "sample_creator_weeks"), ("creators", "sample_creators"), ("semanas completas disponíveis", "complete_weeks_available"), ("semanas observadas", "observed_complete_weeks")):
                         self.assertIn(f"{frequency[key]} {label}", report)

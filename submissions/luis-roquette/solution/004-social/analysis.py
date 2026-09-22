@@ -963,6 +963,7 @@ def _recommendation_text(item: dict[str, object]) -> str:
                    if frequency["value"] is not None else "Coletar antes de sugerir cadência; valor não definido")
         frequency_text = (
             f". Frequência: {cadence}; status {frequency['status']}; unidade {frequency['unit']}; "
+            f"mês {frequency.get('period_month') or 'não fixado'}; regra {frequency['coverage_rule']}; "
             f"método {frequency['method']}; {frequency['sample_creator_weeks']} creator-semanas, "
             f"{frequency['sample_creators']} creators; {frequency['complete_weeks_available']} semanas completas disponíveis, "
             f"{frequency['observed_complete_weeks']} semanas observadas; janela {frequency['window_start'] or 'não definida'} a {frequency['window_end'] or 'não definida'}; "
@@ -1096,7 +1097,9 @@ def analysis_report(result: dict[str, object]) -> str:
               "prioridade = 100 × impacto × força × atualidade. Scores são relativos à plataforma/tipo/unidade, "
               "não monetários. P95=0 usa máximo positivo ou zero se inexistente.", "",
               "A coluna JSON `frequency_hypothesis` preserva status, valor/unidade, método, amostra de creator-semanas/creators, "
-              "semanas completas disponíveis/observadas, janela, ação, mínimo de semanas para coleta e limitação. "
+              "mês (`period_month`), regra (`coverage_rule`), semanas completas disponíveis/observadas, janela, ação, mínimo de semanas para coleta e limitação. "
+              "No patrocínio mensal, entram apenas semanas ISO completas inteiramente dentro do mês e do escopo; "
+              "semanas que atravessam a fronteira mensal ficam fora. Sem mês fixo, vale a cobertura completa do escopo. "
               "O valor é uma hipótese de teste no mesmo contexto da recomendação, não promessa de desempenho.", "",
               "Em `source_ref`, ordenar as linhas de cada evidência por `reference_chunk` (base 1). "
               "`source_row_id`, `source_line` e `reference_index` são arrays JSON paralelos, em blocos de até 500 entradas "
