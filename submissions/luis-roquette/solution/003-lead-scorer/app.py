@@ -181,6 +181,7 @@ button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
 }
 .focus-start strong { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
 .focus-start span { display: block; font: 700 1.05rem/1.35 Charter, Georgia, serif; margin-top: .25rem; }
+.focus-start em { display: block; font-size: .78rem; font-style: normal; margin-top: .35rem; opacity: .9; }
 .focus-card {
     background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(220,236,232,.48));
     border: 1px solid var(--line);
@@ -236,7 +237,15 @@ button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
     font-size: .73rem;
     font-weight: 700;
 }
-.focus-action { color: var(--ink); font-size: .82rem; grid-column: 2; line-height: 1.35; margin-top: .2rem; }
+.focus-reason, .focus-signals, .focus-action {
+    color: var(--ink);
+    font-size: .8rem;
+    grid-column: 2;
+    line-height: 1.35;
+    margin-top: .2rem;
+}
+.focus-reason { color: #315b57; }
+.focus-signals { color: var(--muted); }
 .focus-empty { color: var(--muted); margin-top: 1.5rem; }
 @media (max-width: 800px) {
     .block-container { padding: 1.5rem 1rem 3rem; }
@@ -359,6 +368,25 @@ def focus_queue(rows, stage, limit=3):
             if row.state != "insufficient_data"][:limit]
 
 
+def focus_reason(row):
+    signal = "probabilidade validada" if row.state == "calibrated" else "prioridade relativa"
+    return f"{signal}; faixa {row.band}; evidência {row.evidence_strength}"
+
+
+def focus_signals(row, limit=2):
+    labels = {"product": "produto", "series": "série",
+              "year_established": "ano da conta", "product+seller": "produto + vendedor",
+              "product+seller+account": "produto + vendedor + conta"}
+    factors = sorted((factor for factor in row.factors if factor.contribution),
+                     key=lambda factor: -abs(factor.contribution))[:limit]
+    if not factors:
+        return "sem fator específico além do sinal agregado"
+    return "; ".join(
+        f"{labels.get(factor.field, factor.field)} {factor.observed_value}: "
+        f"associação {'favorável' if factor.direction == 'favoravel' else 'desfavorável'}"
+        for factor in factors)
+
+
 def render_focus_radar(rows):
     queues = {stage: focus_queue(rows, stage) for stage in ("Engaging", "Prospecting")}
     start = (queues["Engaging"] or queues["Prospecting"] or [None])[0]
@@ -366,8 +394,11 @@ def render_focus_radar(rows):
         start_html = ('<div class="focus-start"><strong>Comece aqui</strong>'
                       '<span>Nenhuma oportunidade acionável neste recorte.</span></div>')
     else:
-        start_html = (f'<div class="focus-start"><strong>Comece aqui · {escape(start.stage)}</strong>'
-                      f'<span>{escape(start.opportunity_id)} — {escape(start.next_action)}</span></div>')
+        start_html = (f'<div class="focus-start"><strong>Foque neste lead · '
+                      f'{escape(start.stage)}</strong><span>{escape(start.opportunity_id)} — '
+                      f'{escape(focus_reason(start))}</span><em><b>Atenção aos sinais:</b> '
+                      f'{escape(focus_signals(start))}<br><b>Ação:</b> '
+                      f'{escape(start.next_action)}</em></div>')
     cards = []
     for stage in ("Engaging", "Prospecting"):
         queue = queues[stage]
@@ -387,6 +418,10 @@ def render_focus_radar(rows):
                 f'{escape(row.product or "Produto não identificado")}</div>'
                 f'<div class="focus-signal">{escape(signal)} · evidência '
                 f'{escape(row.evidence_strength)}</div>'
+                f'<div class="focus-reason"><strong>Por quê:</strong> '
+                f'{escape(focus_reason(row))}</div>'
+                f'<div class="focus-signals"><strong>Sinais:</strong> '
+                f'{escape(focus_signals(row))}</div>'
                 f'<div class="focus-action"><strong>Ação:</strong> '
                 f'{escape(row.next_action)}</div></div>')
         note = ("Avance as conversas em andamento" if stage == "Engaging"

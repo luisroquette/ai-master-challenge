@@ -245,6 +245,12 @@ class PortfolioContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "limite"):
             self.app.focus_queue(rows, "Engaging", 0)
         self.assertEqual(self.app.focus_queue([], "Engaging"), [])
+        leader = self.app.focus_queue(rows, "Engaging")[0]
+        self.assertEqual(self.app.focus_reason(leader),
+                         "probabilidade validada; faixa alta; evidência moderada")
+        self.assertIn("produto Produto E-A: associação favorável",
+                      self.app.focus_signals(leader))
+        self.assertIn("série S1: associação desfavorável", self.app.focus_signals(leader))
 
     def test_C4_sections_delegate_all_ordering_to_canonical_rank_stage(self):
         rows = self.app.portfolio_rows(self.bundle, "Gestor", "Mara")
@@ -432,7 +438,10 @@ render_portfolio({factory}(), st.session_state)
         self.assertEqual([tab.label for tab in at.tabs], ["Engaging", "Prospecting"])
         initial = "\n".join(item.value for item in at.markdown)
         self.assertIn("Minha fila agora", initial)
-        self.assertIn("Comece aqui · Engaging", initial)
+        self.assertIn("Foque neste lead · Engaging", initial)
+        self.assertIn("Atenção aos sinais", initial)
+        self.assertIn("Por quê:", initial)
+        self.assertIn("Sinais:", initial)
         self.assertIn("E-A", initial)
         self.assertIn("P-A", initial)
         labels = {button.label for button in at.button}

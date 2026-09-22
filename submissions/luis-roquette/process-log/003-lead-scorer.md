@@ -1309,3 +1309,31 @@ O Foco automático evoluirá para **Minha fila agora**, com até três oportunid
 ### Avaliação da pergunta central
 
 **Nota: 10/10 dentro do escopo e dos dados do challenge.** O vendedor abre, vê o tamanho e a composição do pipeline, recebe uma primeira ação inequívoca e enxerga a sequência curta de trabalho sem precisar filtrar, ordenar ou interpretar a tabela completa. A nota não afirma capacidade inexistente de detectar esfriamento temporal, autenticar usuários, persistir execução ou escrever no CRM; esses limites permanecem explícitos.
+
+## I19 — Feedback humano: foco precisa de justificativa explícita — 2026-09-22
+
+Luis identificou uma lacuna adicional na comunicação operacional:
+
+> “Ainda senti falta de abordagens ou diretrizes claras, como: ‘Foque neste lead porque...’ e ‘Atenção neste lead! Sinais: ...’.”
+
+O feedback invalida a nota 10/10 anterior. A fila dizia **o que fazer**, mas ainda não comunicava de modo suficientemente direto **por que aquele lead merecia foco** nem quais sinais sustentavam a recomendação. A nova nota provisória é **8/10**.
+
+### Decisão
+
+- O destaque principal usará a ordem explícita **“Foque neste lead”**.
+- Cada recomendação separará **por quê**, **sinais observados** e **ação recomendada**.
+- Os sinais virão dos fatores já reconstruídos pelo score; não serão gerados por texto livre nem tratados como causalidade.
+- A linguagem continuará distinguindo prioridade relativa de probabilidade validada.
+- O 10/10 só poderá ser restabelecido depois que a justificativa estiver visível na abertura, coberta por regressão e confirmada no preview real.
+
+### Execução e evidência
+
+- O destaque principal passou a declarar **“Foque neste lead”**, seguido de estágio, oportunidade, natureza do sinal, faixa e força da evidência.
+- Abaixo dele, **“Atenção aos sinais”** apresenta os dois fatores de maior contribuição absoluta e informa se a associação observada é favorável ou desfavorável.
+- Cada item das duas filas agora separa **“Por quê”**, **“Sinais”** e **“Ação”**; isso elimina a necessidade de o vendedor traduzir índice e faixa em uma decisão prática.
+- Os rótulos humanizam `product`, `series`, `year_established` e as combinações históricas, sem alterar cálculo, ranking ou próxima ação.
+- Passada limpa 1: **8/8** testes focais, `py_compile` e `git diff --check` verdes. Passada limpa 2: inspeção renderizada confirmou a nova mensagem e os sinais reais de `CFKXEPFN`, sem novo achado.
+
+### Reavaliação
+
+**Nota restabelecida: 10/10 dentro do escopo do challenge.** A primeira dobra agora responde, em sequência: **qual lead**, **por que ele**, **quais sinais sustentam a atenção** e **qual ação executar**. O sistema continua sem inventar causalidade ou urgência temporal.
