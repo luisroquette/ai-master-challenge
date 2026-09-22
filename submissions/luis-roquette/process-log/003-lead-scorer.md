@@ -1531,3 +1531,15 @@ Luis autorizou a análise final de conformidade e determinou seguir com a entreg
 - Luis então determinou: **“bypass no preflight. vamos direto”**. A execução pendente foi interrompida; nenhum resultado integral final é reivindicado.
 
 A válvula de escape foi usada de forma explícita e transparente. Permanecem válidos os gates leves e focais registrados, mas eles não são apresentados como substitutos de um novo preflight integral.
+
+## I35 — Entrega oficial pelo PR único — 2026-09-22
+
+Após o registro transparente do bypass, o PR oficial `#140` foi reaberto em vez de criar uma segunda submissão, preservando a regra “um PR por pessoa”.
+
+- Título final: `[Submission] Luis Fernando Roquette — Challenge 003`.
+- Base: `Gestao-Quatro-Ponto-Zero/ai-master-challenge:main`.
+- Head: `luisroquette:submission/luis-roquette-003-lead-scorer`.
+- Estado observado após a reabertura: `OPEN`, não-draft e `CLEAN`.
+- A descrição do PR orienta o avaliador ao README, experiência guiada, aplicação e diário; também declara explicitamente que não houve novo preflight integral final.
+
+Esse PR é o canal oficial de entrega previsto pelo regulamento. Nenhum deploy público foi reivindicado como requisito cumprido e nenhuma mensagem paralela foi enviada aos avaliadores.
