@@ -793,7 +793,7 @@ Phase 3                 v
 
 ### Phase Overview
 
-#### Phase 1: Trustworthy data and callable temporal evidence
+#### Phase 1: Trustworthy data and callable temporal evidence [REVIEWED]
 
 Steps: `01-validated-snapshot`, `02a-verified-recovery`, `02b-temporal-evaluation`
 Reviewer model: `opus`

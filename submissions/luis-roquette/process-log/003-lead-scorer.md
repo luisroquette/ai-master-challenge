@@ -1117,3 +1117,9 @@ Este método começa somente quando a implementação estiver completa e a Redun
 - O objetivo é elevar um sistema já funcional ao próximo nível, sem confundir lapidação com implementação ainda incompleta.
 
 **Estado atual:** 0 rodadas globais; método ainda não iniciado.
+
+## Exceção formal aceita na Fase 1 — 2026-09-22
+
+Luis autorizou explicitamente a aceitação do segundo relatório de revisão da Fase 1, semanticamente completo. As evidências registradas foram: conformidade com a SPEC `4,00`, avaliação interna `2,00`, resultado combinado `3,00`, duas passagens limpas consecutivas e **42/42 testes aprovados em ambas**.
+
+A única exceção foi de serialização: o relatório emitiu `scores.combined` em vez da chave literal `combined_score`. Nenhum teste, achado ou gate técnico foi dispensado. Com essa autorização, a Fase 1 foi marcada como `[REVIEWED]` e a Fase 2 foi liberada.
