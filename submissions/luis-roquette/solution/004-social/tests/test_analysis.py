@@ -16,6 +16,7 @@ from tests.helpers import (
     frame_with_target,
     make_cohort,
     make_post,
+    monthly_sponsorship_frequency_rows,
     sponsorship_frequency_rows,
     sponsorship_rows,
 )
@@ -341,6 +342,55 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(frequency["status"], "collect")
         self.assertIsNone(frequency["value"])
         self.assertEqual(frequency["observed_complete_weeks"], 1)
+        self.assertEqual(frequency["action_type"], "collect_two_complete_weeks")
+
+    def test_month_frequency_excludes_boundary_weeks_and_other_months(self):
+        scope = default_scope(
+            target_start="2025-03-01", target_end="2025-04-30", reference_date="2025-04-30"
+        )
+        baseline = analyze(
+            monthly_sponsorship_frequency_rows((1, 3, 10, 17, 24, 31)), scope, "hash"
+        )
+        augmented = analyze(
+            monthly_sponsorship_frequency_rows(
+                (1, 3, 10, 17, 24, 31), extra_april_sponsored_days=(7, 14, 21)
+            ),
+            scope,
+            "hash",
+        )
+        baseline_frequency = baseline["recommendations"][0]["frequency_hypothesis"]
+        augmented_frequency = augmented["recommendations"][0]["frequency_hypothesis"]
+
+        self.assertEqual(baseline_frequency, augmented_frequency)
+        self.assertEqual(baseline_frequency["status"], "test")
+        self.assertEqual(baseline_frequency["value"], 1.0)
+        self.assertEqual(baseline_frequency["complete_weeks_available"], 4)
+        self.assertEqual(baseline_frequency["observed_complete_weeks"], 4)
+        self.assertEqual(baseline_frequency["sample_creator_weeks"], 20)
+        self.assertEqual(baseline_frequency["window_start"], "2025-03-03T00:00:00")
+        self.assertEqual(baseline_frequency["window_end"], "2025-03-30T00:00:00")
+        self.assertEqual(baseline_frequency["period_month"], "2025-03")
+        self.assertEqual(
+            baseline_frequency["coverage_rule"],
+            "complete_iso_weeks_within_calendar_month_and_scope",
+        )
+
+    def test_month_frequency_collects_with_only_one_complete_observed_week(self):
+        result = analyze(
+            monthly_sponsorship_frequency_rows(
+                (1, 2, 3, 31, 31, 31), extra_april_sponsored_days=(7,)
+            ),
+            default_scope(
+                target_start="2025-03-01", target_end="2025-03-31", reference_date="2025-03-31"
+            ),
+            "hash",
+        )
+        frequency = result["recommendations"][0]["frequency_hypothesis"]
+        self.assertEqual(frequency["status"], "collect")
+        self.assertIsNone(frequency["value"])
+        self.assertEqual(frequency["complete_weeks_available"], 4)
+        self.assertEqual(frequency["observed_complete_weeks"], 1)
+        self.assertEqual(frequency["sample_creator_weeks"], 5)
         self.assertEqual(frequency["action_type"], "collect_two_complete_weeks")
 
     def test_priority_is_reproducible_and_exposes_components(self):

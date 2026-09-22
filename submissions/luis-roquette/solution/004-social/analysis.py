@@ -524,8 +524,19 @@ def _priority(values: dict[str, float], denominators: dict[str, float], strength
 
 
 def _frequency_hypothesis(
-    rows: pd.DataFrame, coverage_start: pd.Timestamp, coverage_end: pd.Timestamp
+    rows: pd.DataFrame,
+    coverage_start: pd.Timestamp,
+    coverage_end: pd.Timestamp,
+    period_month: object | None = None,
 ) -> dict[str, object]:
+    if period_month is not None:
+        month_start = pd.Timestamp(f"{period_month}-01")
+        if coverage_start.tzinfo is not None:
+            month_start = month_start.tz_localize(coverage_start.tzinfo)
+        next_month = month_start + pd.offsets.MonthBegin(1)
+        coverage_start = max(coverage_start, month_start)
+        coverage_end = min(coverage_end, next_month - timedelta(days=1))
+
     first_monday = coverage_start.normalize() + timedelta(days=(-coverage_start.weekday()) % 7)
     last_sunday = coverage_end.normalize() - timedelta(days=(coverage_end.weekday() + 1) % 7)
     week_starts: list[pd.Timestamp] = []
@@ -548,6 +559,12 @@ def _frequency_hypothesis(
         "value": float(counts.median()) if sufficient else None,
         "unit": "posts_per_creator_per_complete_iso_week",
         "method": "median_observed_posts_per_creator_week",
+        "coverage_rule": (
+            "complete_iso_weeks_within_calendar_month_and_scope"
+            if period_month is not None
+            else "complete_iso_weeks_within_scope"
+        ),
+        "period_month": str(period_month) if period_month is not None else None,
         "sample_creator_weeks": int(len(counts)),
         "sample_creators": int(observed["creator_id"].nunique()),
         "complete_weeks_available": len(week_starts),
@@ -699,6 +716,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                     _context_rows(targets, alert["context"]),
                     frequency_coverage_start,
                     frequency_coverage_end,
+                    alert["context"].get("period_month"),
                 ),
             }
         )
@@ -764,6 +782,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                     ),
                     frequency_coverage_start,
                     frequency_coverage_end,
+                    item["context"].get("period_month"),
                 ),
             }
         )

@@ -192,3 +192,44 @@ def sponsorship_frequency_rows(weeks: int) -> pd.DataFrame:
                     )
                 )
     return frame_from_rows(rows)
+
+
+def monthly_sponsorship_frequency_rows(
+    sponsored_days: tuple[int, ...], *, extra_april_sponsored_days: tuple[int, ...] = ()
+) -> pd.DataFrame:
+    if len(sponsored_days) != 6:
+        raise ValueError("sponsored_days must contain six posts per creator")
+    rows: list[dict[str, object]] = []
+    organic_days = (1, 3, 10, 17, 24, 31)
+    for sponsored, days in ((False, organic_days), (True, sponsored_days)):
+        for creator in range(5):
+            for post, day in enumerate(days):
+                marker = f"{'s' if sponsored else 'o'}-{creator}-{post}"
+                rows.append(
+                    make_post(
+                        id=marker,
+                        content_id=f"content-{marker}",
+                        creator_id=f"creator-{creator}",
+                        post_date=f"2025-03-{day:02d}T12:00:00",
+                        likes=8 if sponsored else 4,
+                        shares=0,
+                        comments_count=0,
+                        is_sponsored=str(sponsored).upper(),
+                    )
+                )
+    for creator in range(5):
+        for post, day in enumerate(extra_april_sponsored_days):
+            marker = f"april-s-{creator}-{post}"
+            rows.append(
+                make_post(
+                    id=marker,
+                    content_id=f"content-{marker}",
+                    creator_id=f"creator-{creator}",
+                    post_date=f"2025-04-{day:02d}T12:00:00",
+                    likes=20,
+                    shares=0,
+                    comments_count=0,
+                    is_sponsored="TRUE",
+                )
+            )
+    return frame_from_rows(rows)
