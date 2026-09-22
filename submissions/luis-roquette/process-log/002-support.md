@@ -1503,3 +1503,23 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   simples `9,6/10`. Crescimento total desde o baseline: `+1,6`. **Goal ≥9,5 atingido.**
 - **Limite preservado:** nota é avaliação interna baseada na rubrica registrada, não nota
   prometida pelo avaliador. PR `#141` permanece aberto; não houve merge nem submissão final.
+
+## I81 — Check de segurança: parecer inicial — 2026-09-22
+
+- **Decisão do owner:** tratar segurança como checklist, primeiro com parecer completo e
+  depois com correções isoladas, uma por vez.
+- **Escopo auditado:** código, configuração, histórico Git da pasta e arquitetura pública;
+  nenhum controle privado do provedor foi presumido.
+- **Parecer:** risco alto para operação e aceitável somente como demo sanitizada. O app não
+  possui login, cadastro, e-mail, API paga ou banco remoto; controles desses fluxos são
+  não aplicáveis hoje, não “implementados”.
+- **P0 encontrado:** qualquer visitante pode registrar decisões e exportar o SQLite
+  compartilhado; não há autenticação/autorização servidor-side nem restrição por ator.
+- **P0 encontrado:** `data/runtime/decisions.sqlite3` é efêmero, ignorado e sem backup ou
+  restore testado. Artefatos podem ser reproduzidos; decisões humanas não.
+- **Controles parciais existentes:** sanitização de PII, SQL parametrizado, schema fechado,
+  validação de campos, UUID idempotente, escrita transacional e hashes de artefatos.
+- **Segredos:** nenhum candidato encontrado no checkout ou na busca histórica por padrões
+  conhecidos; resultado não é certificação porque `gitleaks` não está instalado.
+- **Próxima correção recomendada:** autenticação servidor-side + autorização de mutações e
+  export. Nenhum código foi alterado nesta fase de parecer.
