@@ -253,6 +253,24 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual(self.app.resolve_selection(state, "Engaging", "page-1",
             [row.opportunity_id for row in rows], positions), "E-B")
 
+    def test_C4_native_selection_keeps_one_active_section_per_stage_page(self):
+        state = {}
+        self.app.ensure_session(state, "fixture")
+        tables = ("engaging-calibrated", "engaging-relative")
+        state["calibrated-widget"] = {"selection": {"rows": [0]}}
+        self.app.activate_native_selection(state, "Engaging", "page-1",
+            "calibrated-widget", tables[0], ("E-A",), tables)
+        self.assertEqual(state["selection_by_stage"]["Engaging"]["id"], "E-A")
+
+        state["relative-widget"] = {"selection": {"rows": [0]}}
+        self.app.activate_native_selection(state, "Engaging", "page-1",
+            "relative-widget", tables[1], ("E-A2",), tables)
+        self.assertEqual(state["selection_by_stage"]["Engaging"], {
+            "context": "page-1", "id": "E-A2", "source_table": tables[1]})
+        self.assertEqual(state["table_reset_by_key"][tables[0]], 1)
+        self.assertEqual(state["active_table_by_stage"]["Engaging"], {
+            "context": "page-1", "table": tables[1]})
+
     def test_TC33_unassigned_rows_stay_in_quality_view_without_a_portfolio_owner(self):
         unassigned = next(row for row in self.bundle.scores if row.opportunity_id == "UNASSIGNED")
         for role, identity in (("Vendedor", "Ana"), ("Gestor", "Mara")):
@@ -319,6 +337,24 @@ class PortfolioContractTests(unittest.TestCase):
         self.app.ensure_session(state, "changed")
         self.assertEqual(state["pins_by_stage"], {})
         self.assertEqual(state["calculation_generation"], 0)
+
+    def test_CK19_prospecting_details_and_pin_preserve_support_and_potential_value(self):
+        row = next(item for item in self.bundle.scores if item.opportunity_id == "P-A")
+        detail = self.app.detail_view(row)
+        self.assertEqual(detail["Observações históricas (n)"], 25)
+        self.assertEqual(detail["Suporte efetivo (n + prior)"], 45.)
+        self.assertEqual(detail["Peso do prior"], 20.)
+
+        state = {}
+        self.app.ensure_session(state, "fixture")
+        before = row.to_dict()
+        pin = self.app.set_temporary_priority(state, "Gestor", "Prospecting", "P-A",
+            "Mara", {"P-A"}, "fixture")
+        pinned = self.app.stage_sections(self.app.portfolio_rows(
+            self.bundle, "Gestor", "Mara"), "Prospecting", pin)["pinned"]
+        table = self.app._table(pinned, "pinned", pin)
+        self.assertEqual(table.loc[0, "Valor potencial do catálogo"], 100.)
+        self.assertEqual(before, row.to_dict())
 
     def test_TC40_cache_identity_changes_for_data_config_and_source(self):
         from data import Snapshot
@@ -421,6 +457,27 @@ render_portfolio({factory}(), st.session_state)
         self.assertTrue(any(button.label == "Abrir E-B" for button in at.button))
         next(button for button in at.button if button.label == "Recalcular prioridades").click().run()
         self.assertFalse(any(caption.value.startswith("Gestor Mara ·") for caption in at.caption))
+
+    def test_C4_CK19_apptest_replaces_section_selection_and_pins_prospecting(self):
+        at = self.fixture_app()
+        next(button for button in at.button if button.label == "Abrir E-A").click().run()
+        next(button for button in at.button if button.label == "Abrir E-A2").click().run()
+        selected = [item.value for item in at.markdown
+                    if item.value.startswith("**Oportunidade:**")]
+        self.assertEqual(selected, ["**Oportunidade:** E-A2"])
+
+        at.selectbox[0].set_value("Gestor").run()
+        next(button for button in at.button if button.label == "Abrir P-A").click().run()
+        rendered = "\n".join(item.value for item in at.markdown)
+        self.assertIn("**Observações históricas (n):** 25", rendered)
+        self.assertIn("**Suporte efetivo (n + prior):** 45.0", rendered)
+        self.assertIn("**Peso do prior:** 20.0", rendered)
+        next(button for button in at.button
+             if button.label == "Prioridade temporária do gestor").click().run()
+        pinned = next(frame.value for frame in at.dataframe
+                      if "Gestor" in frame.value.columns and "P-A" in set(frame.value["ID"]))
+        self.assertEqual(pinned.loc[pinned["ID"] == "P-A",
+                                   "Valor potencial do catálogo"].iloc[0], 100.)
 
 
 class PlaywrightJourneyTests(unittest.TestCase):
@@ -528,6 +585,29 @@ render_portfolio(factories.get(st.query_params.get("scenario", "default"), bundl
         expect(empty.get_by_role("heading", name="Detalhes", exact=True)).to_have_count(0)
         expect(empty.get_by_role("button", name="Prioridade temporária do gestor")).to_have_count(0)
         empty.close()
+
+    def test_C4_CK19_second_section_wins_and_prospecting_support_is_rendered(self):
+        from playwright.sync_api import expect
+
+        page = self.browser.new_page()
+        page.goto(self.base_url)
+        page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+        self.open_details(page, "E-A")
+        page.get_by_text("Oportunidade: E-A", exact=True).wait_for()
+        self.open_details(page, "E-A2")
+        page.get_by_text("Oportunidade: E-A2", exact=True).wait_for()
+        expect(page.get_by_text("Oportunidade: E-A", exact=True)).to_have_count(0)
+
+        self.choose_filter(page, "Contexto demonstrado", "Gestor",
+            "Filtros aplicados: Gestor Mara · Região Todas as regiões · Vendedor Todos da equipe")
+        page.get_by_role("tab", name="Prospecting").click()
+        self.open_details(page, "P-A")
+        page.get_by_text("Observações históricas (n): 25", exact=True).wait_for()
+        page.get_by_text("Suporte efetivo (n + prior): 45.0", exact=True).wait_for()
+        page.get_by_text("Peso do prior: 20.0", exact=True).wait_for()
+        page.get_by_role("button", name="Prioridade temporária do gestor").click()
+        page.get_by_text(re.compile(r"^Gestor Mara ·")).wait_for()
+        page.close()
 
 
 class VerificationGateTests(unittest.TestCase):
