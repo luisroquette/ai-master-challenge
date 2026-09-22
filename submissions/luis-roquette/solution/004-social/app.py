@@ -84,6 +84,11 @@ def _recommendation_context(item: dict[str, object]) -> str:
     return " · ".join(parts) or "Contexto amplo"
 
 
+def _display_number(value: object) -> str:
+    number = float(value)
+    return "0" if number == 0 else f"{number:.6g}"
+
+
 def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
     """Arrow tables cannot carry arbitrary Python ints; keep their text exact."""
     for column in frame.columns:
@@ -327,8 +332,8 @@ else:
                 components = item.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
                 component_columns = st.columns(3)
                 for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
-                    column.number_input(label, value=float(components.get(key, 0.0)), disabled=True, key=f"{label}-{item['evidence_id']}")
-                st.caption(f"Evidência `{item['evidence_id']}` · prioridade {float(item.get('priority', 0)):.4f}")
+                    column.number_input(label, value=float(components.get(key, 0.0)), format="%.6g", disabled=True, key=f"{label}-{item['evidence_id']}")
+                st.caption(f"Evidência `{item['evidence_id']}` · prioridade {_display_number(item.get('priority', 0))}")
                 evidence = _find_evidence(result, str(item["evidence_id"])) or {}
                 with st.expander("Registros de origem e contexto"):
                     _render_evidence(evidence, item, result)
@@ -346,8 +351,8 @@ else:
                 components = additional.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
                 component_columns = st.columns(3)
                 for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
-                    column.number_input(label, value=float(components.get(key, 0.0)), disabled=True, key=f"additional-{label}-{additional['evidence_id']}")
-                st.caption(f"Evidência `{additional['evidence_id']}` · prioridade {float(additional.get('priority', 0)):.4f}")
+                    column.number_input(label, value=float(components.get(key, 0.0)), format="%.6g", disabled=True, key=f"additional-{label}-{additional['evidence_id']}")
+                st.caption(f"Evidência `{additional['evidence_id']}` · prioridade {_display_number(additional.get('priority', 0))}")
                 _render_evidence(_find_evidence(result, str(additional["evidence_id"])) or {}, additional, result)
 
         if has_observations:

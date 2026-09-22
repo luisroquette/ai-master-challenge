@@ -396,6 +396,40 @@ class AppTests(unittest.TestCase):
         self.assertEqual(stored["baseline"]["evidence_snapshot"]["context"]["content_category"],
                          selected["context"]["content_category"])
 
+    def test_tiny_priority_components_keep_magnitude_zero_and_sign(self) -> None:
+        base = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        rows = [{**row, "id": f"{category}-{row['id']}", "content_id": f"{category}-{row['content_id']}",
+                 "content_category": category} for category in ("one", "two", "three", "four") for row in base]
+        tiny_score = 1.1444091796875e-05
+        tiny_component = 1.9073486328125e-06
+
+        def controlled_analysis(*args, **kwargs):
+            result = analyze(*args, **kwargs)
+            first, zero, additional = (result["all_recommendations"][index] for index in (0, 1, 3))
+            first["priority"] = tiny_score
+            first["priority_components"] = {"impact": 0.0, "strength": -tiny_component, "recency": tiny_component}
+            zero["priority"] = 0.0
+            additional["priority"] = -tiny_score
+            additional["priority_components"] = {"impact": 0.0, "strength": -tiny_component, "recency": tiny_component}
+            return result
+
+        with patch("analysis.analyze", side_effect=controlled_analysis):
+            app = self.app()
+            app.file_uploader[0].set_value(("tiny-scores.csv", csv_bytes(rows), "text/csv")).run()
+
+        self.assertFalse(app.exception)
+        captions = [item.value for item in app.caption if "prioridade " in item.value]
+        self.assertTrue(any("prioridade 1.14441e-05" in value for value in captions))
+        self.assertTrue(any(value.endswith("prioridade 0") for value in captions))
+        self.assertTrue(any("prioridade -1.14441e-05" in value for value in captions))
+        first_id = app.session_state["active_result"]["all_recommendations"][0]["evidence_id"]
+        inputs = [item for item in app.number_input if first_id in str(item.key)]
+        self.assertEqual([item.value for item in inputs], [0.0, -tiny_component, tiny_component])
+        self.assertEqual([item.proto.format % item.value for item in inputs],
+                         ["0", "-1.90735e-06", "1.90735e-06"])
+        self.assertTrue(all(item.proto.format == "%.6g" for item in app.number_input))
+        self.assertEqual(app.session_state["active_result"]["all_recommendations"][0]["priority"], tiny_score)
+
     def test_week_and_month_clip_before_timestamp_at_upper_date_boundary(self) -> None:
         rows = [
             make_post(
