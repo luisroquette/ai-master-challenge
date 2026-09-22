@@ -1550,3 +1550,19 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   declarado verde. Permanecem verdes os `50` testes locais e Ruff.
 - **Limite operacional observado:** o Streamlit aplicou redução temporária de CPU durante
   o bootstrap; o sistema concluiu a reprodução e voltou a renderizar sem erro.
+
+## I83 — OIDC adiado no protótipo público — 2026-09-22
+
+- **Decisão:** não configurar o provedor OIDC antes da avaliação. Trata-se de um
+  protótipo público; exigir login criaria atrito para o avaliador sem ampliar a prova
+  central do desafio.
+- **Compensação vigente:** o diagnóstico permanece público, mas toda mutação, leitura do
+  banco de decisões e export operacional continua bloqueada em modo fail-closed.
+- **Pendência explícita:** antes de qualquer uso operacional ou com dados reais, instalar
+  `Authlib>=1.3.2`, cadastrar o cliente no IdP, guardar os segredos no cofre do deploy e
+  preencher as allowlists exatas de `iss` e `sub`.
+- **Provedor recomendado para a próxima fase:** Google Identity para poucos operadores ou
+  contas Google Workspace; Microsoft Entra ID passa a ser preferível se a organização
+  operar no Microsoft 365.
+- **Limite:** esta decisão adia a ativação; não classifica autenticação como desnecessária
+  nem autoriza liberar escrita anônima.

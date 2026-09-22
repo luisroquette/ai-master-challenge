@@ -64,7 +64,8 @@ teste de regressão, evidência no diário e nova medição de risco residual.
 
 ## Tratamento 01 — autenticação e autorização
 
-- Estado: publicado em modo fail-closed; configuração do provedor pendente.
+- Estado: publicado em modo fail-closed; configuração do provedor deliberadamente
+  adiada durante a avaliação do protótipo.
 - Identidade: OIDC nativo do Streamlit, sem senha local e sem token exposto.
 - Autorização: allowlist simultânea de `iss` e `sub`; e-mail/alias não concede acesso.
 - Falha segura: sem IdP, segredo ou allowlist, mutações, leitura e export ficam desativados.
@@ -78,3 +79,9 @@ teste de regressão, evidência no diário e nova medição de risco residual.
   registrada, sem ocultar o gate ausente.
 - Risco residual: alto para uso operacional até cadastrar o cliente OIDC no IdP,
   configurar os secrets no Streamlit Cloud e preencher as allowlists de `iss` e `sub`.
+- Decisão de entrega: não exigir login do avaliador. A superfície pública fica restrita a
+  diagnóstico e artefatos sanitizados; escrita, leitura de decisões e export operacional
+  permanecem indisponíveis. OIDC volta a ser bloqueador antes de dados reais ou operação.
+- Próxima ativação: instalar `Authlib>=1.3.2`; criar o cliente no Google Identity — ou no
+  Microsoft Entra ID se o ambiente corporativo usar Microsoft 365 — e armazenar todas as
+  credenciais somente no cofre do provedor.
