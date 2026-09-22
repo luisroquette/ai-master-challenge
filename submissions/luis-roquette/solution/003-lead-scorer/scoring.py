@@ -10,6 +10,8 @@ from datetime import date
 import hashlib
 import json
 import math
+from pathlib import Path
+import subprocess
 from types import MappingProxyType
 from typing import Any, Mapping
 import warnings
@@ -685,9 +687,425 @@ def evaluate_history(records, config=DEFAULT_CONFIG):
 
 
 def build_scoring_bundle(dataset, config=DEFAULT_CONFIG):
-    """Contract reserved for Phase 2 composition; evaluation itself is callable now.
+    """Fit the frozen policy once and publish every active row in an honest state."""
+    required = ("opportunities", "data_fingerprint", "diagnostics")
+    if any(not hasattr(dataset, name) for name in required):
+        raise ValueError("dataset must provide opportunities, diagnostics and data_fingerprint")
+    records = tuple(dict(row) for row in _records(dataset.opportunities))
+    _, fitted, evaluations, selections = evaluate_history(records, config)
+    source = source_identity()
+    fingerprint = digest((dataset.data_fingerprint, config.fingerprint, source["source_digest"]))
+    scores = score_active(records, fitted, evaluations, selections, fingerprint,
+                          dataset.diagnostics, config)
+    return ScoringBundle(fingerprint, config.version, evaluations, selections, scores,
+                         tuple(_copy_diagnostic(item) for item in dataset.diagnostics), source)
 
-    Deliberately fails rather than publishing an empty/fabricated active portfolio.
-    Phase 2 composes evaluate_history with score_active and source identity here.
-    """
-    raise NotImplementedError("Active score composition belongs to validated SDD step 03a")
+
+def source_identity(root=None):
+    """Identify source bytes without assuming Git metadata exists in Cloud."""
+    root = Path(root or __file__).resolve().parent
+    file_hashes = {}
+    for name in ("app.py", "data.py", "scoring.py", "requirements.txt"):
+        path = root / name
+        file_hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else "missing"
+    try:
+        revision = subprocess.run(("git", "rev-parse", "HEAD"), cwd=root, check=True,
+            text=True, capture_output=True, timeout=5).stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        revision = None
+    return MappingProxyType({"revision": revision, "source_digest": digest(file_hashes)})
+
+
+def _copy_diagnostic(item):
+    if isinstance(item, Mapping):
+        values = dict(item)
+    elif is_dataclass(item):
+        values = asdict(item)
+    else:
+        values = {name: getattr(item, name) for name in
+                  ("code", "scope", "file", "opportunity_id", "field", "reason", "correction")}
+    return MappingProxyType(values)
+
+
+def _identity(row):
+    return dict(opportunity_id=str(row.get("opportunity_id") or ""),
+        stage=row.get("deal_stage"), sales_agent=row.get("sales_agent"),
+        manager=row.get("manager"), regional_office=row.get("regional_office"),
+        product=row.get("product"), account=row.get("account"))
+
+
+def evidence_strength(observed_n):
+    if observed_n < 0:
+        raise ValueError("observed support cannot be negative")
+    return ("forte" if observed_n >= 100 else "moderada" if observed_n >= 30 else
+            "fraca" if observed_n else "indisponivel")
+
+
+def smoothed_rate(wins, count, parent_rate, prior_strength):
+    if any(not isinstance(value, int) for value in (wins, count)) or count < 0 or not 0 <= wins <= count:
+        raise ValueError("counts must be nonnegative integers with wins <= count")
+    if not isinstance(prior_strength, (int, float)) or not math.isfinite(prior_strength) or prior_strength <= 0:
+        raise ValueError("prior strength must be finite and positive")
+    if not isinstance(parent_rate, (int, float)) or not math.isfinite(parent_rate) or not 0 <= parent_rate <= 1:
+        raise ValueError("parent rate must be finite in [0,1]")
+    return (wins + prior_strength * parent_rate) / (count + prior_strength)
+
+
+def _direction(value):
+    return "favoravel" if value > 1e-12 else "desfavoravel" if value < -1e-12 else "neutro"
+
+
+def _relative_band(value, global_rate, config):
+    delta = value - global_rate
+    return "baixa" if delta < -config.relative_delta else "media" if delta < config.relative_delta else "alta"
+
+
+def _history(records):
+    return tuple(row for row in records if row.get("eligible_history") and
+                 row.get("deal_stage") in ("Won", "Lost") and isinstance(row.get("close_date"), date))
+
+
+def _group_counts(history, row, keys):
+    if any(row.get(key) is None for key in keys):
+        return None
+    members = [item for item in history if all(item.get(key) == row.get(key) for key in keys)]
+    return sum(item["deal_stage"] == "Won" for item in members), len(members)
+
+
+def _relative_evidence(row, history, levels, config):
+    total = len(history)
+    if not total:
+        return None
+    global_rate = sum(item["deal_stage"] == "Won" for item in history) / total
+    selected_rate, selected_n = global_rate, total
+    selected_prior, effective = 0., float(total)
+    factors, path = [], []
+    for name, keys in levels:
+        counts = _group_counts(history, row, keys)
+        if counts is None:
+            path.append(f"{name}:missing_key")
+            continue
+        wins, count = counts
+        if count < config.min_group:
+            path.append(f"{name}:observed_n={count}<{config.min_group}")
+            continue
+        child = smoothed_rate(wins, count, selected_rate, config.prior_strength)
+        contribution = child - selected_rate
+        observed = " + ".join(str(row.get(key)) for key in keys)
+        factors.append(Factor(name, observed, contribution, _direction(contribution),
+            f"Associação histórica; {count} observações e prior {config.prior_strength:g}",
+            "product" in keys))
+        selected_rate, selected_n = child, count
+        selected_prior, effective = config.prior_strength, count + config.prior_strength
+        path.append(f"eligible:{name}:observed_n={count}")
+    selected = next((entry.split(":", 2)[1] for entry in reversed(path)
+                     if entry.startswith("eligible:")), "global")
+    path.append(f"selected:{selected}")
+    return (selected_rate, global_rate, tuple(factors), selected_n, selected_prior,
+            float(effective), tuple(path), global_rate)
+
+
+def score_prospecting(row, history, fingerprint, config=DEFAULT_CONFIG):
+    evidence = _relative_evidence(row, _history(history), (
+        ("product", ("product",)),
+        ("product+seller", ("product", "sales_agent")),
+        ("product+seller+account", ("product", "sales_agent", "account"))), config)
+    if evidence is None:
+        return _insufficient(row, fingerprint, (diagnostic("empty_history",
+            "Não há histórico fechado para sustentar a prioridade",
+            "Forneça histórico Won/Lost datado", opportunity_id=row.get("opportunity_id")),))
+    value, base, factors, observed_n, prior, effective, path, global_rate = evidence
+    action = recommend_action("Prospecting", factors)
+    return ScoreResult(**_identity(row), state="relative", route="prospecting",
+        origin="historical_evidence", band=_relative_band(value, global_rate, config),
+        band_kind="relative", potential_revenue=_price(row), relative_index=value,
+        fingerprint=fingerprint, observed_n=observed_n, prior_strength=prior,
+        effective_support=effective, evidence_strength=evidence_strength(observed_n),
+        backoff_path=path, explanation_scale="relative_index", base_value=base,
+        factors=factors, next_action=action)
+
+
+def _price(row):
+    value = row.get("sales_price")
+    return float(value) if isinstance(value, (int, float)) and math.isfinite(value) and value > 0 else None
+
+
+def _insufficient(row, fingerprint, diagnostics):
+    return ScoreResult(**_identity(row), state="insufficient_data", fingerprint=fingerprint,
+        diagnostics=tuple(_copy_diagnostic(item) for item in diagnostics))
+
+
+def _feature_field(name):
+    transformed = name.split("__", 1)[-1]
+    for field in ("product", "series", "year_established"):
+        if transformed == field or transformed.startswith(field + "_"):
+            return field
+    raise ValueError(f"Unsupported transformed feature: {name}")
+
+
+def _factors(names, values, row, reference):
+    grouped = {field: 0. for field in ("product", "series", "year_established")}
+    for name, value in zip(names, values):
+        grouped[_feature_field(name)] += float(value)
+    return tuple(Factor(field, row.get(field), contribution, _direction(contribution), reference,
+                        field in ("product", "series"))
+                 for field, contribution in grouped.items()
+                 if field in row and row.get(field) is not None)
+
+
+def _tree_explanation(estimator, transformed):
+    initial = float(estimator._raw_predict_init(transformed)[0, 0])
+    contributions = [0.] * transformed.shape[1]
+    base = initial
+    for stage in estimator.estimators_:
+        tree = stage[0].tree_
+        value = lambda node: float(tree.value[node].reshape(-1)[0])
+        node = 0
+        base += estimator.learning_rate * value(node)
+        while tree.children_left[node] != tree.children_right[node]:
+            feature = int(tree.feature[node])
+            child = (tree.children_left[node] if transformed[0, feature] <= tree.threshold[node]
+                     else tree.children_right[node])
+            contributions[feature] += estimator.learning_rate * (value(child) - value(node))
+            node = child
+    return base, tuple(contributions)
+
+
+def _calibration_coefficients(calibrated):
+    try:
+        classifiers = calibrated.calibrated_classifiers_
+        calibrators = classifiers[0].calibrators
+        if len(classifiers) != 1 or len(calibrators) != 1:
+            raise ValueError("Expected one binary sigmoid calibrator")
+        return float(calibrators[0].a_), float(calibrators[0].b_)
+    except (AttributeError, IndexError, TypeError) as exc:
+        raise ValueError("Unsupported pinned sigmoid calibration internals") from exc
+
+
+def apply_calibration_explanation(base, factors, slope, intercept):
+    if not all(math.isfinite(value) for value in (base, slope, intercept)):
+        raise ValueError("Calibration explanation requires finite values")
+    transformed = tuple(Factor(item.field, item.observed_value, -slope * item.contribution,
+        _direction(-slope * item.contribution), f"{item.reference}; log-odds calibrado", item.actionable)
+        for item in factors)
+    return -slope * base - intercept, transformed
+
+
+def _expit(value):
+    if value >= 0:
+        return 1 / (1 + math.exp(-value))
+    exponential = math.exp(value)
+    return exponential / (1 + exponential)
+
+
+def explain_score(fitted, row, *, calibrated=False, config=DEFAULT_CONFIG):
+    if fitted.pipeline is None:
+        raise ValueError("Cannot explain an unfitted candidate")
+    frame = feature_frame((row,), fitted.route, config)
+    transformed = fitted.pipeline.named_steps["preprocessor"].transform(frame)
+    estimator = fitted.pipeline.named_steps["estimator"]
+    if fitted.candidate == "logistic":
+        base = float(estimator.intercept_[0])
+        raw = tuple(float(value) for value in transformed[0] * estimator.coef_[0])
+    elif fitted.candidate == "boosting":
+        base, raw = _tree_explanation(estimator, transformed)
+    else:
+        raise ValueError("Unknown fitted candidate")
+    factors = _factors(fitted.feature_names, raw, row,
+                       "Contribuição local no margin bruto do modelo")
+    margin = float(fitted.pipeline.decision_function(frame)[0])
+    if not math.isclose(base + sum(item.contribution for item in factors), margin,
+                        rel_tol=config.explanation_tolerance, abs_tol=config.explanation_tolerance):
+        raise ValueError("Raw explanation does not reconstruct model margin")
+    if not calibrated:
+        return "raw_margin", base, factors
+    if fitted.calibrated is None:
+        raise ValueError("Cannot explain unavailable calibration")
+    slope, intercept = _calibration_coefficients(fitted.calibrated)
+    base, factors = apply_calibration_explanation(base, factors, slope, intercept)
+    probability = float(fitted.calibrated.predict_proba(frame)[0, 1])
+    if not math.isclose(_expit(base + sum(item.contribution for item in factors)), probability,
+                        rel_tol=config.explanation_tolerance, abs_tol=config.explanation_tolerance):
+        raise ValueError("Calibrated explanation does not reconstruct probability")
+    return "calibrated_log_odds", base, factors
+
+
+def summarize_factors(factors, limit=2):
+    positive = tuple(sorted((item for item in factors if item.contribution > 1e-12),
+                            key=lambda item: (-item.contribution, item.field))[:limit])
+    negative = tuple(sorted((item for item in factors if item.contribution < -1e-12),
+                            key=lambda item: (item.contribution, item.field))[:limit])
+    return MappingProxyType({"favoraveis": positive, "desfavoraveis": negative,
+        "mensagem_favoravel": None if positive else "Sem fator favorável sustentado",
+        "mensagem_desfavoravel": None if negative else "Sem fator desfavorável sustentado"})
+
+
+def recommend_action(stage, factors, playbook_version="v1"):
+    if playbook_version != "v1" or stage not in ("Engaging", "Prospecting"):
+        raise ValueError("Unknown playbook version or stage")
+    actionable = [item for item in factors if item.actionable and
+                  abs(item.contribution) > 1e-12 and
+                  (item.field in ("product", "series") or item.field.startswith("product+"))]
+    if not actionable:
+        return "Sem ação recomendada com os dados atuais"
+    chosen = min(actionable, key=lambda item: (-abs(item.contribution), item.field))
+    del chosen
+    return ("Confirmar com a conta se o produto atende à necessidade e combinar o próximo passo comercial"
+            if stage == "Engaging" else
+            "Validar a necessidade para este produto antes de avançar para engajamento")
+
+
+def _fit_lookup(fitted):
+    return {(item.candidate, item.route): item for item in fitted}
+
+
+def _evaluation_lookup(evaluations):
+    return {(item.candidate, item.route): item for item in evaluations}
+
+
+def _route_for_active(row, fitted, config):
+    fits = _fit_lookup(fitted)
+    desired = row.get("route") if row.get("route") in ("full", "fallback") else "fallback"
+    routes = ("full", "fallback") if desired == "full" else ("fallback",)
+    diagnostics = []
+    for route in routes:
+        representative = fits.get(("logistic", route)) or fits.get(("boosting", route))
+        if representative and not support_reasons(row, route, representative.support):
+            if desired == "full" and route == "fallback":
+                diagnostics.append(diagnostic("full_route_unsupported",
+                    "Atributos da conta estão fora do suporte aprendido; usada rota sem conta",
+                    "Confira account e year_established", field="year_established",
+                    opportunity_id=row.get("opportunity_id")))
+            return route, tuple(diagnostics)
+    reasons = support_reasons(row, desired)
+    diagnostics.append(diagnostic("unsupported_active_features", ", ".join(reasons) or
+        "Nenhuma rota treinada suporta a oportunidade", "Corrija produto, série, preço ou conta",
+        opportunity_id=row.get("opportunity_id"), scope="row"))
+    return None, tuple(diagnostics)
+
+
+def _margin_band(margin, training_margins, config):
+    import numpy as np
+    if not training_margins or not all(math.isfinite(value) for value in training_margins):
+        raise ValueError("Training margins unavailable")
+    lower, upper = (float(value) for value in np.quantile(training_margins,
+        config.margin_quantiles, method="linear"))
+    if math.isclose(lower, upper, rel_tol=0, abs_tol=config.explanation_tolerance):
+        return "media"
+    return "baixa" if margin < lower else "media" if margin < upper else "alta"
+
+
+def _suppression_diagnostic(row, route, evaluations):
+    reasons = tuple(dict.fromkeys(reason for item in evaluations if item.route == route
+                                  for reason in item.reasons))
+    return diagnostic("probability_suppressed",
+        "Probabilidade não publicada: " + (", ".join(reasons) if reasons else "banda ativa não validada"),
+        "Use a prioridade relativa e colete novos resultados para recalibrar",
+        opportunity_id=row.get("opportunity_id"))
+
+
+def _historical_engaging(row, history, fingerprint, route, diagnostics, config):
+    evidence = _relative_evidence(row, history, (("product", ("product",)),), config)
+    if evidence is None:
+        return _insufficient(row, fingerprint, diagnostics + (diagnostic("empty_history",
+            "Nenhum modelo ou histórico sustenta a prioridade",
+            "Forneça histórico Won/Lost datado", opportunity_id=row.get("opportunity_id")),))
+    value, base, factors, observed_n, prior, effective, path, global_rate = evidence
+    return ScoreResult(**_identity(row), state="relative", route=route,
+        origin="historical_evidence", band=_relative_band(value, global_rate, config),
+        band_kind="relative", potential_revenue=_price(row), relative_index=value,
+        fingerprint=fingerprint, observed_n=observed_n, prior_strength=prior,
+        effective_support=effective, evidence_strength=evidence_strength(observed_n),
+        backoff_path=path, diagnostics=diagnostics, explanation_scale="relative_index",
+        base_value=base, factors=factors, next_action=recommend_action("Engaging", factors))
+
+
+def _score_engaging(row, history, fitted, evaluations, selections, fingerprint, config):
+    route, route_diagnostics = _route_for_active(row, fitted, config)
+    if route is None:
+        return _insufficient(row, fingerprint, route_diagnostics)
+    fits, evidence = _fit_lookup(fitted), _evaluation_lookup(evaluations)
+    selection = next((item for item in selections if item.route == route), None)
+    if selection and selection.candidate:
+        model = fits[(selection.candidate, route)]
+        evaluation = evidence[(selection.candidate, route)]
+        probability = float(model.calibrated.predict_proba(feature_frame((row,), route, config))[0, 1])
+        validate_probabilities((probability,))
+        band = probability_band(probability, config)
+        band_record = next(item for item in evaluation.bands if item.band == band)
+        if evaluation.status == "passed" and band_record.supported:
+            scale, base, factors = explain_score(model, row, calibrated=True, config=config)
+            return ScoreResult(**_identity(row), state="calibrated", route=route,
+                origin=selection.candidate, band=band, band_kind="probability",
+                potential_revenue=_price(row), probability=probability,
+                expected_revenue=probability * _price(row), evaluation_id=evaluation.evaluation_id,
+                fingerprint=fingerprint, observed_n=band_record.count,
+                effective_support=float(band_record.count),
+                evidence_strength=evidence_strength(band_record.count),
+                diagnostics=route_diagnostics, explanation_scale=scale, base_value=base,
+                factors=factors, next_action=recommend_action("Engaging", factors))
+    diagnostics = route_diagnostics + (_suppression_diagnostic(row, route, evaluations),)
+    for candidate in ("logistic", "boosting"):
+        model = fits.get((candidate, route))
+        if model is None or model.pipeline is None:
+            continue
+        try:
+            scale, base, factors = explain_score(model, row, config=config)
+            margin = base + sum(item.contribution for item in factors)
+            training = tuple(float(value) for value in model.pipeline.decision_function(
+                feature_frame(model.periods[0], route, config)))
+            band = _margin_band(margin, training, config)
+        except (ValueError, RuntimeError, FloatingPointError):
+            continue
+        evaluation = evidence.get((candidate, route))
+        observed_n = len(model.periods[0])
+        return ScoreResult(**_identity(row), state="relative", route=route, origin=candidate,
+            band=band, band_kind="relative", potential_revenue=_price(row),
+            relative_index=margin, evaluation_id=evaluation.evaluation_id if evaluation else None,
+            fingerprint=fingerprint, observed_n=observed_n, effective_support=float(observed_n),
+            evidence_strength=evidence_strength(observed_n), diagnostics=diagnostics,
+            explanation_scale=scale, base_value=base, factors=factors,
+            next_action=recommend_action("Engaging", factors))
+    return _historical_engaging(row, history, fingerprint, route, diagnostics, config)
+
+
+def score_active(records, fitted, evaluations, selections, fingerprint,
+                 input_diagnostics=(), config=DEFAULT_CONFIG):
+    records = tuple(dict(row) for row in _records(records))
+    history = _history(records)
+    diagnostics_by_id = {}
+    for item in input_diagnostics:
+        copied = _copy_diagnostic(item)
+        if copied.get("opportunity_id"):
+            diagnostics_by_id.setdefault(copied["opportunity_id"], []).append(copied)
+    results = []
+    for row in records:
+        if row.get("deal_stage") not in ("Engaging", "Prospecting"):
+            continue
+        if not row.get("eligible_active"):
+            issues = tuple(diagnostics_by_id.get(row.get("opportunity_id"), ())) or (
+                diagnostic("unsupported_active", "Oportunidade ativa sem dados suficientes",
+                    "Corrija os campos indicados no cadastro", opportunity_id=row.get("opportunity_id"),
+                    scope="row"),)
+            results.append(_insufficient(row, fingerprint, issues))
+        elif row["deal_stage"] == "Prospecting":
+            results.append(score_prospecting(row, history, fingerprint, config))
+        else:
+            results.append(_score_engaging(row, history, fitted, evaluations, selections,
+                                            fingerprint, config))
+    return tuple(results)
+
+
+def rank_stage(scores, stage):
+    if stage not in ("Engaging", "Prospecting"):
+        raise ValueError("Unknown active stage")
+    band_rank = {"alta": 0, "media": 1, "baixa": 2, None: 3}
+    def key(item):
+        if item.state == "calibrated":
+            return (0, band_rank[item.band], -(item.expected_revenue or 0), item.opportunity_id)
+        if item.state == "relative":
+            partition = (item.route or "", item.origin or "", item.explanation_scale or "")
+            return (1, partition, band_rank[item.band], -(item.relative_index or 0),
+                    -(item.potential_revenue or 0), item.opportunity_id)
+        return (2, item.opportunity_id)
+    return tuple(sorted((item for item in scores if item.stage == stage), key=key))

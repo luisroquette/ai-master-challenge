@@ -785,7 +785,7 @@ Phase 3                 v
 | `01-validated-snapshot` [DONE] | Phase 1 | opus | sdd:developer | None | None | `.specs/sub-tasks/implement-explainable-lead-scorer/01-validated-snapshot.md` |
 | `02a-verified-recovery` [DONE] | Phase 1 | opus | sdd:developer | `01-validated-snapshot` | `02b-temporal-evaluation` | `.specs/sub-tasks/implement-explainable-lead-scorer/02a-verified-recovery.md` |
 | `02b-temporal-evaluation` [DONE] | Phase 1 | opus | sdd:developer | `01-validated-snapshot` | `02a-verified-recovery` | `.specs/sub-tasks/implement-explainable-lead-scorer/02b-temporal-evaluation.md` |
-| `03a-explainable-priorities` | Phase 2 | opus | sdd:developer | `02b-temporal-evaluation` | `03b-portfolio-session-ui` | `.specs/sub-tasks/implement-explainable-lead-scorer/03a-explainable-priorities.md` |
+| `03a-explainable-priorities` [DONE] | Phase 2 | opus | sdd:developer | `02b-temporal-evaluation` | `03b-portfolio-session-ui` | `.specs/sub-tasks/implement-explainable-lead-scorer/03a-explainable-priorities.md` |
 | `03b-portfolio-session-ui` [DONE] | Phase 2 | sonnet | sdd:developer | `02b-temporal-evaluation` | `03a-explainable-priorities` | `.specs/sub-tasks/implement-explainable-lead-scorer/03b-portfolio-session-ui.md` |
 | `04-canonical-verification` | Phase 2 | sonnet | general sonnet | `03a-explainable-priorities`, `03b-portfolio-session-ui` | None | `.specs/sub-tasks/implement-explainable-lead-scorer/04-canonical-verification.md` |
 | `05-verified-cloud-delivery` | Phase 3 | sonnet | general sonnet | `04-canonical-verification` | None | `.specs/sub-tasks/implement-explainable-lead-scorer/05-verified-cloud-delivery.md` |

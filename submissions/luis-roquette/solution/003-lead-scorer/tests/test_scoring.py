@@ -10,6 +10,7 @@ import json
 import math
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -136,8 +137,8 @@ class ContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             score_fixture("insufficient_data", relative_index=.3)
 
-    def test_C3_phase_boundary_does_not_publish_placeholder_active_scores(self):
-        with self.assertRaisesRegex(NotImplementedError, "03a"):
+    def test_C3_bundle_requires_the_dataset_contract(self):
+        with self.assertRaisesRegex(ValueError, "dataset"):
             s.build_scoring_bundle(object())
 
     def test_TC43_probability_bounds_and_invalid_values(self):
@@ -376,6 +377,223 @@ class PublicationPolicyTests(unittest.TestCase):
         self.assertEqual(s.ranking_metrics(rows,probabilities)[0].financial_unavailable_reason,"no_positive_realized_total")
 
 
+class ActivePriorityTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.history = history_fixture()
+        cls.split, cls.fitted, cls.evaluations, cls.selections = s.evaluate_history(cls.history)
+
+    def active(self, opportunity_id, stage="Engaging", **changes):
+        row = dict(self.history[0], opportunity_id=opportunity_id, deal_stage=stage,
+            eligible_history=False, eligible_active=True, close_date=None,
+            close_value=None, financial_eligible=False)
+        row.update(changes)
+        return row
+
+    def score(self, rows, *, selections=None, diagnostics=()):
+        return s.score_active(tuple(self.history) + tuple(rows), self.fitted, self.evaluations,
+            self.selections if selections is None else selections,
+            "fixture-fingerprint", diagnostics)
+
+    def test_TC15_full_then_fallback_routing_without_account_imputation(self):
+        full = self.active("full")
+        fallback = self.active("fallback", account=None, account_match="left_only",
+            year_established=None, route="fallback")
+        full_score, fallback_score = self.score((full, fallback))
+        self.assertEqual((full_score.route, fallback_score.route), ("full", "fallback"))
+        self.assertEqual((full_score.origin, fallback_score.origin), ("logistic", "logistic"))
+        fallback_fit = next(item for item in self.fitted
+                            if item.candidate == "logistic" and item.route == "fallback")
+        self.assertFalse(any("year_established" in name for name in fallback_fit.feature_names))
+
+        # A full-route account outside trained year support degrades through the
+        # deliberate account-free feature contract instead of mean imputation.
+        out_of_support = self.active("year-fallback", year_established=1800, route="full")
+        score = self.score((out_of_support,))[0]
+        self.assertEqual(score.route, "fallback")
+        self.assertTrue(any(item["code"] == "full_route_unsupported" for item in score.diagnostics))
+
+    def test_TC12_TC16_engaging_score_is_invariant_to_forbidden_context(self):
+        original = self.active("context-a")
+        changed = self.active("context-b", sales_agent="seller-other", manager="manager-other",
+                              regional_office="region-other", close_date=date(2099, 1, 1),
+                              close_value=999_999.)
+        left, right = self.score((original, changed))
+        for field in ("state", "route", "origin", "band", "probability",
+                      "expected_revenue", "relative_index", "explanation_scale", "base_value"):
+            with self.subTest(field=field):
+                self.assertEqual(getattr(left, field), getattr(right, field))
+        self.assertEqual(tuple(item.contribution for item in left.factors),
+                         tuple(item.contribution for item in right.factors))
+
+    def test_TC24_rejected_routes_suppress_probability_and_expected_revenue(self):
+        rejected = tuple(replace(item, status="rejected", reasons=("fixture_rejection",))
+                         for item in self.evaluations)
+        selections = tuple(s.select_route(rejected, route) for route in ("full", "fallback"))
+        scores = s.score_active((self.active("engaging"),), self.fitted, rejected,
+                                selections, "fixture-fingerprint")
+        payload = scores[0].to_dict()
+        self.assertEqual(payload["state"], "relative")
+        self.assertNotIn("probability", payload)
+        self.assertNotIn("expected_revenue", payload)
+        self.assertTrue(any(item["code"] == "probability_suppressed"
+                            for item in payload["diagnostics"]))
+
+    def test_TC25_prospecting_nested_smoothing_is_hand_reconstructable(self):
+        history = []
+        for index in range(40):
+            product = "A" if index < 20 else "B"
+            won = index < 15 or 20 <= index < 25
+            history.append(dict(opportunity_id=f"h-{index}", deal_stage="Won" if won else "Lost",
+                close_date=date(2020, 1, 1), eligible_history=True, product=product,
+                sales_agent="seller-a" if product == "A" else "seller-b",
+                account="account-a" if product == "A" else "account-b"))
+        prospect = self.active("prospect", "Prospecting", product="A", sales_agent="seller-a",
+                               account="account-a", sales_price=200.)
+        result = s.score_prospecting(prospect, history, "fixture-fingerprint")
+        expected = (15 + 20 * ((15 + 20 * ((15 + 20 * .5) / 40)) / 40)) / 40
+        self.assertAlmostEqual(result.relative_index, expected)
+        self.assertAlmostEqual(result.base_value + sum(f.contribution for f in result.factors), expected)
+        self.assertEqual((result.observed_n, result.prior_strength, result.effective_support), (20, 20., 40.))
+        self.assertEqual(result.band, "alta")
+
+    def test_TC26_sparse_backoff_and_support_boundaries(self):
+        self.assertAlmostEqual(s.smoothed_rate(1, 1, .5, 20), 11/21)
+        self.assertAlmostEqual(s.smoothed_rate(0, 0, .5, 20), .5)
+        with self.assertRaisesRegex(ValueError, "counts"):
+            s.smoothed_rate(0, -1, .5, 20)
+        with self.assertRaisesRegex(ValueError, "strength"):
+            s.smoothed_rate(0, 1, .5, 0)
+
+        history = [dict(opportunity_id=f"h-{i}", deal_stage="Won" if i % 2 else "Lost",
+            close_date=date(2020, 1, 1), eligible_history=True, product="other",
+            sales_agent="other", account="other") for i in range(30)]
+        history.append(dict(opportunity_id="only-one", deal_stage="Won", close_date=date(2020, 1, 1),
+            eligible_history=True, product="rare", sales_agent="rare", account="rare"))
+        result = s.score_prospecting(self.active("rare", "Prospecting", product="rare",
+            sales_agent="rare", account="rare"), history, "fixture-fingerprint")
+        self.assertEqual(result.backoff_path[-1], "selected:global")
+        self.assertEqual(result.prior_strength, 0.)
+        self.assertTrue(any("observed_n=1<20" in item for item in result.backoff_path))
+
+    def test_TC20_degraded_margin_quantile_boundaries_and_equal_cutoffs(self):
+        for value, expected in ((1-1e-12, "baixa"), (1., "media"),
+                                (2-1e-12, "media"), (2., "alta")):
+            with self.subTest(value=value):
+                self.assertEqual(s._margin_band(value, (0., 3.), s.DEFAULT_CONFIG), expected)
+        self.assertEqual(s._margin_band(1., (1., 1., 1.), s.DEFAULT_CONFIG), "media")
+
+    def test_TC27_prospecting_contract_never_exposes_probability_revenue(self):
+        prospect = self.active("prospect", "Prospecting")
+        result = self.score((prospect,))[0]
+        payload = result.to_dict()
+        self.assertEqual(result.origin, "historical_evidence")
+        self.assertEqual(result.potential_revenue, 100.)
+        self.assertIn(result.evidence_strength, ("fraca", "moderada", "forte"))
+        self.assertNotIn("probability", payload)
+        self.assertNotIn("expected_revenue", payload)
+
+    def test_TC28_logistic_raw_and_calibrated_affine_reconstruct_outputs(self):
+        fitted = next(item for item in self.fitted
+                      if item.candidate == "logistic" and item.route == "full")
+        row = self.active("explain-logistic")
+        scale, base, factors = s.explain_score(fitted, row)
+        actual = float(fitted.pipeline.decision_function(s.feature_frame((row,), "full"))[0])
+        self.assertEqual(scale, "raw_margin")
+        self.assertAlmostEqual(base + sum(item.contribution for item in factors), actual, places=8)
+
+        for slope in (0., -2.):
+            transformed_base, transformed = s.apply_calibration_explanation(base, factors, slope, .3)
+            reconstructed = transformed_base + sum(item.contribution for item in transformed)
+            self.assertAlmostEqual(reconstructed, -(slope * actual + .3), places=8)
+            self.assertTrue(all(item.reference.endswith("log-odds calibrado") for item in transformed))
+
+    def test_TC29_boosting_tree_paths_reconstruct_raw_margin(self):
+        fitted = next(item for item in self.fitted
+                      if item.candidate == "boosting" and item.route == "fallback")
+        row = self.active("explain-tree", route="fallback", account_match="left_only",
+                          year_established=None)
+        scale, base, factors = s.explain_score(fitted, row)
+        actual = float(fitted.pipeline.decision_function(s.feature_frame((row,), "fallback"))[0])
+        self.assertEqual(scale, "raw_margin")
+        self.assertAlmostEqual(base + sum(item.contribution for item in factors), actual, places=8)
+
+    def test_TC30_factor_summary_preserves_value_sign_and_absent_direction(self):
+        factors = (s.Factor("product", "A", .4, "favoravel", "ref", True),
+                   s.Factor("series", "B", -.2, "desfavoravel", "ref", True))
+        summary = s.summarize_factors(factors)
+        self.assertEqual(summary["favoraveis"][0].observed_value, "A")
+        self.assertEqual(summary["desfavoraveis"][0].contribution, -.2)
+        absent = s.summarize_factors((factors[0],))
+        self.assertEqual(absent["mensagem_desfavoravel"], "Sem fator desfavorável sustentado")
+        self.assertEqual(s.summarize_factors((factors[1],))["mensagem_favoravel"],
+                         "Sem fator favorável sustentado")
+
+    def test_TC31_TC32_versioned_playbook_uses_only_actionable_evidence(self):
+        cases = (
+            ("Engaging", "product", "Confirmar com a conta se o produto atende à necessidade e combinar o próximo passo comercial"),
+            ("Engaging", "series", "Confirmar com a conta se o produto atende à necessidade e combinar o próximo passo comercial"),
+            ("Prospecting", "product", "Validar a necessidade para este produto antes de avançar para engajamento"),
+            ("Prospecting", "series", "Validar a necessidade para este produto antes de avançar para engajamento"),
+        )
+        for stage, field, action in cases:
+            with self.subTest(stage=stage, field=field):
+                factor = s.Factor(field, "observado", .2, "favoravel", "ref", True)
+                self.assertEqual(s.recommend_action(stage, (factor,)), action)
+        no_action = "Sem ação recomendada com os dados atuais"
+        for factors in ((), (s.Factor("account", "A", 3., "favoravel", "ref", False),),
+                        (s.Factor("product", "A", 1e-13, "favoravel", "ref", True),)):
+            self.assertEqual(s.recommend_action("Engaging", factors), no_action)
+
+    def test_TC22_TC23_band_first_partitioned_ranking_and_lexical_ties(self):
+        low_expensive = score_fixture(opportunity_id="z-low", band="baixa", probability=.39,
+                                      expected_revenue=390000., potential_revenue=1_000_000.)
+        high_cheap = score_fixture(opportunity_id="a-high", band="alta", probability=.7,
+                                   expected_revenue=7., potential_revenue=10.)
+        tied_b = score_fixture(opportunity_id="b-tie", band="media", probability=.5,
+                               expected_revenue=50., potential_revenue=100.)
+        tied_a = replace(tied_b, opportunity_id="a-tie")
+        ranked = s.rank_stage((low_expensive, tied_b, high_cheap, tied_a), "Engaging")
+        self.assertEqual([item.opportunity_id for item in ranked],
+                         ["a-high", "a-tie", "b-tie", "z-low"])
+
+        relative_a = score_fixture("relative", opportunity_id="z", route="full",
+                                   origin="logistic", relative_index=999.)
+        relative_b = score_fixture("relative", opportunity_id="a", route="fallback",
+                                   origin="logistic", relative_index=-999.)
+        relative_c = replace(relative_a, opportunity_id="a2", relative_index=1000.)
+        ranked = s.rank_stage((relative_a, relative_b, relative_c), "Engaging")
+        self.assertEqual([item.opportunity_id for item in ranked], ["a", "a2", "z"])
+
+    def test_TC42_seeded_active_scores_are_deterministic_and_stage_safe(self):
+        rows = tuple(self.active(f"e-{i}", sales_price=float(1+i)) for i in range(20)) + tuple(
+            self.active(f"p-{i}", "Prospecting", sales_price=float(1+i)) for i in range(20))
+        first = self.score(rows)
+        second = self.score(tuple(reversed(rows)))
+        first_by_id = {item.opportunity_id: item.to_dict() for item in first}
+        second_by_id = {item.opportunity_id: item.to_dict() for item in second}
+        self.assertEqual(first_by_id, second_by_id)
+        for result in first:
+            payload = result.to_dict()
+            if result.state == "calibrated":
+                self.assertTrue(math.isfinite(result.probability) and 0 <= result.probability <= 1)
+            if result.stage == "Prospecting":
+                self.assertNotIn("probability", payload)
+                self.assertNotIn("expected_revenue", payload)
+
+    def test_TC08_TC23_unsupported_active_is_retained_without_invented_score(self):
+        row = self.active("unsupported", eligible_active=False, input_status="unsupported_active",
+                          product=None, product_match="left_only")
+        issue = SimpleNamespace(code="unknown_key", scope="row", file="sales_pipeline.csv",
+            opportunity_id="unsupported", field="product", reason="Produto desconhecido",
+            correction="Corrija product usando o catálogo")
+        result = self.score((row,), diagnostics=(issue,))[0]
+        self.assertEqual(result.state, "insufficient_data")
+        self.assertEqual(result.opportunity_id, "unsupported")
+        self.assertIsNone(result.band)
+        self.assertEqual(result.diagnostics[0]["field"], "product")
+
+
 class ZRealDataEvaluationTests(unittest.TestCase):
     def test_TC14_real_four_routes_frozen_policy_and_complete_evidence(self):
         import data
@@ -415,6 +633,22 @@ class ZRealDataEvaluationTests(unittest.TestCase):
             natural_missing_account_count=item.natural_missing_account_count) for item in evaluations]
         print("REAL_EVALUATIONS",json.dumps(summaries,sort_keys=True,allow_nan=False),flush=True)
         print("REAL_SELECTIONS",json.dumps(s.serialize(selections),sort_keys=True),flush=True)
+
+        bundle = s.build_scoring_bundle(dataset)
+        active = dataset.opportunities[dataset.opportunities["deal_stage"].isin(("Engaging", "Prospecting"))]
+        self.assertEqual(len(bundle.scores), len(active))
+        self.assertEqual(len({item.opportunity_id for item in bundle.scores}), len(bundle.scores))
+        self.assertTrue(all(item.state in ("relative", "insufficient_data") for item in bundle.scores))
+        self.assertTrue(all("probability" not in item.to_dict() and
+                            "expected_revenue" not in item.to_dict() for item in bundle.scores))
+        self.assertEqual({item.origin for item in bundle.scores if item.stage == "Prospecting"},
+                         {"historical_evidence"})
+        print("REAL_ACTIVE_SCORES", json.dumps({"count": len(bundle.scores),
+            "states": {state: sum(item.state == state for item in bundle.scores)
+                       for state in ("relative", "insufficient_data")},
+            "fingerprint": bundle.fingerprint,
+            "source_identity": s.serialize(bundle.source_identity)},
+            sort_keys=True, allow_nan=False), flush=True)
 
 
 if __name__ == "__main__":
