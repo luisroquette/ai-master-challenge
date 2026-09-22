@@ -20,6 +20,145 @@ ROOT = Path(__file__).resolve().parent
 PAGE_SIZE = 25
 PIN_TIMEZONE = ZoneInfo("America/Sao_Paulo")
 
+THEME_CSS = """
+<style>
+:root {
+    --ink: #17212b;
+    --muted: #607080;
+    --paper: #f5f3ee;
+    --surface: rgba(255, 255, 255, 0.88);
+    --line: #d9dedc;
+    --teal: #0d6b63;
+    --teal-soft: #dcece8;
+    --signal: #c75d36;
+}
+[data-testid="stAppViewContainer"] {
+    background:
+        radial-gradient(circle at 88% 4%, rgba(13, 107, 99, 0.10), transparent 25rem),
+        linear-gradient(180deg, #fbfaf7 0%, var(--paper) 100%);
+    color: var(--ink);
+}
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stToolbar"], [data-testid="stAppDeployButton"] { display: none; }
+.block-container {
+    max-width: 1480px;
+    padding: 2.6rem 2.5rem 4rem;
+}
+h1, h2, h3 {
+    color: var(--ink);
+    font-family: Charter, "Iowan Old Style", Georgia, serif;
+    letter-spacing: -0.025em;
+}
+h1 { font-size: clamp(2.35rem, 4vw, 4.1rem) !important; line-height: 0.98 !important; }
+h3 { font-size: 1.32rem !important; }
+p, label, button, input, [data-baseweb="select"] {
+    font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+.decision-eyebrow {
+    color: var(--teal);
+    font: 700 0.72rem/1.2 "Avenir Next", Avenir, sans-serif;
+    letter-spacing: 0.16em;
+    margin: 0 0 0.65rem;
+    text-transform: uppercase;
+}
+[data-testid="stAlert"] {
+    background: rgba(220, 236, 232, 0.7);
+    border: 1px solid #bfd6d1;
+    border-radius: 12px;
+    color: #174b47;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--surface);
+    border-color: var(--line) !important;
+    border-radius: 16px;
+    box-shadow: 0 14px 38px rgba(23, 33, 43, 0.045);
+}
+[data-testid="stMetric"] {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    min-height: 112px;
+    padding: 1rem 1.1rem;
+}
+[data-testid="stMetricLabel"] { color: var(--muted); }
+[data-testid="stMetricValue"] {
+    color: var(--ink);
+    font-family: Charter, "Iowan Old Style", Georgia, serif;
+}
+[data-baseweb="select"] > div {
+    background: #fff;
+    border-color: var(--line);
+    border-radius: 10px;
+}
+[data-testid="stButton"] button {
+    border-color: #bdc8c5;
+    border-radius: 9px;
+    font-weight: 650;
+    transition: border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+[data-testid="stButton"] button:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+    transform: translateY(-1px);
+}
+[data-testid="stBaseButton-primary"] {
+    background: var(--teal) !important;
+    border-color: var(--teal) !important;
+    color: #fff !important;
+}
+[data-testid="stBaseButton-primary"]:hover {
+    background: #09564f !important;
+    color: #fff !important;
+}
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+[data-baseweb="tab-list"] {
+    border-bottom: 1px solid var(--line);
+    gap: 1.25rem;
+}
+[data-baseweb="tab"] {
+    color: var(--muted);
+    font-weight: 700;
+    padding-left: 0;
+    padding-right: 0;
+}
+button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
+[data-baseweb="tab-highlight"] { background-color: var(--teal) !important; }
+[data-testid="stExpander"] {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: var(--line);
+    border-radius: 10px;
+}
+.trace-line {
+    color: var(--muted);
+    font-size: 0.73rem;
+    overflow-wrap: anywhere;
+}
+.empty-detail {
+    background: linear-gradient(145deg, rgba(220,236,232,.68), rgba(255,255,255,.75));
+    border: 1px dashed #9cbdb7;
+    border-radius: 16px;
+    color: #315b57;
+    min-height: 210px;
+    padding: 2rem;
+}
+.empty-detail strong {
+    color: var(--ink);
+    display: block;
+    font: 700 1.35rem/1.2 Charter, Georgia, serif;
+    margin-bottom: .6rem;
+}
+@media (max-width: 800px) {
+    .block-container { padding: 1.5rem 1rem 3rem; }
+    h1 { font-size: 2.45rem !important; }
+    [data-testid="stMetric"] { min-height: 96px; }
+}
+</style>
+"""
+
 
 @dataclass(frozen=True)
 class TemporaryPin:
@@ -187,6 +326,21 @@ def _selection_rows(event):
     return list(rows or ())
 
 
+def _table_column_config():
+    return {
+        "ID": st.column_config.TextColumn(width="small", pinned=True),
+        "Produto": st.column_config.TextColumn(width="medium"),
+        "Faixa": st.column_config.TextColumn(width="small"),
+        "Probabilidade": st.column_config.NumberColumn(format="percent", width="small"),
+        "Receita esperada (valor catálogo)": st.column_config.NumberColumn(
+            format="localized", width="medium"),
+        "Índice relativo": st.column_config.NumberColumn(format="%.3f", width="small"),
+        "Evidência": st.column_config.TextColumn(width="small"),
+        "Valor potencial do catálogo": st.column_config.NumberColumn(
+            format="localized", width="medium"),
+    }
+
+
 def activate_native_selection(session, stage, context, widget_key, table_key,
                               displayed_ids, table_keys):
     """Publish one native row selection and invalidate every sibling grid."""
@@ -220,11 +374,13 @@ def render_selectable_table(rows, state, pin, key, session=None, stage=None,
                             context=None, table_keys=()):
     if session is None:
         event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch",
-                             key=key, on_select="rerun", selection_mode="single-row")
+            column_config=_table_column_config(), row_height=38,
+            key=key, on_select="rerun", selection_mode="single-row")
         return _selection_rows(event)
     token = session["table_reset_by_key"].get(key, 0)
     widget_key = f"{key}-reset-{token}"
     event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch",
+        column_config=_table_column_config(), row_height=38,
         key=widget_key, on_select=partial(activate_native_selection, session, stage, context,
             widget_key, key, tuple(row.opportunity_id for row in rows), tuple(table_keys)),
         selection_mode="single-row")
@@ -234,7 +390,7 @@ def render_selectable_table(rows, state, pin, key, session=None, stage=None,
 
 
 def _render_open_actions(rows, stage, context, session, table_keys):
-    st.caption("Ações acessíveis")
+    st.caption("Acesso alternativo por teclado")
     for start in range(0, len(rows), 4):
         columns = st.columns(4)
         for column, row in zip(columns, rows[start:start + 4]):
@@ -288,7 +444,7 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
         return
     context = hashlib.sha256(repr((stage, role, identity, region, seller,
         tuple(row.opportunity_id for row in ordered))).encode()).hexdigest()
-    list_column, detail_column = st.columns((2, 1))
+    list_column, detail_column = st.columns((1.8, 1), gap="large")
     labels = {"pinned": "Prioridade temporária", "calibrated": "Probabilidade validada",
               "relative": "Prioridade relativa", "insufficient_data": "Dados insuficientes"}
     with list_column:
@@ -338,53 +494,92 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
                            f"total em valor de catálogo: {sum(row.expected_revenue for row in calibrated):.2f}")
     selected_id = resolve_selection(session, stage, context, displayed_ids, selected_positions)
     with detail_column:
-        if not selected_id:
-            st.caption("Selecione uma linha para ver os detalhes.")
-            return
-        row = next(item for item in ordered if item.opportunity_id == selected_id)
-        st.markdown("### Detalhes")
-        for label, value in detail_view(row).items():
-            st.markdown(f"**{label}:** {value}")
-        if role == "Gestor" and st.button("Prioridade temporária do gestor", key=f"pin-{stage}-{context}"):
-            set_temporary_priority(session, role, stage, row.opportunity_id, identity,
-                                   {item.opportunity_id for item in rows}, bundle.fingerprint)
-            st.rerun()
+        with st.container(border=True):
+            if not selected_id:
+                st.markdown("""
+                <div class="empty-detail">
+                    <strong>Leia o sinal por trás da prioridade</strong>
+                    Selecione uma oportunidade na tabela ou use um botão “Abrir” para ver
+                    evidências, fatores e a próxima ação recomendada.
+                </div>
+                """, unsafe_allow_html=True)
+                return
+            row = next(item for item in ordered if item.opportunity_id == selected_id)
+            st.markdown("### Detalhes")
+            for label, value in detail_view(row).items():
+                if isinstance(value, list):
+                    st.markdown(f"**{label}:**")
+                    st.markdown("\n".join(f"- {item}" for item in value))
+                elif label == "Probabilidade":
+                    st.markdown(f"**{label}:** {value:.1%}")
+                elif label in ("Receita esperada", "Índice relativo"):
+                    st.markdown(f"**{label}:** {value:,.3f}")
+                else:
+                    st.markdown(f"**{label}:** {value}")
+            if role == "Gestor" and st.button("Prioridade temporária do gestor",
+                    key=f"pin-{stage}-{context}", type="primary", width="stretch"):
+                set_temporary_priority(session, role, stage, row.opportunity_id, identity,
+                                       {item.opportunity_id for item in rows}, bundle.fingerprint)
+                st.rerun()
 
 
 def render_portfolio(bundle, session):
     ensure_session(session, bundle.fingerprint)
+    st.markdown(THEME_CSS, unsafe_allow_html=True)
+    st.markdown('<p class="decision-eyebrow">Lead intelligence · carteira ativa</p>',
+                unsafe_allow_html=True)
     st.title("Prioridades comerciais explicáveis")
-    st.info("Protótipo de apoio à decisão: a seleção de perfil demonstra a visão e não autentica o usuário.")
+    st.info("Protótipo de apoio à decisão. A seleção de perfil demonstra cada visão da carteira; não autentica o usuário.")
     assigned = [row for row in bundle.scores if row.sales_agent and row.manager and row.regional_office]
-    role = st.selectbox("Contexto demonstrado", ("Vendedor", "Gestor"))
-    options = sorted({row.sales_agent if role == "Vendedor" else row.manager for row in assigned})
-    options = options or ["Sem identidade atribuída"]
-    identity = st.selectbox("Vendedor" if role == "Vendedor" else "Gestor", options)
-    if session.get("view_identity") != (role, identity):
-        session["view_identity"] = (role, identity)
-        session["selection_by_stage"] = {}
-        session["active_table_by_stage"] = {}
-        session["table_reset_by_key"] = {}
-        session["page_by_stage"] = {}
-    region, seller = "Todas as regiões", "Todos da equipe"
-    if role == "Gestor":
-        team = [row for row in assigned if row.manager == identity]
-        region = st.selectbox("Escritório regional", ["Todas as regiões"] + sorted({row.regional_office for row in team}))
-        regional_team = team if region == "Todas as regiões" else [row for row in team if row.regional_office == region]
-        seller = st.selectbox("Vendedor da equipe", ["Todos da equipe"] + sorted({row.sales_agent for row in regional_team}))
-        st.caption(f"Filtros aplicados: Gestor {identity} · Região {region} · Vendedor {seller}")
-    else:
-        st.caption(f"Filtros aplicados: Vendedor {identity}")
-    if st.button("Recalcular prioridades"):
-        recalculate(session)
+    with st.container(border=True):
+        st.markdown("#### Recorte da carteira")
+        role_column, identity_column, *remaining = st.columns(
+            (1, 1.35, 1.15, 1.35, .8), vertical_alignment="bottom")
+        role = role_column.selectbox("Contexto demonstrado", ("Vendedor", "Gestor"))
+        options = sorted({row.sales_agent if role == "Vendedor" else row.manager for row in assigned})
+        options = options or ["Sem identidade atribuída"]
+        identity = identity_column.selectbox("Vendedor" if role == "Vendedor" else "Gestor", options)
+        if session.get("view_identity") != (role, identity):
+            session["view_identity"] = (role, identity)
+            session["selection_by_stage"] = {}
+            session["active_table_by_stage"] = {}
+            session["table_reset_by_key"] = {}
+            session["page_by_stage"] = {}
+        region, seller = "Todas as regiões", "Todos da equipe"
+        if role == "Gestor":
+            team = [row for row in assigned if row.manager == identity]
+            region = remaining[0].selectbox("Escritório regional",
+                ["Todas as regiões"] + sorted({row.regional_office for row in team}))
+            regional_team = (team if region == "Todas as regiões" else
+                             [row for row in team if row.regional_office == region])
+            seller = remaining[1].selectbox("Vendedor da equipe",
+                ["Todos da equipe"] + sorted({row.sales_agent for row in regional_team}))
+            st.caption(f"Filtros aplicados: Gestor {identity} · Região {region} · Vendedor {seller}")
+        else:
+            remaining[0].empty()
+            remaining[1].empty()
+            st.caption(f"Filtros aplicados: Vendedor {identity}")
+        if remaining[2].button("Recalcular prioridades", type="primary", width="stretch"):
+            recalculate(session)
     rows = portfolio_rows(bundle, role, identity, region, seller)
-    st.caption(f"Versão {bundle.config_version} · revisão {bundle.source_identity.get('revision') or 'indisponível'} · "
-               f"fingerprint {bundle.fingerprint} · fonte {bundle.source_identity.get('source_digest', '')}")
+    overview = st.columns(4)
+    overview[0].metric("Oportunidades", len(rows), help="Total no recorte selecionado")
+    overview[1].metric("Engaging", sum(row.stage == "Engaging" for row in rows))
+    overview[2].metric("Prospecting", sum(row.stage == "Prospecting" for row in rows))
+    overview[3].metric("Sinais altos", sum(row.band == "alta" for row in rows),
+        help="Contagem descritiva; Engaging e Prospecting mantêm escalas independentes")
+    st.markdown(
+        f'<p class="trace-line">Versão {bundle.config_version} · '
+        f'revisão {bundle.source_identity.get("revision") or "indisponível"} · '
+        f'fingerprint {bundle.fingerprint} · '
+        f'fonte {bundle.source_identity.get("source_digest", "")}</p>',
+        unsafe_allow_html=True)
     unassigned = [row for row in bundle.scores if not row.sales_agent or not row.manager or not row.regional_office]
     if unassigned or bundle.input_diagnostics:
         with st.expander(f"Qualidade dos dados ({len(unassigned)} sem atribuição segura)"):
             if unassigned:
-                st.dataframe(_table(unassigned, "insufficient_data"), hide_index=True, width="stretch")
+                st.dataframe(_table(unassigned, "insufficient_data"), hide_index=True,
+                             width="stretch", column_config=_table_column_config(), row_height=38)
             if bundle.input_diagnostics:
                 st.dataframe(pd.DataFrame({name: [_diagnostic_value(item, name) for item in bundle.input_diagnostics]
                     for name in ("code", "opportunity_id", "reason", "correction")}),

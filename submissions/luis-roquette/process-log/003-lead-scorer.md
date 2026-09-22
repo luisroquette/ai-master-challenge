@@ -1212,3 +1212,28 @@ Luis determinou uma rodada profunda de melhoria do frontend, com foco principal 
 - A lapidação cobrirá hierarquia da informação, tipografia, cores, densidade, espaçamento, estados, navegação, responsividade, microinterações e clareza das decisões apresentadas.
 - Cada mudança seguirá `Planejamento → Revisão → Execução → Teste`; uma melhoria só permanecerá se produzir ganho observável sem degradar uso, desempenho ou compreensão.
 - O resultado será novamente validado no preview local e documentado com decisões, antes/depois, evidências, correções e limitações. O embargo externo continua integralmente vigente.
+
+## I16 — Execução da rodada profunda de frontend, UI e UX — 2026-09-22
+
+### Direção e implementação
+
+A skill `frontend-design` orientou uma direção de **mesa de decisão comercial editorial**: sóbria, densa e memorável, sem alterar regras de negócio. A interface recebeu hierarquia tipográfica, fundo atmosférico leve, paleta de papel/teal, cartões de contexto, filtros agrupados, indicadores executivos, tabelas formatadas, estados e botões coerentes, painel inicial instrutivo e detalhes com fatores em listas legíveis.
+
+Foram preservados os contratos essenciais: tela única, abas Engaging/Prospecting independentes, dataframe nativo selecionável, painel adjacente, rótulos acessíveis, filtros de vendedor/gestor, rastreabilidade visível, ausência honesta de probabilidade em rotas rejeitadas e prioridade temporária exclusiva do gestor.
+
+### Feedback looping e correções
+
+- A primeira revisão visual encontrou a cor primária vermelha herdada do Streamlit, ambiguidade no indicador “Faixa alta” e fatores exibidos como listas Python.
+- A correção aplicou o teal aos CTAs, renomeou o indicador para “Sinais altos” com aviso de escalas independentes e renderizou fatores em listas semânticas; índices e probabilidades passaram a ter formatação de leitura.
+- O primeiro comando Playwright não executou testes: faltava o Chromium `v1243` no cache local. O navegador compatível foi instalado e o mesmo gate focal foi repetido sem skips.
+
+### Evidências e redundância necessária
+
+- `py_compile` e `git diff --check`: verdes.
+- Streamlit AppTest: **4/4** em duas execuções.
+- Contratos de portfólio e sessão: **14/14**.
+- Jornadas Playwright: primeira tentativa com **0 testes** por dependência ambiental ausente; após a correção, **3/3** verdes.
+- Passada limpa 1: inspeção renderizada de vendedor, gestor, Engaging, Prospecting, detalhe e estado vazio, sem novo achado relevante.
+- Passada limpa 2: revisão de contratos, acessibilidade, estados e journeys automatizados, sem novo achado relevante.
+
+O objetivo específico da rodada de UI/UX foi atingido com duas passadas consecutivas sem melhoria relevante. O preflight integral não foi executado nesta rodada e não é reivindicado. Nenhum push, PR, deploy, URL pública ou comunicação aos avaliadores ocorreu; o embargo externo permanece vigente.
