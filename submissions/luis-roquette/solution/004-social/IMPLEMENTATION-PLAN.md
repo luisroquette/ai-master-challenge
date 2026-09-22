@@ -697,7 +697,7 @@ Todos os comandos das Tasks 7–11 partem de `submissions/luis-roquette/solution
 - Produces: `_engagement_drivers(targets: pd.DataFrame, source_hash: str, scope: dict[str, object]) -> dict[str, object]` e `result["engagement_drivers"]` com `evidence_id`, `materiality_threshold_pp`, `contexts`, `leader`, `laggard`, `runner_up`, `verdict` e `change_trigger`.
 - Preserves: `_dimensions`, alertas e fila existentes continuam disponíveis; nenhuma média marginal vira prova causal.
 
-- [ ] **Step 1: Criar fixtures mensais determinísticas**
+- [x] **Step 1: Criar fixtures mensais determinísticas**
 
 Adicionar a `tests/helpers.py`:
 
@@ -715,7 +715,7 @@ def default_scope_all_history(rows: list[dict[str, object]]) -> dict[str, object
 
 A fixture usa creators `target-a-0..4`/`target-b-0..4` e `peer-a-0..4`/`peer-b-0..4`, alternando `a` e `b` por mês, para satisfazer cinco creators em cada braço mensal e dez no contexto completo. Ela deve permitir três casos: sinal positivo estável e material; sinais mensais alternados; sinal estável abaixo do limiar prático. Com `concentrated=True`, mantém pelo menos dez creators no conjunto e cinco por braço/mês, mas concentra pelo menos 78 dos 90 posts elegíveis em um creator para reduzir somente o fator de concentração.
 
-- [ ] **Step 2: Escrever os testes vermelhos do contrato**
+- [x] **Step 2: Escrever os testes vermelhos do contrato**
 
 Adicionar a `test_analysis.py`:
 
@@ -763,7 +763,7 @@ def test_driver_ranking_is_stable_under_row_shuffle_and_exact_tie(self):
 
 `duplicate_driver_context` copia alvo e par com IDs/creators exclusivos e troca a plataforma, preservando deltas, volumes e datas; assim, os conjuntos comparáveis permanecem isolados e o desempate final depende apenas de `context_signature`, não da ordem das linhas.
 
-- [ ] **Step 3: Executar os testes e confirmar o vermelho correto**
+- [x] **Step 3: Executar os testes e confirmar o vermelho correto**
 
 Run:
 
@@ -777,7 +777,7 @@ uv run --with-requirements requirements.txt python -m unittest \
 
 Expected: FAIL porque `engagement_drivers` e `driver_rows` ainda não existem; nenhuma falha de parsing da fixture.
 
-- [ ] **Step 4: Implementar o ranking mínimo no motor existente**
+- [x] **Step 4: Implementar o ranking mínimo no motor existente**
 
 Implementar em `analysis.py` sem nova classe/dependência:
 
@@ -798,11 +798,11 @@ is_laggard = eligible and median_delta <= -materiality and stability >= 2 / 3 an
 
 Para cada mês, `target_month` contém o contexto completo; `peer_month` contém outros formatos/categorias da mesma plataforma/faixa/mês e exclui os IDs do alvo. Cada braço precisa de 30 taxas e cinco creators. `context_rows` e `peer_rows` concatenam somente os braços dos meses elegíveis; a força reutiliza `_strength` e toma o menor braço, sem fórmula paralela. Ordenar candidatos positivos por `is_leader desc, stability desc, strength desc, median_delta desc, posts desc, context_signature asc`; ordenar negativos separadamente por `is_laggard desc, stability desc, strength desc, median_delta asc, posts desc, context_signature asc`. `runner_up` é o segundo positivo elegível, mesmo quando não há vencedor; `laggard` só existe quando passa os gates negativos. Guardar amostras, creators, meses, ERv/volumes de alvo e par, deltas mensais e referências. `volume_guard` compara medianas por post de views e interações: `aligned` quando ambos os deltas são não negativos; `tradeoff` caso contrário. O guard não altera o ranking por ERv, mas aparece obrigatoriamente no veredicto para impedir que taxa maior seja comunicada como maior alcance absoluto.
 
-- [ ] **Step 5: Integrar ao resultado e versionar o método**
+- [x] **Step 5: Integrar ao resultado e versionar o método**
 
 Adicionar `"engagement_drivers": _engagement_drivers(...)` ao retorno de `analyze`. Alterar `METHOD_VERSION` para `2.5.0` e acrescentar `2.4.0` a `HISTORICAL_METHOD_VERSIONS`; comparações automáticas de outcomes entre 2.4.0 e 2.5.0 continuam bloqueadas.
 
-- [ ] **Step 6: Rodar regressões focais e commit**
+- [x] **Step 6: Rodar regressões focais e commit**
 
 Run:
 

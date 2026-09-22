@@ -23,8 +23,8 @@ from typing import Any
 import pandas as pd
 
 
-METHOD_VERSION = "2.4.0"
-HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0", "2.2.0", "2.3.0")
+METHOD_VERSION = "2.5.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0", "2.2.0", "2.3.0", "2.4.0")
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
 MIN_OPERATIONAL_DATE = pd.Timestamp("1971-01-01T00:00:00")
@@ -72,6 +72,7 @@ OPTIONAL_COLUMNS = (
 METRIC_COLUMNS = ("views", "likes", "shares", "comments_count", "follower_count")
 CORE_KEYS = ("platform", "content_type", "content_category", "follower_band", "is_sponsored")
 GROUP_KEYS = ("platform", "content_type", "content_category", "follower_band")
+DRIVER_KEYS = GROUP_KEYS
 SPONSORSHIP_KEYS = (*GROUP_KEYS, "period_month")
 AUDIENCE_KEYS = (
     "audience_age_distribution",
@@ -642,6 +643,165 @@ def _sponsorship(
     }
 
 
+def _engagement_drivers(
+    targets: pd.DataFrame, source_hash: str, scope: dict[str, object]
+) -> dict[str, object]:
+    organic = targets.loc[(~targets["is_sponsored"]) & targets["erv"].notna()]
+    global_iqr = (
+        float(organic["erv"].quantile(0.75) - organic["erv"].quantile(0.25))
+        if len(organic)
+        else 0.0
+    )
+    materiality = max(0.10, 0.25 * global_iqr)
+    monthly_pools = {
+        (str(platform), str(band), str(month)): group
+        for (platform, band, month), group in organic.groupby(
+            ["platform", "follower_band", "period_month"], dropna=False, sort=True
+        )
+    }
+    contexts: list[dict[str, object]] = []
+    for key, all_context_rows in organic.groupby(list(DRIVER_KEYS), dropna=False, sort=True):
+        context = dict(zip(DRIVER_KEYS, key, strict=True))
+        target_frames: list[pd.DataFrame] = []
+        peer_frames: list[pd.DataFrame] = []
+        monthly: list[dict[str, object]] = []
+        for month, target_month in all_context_rows.groupby("period_month", sort=True):
+            peer_month = monthly_pools[(str(context["platform"]), str(context["follower_band"]), str(month))]
+            peer_month = peer_month.loc[
+                ~(
+                    peer_month["content_type"].eq(context["content_type"])
+                    & peer_month["content_category"].eq(context["content_category"])
+                )
+            ]
+            if (
+                len(target_month) < 30
+                or target_month["creator_id"].nunique() < 5
+                or len(peer_month) < 30
+                or peer_month["creator_id"].nunique() < 5
+            ):
+                continue
+            target_frames.append(target_month)
+            peer_frames.append(peer_month)
+            monthly.append(
+                {
+                    "period_month": str(month),
+                    "target_posts": int(len(target_month)),
+                    "target_creators": int(target_month["creator_id"].nunique()),
+                    "peer_posts": int(len(peer_month)),
+                    "peer_creators": int(peer_month["creator_id"].nunique()),
+                    "target_median_erv": float(target_month["erv"].median()),
+                    "peer_median_erv": float(peer_month["erv"].median()),
+                    "delta_erv_pp": float(target_month["erv"].median() - peer_month["erv"].median()),
+                }
+            )
+        if not monthly:
+            continue
+        context_rows = pd.concat(target_frames, ignore_index=False)
+        peer_rows = pd.concat(peer_frames, ignore_index=False)
+        monthly_deltas = [float(item["delta_erv_pp"]) for item in monthly]
+        median_delta = float(pd.Series(monthly_deltas).median())
+        same_sign_months = sum(
+            (value > 0) == (median_delta > 0) for value in monthly_deltas if value != 0
+        )
+        stability = same_sign_months / len(monthly_deltas)
+        strength = min(_strength(context_rows)[0], _strength(peer_rows)[0])
+        eligible = (
+            len(monthly) >= 3
+            and len(context_rows) >= 90
+            and context_rows["creator_id"].nunique() >= 10
+        )
+        is_leader = eligible and median_delta >= materiality and stability >= 2 / 3 and strength >= 0.40
+        is_laggard = eligible and median_delta <= -materiality and stability >= 2 / 3 and strength >= 0.40
+        target_views = float(context_rows["views"].median())
+        peer_views = float(peer_rows["views"].median())
+        target_interactions = float(context_rows["interactions"].median())
+        peer_interactions = float(peer_rows["interactions"].median())
+        delta_views = target_views - peer_views
+        delta_interactions = target_interactions - peer_interactions
+        signature = json.dumps(context, ensure_ascii=False, sort_keys=True, default=str)
+        evidence_id = _stable_id(
+            "driver",
+            source_hash,
+            {"scope": scope, "context": context, "statistic": "median_monthly_peer_erv_difference"},
+        )
+        contexts.append(
+            {
+                "evidence_id": evidence_id,
+                "context": context,
+                "context_signature": signature,
+                "eligible": eligible,
+                "eligible_months": len(monthly),
+                "months": monthly,
+                "posts": int(len(context_rows)),
+                "creators": int(context_rows["creator_id"].nunique()),
+                "peer_posts": int(len(peer_rows)),
+                "peer_creators": int(peer_rows["creator_id"].nunique()),
+                "median_delta_erv_pp": median_delta,
+                "stability": stability,
+                "strength": strength,
+                "strength_label": _strength_label(strength),
+                "materiality_threshold_pp": materiality,
+                "is_leader": is_leader,
+                "is_laggard": is_laggard,
+                "target": _summary(context_rows),
+                "peer": _summary(peer_rows),
+                "volume_guard": {
+                    "target_median_views": target_views,
+                    "peer_median_views": peer_views,
+                    "delta_views": delta_views,
+                    "target_median_interactions": target_interactions,
+                    "peer_median_interactions": peer_interactions,
+                    "delta_interactions": delta_interactions,
+                    "status": "aligned" if delta_views >= 0 and delta_interactions >= 0 else "tradeoff",
+                },
+                "target_source_row_ids": sorted(context_rows["source_row_id"].astype(str)),
+                "peer_source_row_ids": sorted(peer_rows["source_row_id"].astype(str)),
+            }
+        )
+
+    positive = sorted(
+        (item for item in contexts if item["eligible"] and float(item["median_delta_erv_pp"]) > 0),
+        key=lambda item: (
+            not bool(item["is_leader"]),
+            -float(item["stability"]),
+            -float(item["strength"]),
+            -float(item["median_delta_erv_pp"]),
+            -int(item["posts"]),
+            str(item["context_signature"]),
+        ),
+    )
+    negative = sorted(
+        (item for item in contexts if item["eligible"] and float(item["median_delta_erv_pp"]) < 0),
+        key=lambda item: (
+            not bool(item["is_laggard"]),
+            -float(item["stability"]),
+            -float(item["strength"]),
+            float(item["median_delta_erv_pp"]),
+            -int(item["posts"]),
+            str(item["context_signature"]),
+        ),
+    )
+    contexts.sort(key=lambda item: str(item["context_signature"]))
+    leader = next((item for item in positive if item["is_leader"]), None)
+    laggard = next((item for item in negative if item["is_laggard"]), None)
+    return {
+        "evidence_id": _stable_id(
+            "driver-overview",
+            source_hash,
+            {"scope": scope, "statistic": "stable_multivariate_organic_contexts"},
+        ),
+        "materiality_threshold_pp": materiality,
+        "contexts": contexts,
+        "leader": leader,
+        "laggard": laggard,
+        "runner_up": positive[1] if len(positive) > 1 else None,
+        "verdict": "stable_winner" if leader else "no_sustained_winner",
+        "change_trigger": (
+            "Reavaliar quando houver três meses elegíveis, efeito material, estabilidade >=2/3 e força >=0,40."
+        ),
+    }
+
+
 def _p95(values: pd.Series) -> float:
     if values.empty:
         return 0.0
@@ -1057,6 +1217,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         )
 
     sponsorship = _sponsorship(targets, source_hash, scope_identity)
+    engagement_drivers = _engagement_drivers(targets, source_hash, scope_identity)
     editorial = _editorial(filtered_frame, start, end_exclusive, source_hash, scope_identity)
     candidates: list[dict[str, object]] = []
 
@@ -1309,6 +1470,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         "cohorts": {"editorial": editorial},
         "alerts": alerts,
         "sponsorship": sponsorship,
+        "engagement_drivers": engagement_drivers,
         "recommendations": recommendations,
         "all_recommendations": all_recommendations,
         "evidence_snapshots": {
@@ -1714,8 +1876,8 @@ def executive_answers(result: dict[str, object]) -> list[dict[str, str]]:
         leader = max(formats, key=lambda item: (float(item["median_erv"]), str(item.get("value", ""))))
         trailer = min(formats, key=lambda item: (float(item["median_erv"]), str(item.get("value", ""))))
         spread = float(leader["median_erv"]) - float(trailer["median_erv"])
-        leader_label = format_labels.get(str(leader["value"]).lower(), str(leader["value"]))
-        trailer_label = format_labels.get(str(trailer["value"]).lower(), str(trailer["value"]))
+        leader_label = _short(format_labels.get(str(leader["value"]).lower(), str(leader["value"])), 80)
+        trailer_label = _short(format_labels.get(str(trailer["value"]).lower(), str(trailer["value"])), 80)
         engagement = {
             "question": "O que gera engajamento?",
             "verdict": f"NÃO HÁ DRIVER CAUSAL COMPROVADO; {leader_label.upper()} LIDERA NUMERICAMENTE",

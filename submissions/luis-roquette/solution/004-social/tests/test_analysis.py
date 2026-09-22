@@ -14,6 +14,9 @@ from tests.helpers import (
     concentrated_reference,
     csv_bytes,
     default_scope,
+    default_scope_all_history,
+    driver_rows,
+    duplicate_driver_context,
     frame_from_rows,
     frame_with_target,
     make_cohort,
@@ -333,6 +336,49 @@ class CsvBoundaryTests(unittest.TestCase):
 
 
 class ContextEvidenceTests(unittest.TestCase):
+    def test_driver_ranking_requires_multivariate_peers_and_three_eligible_months(self):
+        rows = driver_rows([1.0, 1.2, 0.8])
+        result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+        leader = result["engagement_drivers"]["leader"]
+        self.assertEqual(leader["context"], {
+            "platform": "Instagram", "content_type": "text",
+            "content_category": "tech", "follower_band": "10,000–49,999",
+        })
+        self.assertEqual(leader["eligible_months"], 3)
+        self.assertGreaterEqual(leader["stability"], 2 / 3)
+        self.assertEqual(set(leader["volume_guard"]), {
+            "target_median_views", "peer_median_views", "delta_views",
+            "target_median_interactions", "peer_median_interactions", "delta_interactions",
+            "status",
+        })
+        self.assertEqual(result["engagement_drivers"]["laggard"]["context"]["content_type"], "video")
+
+    def test_driver_ranking_abstains_for_unstable_or_immaterial_effect(self):
+        for deltas in ([1.0, -1.0, 1.0, -1.0], [0.01, 0.02, 0.01]):
+            with self.subTest(deltas=deltas):
+                rows = driver_rows(list(deltas))
+                ranking = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")["engagement_drivers"]
+                self.assertIsNone(ranking["leader"])
+                self.assertEqual(ranking["verdict"], "no_sustained_winner")
+
+    def test_driver_strength_penalizes_creator_concentration(self):
+        balanced_rows = driver_rows([1, 1, 1])
+        concentrated_rows = driver_rows([1, 1, 1], concentrated=True)
+        balanced = analyze(frame_from_rows(balanced_rows), default_scope_all_history(balanced_rows), "hash")
+        concentrated = analyze(frame_from_rows(concentrated_rows), default_scope_all_history(concentrated_rows), "hash")
+        balanced_text = next(item for item in balanced["engagement_drivers"]["contexts"] if item["context"]["content_type"] == "text")
+        concentrated_text = next(item for item in concentrated["engagement_drivers"]["contexts"] if item["context"]["content_type"] == "text")
+        self.assertGreater(balanced_text["strength"], concentrated_text["strength"])
+
+    def test_driver_ranking_is_stable_under_row_shuffle_and_exact_tie(self):
+        rows = driver_rows([1, 1, 1])
+        tied = duplicate_driver_context(rows, platform="TikTok")
+        first_rows = rows + tied
+        frame = frame_from_rows(first_rows)
+        first = analyze(frame, default_scope_all_history(first_rows), "hash")
+        second = analyze(frame.iloc[::-1].copy(), default_scope_all_history(first_rows), "hash")
+        self.assertEqual(first["engagement_drivers"], second["engagement_drivers"])
+
     def test_editorial_uses_same_platform_and_audience_filter_universe(self):
         frames = []
         for platform, location in (("Instagram", "BR"), ("TikTok", "BR"), ("TikTok", "US")):
@@ -680,7 +726,7 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(first_id, equivalent["dimensions"]["platform"][0]["evidence_id"])
         self.assertNotEqual(first_id, changed["dimensions"]["platform"][0]["evidence_id"])
         self.assertEqual(first["scope"]["method_version"], METHOD_VERSION)
-        self.assertEqual(METHOD_VERSION, "2.4.0")
+        self.assertEqual(METHOD_VERSION, "2.5.0")
 
     def test_insufficiency_diagnostics_and_source_rate_warning_are_preserved(self):
         frame = frame_with_target(make_cohort(4, 6, [4]), 20)

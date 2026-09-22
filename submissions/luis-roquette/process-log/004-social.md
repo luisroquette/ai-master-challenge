@@ -885,3 +885,12 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Passada 13 (`clean=false`):** a Task 11 ainda não trazia resultados esperados e usava um placeholder no preflight remoto. Foram registrados resultados terminais e o comando canônico completo via `codespace-manager`; contador reiniciado para `0/2`.
 - **Passadas 14 e 15 (`clean=true`):** duas revisões consecutivas não encontraram nova correção ou otimização substancial. O goal foi atingido em `2/2` passadas limpas.
 - **Estado de encerramento:** planejamento e documentação concluídos; implementação das Tasks 7–11 ainda não iniciada. Nesta etapa não houve alteração de runtime, suíte, preflight, push, PR, deploy ou API paga. `.claude/`, `.specs/` e `skills-lock.json` permaneceram locais e fora do commit.
+
+## I64 — Feedback looping, Task 7: ranking multivariado estável — 2026-09-22
+
+- **Planejamento e revisão:** a implementação começou pelo contrato TDD da Task 7. A revisão da fixture mostrou que cinco creators alternados deixariam a força abaixo de `0,40`; o conjunto balanceado passou a usar dez creators por mês, mantendo o mínimo de 30 posts por braço/mês.
+- **Teste vermelho:** quatro testes falharam exclusivamente por ausência de `engagement_drivers`, confirmando o ponto correto de implementação.
+- **Execução:** o motor passou a comparar contextos orgânicos `platform + content_type + content_category + follower_band` contra outros formatos/categorias da mesma plataforma/faixa/mês. O método `2.5.0` registra materialidade, estabilidade, força, amostras, referências, volume guard, líder, vice e pior contexto sem alegar causalidade.
+- **Feedback 1:** o teste de determinismo reserializava o CSV invertido e mudava corretamente o hash/IDs de origem. O harness foi corrigido para embaralhar o DataFrame já carregado, preservando identidades.
+- **Feedback 2:** a regressão ampla encontrou uma expectativa fixa em `2.4.0` e um rótulo externo ilimitado no resumo executivo. A expectativa migrou para `2.5.0`; a saída visível reutiliza `_short`, enquanto o valor integral permanece nos dados/export.
+- **Validação:** `ContextEvidenceTests + ReconstructionTests` aprovou **41/41**; `py_compile` e `git diff --check` passaram. Task 7 validada antes do avanço; sem preflight pesado, push, PR ou deploy.

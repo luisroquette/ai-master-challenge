@@ -233,3 +233,56 @@ def monthly_sponsorship_frequency_rows(
                 )
             )
     return frame_from_rows(rows)
+
+
+def driver_rows(month_deltas: list[float], *, concentrated: bool = False) -> list[dict[str, object]]:
+    """Build monthly organic text targets and video peers with exact ERv deltas."""
+    rows: list[dict[str, object]] = []
+    for month_index, delta in enumerate(month_deltas, start=1):
+        for content_type, erv in (("text", 5.0 + delta), ("video", 5.0)):
+            arm = "target" if content_type == "text" else "peer"
+            for index in range(30):
+                if concentrated:
+                    creator = f"{arm}-dominant" if index < 26 else f"{arm}-{month_index}-{index}"
+                else:
+                    creator = f"{arm}-{index % 10}"
+                marker = f"driver-{month_index}-{content_type}-{index}"
+                rows.append(
+                    make_post(
+                        id=marker,
+                        content_id=f"content-{marker}",
+                        creator_id=creator,
+                        content_type=content_type,
+                        content_category="tech",
+                        post_date=f"2025-{month_index:02d}-{1 + index % 28:02d}T12:00:00",
+                        views=10_000,
+                        likes=int(round(erv * 100)),
+                        shares=0,
+                        comments_count=0,
+                        is_sponsored="FALSE",
+                    )
+                )
+    return rows
+
+
+def duplicate_driver_context(rows: list[dict[str, object]], **overrides: object) -> list[dict[str, object]]:
+    duplicated: list[dict[str, object]] = []
+    for row in rows:
+        copied = dict(row)
+        copied.update(overrides)
+        copied["id"] = f"duplicate-{row['id']}"
+        copied["content_id"] = f"duplicate-{row['content_id']}"
+        copied["creator_id"] = f"duplicate-{row['creator_id']}"
+        duplicated.append(copied)
+    return duplicated
+
+
+def default_scope_all_history(rows: list[dict[str, object]]) -> dict[str, object]:
+    dates = [str(row["post_date"]) for row in rows]
+    return {
+        "target_start": min(dates),
+        "target_end": max(dates),
+        "reference_date": max(dates),
+        "filters": {},
+        "include_post_alerts": False,
+    }
