@@ -1179,6 +1179,19 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   corte foi feito porque os contratos existentes são necessários para os gates seguros.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
 
+## I73 — Redundância Necessária R8: CLEAN — 2026-09-22
+
+- **Base auditada:** SHA `a687ec26b203b8785940d58aa57f0bbd16407bf4`.
+- **Resultado:** `CLEAN`; nenhuma nova correção, melhoria ou otimização relevante foi
+  encontrada na regressão da rodada.
+- **Verificação:** 4 testes passaram; Ruff e `git diff --check` passaram. O doctor local
+  detectou ambiente divergente e orientou corretamente executar o setup, sem alegar que o
+  ambiente local estava pronto.
+- **Limites preservados:** preflight terminal não executado/não verde; PR obrigatório de
+  submissão ainda pendente; CK-12 permanece validação futura opcional, com drafts bloqueados.
+- **Streak e encerramento:** `2/2` rodadas limpas consecutivas. A etapa de Redundância
+  Necessária está encerrada.
+
 ## I68 — Redundância Necessária R3: NOT CLEAN — 2026-09-22
 
 - **Resultado da rodada:** `NOT CLEAN`, com um único achado Low; streak reiniciado em
