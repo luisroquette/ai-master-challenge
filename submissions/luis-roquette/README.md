@@ -14,7 +14,7 @@ Construí uma aplicação Streamlit que transforma 8.800 oportunidades reais em 
 
 1. **Experiência guiada:** após clonar o repositório, rode `python3 -m http.server 50400 --directory submissions/luis-roquette` e abra `http://127.0.0.1:50400/delivery/`.
 2. **Produto funcional:** siga o [setup e o preflight do Lead Scorer](solution/003-lead-scorer/README.md).
-3. **Construção visual:** veja o [vídeo de 5:48](delivery/assets/video-notebooklm.mp4), o [infográfico](delivery/assets/infografico-notebooklm.png) e o [mapa mental](delivery/assets/mapa-mental-notebooklm.png).
+3. **Construção visual:** veja o [walkthrough humano legendado de 6:05](delivery/assets/video-construcao-legendado.mp4), o [resumo audiovisual do NotebookLM de 5:48](delivery/assets/video-notebooklm.mp4), o [infográfico](delivery/assets/infografico-notebooklm.png) e o [mapa mental](delivery/assets/mapa-mental-notebooklm.png).
 
 ## Solução
 

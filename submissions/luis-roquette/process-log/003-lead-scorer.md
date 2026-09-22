@@ -1507,3 +1507,15 @@ Luis autorizou iniciar a entrega oficial “como manda o figurino”. Antes de q
 - Os diretórios `__pycache__` encontrados são locais e ignorados; não fazem parte do diff. O whitespace apontado nos CSVs pertence ao snapshot CC0 preservado por checksum e não será reescrito.
 
 Nenhum push, reabertura de PR, deploy ou contato com avaliadores ocorreu nesta etapa. A primeira transmissão externa permanece condicionada à confirmação de Luis imediatamente antes da ação.
+
+## I33 — Incorporação do walkthrough humano legendado — 2026-09-22
+
+Luis entregou a gravação final legendada e acelerada em 1,25× para integrar o pacote antes da publicação. O arquivo original tinha 233 MB, acima do limite individual de 100 MB do GitHub, e não poderia compor o PR nesse estado.
+
+- A versão de entrega foi transcodificada localmente para H.264/AAC, 1280 × 720, 30 fps e 86,8 MB, sem chamada de API externa.
+- A duração final é 6min05s; a decodificação integral terminou sem erro e quadros distribuídos pelo vídeo confirmaram imagem e legendas visíveis.
+- O walkthrough humano passou a ser o vídeo principal da experiência guiada.
+- O vídeo de 5min48s produzido no NotebookLM foi preservado como material complementar, mantendo a evidência visual originalmente planejada.
+- README, portal e links finais foram atualizados sem criar uma nova etapa ou ampliar a navegação de doze telas.
+
+Nenhum push, reabertura de PR, deploy ou contato com avaliadores ocorreu durante a incorporação.
