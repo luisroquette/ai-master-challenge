@@ -23,8 +23,8 @@ from typing import Any
 import pandas as pd
 
 
-METHOD_VERSION = "2.2.0"
-HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0")
+METHOD_VERSION = "2.3.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0", "2.0.0", "2.1.0", "2.2.0")
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
 MIN_OPERATIONAL_DATE = pd.Timestamp("1971-01-01T00:00:00")
@@ -1199,7 +1199,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
     recommendations = all_recommendations[:3]
 
     evidence_by_id = {item["evidence_id"]: item for item in [*alerts, *editorial, *sponsorship["strata"]]}
-    for recommendation in all_recommendations:
+    for rank, recommendation in enumerate(all_recommendations, 1):
         snapshot = deepcopy(recommendation["evidence_snapshot"])
         family = snapshot["family"]
         evidence = evidence_by_id[snapshot["evidence_id"]]
@@ -1232,7 +1232,9 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         else:
             comparator = _context_rows(targets, {**context, "is_sponsored": False}).dropna(subset=["erv"])
             references = {"target": aggregate["source_row_ids"], "comparator": sorted(comparator["source_row_id"].astype(str))}
-        snapshot.update({"source_hash": source_hash, "strength": evidence["strength"],
+        snapshot.update({"recommendation": {"rank": rank, **deepcopy({
+                             key: value for key, value in recommendation.items() if key != "evidence_snapshot"})},
+                         "source_hash": source_hash, "strength": evidence["strength"],
                          "strength_label": evidence.get("strength_label", _strength_label(evidence["strength"])),
                          "delta_erv_pp": evidence["delta_erv_pp"], "references": references,
                          "observation_contract": contract, "context_aggregate": aggregate})
@@ -1471,7 +1473,7 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
     for index, uncovered in enumerate(result.get("sponsorship", {}).get("uncovered_strata", [])):
         yield from analytical_row("sponsorship_uncovered", f"uncovered-{index + 1}", statistics=uncovered, context={key: uncovered[key] for key in SPONSORSHIP_KEYS})
 
-    for rank, item in enumerate(result.get("recommendations", []), start=1):
+    for rank, item in enumerate(result.get("all_recommendations", result.get("recommendations", [])), start=1):
         yield from analytical_row("recommendation", str(item["evidence_id"]), rank=rank,
                   **{name: item.get(name) for name in ("recommendation_key", "priority", "priority_values", "normalization", "delta_erv_pp", "representative_date", "context", "action", "action_type", "topic", "metric", "owner", "execution_window", "review_window", "frequency_hypothesis")},
                   **item.get("priority_components", {}),
@@ -1681,7 +1683,8 @@ def analysis_report(result: dict[str, object], decisions: list[dict[str, object]
         return "não definida" if value is None else f"{float(value):.6g}"
 
     lines = ["# Estratégia Social Media — Challenge 004", "", "## Decisão para segunda-feira", "",
-             "Fila única: as recomendações abaixo vêm de `result[recommendations]`, na mesma ordem do HTML e do CSV. "
+             "Fila única: o top 3 abaixo vem de `result[recommendations]`, na mesma ordem do HTML e do início do CSV; "
+             "o CSV preserva a fila completa `result[all_recommendations]`, incluindo as demais ações decidíveis na UI. "
              "São propostas para decisão humana; não executam gasto, publicação ou interrupção.", ""]
     for rank, item in enumerate(result.get("recommendations") or result.get("pending", []), 1):
         lines.append(f"{rank}. {text(_recommendation_text(item))}")

@@ -111,7 +111,7 @@ def verify(raw_path: Path, evidence_path: Path) -> None:
         if context[:-1] not in [value[:-1] for value in unique]:
             unique.append(context)
     queue = [row for row in exported if row["record_type"] == "recommendation"]
-    for row, context in zip(queue, unique[:3], strict=True):
+    for row, context in zip(queue, unique, strict=True):
         assert tuple(json.loads(row["context"])[key] for key in ("platform", "content_type", "content_category", "follower_band", "period_month")) == context
         score, delta, _, values = calculated[context]
         assert math.isclose(float(row["priority"]), score, rel_tol=1e-12)

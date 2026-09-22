@@ -25,16 +25,18 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
             rows = [row for row in csv.DictReader(handle) if row["record_type"] == "recommendation"]
         report = (ROOT / "analysis.md").read_text(encoding="utf-8").split("## O que os dados", 1)[0]
         cited = re.findall(r"Evidência: ([\w-]+)", report)
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(cited, [row["evidence_id"] for row in rows])
+        self.assertGreaterEqual(len(rows), 3)
+        self.assertEqual(cited, [row["evidence_id"] for row in rows[:3]])
         for rank, row in enumerate(rows, 1):
-            self.assertEqual(row["method_version"], "2.2.0")
+            self.assertEqual(row["method_version"], "2.3.0")
             self.assertEqual(int(row["rank"]), rank)
             values, normalization = json.loads(row["priority_values"]), json.loads(row["normalization"])
             impact = sum(min(value / normalization[key], 1) if normalization[key] else 0 for key, value in values.items()) / 3
             self.assertAlmostEqual(float(row["impact"]), impact)
             expected = 100 * impact * float(row["strength"]) * float(row["recency"])
             self.assertAlmostEqual(float(row["priority"]), expected, delta=abs(expected) * 1e-12)
+            if rank > 3:
+                continue
             self.assertIn(f"{expected:.6g}", report)
             frequency = json.loads(row["frequency_hypothesis"])
             self.assertEqual(frequency["status"], "test")
