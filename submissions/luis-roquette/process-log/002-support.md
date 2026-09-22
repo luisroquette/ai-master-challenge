@@ -1486,3 +1486,20 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   `git diff --check` passaram.
 - **Medição após a frente:** diagnóstico `9,5`, automação `9,5`, prova funcional `9,3`;
   média simples `9,4/10`. Crescimento: `+0,2`. O Goal ainda não foi atingido.
+
+## I80 — Goal ≥ 9,5 · Frente 5: prova final e fechamento — 2026-09-22
+
+- **Rastreabilidade:** READMEs e relatório de medição foram atualizados com a resposta
+  executiva, confiabilidade, risco-cobertura, cenários e contrato do piloto.
+- **Gate remoto:** no SHA de aplicação `1dddf03e3bc07464c2574ec43eb1b74f02fa9c2d`, o
+  Codespace reproduziu `8.469` linhas Customer e `47.837` IT; `251` testes passaram em
+  `23,23 s` e Ruff passou sem falhas.
+- **Deploy público:** reboot iniciado às `21:44 UTC`; a aplicação concluiu após cerca de
+  16 minutos sob redução de CPU. “Resposta ao Diretor” abriu como rota inicial.
+- **Prova visual:** navegador confirmou `4.047,83 h`, `0% Customer`, macro-F1 IT
+  `83,51%`, cobertura IT `37,43%`, risco `10,64%`, piloto de `1.000` tickets e todos os
+  critérios go/no-go. Scorecard confirmou cobertura/IC95% e cenário base `625 h/ano`.
+- **Medição final:** diagnóstico `9,6`, automação `9,5`, prova funcional `9,7`; média
+  simples `9,6/10`. Crescimento total desde o baseline: `+1,6`. **Goal ≥9,5 atingido.**
+- **Limite preservado:** nota é avaliação interna baseada na rubrica registrada, não nota
+  prometida pelo avaliador. PR `#141` permanece aberto; não houve merge nem submissão final.

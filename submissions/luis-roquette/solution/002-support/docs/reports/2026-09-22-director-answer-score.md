@@ -15,6 +15,7 @@ próxima decisão executável; aparência visual isolada não aumenta a nota.
 | Confiabilidade e IC95% | 9,5 | 7,7 | 8,8 | 8,7 |
 | Risco-cobertura por domínio | 9,5 | 9,2 | 9,0 | 9,2 |
 | Impacto e contrato do piloto | 9,5 | 9,5 | 9,3 | 9,4 |
+| Gate remoto + prova pública | 9,6 | 9,5 | 9,7 | **9,6** |
 
 ## Evidência que fecha o Goal
 
@@ -28,5 +29,7 @@ próxima decisão executável; aparência visual isolada não aumenta a nota.
 
 ## Condição para nota final
 
-A nota `≥9,5` só é registrada após os testes canônicos e a navegação pública confirmarem
-essas evidências no mesmo SHA. Até lá, a medição válida permanece `9,4/10`.
+A nota `9,6/10` foi registrada após `251` testes e Ruff passarem no Codespace sobre o SHA
+de aplicação `1dddf03e3bc07464c2574ec43eb1b74f02fa9c2d`, seguido da confirmação pública das
+duas telas executivas. É uma avaliação interna pela rubrica acima, não uma nota prometida
+pelo avaliador.
