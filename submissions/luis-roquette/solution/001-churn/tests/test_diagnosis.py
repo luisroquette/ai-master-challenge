@@ -65,6 +65,13 @@ def test_unstable_candidate_is_not_ranked(candidate_frames) -> None:
     unstable = findings.loc[findings.finding_id.eq("F-product-usage-drop")].iloc[0]
     assert unstable["confidence"] == "inconclusive"
     assert pd.isna(unstable["priority_rank"])
+    assert unstable["diagnostic_cutoff"] == pd.Timestamp("2024-11-30")
+    assert unstable["horizon_days"] == 30
+    assert unstable["exposure_rule"] == "usage_change_30_vs_90 le -0.3"
+    assert unstable["diagnostic_exposed_accounts"] >= unstable["diagnostic_exposed_churns"]
+    assert (
+        unstable["counterevidence"] == "O modelo estatístico não produziu uma estimativa estável."
+    )
 
 
 def test_rank_uses_mrr_then_reach_then_actionability(accepted_findings) -> None:

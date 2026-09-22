@@ -1124,5 +1124,5 @@ Confirm that process logs `000`, `001` and `002` plus setup evidence are present
 - [x] No paid API, secret, external database or production-only dependency exists.
 - [x] `make reproduce` and `make check` are sufficient from a clean Python 3.12 environment.
 - [x] The dashboard starts from the repository root with the exact runtime pins in `requirements.txt` and no apt package.
-- [ ] Process logs contain actual prompts, mistakes, corrections, commands and validation evidence.
+- [x] Process logs contain actual prompts, mistakes, corrections, commands and validation evidence.
 - [x] Only files under `submissions/luis-roquette/` are changed.

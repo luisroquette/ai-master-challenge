@@ -82,7 +82,8 @@ As datas contraditórias limitam inferência; feedback textual é usado apenas r
 ## Solução de problemas
 
 - `Python 3.12 ou uv é obrigatório`: instale um deles e repita `make setup`.
-- `checksum mismatch`: não edite `artifacts/`; execute `make reproduce`.
+- `ravenstack_*.csv: checksum mismatch`: restaure os dados brutos oficiais e repita `make reproduce`.
+- `findings.csv checksum mismatch` (ou outro artefato): não edite `artifacts/`; execute `make reproduce`.
 - `Artefatos inválidos` no app: conclua `make reproduce` antes de `make app`.
 - wheel ausente: confirme Python 3.12; as versões fixadas possuem wheels Linux e macOS.
 

@@ -235,8 +235,15 @@ with evidence_tab:
             "ci_high",
             effect_column,
             "sensitivity_delta",
+            "diagnostic_cutoff",
+            "horizon_days",
+            "exposure_rule",
+            "diagnostic_exposed_accounts",
+            "diagnostic_exposed_churns",
+            "candidate_coverage",
             "source_tables",
             "confidence",
+            "counterevidence",
             "limitation",
         )
         if column in evidence
@@ -253,8 +260,15 @@ with evidence_tab:
                 "ci_high": "IC superior",
                 effect_column: "Efeito selecionado",
                 "sensitivity_delta": "Diferença entre cronologias",
+                "diagnostic_cutoff": "Cutoff diagnóstico",
+                "horizon_days": "Horizonte em dias",
+                "exposure_rule": "Regra de exposição",
+                "diagnostic_exposed_accounts": "Contas expostas no diagnóstico",
+                "diagnostic_exposed_churns": "Churns entre expostas",
+                "candidate_coverage": "Cobertura da variável",
                 "source_tables": "Tabelas-fonte",
                 "confidence": "Elegibilidade",
+                "counterevidence": "Contraevidência",
                 "limitation": "Limitação",
             }
         )
@@ -302,6 +316,10 @@ with queue_tab:
     finding_filter = st.selectbox(
         "Sinal",
         ["Todos", *finding_values],
+        format_func=lambda value: {
+            **FINDING_LABELS,
+            "validation-only": "Validação descritiva",
+        }.get(value, value),
         key="finding_filter",
     )
     if is_watchlist:
@@ -312,11 +330,21 @@ with queue_tab:
         priorities = sorted(operational["priority"].dropna().unique())
         priority_filter = st.multiselect("Prioridade", priorities, default=priorities)
     plan_values = sorted(operational["plan_tier"].dropna().astype(str).unique())
-    plan_filter = st.multiselect("Plano", plan_values, default=plan_values)
+    plan_filter = st.multiselect(
+        "Plano",
+        plan_values,
+        default=plan_values,
+        format_func=lambda value: SEGMENT_LABELS.get(value, value),
+    )
     mrr_values = [
         value for value in ("low", "mid", "high") if value in set(operational["mrr_band"])
     ]
-    mrr_filter = st.multiselect("Faixa de MRR", mrr_values, default=mrr_values)
+    mrr_filter = st.multiselect(
+        "Faixa de MRR",
+        mrr_values,
+        default=mrr_values,
+        format_func=lambda value: MRR_BAND_LABELS.get(value, value),
+    )
     filtered = operational.copy()
     if finding_filter != "Todos":
         filtered = filtered.loc[filtered["finding_id"].eq(finding_filter)]

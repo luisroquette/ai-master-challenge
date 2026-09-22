@@ -602,6 +602,8 @@ def validate_artifact_set(output_dir: Path) -> dict[str, object]:
         raise ArtifactConsistencyError("run_manifest.json missing")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     checksums = manifest.get("artifact_checksums", {})
+    if not isinstance(checksums, dict):
+        raise ArtifactConsistencyError("artifact_checksums must be an object")
     if set(checksums) != EXPECTED_ARTIFACT_FILENAMES:
         raise ArtifactConsistencyError("artifact manifest is incomplete or has unknown files")
     for filename, expected in checksums.items():

@@ -325,6 +325,29 @@ def evaluate_candidates(
             else pd.Series(False, index=scoring.index)
         )
         exposed_scoring = scoring.loc[scoring_exposure].drop_duplicates("account_id")
+        diagnostic_churns = int(exposed_snapshot["churn_next_30d"].sum())
+        if str(failure_reason).startswith("model_failure"):
+            counterevidence = "O modelo estatístico não produziu uma estimativa estável."
+        elif failure_reason == "chronology_instability":
+            counterevidence = (
+                f"Efeito observed={observed_effect:.3f}, strict={strict_effect:.3f}, "
+                f"delta={sensitivity_delta:.3f}."
+            )
+        elif failure_reason == "sample_or_coverage_gate":
+            counterevidence = (
+                f"Amostra exposta={len(exposed_snapshot)}, churns={diagnostic_churns}, "
+                f"cobertura={strict_fit.get('coverage', 0.0):.3f}."
+            )
+        elif failure_reason == "cross_table_gate":
+            counterevidence = "Os motivos do primeiro churn não corroboraram o sinal."
+        elif failure_reason == "association_gate":
+            counterevidence = (
+                f"OR={strict_fit.get('odds_ratio', np.nan):.3f}; intervalo de 95%="
+                f"[{strict_fit.get('ci_low', np.nan):.3f}, "
+                f"{strict_fit.get('ci_high', np.nan):.3f}]."
+            )
+        else:
+            counterevidence = "Efeito, intervalo e cronologias passaram os gates definidos."
         actions = ACTIONS[driver_group]
         rows.append(
             {
@@ -338,12 +361,18 @@ def evaluate_candidates(
                 "observed_effect": observed_effect,
                 "strict_effect": strict_effect,
                 "sensitivity_delta": sensitivity_delta,
+                "diagnostic_cutoff": strict_snapshot["cutoff"].max(),
+                "horizon_days": 30,
+                "exposure_rule": f"{feature} {operator} {threshold}",
+                "diagnostic_exposed_accounts": len(exposed_snapshot),
+                "diagnostic_exposed_churns": diagnostic_churns,
+                "candidate_coverage": strict_fit.get("coverage", 0.0),
                 "source_tables": "accounts|subscriptions|feature_usage|support_tickets|churn_events",
                 "affected_accounts": len(exposed_scoring),
                 "mrr_exposed_max": float(exposed_scoring["mrr_active"].sum()),
                 "confidence": "accepted" if accepted else "inconclusive",
                 "failure_reason": failure_reason,
-                "counterevidence": "A leitura observed/strict e o intervalo são mantidos juntos.",
+                "counterevidence": counterevidence,
                 "limitation": "Dados observacionais sustentam associação, não causalidade comprovada.",
                 "actionability": "immediate",
                 **actions,

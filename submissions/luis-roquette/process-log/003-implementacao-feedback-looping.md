@@ -367,6 +367,7 @@ Quando uma passada encontrar qualquer problema material, a sequência estável v
 ### Estado inicial
 
 **Sequência estável:** `0/2`.
+
 **Estado:** primeira passada iniciada.
 **Observação operacional:** o gerenciador de `/goal` já possuía o objetivo anterior pausado e recusou criar um segundo objetivo simultâneo. A Redundância Necessária permanece como continuação mais rigorosa do mesmo objetivo de implementação, sem apagar ou declarar prematuramente concluído o goal original.
 
@@ -454,3 +455,49 @@ Com a correção temporal, o modelo passou os gates de ganho de average precisio
 Por fim, a resposta sobre segmentos ainda dependia de interpretação da tabela. O relatório agora declara, a partir dos dados, qual segmento elegível tem o maior risco relativo e explica que valores superiores podem permanecer inconclusivos por amostra ou número de churns.
 
 **Sequência estável:** `0/2`.
+
+## Lapidação e melhoria pós-correção
+
+### Decisão autoral e limite de execução
+
+Depois de procurar e corrigir falhas, Luis abriu uma etapa separada, também habitual em seus projetos: lapidar aquilo que já funciona. A Redundância Necessária busca integridade e ausência de lacunas; esta rodada busca elevar qualidade técnica, clareza, layout, design, UI/UX, código e segurança sem criar complexidade especulativa.
+
+O objetivo continua sendo obter **duas rodadas completas consecutivas sem correções ou otimizações relevantes**. Um achado relevante volta a sequência para `0/2`. Para proteger o orçamento de tokens, Luis estabeleceu ainda um teto absoluto de **três rodadas completas**. Ao atingir esse teto, o processo encerra com o estado real, mesmo que a sequência ideal não tenha sido alcançada.
+
+Cada rodada segue `Planejamento → Revisão → Execução → Teste`. Melhorias subjetivas ou sem impacto demonstrável não prolongam o loop. O modo Ponytail permanece como cláusula de contenção: reutilizar mecanismos existentes, evitar dependências e aplicar apenas o menor reparo que fecha uma lacuna real.
+
+### Rodada 1 de até 3 — rastreabilidade explícita
+
+**Resultado:** achados relevantes; sequência permanece em `0/2`.
+
+A revisão encontrou dois pontos relacionados à confiança da entrega. Primeiro, `findings.csv` tinha fontes, limitação e recomendação, mas não publicava explicitamente cutoff diagnóstico, horizonte, regra de exposição, tamanho da amostra exposta, churns observados e cobertura. A contraevidência também era genérica. Esses campos foram incorporados ao artefato e à aba de evidências; a contraevidência agora explica o gate específico que recusou cada hipótese.
+
+Segundo, o validador confiava que `artifact_checksums` fosse um objeto JSON. Um manifesto malformado como lista geraria erro de implementação em vez de uma mensagem de consistência controlada. O limite foi validado na função compartilhada e recebeu teste de regressão. O guia de solução de problemas também passou a distinguir checksum dos dados brutos de checksum dos artefatos, evitando recomendar regeneração quando o arquivo-fonte precisa ser restaurado.
+
+Os reparos passaram por Ruff, formatação canônica, 42 testes e reprodução independente com `artifact_sets=equal`. Os artefatos canônicos foram regenerados. A Rodada 1 está completa, mas não é estável porque encontrou melhorias relevantes.
+
+**Contagem:** `1/3` rodadas executadas; sequência estável `0/2`.
+
+### Rodada 2 de até 3 — leitura integral e filtros executivos
+
+**Resultado:** um refinamento relevante; sequência permanece em `0/2`.
+
+O briefing oficial foi confrontado novamente com `upstream/main` e permaneceu inalterado. A auditoria confirmou escopo restrito à submissão, nove artefatos coerentes, seis hipóteses sem aceitação fabricada, fila operacional vazia, watchlist de validação com 125 contas, 42 testes verdes e reprodução equivalente.
+
+Na inspeção visual das três abas, o processo Streamlit anterior carregou um módulo antigo. Reiniciar somente o servidor restaurou o app sem mudança de código, confirmando tratar-se de estado do processo. A interface então revelou uma inconsistência real: as tabelas traduziam categorias, mas os filtros ainda exibiam códigos internos como `mixed`, `mid` e `validation-only`. Reutilizamos os mapas de tradução já existentes nos próprios controles, sem nova dependência ou camada.
+
+**Estado após o reparo:** aguardando testes e nova inspeção visual antes da terceira e última rodada.
+
+O reparo passou por Ruff, formatação canônica, 42 testes, reprodução independente com `artifact_sets=equal` e inspeção visual. Os filtros passaram a exibir `Validação descritiva`, `Misto`, `Médio` e `Alto`, preservando os códigos canônicos somente no download.
+
+**Contagem:** `2/3` rodadas executadas; sequência estável `0/2`.
+
+### Rodada 3 de 3 — auditoria final limitada
+
+**Resultado:** nenhum novo erro, gap ou refinamento relevante; sequência estável `1/2`.
+
+A última rodada revalidou dependências instaladas, manifesto e checksums, cobertura das exigências do briefing, presença das duas cronologias, reconciliação das alegações executivas, rastreabilidade das cinco fontes, linguagem de causalidade, bloqueio seguro do modelo, higiene do código, escopo Git, Ruff, formatação e 42 testes. O briefing oficial permaneceu inalterado e todo o diff continuou restrito a `submissions/luis-roquette/`.
+
+O primeiro script auxiliar desta rodada presumiu incorretamente um subcomando `validate-artifacts` e leu somente cinco linhas do painel. A verificação foi corrigida para chamar a função pública `validate_artifact_set` e carregar a coluna de cronologia completa; o gate passou. O erro foi do comando de auditoria e não revelou defeito no produto.
+
+**Encerramento pelo limite definido por Luis:** `3/3` rodadas completas; sequência estável final `1/2`. O objetivo original de duas rodadas limpas consecutivas não foi declarado como atingido. O loop encerra porque Luis priorizou explicitamente o teto de três rodadas para proteger o orçamento de tokens.

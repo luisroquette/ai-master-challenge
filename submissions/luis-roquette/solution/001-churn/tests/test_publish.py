@@ -48,6 +48,16 @@ def test_manifest_rejects_missing_artifact_entry(analysis_result, tmp_path) -> N
         validate_artifact_set(tmp_path)
 
 
+def test_manifest_rejects_invalid_checksum_shape(analysis_result, tmp_path) -> None:
+    publish_artifacts(analysis_result, tmp_path)
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["artifact_checksums"] = []
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ArtifactConsistencyError, match="must be an object"):
+        validate_artifact_set(tmp_path)
+
+
 def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_path) -> None:
     result = replace(
         analysis_result,
