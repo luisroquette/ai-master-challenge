@@ -235,6 +235,14 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertIsNone(self.app.resolve_selection(state, "Engaging", "new", ["E-B"], []))
         self.assertNotIn("Engaging", state["selection_by_stage"])
 
+    def test_TC36_compact_pagination_is_bounded_and_clamps_pages(self):
+        rows = list(range(61))
+        page, count, visible = self.app.paginate_rows(rows, 1)
+        self.assertEqual((page, count, visible), (1, 3, list(range(25, 50))))
+        page, count, visible = self.app.paginate_rows(rows, 99)
+        self.assertEqual((page, count, visible), (2, 3, list(range(50, 61))))
+        self.assertLessEqual(len(visible), 25)
+
     def test_TC37_TC38_manager_only_pin_preserves_score_and_attribution(self):
         state = {}
         self.app.ensure_session(state, "fixture")
@@ -306,29 +314,27 @@ render_portfolio(bundle_fixture(), st.session_state)
         at = self.fixture_app()
         self.assertFalse(at.exception)
         self.assertEqual([tab.label for tab in at.tabs], ["Engaging", "Prospecting"])
-        insufficient = next(frame.value for frame in at.dataframe
-                            if "P-BAD" in frame.value["ID"].tolist())
-        self.assertIn("Dados insuficientes", insufficient["Faixa"].tolist())
-        self.assertNotIn("Probabilidade", insufficient.columns)
-        self.assertNotIn("Receita esperada (valor catálogo)", insufficient.columns)
+        labels = {button.label for button in at.button}
+        self.assertIn("Abrir P-BAD", labels)
+        next(button for button in at.button if button.label == "Abrir P-BAD").click().run()
+        rendered = "\n".join(item.value for item in at.markdown)
+        self.assertIn("Dados insuficientes", rendered)
+        self.assertIn("Corrija product", rendered)
 
     def test_TC35_TC37_TC38_TC39_apptest_manager_filter_pin_and_reset(self):
         at = self.fixture_app()
-        at.text_input[0].set_value("E-A").run()
-        next(button for button in at.button if button.label == "Abrir detalhes de Engaging").click().run()
+        next(button for button in at.button if button.label == "Abrir E-A").click().run()
         self.assertFalse(any(button.label == "Prioridade temporária do gestor" for button in at.button))
         at.selectbox[0].set_value("Gestor").run()
         at.selectbox[2].set_value("Norte").run()
         at.selectbox[3].set_value("Beto").run()
-        at.text_input[0].set_value("E-B").run()
-        next(button for button in at.button if button.label == "Abrir detalhes de Engaging").click().run()
+        next(button for button in at.button if button.label == "Abrir E-B").click().run()
         pin = next(button for button in at.button if button.label == "Prioridade temporária do gestor")
         pin.click().run()
-        pinned = next(frame.value for frame in at.dataframe if "Gestor" in frame.value.columns)
-        self.assertEqual(pinned.loc[0, "ID"], "E-B")
-        self.assertEqual(pinned.loc[0, "Probabilidade"], .7)
+        self.assertTrue(any("Gestor Mara ·" in caption.value for caption in at.caption))
+        self.assertTrue(any(button.label == "Abrir E-B" for button in at.button))
         next(button for button in at.button if button.label == "Recalcular prioridades").click().run()
-        self.assertFalse(any("Gestor" in frame.value.columns for frame in at.dataframe))
+        self.assertFalse(any("Gestor Mara ·" in caption.value for caption in at.caption))
 
 
 class PlaywrightJourneyTests(unittest.TestCase):
@@ -363,11 +369,8 @@ render_portfolio(bundle_fixture(), st.session_state)
         cls.server_context.__exit__(None, None, None)
         cls.directory.cleanup()
 
-    def open_details(self, page, stage, value):
-        field = page.get_by_label(f"ID da oportunidade em {stage}", exact=True)
-        field.fill(value)
-        self.assertEqual(field.input_value(), value)
-        page.get_by_role("button", name=f"Abrir detalhes de {stage}", exact=True).click()
+    def open_details(self, page, value):
+        page.get_by_role("button", name=f"Abrir {value}", exact=True).click()
 
     @staticmethod
     def choose_filter(page, label, value):
@@ -385,7 +388,7 @@ render_portfolio(bundle_fixture(), st.session_state)
         seller.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
         seller.get_by_role("tab", name="Prospecting").click()
         seller.get_by_text("Dados insuficientes", exact=True).first.wait_for()
-        self.open_details(seller, "Prospecting", "P-BAD")
+        self.open_details(seller, "P-BAD")
         seller.get_by_text("Corrija product no cadastro", exact=False).wait_for()
         self.assertEqual(seller.get_by_role("button", name="Prioridade temporária do gestor").count(), 0)
         seller_context.close()
@@ -397,7 +400,7 @@ render_portfolio(bundle_fixture(), st.session_state)
         self.choose_filter(manager, "Contexto demonstrado", "Gestor")
         self.choose_filter(manager, "Escritório regional", "Norte")
         self.choose_filter(manager, "Vendedor da equipe", "Beto")
-        self.open_details(manager, "Engaging", "E-B")
+        self.open_details(manager, "E-B")
         manager.get_by_text("Origem:", exact=False).wait_for()
         manager.get_by_role("button", name="Prioridade temporária do gestor").click()
         manager.get_by_text("Gestor Mara ·", exact=False).wait_for()

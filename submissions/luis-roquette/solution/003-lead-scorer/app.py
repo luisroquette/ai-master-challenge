@@ -17,6 +17,7 @@ from scoring import DEFAULT_CONFIG, build_scoring_bundle
 
 ROOT = Path(__file__).resolve().parent
 BAND_ORDER = {"alta": 0, "media": 1, "baixa": 2, None: 3}
+PAGE_SIZE = 25
 
 
 @dataclass(frozen=True)
@@ -63,16 +64,19 @@ def ensure_session(session, current_fingerprint):
         session["calculation_generation"] = 0
         session["selection_by_stage"] = {}
         session["pins_by_stage"] = {}
+        session["page_by_stage"] = {}
     else:
         session.setdefault("calculation_generation", 0)
         session.setdefault("selection_by_stage", {})
         session.setdefault("pins_by_stage", {})
+        session.setdefault("page_by_stage", {})
 
 
 def recalculate(session):
     session["calculation_generation"] = session.get("calculation_generation", 0) + 1
     session["selection_by_stage"] = {}
     session["pins_by_stage"] = {}
+    session["page_by_stage"] = {}
 
 
 def set_temporary_priority(session, role, stage, opportunity_id, manager, allowed_ids,
@@ -165,6 +169,37 @@ def resolve_selection(session, stage, context, ordered_ids, selected_positions):
     return previous["id"] if previous else None
 
 
+def paginate_rows(rows, page, page_size=PAGE_SIZE):
+    """Return one bounded page without hiding the real total."""
+    if page_size < 1:
+        raise ValueError("page_size deve ser positivo")
+    page_count = max(1, (len(rows) + page_size - 1) // page_size)
+    current = min(max(page, 0), page_count - 1)
+    start = current * page_size
+    return current, page_count, rows[start:start + page_size]
+
+
+def _compact_metric(row):
+    if row.state == "calibrated":
+        return f"Prob. {row.probability:.1%} · Receita {row.expected_revenue:.2f}"
+    if row.state == "relative":
+        return (f"Índice {row.relative_index:.3f} · Evidência {row.evidence_strength} · "
+                f"Potencial {(row.potential_revenue or 0):.2f}")
+    return "Corrigir dados"
+
+
+def _render_compact_row(row, stage, context, session):
+    columns = st.columns((1.1, 1.6, 1.1, 2.4, 1.25))
+    columns[0].markdown(f"**{row.opportunity_id}**")
+    columns[1].write(row.product or "indisponível")
+    columns[2].write(row.band or "Dados insuficientes")
+    columns[3].write(_compact_metric(row))
+    if columns[4].button(f"Abrir {row.opportunity_id}",
+                         key=f"open-{stage}-{context}-{row.opportunity_id}"):
+        session["selection_by_stage"][stage] = {
+            "context": context, "id": row.opportunity_id}
+
+
 def _table(rows, state, pin=None):
     records = []
     for row in rows:
@@ -201,38 +236,47 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
         return
     context = hashlib.sha256(repr((stage, role, identity, region, seller,
         tuple(row.opportunity_id for row in ordered))).encode()).hexdigest()
-    selected = []
     list_column, detail_column = st.columns((2, 1))
     labels = {"pinned": "Prioridade temporária", "calibrated": "Probabilidade validada",
               "relative": "Prioridade relativa", "insufficient_data": "Dados insuficientes"}
     with list_column:
-        for name, section in sections.items():
-            if not section:
-                continue
-            st.markdown(f"### {labels[name]}")
-            if name == "pinned":
-                st.caption(f"Gestor {pin.manager} · {pin.created_at_utc.isoformat()}")
-            event = st.dataframe(_table(section, name, pin), hide_index=True, width="stretch",
-                on_select="rerun", selection_mode="single-row",
-                key=f"table-{name}-{context}")
-            if event.selection.rows:
-                selected = [ordered.index(section[event.selection.rows[0]])]
+        page_state = session["page_by_stage"].get(stage)
+        if not page_state or page_state["context"] != context:
+            page_state = {"context": context, "page": 0}
+            session["page_by_stage"][stage] = page_state
+        page, page_count, visible_rows = paginate_rows(ordered, page_state["page"])
+        page_state["page"] = page
+        row_section = {row.opportunity_id: name for name, section in sections.items()
+                       for row in section}
+        previous_section = None
+        for row in visible_rows:
+            name = row_section[row.opportunity_id]
+            if name != previous_section:
+                st.markdown(f"### {labels[name]}")
+                if name == "pinned":
+                    st.caption(f"Gestor {pin.manager} · {pin.created_at_utc.isoformat()}")
+                headers = st.columns((1.1, 1.6, 1.1, 2.4, 1.25))
+                for column, label in zip(headers, ("ID", "Produto", "Faixa", "Métrica", "Ação")):
+                    column.caption(label)
+                previous_section = name
+            _render_compact_row(row, stage, context, session)
+        navigation = st.columns((1, 1, 2))
+        if navigation[0].button(f"Página anterior de {stage}", disabled=page == 0,
+                                key=f"previous-{stage}-{context}"):
+            page_state["page"] = page - 1
+            st.rerun()
+        if navigation[1].button(f"Próxima página de {stage}", disabled=page + 1 >= page_count,
+                                key=f"next-{stage}-{context}"):
+            page_state["page"] = page + 1
+            st.rerun()
+        navigation[2].caption(
+            f"Página {page + 1} de {page_count} · {len(visible_rows)} de {len(ordered)} oportunidades")
         if stage == "Engaging":
             calibrated = [row for row in ordered if row.state == "calibrated"]
             st.caption(f"Receita esperada cobre {len(calibrated)}/{len(ordered)} oportunidades; "
                        f"total em valor de catálogo: {sum(row.expected_revenue for row in calibrated):.2f}")
-        ordered_ids = [row.opportunity_id for row in ordered]
-        with st.form(f"details-form-{context}", clear_on_submit=False):
-            accessible_id = st.text_input(f"ID da oportunidade em {stage}",
-                key=f"details-id-{context}", placeholder="Digite o ID exato exibido na tabela")
-            submitted = st.form_submit_button(f"Abrir detalhes de {stage}")
-        if submitted:
-            if accessible_id in ordered_ids:
-                selected = [ordered_ids.index(accessible_id)]
-            else:
-                st.warning("ID não encontrado neste estágio e filtro.")
     selected_id = resolve_selection(session, stage, context,
-                                    [row.opportunity_id for row in ordered], selected)
+                                    [row.opportunity_id for row in ordered], [])
     with detail_column:
         if not selected_id:
             st.caption("Selecione uma linha para ver os detalhes.")
@@ -259,6 +303,7 @@ def render_portfolio(bundle, session):
     if session.get("view_identity") != (role, identity):
         session["view_identity"] = (role, identity)
         session["selection_by_stage"] = {}
+        session["page_by_stage"] = {}
     region, seller = "Todas as regiões", "Todos da equipe"
     if role == "Gestor":
         team = [row for row in assigned if row.manager == identity]
