@@ -817,6 +817,7 @@ EXPORT_COLUMNS = (
     "rank", "recommendation_key", "priority", "impact", "strength", "recency",
     "priority_values", "normalization", "delta_erv_pp", "representative_date",
     "action", "action_type", "topic", "metric", "frequency_hypothesis",
+    "reference_chunk", "reference_index",
 )
 
 
@@ -834,6 +835,28 @@ def _cell(value: object) -> str | int | float:
         if not char.isspace():
             break
     return text
+
+
+def _reference_chunks(source_ids: list[str], lines: dict[str, int]) -> Iterable[dict[str, object]]:
+    chunk = 1
+    ids, indices, physical = [], [], []
+    size = 2
+    for index, source_id in enumerate(source_ids):
+        opaque_id = str(source_id).split(":", 1)[-1]
+        # Bound even a single unusually long ID; repeated indices join its fragments.
+        for offset in range(0, len(opaque_id), 4096):
+            fragment = opaque_id[offset:offset + 4096]
+            length = len(json.dumps(fragment, ensure_ascii=False)) + 2
+            if ids and (size + length > 32_768 or len(ids) == 500):
+                yield {"reference_chunk": chunk, "reference_index": indices, "source_row_id": ids, "source_line": physical}
+                chunk += 1
+                ids, indices, physical, size = [], [], [], 2
+            ids.append(fragment)
+            indices.append(index)
+            physical.append(lines[str(source_id)])
+            size += length
+    if ids:
+        yield {"reference_chunk": chunk, "reference_index": indices, "source_row_id": ids, "source_line": physical}
 
 
 def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object]]) -> Iterable[dict[str, object]]:
@@ -869,18 +892,16 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         if not evidence_id or evidence_id in emitted:
             continue
         emitted.add(evidence_id)
-        metric_name = "metric_value" if item.get("metric_value") is not None else "median_erv" if item.get("median_erv") is not None else "delta_erv_pp" if item.get("delta_erv_pp") is not None else "coverage" if item.get("coverage") is not None else "posts"
+        metric_name = "metric_value" if item.get("metric_value") is not None else "median_erv" if "median_erv" in item else "delta_erv_pp" if item.get("delta_erv_pp") is not None else "coverage" if item.get("coverage") is not None else "posts"
         metric_value = item.get(metric_name, item.get("metric_value", item.get("posts", "")))
         text = item.get("value", item.get("action", item.get("reason", item.get("claim", item.get("direction", item.get("dimension", "evidence"))))))
         context = dict(item.get("context") or {"dimension": item.get("dimension"), "value": item.get("value")})
-        context.update({name: item[name] for name in ("posts", "creators", "n_rate", "views", "interactions", "creator_exposure", "undefined_rates", "zero_interaction_share", "weighted_erv", "q1_erv", "q3_erv", "strength", "organic", "sponsored", "creator_overlap", "eligible_strata", "uncovered_count", "coverage", "required_financial_data") if name in item})
+        context.update({name: item[name] for name in ("posts", "creators", "n_rate", "views", "interactions", "creator_exposure", "undefined_rates", "zero_interaction_share", "weighted_erv", "q1_erv", "q3_erv", "strength", "organic", "sponsored", "creator_overlap", "eligible_strata", "uncovered_count", "coverage", "period_granularity", "required_financial_data") if name in item})
         formula = "eligible controlled posts / scoped posts" if evidence_id.startswith("sponsorship-overview-") else "median_by_creator(sponsored ERv) - median_by_creator(organic ERv)" if evidence_id.startswith("sponsorship-") else "median(100 * (likes + shares + comments_count) / views)" if evidence_id.startswith(("dimension-", "summary-")) else "method_version contract"
         yield row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name == "delta_erv_pp" else "percent" if "erv" in metric_name else "count", context=context, formula=formula)
         source_row_ids = item.get("source_row_ids", [])
-        if source_row_ids:
-            compact_ids = [str(source_row_id).split(":", 1)[-1] for source_row_id in source_row_ids]
-            source_lines = [result["row_references"][str(source_row_id)] for source_row_id in source_row_ids]
-            yield row("source_ref", evidence_id, source_row_id=compact_ids, source_line=source_lines)
+        for chunk in _reference_chunks(source_row_ids, result.get("row_references", {})):
+            yield row("source_ref", evidence_id, **chunk)
 
     for rank, item in enumerate(result.get("recommendations", []), start=1):
         yield row("recommendation", str(item["evidence_id"]), rank=rank,
@@ -951,7 +972,7 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
         for item in priority_items[:3]
     )
     findings = "".join(
-        f"<li>{html.escape(str(item.get('dimension', 'segmento')))} = {html.escape(str(item.get('value', '')))}: {int(item.get('posts', 0))} posts; mediana ERv {float(item.get('median_erv') or 0):.2f}% <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
+        f"<li>{html.escape(str(item.get('dimension', 'segmento')))} = {html.escape(str(item.get('value', '')))}: {int(item.get('posts', 0))} posts; mediana ERv {format(float(item['median_erv']), '.2f') + '%' if item.get('median_erv') is not None else 'não definida (views=0: sem denominador para ERv)'} <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
         for item in sorted(dimensions, key=lambda value: (-int(value.get("posts", 0)), str(value.get("evidence_id", ""))))[:5]
     )
     decisions_html = "".join(f"<li>{html.escape(str(item.get('status', '')))} — {html.escape(str(item.get('text', item.get('action', ''))))}</li>" for item in decisions[:5]) or "<li>Nenhuma decisão registrada.</li>"
@@ -984,7 +1005,8 @@ def analysis_report(result: dict[str, object]) -> str:
               f"referência: {text(scope.get('reference_date'))}; filtros: `{text(json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True))}`.", "",
               f"{metrics.get('posts', 0)} posts; {metrics.get('creators', 0)} creators; "
               f"{metrics.get('views', 0)} views; {metrics.get('interactions', 0)} interações. "
-              f"Mediana ERv: {number(metrics.get('median_erv'))}%; ERv ponderado: {number(metrics.get('weighted_erv'))}%. "
+              f"Mediana ERv: {number(metrics.get('median_erv'))}{'%' if metrics.get('median_erv') is not None else ''}; "
+              f"ERv ponderado: {number(metrics.get('weighted_erv'))}{'%' if metrics.get('weighted_erv') is not None else ''}. "
               f"Proporção de posts com zero interação: {number(metrics.get('zero_interaction_share'))}; "
               f"taxas indefinidas: {metrics.get('undefined_rates', 0)}. Evidência: `{summary_id}`.", "",
               "ERv = 100 × (likes + shares + comments_count) / views; views=0 deixa a taxa indefinida e preserva volume. "
@@ -1013,9 +1035,11 @@ def analysis_report(result: dict[str, object]) -> str:
               f"{sponsorship.get('eligible_strata', 0)} estratos elegíveis; {sponsorship.get('uncovered_count', 0)} "
               f"sem amostra/contraparte suficiente; cobertura de {100 * sponsorship.get('coverage', 0):.6g}% dos posts. "
               f"Evidência: `{overview_id}`.", "",
-              "Controle: mesma plataforma, formato, categoria, faixa de creator e período. "
+              "Controle: mesma plataforma, formato, categoria, faixa de creator e mês-calendário. "
+              "Cada mês exige contrapartes contemporâneas; orgânicos de um mês não são comparados a patrocinados de outro. "
               "Cada braço exige 30 taxas definidas e cinco creators; o efeito é a diferença entre "
-              "medianas das medianas de ERv por creator. Patrocínio é associação observacional, não causalidade. "
+              "medianas das medianas de ERv por creator. Cobertura baixa restringe as conclusões aos meses/contextos elegíveis; "
+              "não sustenta uma política geral de patrocínio. Patrocínio é associação observacional, não causalidade. "
               "Custo implícito e retorno financeiro não podem ser calculados: faltam investimento, "
               "custo de produção, receita/conversão. Nenhum threshold de seguidores justifica desembolso sozinho.", ""]
     strata = sponsorship.get("strata", [])
@@ -1055,9 +1079,12 @@ def analysis_report(result: dict[str, object]) -> str:
               "A coluna JSON `frequency_hypothesis` preserva status, valor/unidade, método, amostra de creator-semanas/creators, "
               "semanas completas disponíveis/observadas, janela, ação, mínimo de semanas para coleta e limitação. "
               "O valor é uma hipótese de teste no mesmo contexto da recomendação, não promessa de desempenho.", "",
-              "Em `source_ref`, `source_row_id` e `source_line` são arrays JSON de mesmo tamanho e ordem: "
-              "o par de índice i identifica o ID opaco e a primeira linha física (base 1) do registro. "
-              "Reconstituir a chave completa com `source_hash + ':' + source_row_id[i]`. "
+              "Em `source_ref`, ordenar as linhas de cada evidência por `reference_chunk` (base 1). "
+              "`source_row_id`, `source_line` e `reference_index` são arrays JSON paralelos, em blocos de até 500 entradas "
+              "e 32.768 caracteres no campo de IDs, legíveis pelo limite padrão do csv.reader. "
+              "O índice identifica o registro dentro da evidência (base 0); concatenar fragmentos de ID com o mesmo "
+              "`reference_index`, conservando a linha física inicial (base 1). IDs acima de 4.096 caracteres "
+              "são fragmentados sem perder conteúdo. Reconstituir a chave completa com `source_hash + ':' + ID`. "
               "Campos multilinha contam todas as linhas físicas; células de texto neutralizam fórmulas de planilha.", "",
               "A CLI publica todo o histórico, sem alertas post a post. Ausência de período anterior igualmente "
               "longo pode impedir comparações editoriais; não se inventa tendência. O monitoramento recente "

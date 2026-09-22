@@ -57,6 +57,44 @@ def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
 
 
 class ExportTests(unittest.TestCase):
+    def test_zero_view_rate_remains_undefined_in_all_exports(self):
+        for views, expected in ((0, "não definida"), (100, "0.00%")):
+            frame, errors = load_csv(csv_bytes([make_post(views=views, likes=0, shares=0, comments_count=0)]))
+            self.assertEqual(errors, [])
+            result = analyze(frame, {"include_post_alerts": False}, str(frame["source_hash"].iloc[0]))
+            page = executive_summary(result, [])
+            self.assertIn(f"mediana ERv {expected}", page)
+            if views == 0:
+                self.assertNotIn("mediana ERv 0.00%", page)
+                self.assertIn("views=0", page)
+                self.assertIn("Mediana ERv: não definida", analysis_report(result))
+            dimensions = [row for row in parse_export(export_evidence(result, [])) if row["record_type"] == "evidence" and row["evidence_id"].startswith("dimension-")]
+            for row in dimensions:
+                self.assertEqual(row["metric_name"], "median_erv")
+                self.assertEqual(row["metric_value"], "" if views == 0 else "0.0")
+
+    def test_large_reference_export_round_trips_with_default_csv_limit(self):
+        result = sample_result()
+        ids = [f"abc:id:{index}" for index in range(20_000)] + ["abc:= " + "x" * 140_000]
+        result["row_references"] = {source_id: index + 2 for index, source_id in enumerate(ids)}
+        result["dimensions"]["platform"][0]["source_row_ids"] = ids
+        limit = csv.field_size_limit()
+        self.assertEqual(limit, 131_072)
+        payload = export_evidence(result, [])
+        rows = parse_export(payload)
+        self.assertEqual(csv.field_size_limit(), limit)
+        self.assertEqual(payload, export_evidence(result, []))
+        refs = [row for row in rows if row["record_type"] == "source_ref" and row["evidence_id"] == "dimension-1"]
+        self.assertGreater(len(refs), 1)
+        reconstructed = {}
+        for chunk, row in enumerate(refs, 1):
+            self.assertEqual(int(row["reference_chunk"]), chunk)
+            for index, source_id, line in zip(json.loads(row["reference_index"]), json.loads(row["source_row_id"]), json.loads(row["source_line"]), strict=True):
+                prior, prior_line = reconstructed.get(index, ("", line))
+                self.assertEqual(line, prior_line)
+                reconstructed[index] = (prior + source_id, line)
+        self.assertEqual(list(reconstructed.values()), [(source_id.split(":", 1)[1], result["row_references"][source_id]) for source_id in ids])
+
     def test_formula_prefix_after_whitespace_and_controls_preserves_original_text(self):
         unsafe = [prefix + marker + "1" for prefix in ("  ", "\n", " \t\r\n\x00\x7f\ufeff", "\u00a0") for marker in "=+-@"]
         safe = ["  texto", "   ", ""]
