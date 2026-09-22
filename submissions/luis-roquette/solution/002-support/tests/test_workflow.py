@@ -387,3 +387,20 @@ def test_reject_requires_reason_and_readback_failure_never_confirms(prepared, tm
     assert app.error and not app.success
     with closing(sqlite3.connect(tmp_path / "decisions.sqlite3", isolation_level=None)) as conn:
         assert len(list_decisions(conn)) == 1  # Commit exists; missing readback is NOT success.
+
+
+def test_pipeline_sanitizer_checks_final_whitespace_normalized_form(tmp_path):
+    from support_copilot.data import load_customer_tickets, sanitize_text
+
+    # Synthetic reproduction of the real failure: joining lines must not create
+    # a value accepted at ingestion and quarantined by the model's second check.
+    with pytest.raises(ValueError, match="suspected_name"):
+        sanitize_text("Technical\nIssue")
+    assert sanitize_text(sanitize_text("reset\n the device")) == "reset the device"
+    customer, _ = sources(tmp_path / "source")
+    raw = pd.read_csv(customer, keep_default_na=False)
+    raw.loc[0, "Ticket Description"] = "Technical\nIssue"
+    raw.to_csv(customer, index=False)
+    frame = load_customer_tickets(customer)
+    assert frame.attrs["quality"]["excluded"]["privacy_quarantine"] == 1
+    assert all(sanitize_text(text) == text for text in frame.text)

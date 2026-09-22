@@ -21,7 +21,7 @@ from typing import Literal, TypedDict
 import pandas as pd
 
 Domain = Literal["customer", "it"]
-SANITIZER_VERSION = "conservative-v1"
+SANITIZER_VERSION = "conservative-v2"
 GROUPING_VERSION = "canonical-v1"
 IT_TAXONOMY = (
     "Access", "Administrative rights", "HR Support", "Hardware", "Internal Project",
@@ -185,6 +185,9 @@ def sanitize_text(value: str | None, names: Sequence[str] = ()) -> str:
     text = re.sub(r"https?://\S+|www\.\S+", "[URL]", text, flags=re.I)
     text = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "[IP]", text)
     text = re.sub(r"\b(?=\w*[a-zA-Z])(?=\w*\d)\w+\b", "[IDENTIFIER]", text)
+    # Validate exactly the text downstream consumers receive. Joining whitespace AFTER
+    # these checks could create a newly suspicious name pair across a line break.
+    text = " ".join(text.split())
     # Quarantine residual named entities; false positives are safer than publishing PII.
     if any(match.group() not in SAFE_PHRASES for match in CAPITAL_PAIR.finditer(text)):
         raise ValueError("privacy_quarantine:suspected_name")
@@ -197,7 +200,7 @@ def sanitize_text(value: str | None, names: Sequence[str] = ()) -> str:
         raise ValueError("privacy_quarantine:unrecognized_entity")
     if re.search(r"\b(?:address|cpf|ssn|passport|account number|credit card)\s*[:#]", text, re.I):
         raise ValueError("privacy_quarantine:identifier")
-    return " ".join(text.split())
+    return text
 
 
 def canonical_text(text: str) -> str:
