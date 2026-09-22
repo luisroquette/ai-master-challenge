@@ -182,8 +182,8 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
 - [Export persistido](evidence/decisions-demo.csv): mesmo `audit_id=1`, ação
   `escalate`, SHA-256 registrado em [metrics.json](evidence/metrics.json).
 - Reinício real preservou o evento; scorecard e texto livre IT foram observados no
-  navegador. IT classificou `hardware device not starting` como Hardware, mas o gate
-  manteve revisão humana (`0,5464 < 0,55`).
+  navegador. IT classificou `hardware device not starting` como Hardware, com confiança
+  `0,9701` e `auto_route` no threshold `0,55`.
 - Aprovação/edição permaneceram bloqueadas porque zero consultas eram elegíveis para a
   validação humana opcional. CK-12 fica como evolução futura; nenhum draft ou rating foi
   fabricado, e o escalonamento real persistido demonstra a intervenção humana canônica.

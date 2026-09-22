@@ -1117,3 +1117,11 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   e não é marcado como verde. A aprovação 4,7 não converte esse comando não executado em
   evidência. Decisão SDD: marcar somente steps 08–10 `[DONE]` e Phase 3 `[REVIEWED]`, sem
   antecipar o DoD geral; avançar agora para sua verificação específica.
+
+## I65a — Correção factual do README no DoD — 2026-09-22
+
+- O verificador retornou DoD `4/5`: o README técnico ainda descrevia uma execução IT antiga
+  (`0,5464`, revisão humana), divergente da demonstração final persistida.
+- Correção restrita à documentação: Hardware, confiança `0,9701`, `auto_route` no threshold
+  `0,55`, conforme a evidência final. Nenhum código, teste, evidence ou checkbox do DoD foi
+  alterado; o item deve ser reavaliado após este checkpoint.
