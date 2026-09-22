@@ -14,13 +14,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 import streamlit as st
+from analysis import analyze, load_csv
 
 from streamlit.testing.v1 import AppTest
 from streamlit.testing.v1.app_test import TMP_DIR
 
 from tests.helpers import csv_bytes, make_post
 from tests.test_exports import historical_log, parse_export
-from storage import list_decisions
+from storage import list_decisions, record_import
 
 
 APP = Path(__file__).parents[1] / "app.py"
@@ -290,6 +291,70 @@ class AppTests(unittest.TestCase):
         app.button(key="save_decision").click().run()
         self.assertTrue(any("Decisão registrada" in item.value for item in app.success))
         self.assertEqual(self.stored()[0]["recommendation_key"], fourth["recommendation_key"])
+
+    def test_session_analysis_reuse_and_strict_invalidation(self) -> None:
+        tech = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        beauty = [{**row, "id": f"beauty-{row['id']}", "content_id": f"beauty-{row['content_id']}",
+                   "content_category": "beauty"} for row in tech]
+        raw = csv_bytes(tech + beauty)
+        with (
+            patch("analysis.load_csv", wraps=load_csv) as validate,
+            patch("analysis.analyze", wraps=analyze) as engine,
+            patch("storage.record_import", wraps=record_import) as provenance,
+            patch("streamlit.download_button", wraps=st.download_button) as download,
+        ):
+            app = self.app()
+            app.file_uploader[0].set_value(("mixed.csv", raw, "text/csv")).run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 1))
+
+            second = app.session_state["active_result"]["all_recommendations"][1]
+            app.selectbox(key="decision_recommendation").set_value(second).run()
+            app.button(key="save_decision").click().run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 1))
+            self.assertEqual(self.stored()[0]["recommendation_key"], second["recommendation_key"])
+            payload = next(call.args[1] for call in reversed(download.call_args_list)
+                           if call.args[0] == "Baixar evidências e decisões (CSV)")
+            self.assertTrue(any(row["record_type"] == "decision" for row in parse_export(payload)))
+
+            app.multiselect(key="filter_content_category").set_value(["beauty"]).run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 2))
+
+            app.selectbox(key="period_mode").set_value("Todo o histórico").run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 3))
+
+            changed = csv_bytes([{**row, "likes": int(row["likes"]) + 1} for row in tech + beauty])
+            app.file_uploader[0].set_value(("changed.csv", changed, "text/csv")).run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (2, 2, 4))
+            preserved = app.session_state["active_result"]
+
+            app.file_uploader[0].set_value(("invalid.csv", b"invalid", "text/csv")).run()
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (3, 2, 4))
+            self.assertEqual(app.session_state["active_result"]["scope"], preserved["scope"])
+            self.assertTrue(app.error)
+
+    def test_recommendation_labels_expose_context_without_changing_identity(self) -> None:
+        base = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        rows = [{**row, "id": f"{category}-{row['id']}", "content_id": f"{category}-{row['content_id']}",
+                 "content_category": category} for category in ("alpha", "beta", "gamma", "delta") for row in base]
+        app = self.app()
+        app.file_uploader[0].set_value(("contexts.csv", csv_bytes(rows), "text/csv")).run()
+
+        options = app.selectbox(key="decision_recommendation").options
+        self.assertGreaterEqual(len(options), 2)
+        self.assertNotEqual(options[0], options[1])
+        for expected in ("Plataforma: Instagram", "Formato: video", "Categoria:", "Faixa: 10,000–49,999"):
+            self.assertTrue(all(expected in option for option in options))
+        additional_options = app.selectbox(key="additional_recommendation").options
+        self.assertTrue(all("Plataforma: Instagram" in option and "Categoria:" in option
+                            for option in additional_options))
+        captions = [item.value for item in app.caption if item.value.startswith("Contexto —")]
+        self.assertGreaterEqual(len(captions), 3)
+        self.assertTrue(all("Plataforma: Instagram" in caption and "Categoria:" in caption for caption in captions))
+
+        selected = app.session_state["active_result"]["all_recommendations"][1]
+        app.selectbox(key="decision_recommendation").set_value(selected).run()
+        app.button(key="save_decision").click().run()
+        self.assertEqual(self.stored()[0]["recommendation_key"], selected["recommendation_key"])
 
     def test_week_and_month_clip_before_timestamp_at_upper_date_boundary(self) -> None:
         rows = [

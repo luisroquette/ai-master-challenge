@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import sqlite3
 import uuid
@@ -66,6 +68,16 @@ def _find_evidence(value: object, evidence_id: str) -> dict[str, object] | None:
 def _baseline(recommendation: dict[str, object]) -> dict[str, object]:
     return {**decision_baseline(recommendation["evidence_snapshot"]),
             "simulation": bool(os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW"))}
+
+
+def _recommendation_context(item: dict[str, object]) -> str:
+    context = item.get("context", {})
+    assert isinstance(context, dict)
+    labels = (("platform", "Plataforma"), ("content_type", "Formato"),
+              ("content_category", "Categoria"), ("follower_band", "Faixa"),
+              ("month", "Mês"))
+    parts = [f"{label}: {context[key]}" for key, label in labels if context.get(key) is not None]
+    return " · ".join(parts) or "Contexto amplo"
 
 
 def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
@@ -147,19 +159,22 @@ except (OSError, sqlite3.Error, RuntimeError) as exc:
 uploaded = st.file_uploader("Enviar CSV", type=["csv"], help="UTF-8, até 50 MiB; o arquivo bruto não é persistido.")
 if uploaded is not None:
     raw = uploaded.getvalue()
-    frame, diagnostics = load_csv(raw)
-    if diagnostics:
-        st.error("Arquivo rejeitado. A fonte válida anterior, se houver, continua ativa.")
-        st.dataframe(pd.DataFrame(diagnostics), hide_index=True, width="stretch")
-    elif frame is not None:
-        metadata = _source_metadata(uploaded.name, raw, frame)
-        try:
-            record_import(connection, metadata)
-        except sqlite3.Error as exc:
-            st.error(f"Importação validada, mas a proveniência não foi salva: {exc}")
-        else:
-            st.session_state["active_frame"] = frame
-            st.session_state["active_metadata"] = metadata
+    source_key = hashlib.sha256(raw).hexdigest()
+    if st.session_state.get("validated_source_key") != source_key:
+        frame, diagnostics = load_csv(raw)
+        if diagnostics:
+            st.error("Arquivo rejeitado. A fonte válida anterior, se houver, continua ativa.")
+            st.dataframe(pd.DataFrame(diagnostics), hide_index=True, width="stretch")
+        elif frame is not None:
+            metadata = _source_metadata(uploaded.name, raw, frame)
+            try:
+                record_import(connection, metadata)
+            except sqlite3.Error as exc:
+                st.error(f"Importação validada, mas a proveniência não foi salva: {exc}")
+            else:
+                st.session_state["active_frame"] = frame
+                st.session_state["active_metadata"] = metadata
+                st.session_state["validated_source_key"] = source_key
 
 decisions = list_decisions(connection)
 active_frame = st.session_state.get("active_frame")
@@ -248,8 +263,16 @@ else:
             "requested_end": requested_end.isoformat(),
             "partial_period": partial_period,
         }
-        result = analyze(active_frame, scope, str(metadata["source_hash"]))
-        st.session_state["active_result"] = result
+        analysis_key = (
+            str(metadata["source_hash"]), METHOD_VERSION,
+            json.dumps(scope, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+        )
+        if st.session_state.get("analysis_key") == analysis_key and st.session_state.get("active_result") is not None:
+            result = st.session_state["active_result"]
+        else:
+            result = analyze(active_frame, scope, str(metadata["source_hash"]))
+            st.session_state["active_result"] = result
+            st.session_state["analysis_key"] = analysis_key
         analysis_state = result["analysis_state"]
         has_observations = bool(analysis_state["has_observations"])
         metrics = result["metrics"]
@@ -296,6 +319,7 @@ else:
             title = item.get("action", item.get("reason", "Coletar evidência"))
             with st.container(border=True):
                 st.markdown(f"**{rank}. {title}**")
+                st.caption(f"Contexto — {_recommendation_context(item)}")
                 components = item.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
                 component_columns = st.columns(3)
                 for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
@@ -312,7 +336,7 @@ else:
                 additional = st.selectbox(
                     "Ação adicional para detalhar",
                     additional_recommendations,
-                    format_func=lambda item: f"{item['evidence_id']} — {item['action']}",
+                    format_func=lambda item: f"{_recommendation_context(item)} — {item['action']} · {item['evidence_id']}",
                     key="additional_recommendation",
                 )
                 components = additional.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
@@ -338,7 +362,7 @@ else:
             selected = st.selectbox(
                 "Recomendação para decidir",
                 all_recommendations,
-                format_func=lambda item: f"{item['evidence_id']} — {item['action']}",
+                format_func=lambda item: f"{_recommendation_context(item)} — {item['action']} · {item['evidence_id']}",
                 key="decision_recommendation",
             )
             with st.form("decision_form"):
