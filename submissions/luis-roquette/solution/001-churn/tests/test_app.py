@@ -45,6 +45,21 @@ def test_dashboard_starts_with_five_canonical_blocks(generated_artifacts, monkey
     assert any(answer["headline"] in value for value in markdown)
 
 
+def test_dashboard_exposes_verdict_limits_and_confidence_before_tabs(
+    generated_artifacts, monkeypatch
+) -> None:
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(generated_artifacts))
+
+    app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
+    text = " ".join(element.value for element in app.markdown)
+
+    assert not app.exception
+    assert "Alta confiança" in text
+    assert "Baixa confiança" in text
+    assert "plausible_hypothesis" not in text
+    assert "intervention_proposal" not in text
+
+
 def test_dashboard_never_imports_analytical_modules() -> None:
     source = (SOLUTION_ROOT / "app.py").read_text()
     assert "ravenstack_churn.diagnosis" not in source

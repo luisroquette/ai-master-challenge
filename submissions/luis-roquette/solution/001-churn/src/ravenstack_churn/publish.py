@@ -87,6 +87,18 @@ SEGMENT_LABELS = {
     "other": "Outros",
     "partner": "Parceiros",
 }
+EVIDENCE_LEVEL_LABELS = {
+    "confirmed_fact": "Fato confirmado",
+    "supported_mechanism": "Mecanismo sustentado",
+    "plausible_hypothesis": "Hipótese plausível",
+    "inconclusive": "Evidência inconclusiva",
+}
+EVIDENCE_CONFIDENCE_LABELS = {
+    "confirmed_fact": "Alta confiança",
+    "supported_mechanism": "Moderada confiança",
+    "plausible_hypothesis": "Baixa confiança",
+    "inconclusive": "Baixa confiança",
+}
 
 
 class ArtifactConsistencyError(ValueError):
@@ -443,6 +455,9 @@ def _claim(
         "id": claim_id,
         "statement": statement,
         "evidence_level": evidence_level,
+        "confidence_label": EVIDENCE_CONFIDENCE_LABELS.get(
+            str(evidence_level), "Baixa confiança"
+        ),
         "status": status,
         "value": value,
         "unit": unit,
@@ -509,6 +524,17 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
             ("next_actions", "Próximas ações", "Ações proporcionais à força da evidência."),
         )
     }
+    evidence_refs["quality:report"] = {
+        "artifact": "quality_report.json",
+        "row_key": {"scope": "quality_report"},
+        "columns": ["rows", "contradictions"],
+        "calculation": "build_quality_report",
+        "source_tables": list(result.quality_report.get("rows", {})),
+        "period_start": None,
+        "period_end": str(OBSERVATION_END.date()),
+        "population": "all_input_rows",
+        "unit": "data_quality_rules",
+    }
 
     history = result.monthly_churn
     overall = history.loc[
@@ -564,7 +590,27 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
                 uncertainty_high=recent.get("difference_ci_high"),
             )
         )
-        blocks["what_changed"]["summary"] = statement
+        formatted_mrr = f"{recent['mrr_lost']:,.0f}".replace(",", ".")
+        impact_statement = (
+            f"O MRR perdido observado no período recente foi US$ {formatted_mrr}; "
+            "é impacto associado aos churns, não receita automaticamente recuperável."
+        )
+        blocks["what_changed"]["claims"].append(
+            _claim(
+                "C-churn-impact",
+                impact_statement,
+                "confirmed_fact",
+                "observed",
+                recent.get("mrr_lost"),
+                "monthly_recurring_revenue",
+                str(recent.get("population", "registered_at_start")),
+                recent.get("period_start"),
+                recent.get("period_end"),
+                [recent_ref],
+                "Soma do MRR conhecido nos eventos terminais; não estima receita recuperável.",
+            )
+        )
+        blocks["what_changed"]["summary"] = f"{statement} {impact_statement}"
 
     usage = result.claim_checks.loc[result.claim_checks["claim_id"].eq("C-usage-growth")]
     usage_overall = usage.loc[usage["cohort"].eq("overall")]
@@ -677,7 +723,12 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
                 "Ranking descritivo restrito aos segmentos que passaram os limiares de amostra.",
             )
         )
-        blocks["where"]["summary"] = segment_statement
+        blocks["where"]["summary"] = (
+            "Não há concentração material demonstrada: o maior recorte elegível tem "
+            f"RR {top_segment['relative_risk']:.2f}×, abaixo do limiar descritivo de 1,25×."
+            if top_segment["relative_risk"] < 1.25
+            else segment_statement
+        )
 
     scorecard = result.mechanism_scorecard
     supported = scorecard.loc[
@@ -723,7 +774,10 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
                 "cross_table_support",
             ),
         )
-        mechanism_statement = f"{mechanism['claim']} Estado: {mechanism['evidence_level']}."
+        evidence_label = EVIDENCE_LEVEL_LABELS.get(
+            str(mechanism["evidence_level"]), "Evidência inconclusiva"
+        )
+        mechanism_statement = f"{mechanism['claim']} Estado: {evidence_label}."
         blocks["strongest_mechanism"]["claims"].append(
             _claim(
                 "M-strongest",
@@ -792,9 +846,11 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         )
         unknown_statement = (
             f"A satisfação geral dos respondentes {satisfaction_overall_trend} de "
-            f"{satisfaction_row['start_value']:.2f}→{satisfaction_row['end_value']:.2f}; entre "
+            f"{satisfaction_row['start_value']:.2f}→{satisfaction_row['end_value']:.2f} "
+            f"(cobertura {satisfaction_row['coverage']:.1%}); entre "
             f"futuros churners, {satisfaction_churn_trend} de "
-            f"{satisfaction_churn_row['start_value']:.2f}→{satisfaction_churn_row['end_value']:.2f}. "
+            f"{satisfaction_churn_row['start_value']:.2f}→{satisfaction_churn_row['end_value']:.2f} "
+            f"(cobertura {satisfaction_churn_row['coverage']:.1%}). "
             "São apenas tickets respondidos; não representam toda a base."
         )
         blocks["unknowns"]["claims"].extend(
@@ -836,51 +892,109 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         )
         blocks["unknowns"]["summary"] = unknown_statement
 
+    contradictions = result.quality_report.get("contradictions", {})
+    anomaly_count = sum(int(count) for count in contradictions.values() if count)
+    if anomaly_count:
+        anomaly_statement = (
+            f"A auditoria sinalizou {anomaly_count:,} ocorrências de regras de qualidade; "
+            "uma mesma linha pode aparecer em mais de uma regra."
+        ).replace(",", ".")
+        blocks["unknowns"]["claims"].append(
+            _claim(
+                "C-data-quality-anomalies",
+                anomaly_statement,
+                "confirmed_fact",
+                "concern",
+                anomaly_count,
+                "quality_rule_hits",
+                "all_input_rows",
+                None,
+                OBSERVATION_END,
+                ["quality:report"],
+                "Contagem de ocorrências por regra, não de linhas distintas.",
+            )
+        )
+        blocks["unknowns"]["summary"] = (
+            f"{blocks['unknowns']['summary']} {anomaly_statement}"
+        )
+
     finding = (
         result.findings.loc[result.findings["finding_id"].eq(selected_mechanism_id)].iloc[0]
         if selected_mechanism_id is not None
         else None
     )
-    if mechanism_ref:
-        action_evidence = [mechanism_ref]
-    elif unknown_ref:
-        action_evidence = [unknown_ref]
+    if finding is not None:
+        actions = [
+            {
+                "id": "A-intervene",
+                "kind": "intervention_proposal",
+                "description": str(finding["immediate_action"]),
+                "evidence_ids": [mechanism_ref],
+                "owner_role": str(finding["owner"]),
+                "deadline_days": 7,
+                "population": "contas expostas no snapshot diagnóstico",
+                "success_metric": str(finding.get("success_metric", "sinal e churn da coorte")),
+                "advance_if": "o sinal persistir com cobertura e comparação suficientes",
+                "stop_if": "a auditoria contradizer o sinal ou revelar viés de cobertura",
+                "limitation": "Proposta; nenhum contato ou automação foi autorizado.",
+            }
+        ]
     else:
-        evidence_refs["quality:report"] = {
-            "artifact": "quality_report.json",
-            "row_key": {"scope": "quality_report"},
-            "columns": ["rows", "contradictions"],
-            "calculation": "build_quality_report",
-            "source_tables": list(result.quality_report.get("rows", {})),
-            "period_start": None,
-            "period_end": str(OBSERVATION_END.date()),
-            "population": "all_input_rows",
-            "unit": "data_quality_rules",
-        }
-        action_evidence = ["quality:report"]
-    action = {
-        "id": "A-intervene" if finding is not None else "A-validate",
-        "kind": "intervention_proposal" if finding is not None else "validation",
-        "description": (
-            str(finding["immediate_action"])
-            if finding is not None
-            else "Auditar cobertura e testar prospectivamente a hipótese mais plausível."
-        ),
-        "evidence_ids": action_evidence,
-        "owner_role": str(finding["owner"]) if finding is not None else "Head de Dados",
-        "deadline_days": 7,
-        "population": "contas expostas no snapshot diagnóstico",
-        "success_metric": (
-            str(finding.get("success_metric", "sinal e churn da coorte"))
-            if finding is not None
-            else "cobertura >=70% e sinal temporal consistente"
-        ),
-        "advance_if": "o sinal persistir com cobertura e comparação suficientes",
-        "stop_if": "a auditoria contradizer o sinal ou revelar viés de cobertura",
-        "limitation": "Proposta; nenhum contato ou automação foi autorizado.",
-    }
-    blocks["next_actions"]["actions"].append(action)
-    blocks["next_actions"]["summary"] = str(action["description"])
+        actions = [
+            {
+                "id": "A-data-integrity",
+                "kind": "validation",
+                "description": "Sanear eventos fora do ciclo de vida e medir novamente o churn.",
+                "evidence_ids": ["quality:report"],
+                "owner_role": "Head de Dados",
+                "deadline_days": 7,
+                "population": "eventos e contas sinalizados pelas regras de qualidade",
+                "success_metric": "zero evento inválido aceito e métricas reproduzidas",
+                "advance_if": "churn e coortes permanecerem estáveis após o saneamento",
+                "stop_if": "a correção alterar materialmente denominadores ou tendências",
+                "limitation": "Validação interna; não autoriza intervenção em clientes.",
+            },
+            {
+                "id": "A-usage-prospective",
+                "kind": "validation",
+                "description": "Acompanhar uso e churn prospectivamente por 30 dias.",
+                "evidence_ids": [
+                    "claim:C-usage-growth:churn_next_30d"
+                    if "claim:C-usage-growth:churn_next_30d" in evidence_refs
+                    else "quality:report"
+                ],
+                "owner_role": "Head de Produto",
+                "deadline_days": 30,
+                "population": "contas ativas no início da janela prospectiva",
+                "success_metric": "uso prévio e churn em 30 dias com cobertura >=70%",
+                "advance_if": "a queda de uso anteceder churn com comparação suficiente",
+                "stop_if": "o sinal desaparecer ou ocorrer apenas após o churn",
+                "limitation": "Teste observacional prospectivo; não prova causalidade sozinho.",
+            },
+            {
+                "id": "A-satisfaction-sample",
+                "kind": "validation",
+                "description": "Medir satisfação numa amostra representativa, fora dos tickets.",
+                "evidence_ids": [
+                    "claim:C-satisfaction-ok:churn_next_30d"
+                    if "claim:C-satisfaction-ok:churn_next_30d" in evidence_refs
+                    else "quality:report"
+                ],
+                "owner_role": "Head de CS",
+                "deadline_days": 30,
+                "population": "amostra estratificada de contas ativas e recém-churnadas",
+                "success_metric": "resposta >=70% por estrato e diferença entre coortes",
+                "advance_if": "a diferença persistir com cobertura representativa",
+                "stop_if": "a diferença sumir fora da amostra de tickets",
+                "limitation": "Amostragem mede associação e representatividade, não causa.",
+            },
+        ]
+    blocks["next_actions"]["actions"].extend(actions)
+    blocks["next_actions"]["summary"] = (
+        str(actions[0]["description"])
+        if finding is not None
+        else "Validar dados, uso e satisfação antes de intervir em clientes."
+    )
 
     block_list = [
         blocks[block_id]
@@ -896,11 +1010,30 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         claim["id"]
         for claim in block_list[0]["claims"]  # type: ignore[index]
     ]
-    headline = str(block_list[0]["summary"])
+    headline = f"Resposta curta: {block_list[0]['summary']}"
     if mechanism_status in {"inconclusive", "unavailable"}:
-        headline += " Nenhum mecanismo passou todos os gates."
+        headline += (
+            " Nenhum mecanismo passou todos os gates. Decisão: validar dados, uso e "
+            "satisfação antes de intervir."
+        )
     elif mechanism_status == "tied":
-        headline += " Há mecanismos sustentados empatados; nenhum foi selecionado isoladamente."
+        headline += (
+            " Há mecanismos sustentados empatados; nenhum foi selecionado isoladamente. "
+            "Decisão: comparar os mecanismos antes de priorizar intervenção."
+        )
+    else:
+        headline += " Decisão: priorizar a intervenção sustentada e medir o resultado."
+    block_confidence = {
+        "what_changed": "Alta confiança",
+        "where": "Alta confiança",
+        "strongest_mechanism": (
+            "Moderada confiança" if mechanism_status in {"supported", "tied"} else "Baixa confiança"
+        ),
+        "unknowns": "Baixa confiança",
+        "next_actions": "Baixa confiança",
+    }
+    for block in block_list:
+        block["confidence_label"] = block_confidence[str(block["id"])]
     return {
         "schema_version": 1,
         "analysis_id": analysis_id,
@@ -1179,7 +1312,16 @@ def _build_report(
 ) -> str:
     lines = ["# Resposta executiva canônica", "", str(answer["headline"]), ""]
     for index, block in enumerate(answer["blocks"], start=1):  # type: ignore[union-attr]
-        lines.extend([f"## {index}. {block['title']}", "", str(block["summary"]), ""])
+        lines.extend(
+            [
+                f"## {index}. {block['title']}",
+                "",
+                f"**{block['confidence_label']}**",
+                "",
+                str(block["summary"]),
+                "",
+            ]
+        )
         lines.extend(f"- **{claim['id']}:** {claim['statement']}" for claim in block["claims"])
         lines.extend(
             f"- **{action['id']}:** {action['description']}" for action in block["actions"]

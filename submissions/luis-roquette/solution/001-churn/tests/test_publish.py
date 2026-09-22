@@ -85,6 +85,9 @@ def test_ceo_answer_reconciles_usage_and_satisfaction_claims(analysis_result) ->
     assert claims["C-usage-churn-next-30d"]["status"] == "down"
     assert claims["C-satisfaction-overall"]["population"] == "support_ticket_respondents"
     assert claims["C-satisfaction-churn-next-30d"]["period_end"] == "2024-11-30"
+    assert answer["headline"].startswith("Resposta curta:")
+    assert "Decisão:" in answer["headline"]
+    assert len(answer["headline"].split()) <= 120
 
 
 def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
@@ -111,6 +114,68 @@ def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
     assert "plausible_hypothesis" not in executive_text
     assert "auto_renew_off" not in executive_text
     assert "causa ainda não demonstrada" in executive_text
+
+
+def test_ceo_answer_quantifies_impact_and_denies_false_concentration(
+    analysis_result,
+) -> None:
+    result = replace(
+        analysis_result,
+        segment_metrics=analysis_result.segment_metrics.assign(relative_risk=1.08),
+    )
+
+    answer = _build_ceo_answer(result)
+    claims = {
+        claim["id"]: claim
+        for block in answer["blocks"]
+        for claim in block["claims"]
+    }
+    recent = (
+        analysis_result.monthly_churn.loc[
+            analysis_result.monthly_churn["period_kind"].eq("comparison_period")
+            & analysis_result.monthly_churn["dimension"].eq("all")
+            & analysis_result.monthly_churn["segment"].eq("all")
+        ]
+        .sort_values("period_end")
+        .iloc[-1]
+    )
+    where = next(block for block in answer["blocks"] if block["id"] == "where")
+
+    assert claims["C-churn-impact"]["unit"] == "monthly_recurring_revenue"
+    assert claims["C-churn-impact"]["value"] == recent["mrr_lost"]
+    assert claims["C-churn-impact"]["period_start"] == "2024-06-01"
+    assert claims["C-churn-impact"]["period_end"] == "2024-11-30"
+    assert "não há concentração material demonstrada" in where["summary"].lower()
+
+
+def test_inconclusive_mechanisms_create_validation_plan_not_winner(
+    analysis_result,
+) -> None:
+    result = replace(
+        analysis_result,
+        findings=analysis_result.findings.assign(confidence="inconclusive"),
+        mechanism_scorecard=analysis_result.mechanism_scorecard.assign(
+            evidence_level="plausible_hypothesis", status="inconclusive"
+        ),
+    )
+
+    answer = _build_ceo_answer(result)
+    mechanism = next(
+        block for block in answer["blocks"] if block["id"] == "strongest_mechanism"
+    )
+    actions = next(
+        block for block in answer["blocks"] if block["id"] == "next_actions"
+    )["actions"]
+
+    assert mechanism["title"] == "Causa ainda não demonstrada"
+    assert mechanism["claims"] == []
+    assert len(actions) == 3
+    assert {action["owner_role"] for action in actions} == {
+        "Head de Dados",
+        "Head de Produto",
+        "Head de CS",
+    }
+    assert all(action["advance_if"] and action["stop_if"] for action in actions)
 
 
 def test_rehashed_invalid_reference_is_rejected(analysis_result, tmp_path) -> None:

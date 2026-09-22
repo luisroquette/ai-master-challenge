@@ -304,6 +304,10 @@ analysis_status = {
     "inconclusive": "Evidência inconclusiva",
     "unavailable": "Evidência indisponível",
 }[answer["mechanism_status"]]
+action_kind_labels = {
+    "validation": "Validação",
+    "intervention_proposal": "Proposta de intervenção",
+}
 
 st.markdown(
     f"""
@@ -391,6 +395,7 @@ for index, block in enumerate(answer["blocks"], start=1):
             <div class="answer-index">{index:02d}</div>
             <div>
                 <h2>{escape(str(block["title"]))}</h2>
+                <small>{escape(str(block["confidence_label"]))}</small>
                 <p>{escape(str(block["summary"]))}</p>
             </div>
         </section>
@@ -401,13 +406,15 @@ for index, block in enumerate(answer["blocks"], start=1):
         st.markdown(
             '<div class="canonical-item">'
             f"<strong>{escape(str(claim['id']))}</strong><br>"
-            f"{escape(str(claim['statement']))}</div>",
+            f"{escape(str(claim['statement']))}<br>"
+            f"<small>{escape(str(claim['confidence_label']))}</small></div>",
             unsafe_allow_html=True,
         )
     for action in block["actions"]:
         st.markdown(
             '<div class="canonical-item">'
-            f"<strong>{escape(str(action['id']))} · {escape(str(action['kind']))}</strong><br>"
+            f"<strong>{escape(str(action['id']))} · "
+            f"{escape(action_kind_labels.get(str(action['kind']), str(action['kind'])))}</strong><br>"
             f"{escape(str(action['description']))}<br>"
             f"<small>{escape(str(action['owner_role']))} · {int(action['deadline_days'])} dias · "
             f"avançar se {escape(str(action['advance_if']))}; parar se "
