@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 import hashlib
 import json
 from pathlib import Path
@@ -53,11 +54,15 @@ def ensure_session(session, current_fingerprint):
         session["fingerprint"] = current_fingerprint
         session["calculation_generation"] = 0
         session["selection_by_stage"] = {}
+        session["active_table_by_stage"] = {}
+        session["table_reset_by_key"] = {}
         session["pins_by_stage"] = {}
         session["page_by_stage"] = {}
     else:
         session.setdefault("calculation_generation", 0)
         session.setdefault("selection_by_stage", {})
+        session.setdefault("active_table_by_stage", {})
+        session.setdefault("table_reset_by_key", {})
         session.setdefault("pins_by_stage", {})
         session.setdefault("page_by_stage", {})
 
@@ -65,6 +70,8 @@ def ensure_session(session, current_fingerprint):
 def recalculate(session):
     session["calculation_generation"] = session.get("calculation_generation", 0) + 1
     session["selection_by_stage"] = {}
+    session["active_table_by_stage"] = {}
+    session["table_reset_by_key"] = {}
     session["pins_by_stage"] = {}
     session["page_by_stage"] = {}
 
@@ -139,6 +146,10 @@ def detail_view(row):
         result.update({"Probabilidade": row.probability, "Receita esperada": row.expected_revenue})
     elif row.state == "relative":
         result["Índice relativo"] = row.relative_index
+        if row.stage == "Prospecting":
+            result.update({"Observações históricas (n)": row.observed_n,
+                           "Suporte efetivo (n + prior)": row.effective_support,
+                           "Peso do prior": row.prior_strength})
     else:
         result["Correção"] = "; ".join(filter(None, (
             _diagnostic_value(item, "correction") for item in row.diagnostics))) or "Revise os campos indicados"
@@ -149,11 +160,13 @@ def resolve_selection(session, stage, context, ordered_ids, selected_positions):
     previous = session["selection_by_stage"].get(stage)
     if previous and (previous["context"] != context or previous["id"] not in ordered_ids):
         session["selection_by_stage"].pop(stage, None)
+        session["active_table_by_stage"].pop(stage, None)
         previous = None
     if selected_positions:
         position = selected_positions[0]
         if 0 <= position < len(ordered_ids):
-            previous = {"context": context, "id": ordered_ids[position]}
+            previous = {"context": context, "id": ordered_ids[position],
+                        "source_table": previous.get("source_table") if previous else None}
             session["selection_by_stage"][stage] = previous
     return previous["id"] if previous else None
 
@@ -174,21 +187,61 @@ def _selection_rows(event):
     return list(rows or ())
 
 
-def render_selectable_table(rows, state, pin, key):
-    event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch", key=key,
-                         on_select="rerun", selection_mode="single-row")
-    return _selection_rows(event)
+def activate_native_selection(session, stage, context, widget_key, table_key,
+                              displayed_ids, table_keys):
+    """Publish one native row selection and invalidate every sibling grid."""
+    positions = _selection_rows(session.get(widget_key, {}))
+    active = session["active_table_by_stage"].get(stage)
+    if not positions or not 0 <= positions[0] < len(displayed_ids):
+        if active == {"context": context, "table": table_key}:
+            session["active_table_by_stage"].pop(stage, None)
+            session["selection_by_stage"].pop(stage, None)
+        return
+    for sibling in table_keys:
+        if sibling != table_key:
+            session["table_reset_by_key"][sibling] = (
+                session["table_reset_by_key"].get(sibling, 0) + 1)
+    session["active_table_by_stage"][stage] = {"context": context, "table": table_key}
+    session["selection_by_stage"][stage] = {
+        "context": context, "id": displayed_ids[positions[0]], "source_table": table_key}
 
 
-def _render_open_actions(rows, stage, context, session):
+def activate_button_selection(session, stage, context, opportunity_id, table_keys):
+    """Use the same source of truth as native grids and clear their visual state."""
+    for table_key in table_keys:
+        session["table_reset_by_key"][table_key] = (
+            session["table_reset_by_key"].get(table_key, 0) + 1)
+    session["active_table_by_stage"][stage] = {"context": context, "table": None}
+    session["selection_by_stage"][stage] = {
+        "context": context, "id": opportunity_id, "source_table": None}
+
+
+def render_selectable_table(rows, state, pin, key, session=None, stage=None,
+                            context=None, table_keys=()):
+    if session is None:
+        event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch",
+                             key=key, on_select="rerun", selection_mode="single-row")
+        return _selection_rows(event)
+    token = session["table_reset_by_key"].get(key, 0)
+    widget_key = f"{key}-reset-{token}"
+    event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch",
+        key=widget_key, on_select=partial(activate_native_selection, session, stage, context,
+            widget_key, key, tuple(row.opportunity_id for row in rows), tuple(table_keys)),
+        selection_mode="single-row")
+    active = session["active_table_by_stage"].get(stage)
+    return (_selection_rows(event)
+            if active == {"context": context, "table": key} else [])
+
+
+def _render_open_actions(rows, stage, context, session, table_keys):
     st.caption("Ações acessíveis")
     for start in range(0, len(rows), 4):
         columns = st.columns(4)
         for column, row in zip(columns, rows[start:start + 4]):
-            if column.button(f"Abrir {row.opportunity_id}",
-                             key=f"open-{stage}-{context}-{row.opportunity_id}"):
-                session["selection_by_stage"][stage] = {
-                    "context": context, "id": row.opportunity_id}
+            column.button(f"Abrir {row.opportunity_id}",
+                key=f"open-{stage}-{context}-{row.opportunity_id}",
+                on_click=activate_button_selection,
+                args=(session, stage, context, row.opportunity_id, tuple(table_keys)))
 
 
 def format_pin_timestamp(pin):
@@ -213,7 +266,8 @@ def _table(rows, state, pin=None):
                                "Receita esperada (valor catálogo)": row.expected_revenue})
             elif row.state == "relative":
                 record.update({"Índice relativo": row.relative_index,
-                               "Evidência": row.evidence_strength})
+                               "Evidência": row.evidence_strength,
+                               "Valor potencial do catálogo": row.potential_revenue})
             else:
                 record["Correção"] = detail_view(row)["Correção"]
         else:
@@ -230,6 +284,7 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
     if not ordered:
         st.info("Nenhuma oportunidade neste filtro")
         session["selection_by_stage"].pop(stage, None)
+        session["active_table_by_stage"].pop(stage, None)
         return
     context = hashlib.sha256(repr((stage, role, identity, region, seller,
         tuple(row.opportunity_id for row in ordered))).encode()).hexdigest()
@@ -245,19 +300,25 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
         page_state["page"] = page
         row_section = {row.opportunity_id: name for name, section in sections.items()
                        for row in section}
+        section_rows_by_name = {name: [row for row in visible_rows
+            if row_section[row.opportunity_id] == name]
+            for name in ("pinned", "calibrated", "relative", "insufficient_data")}
+        table_keys = tuple(f"portfolio-{stage}-{context}-{page}-{name}"
+            for name, section_rows in section_rows_by_name.items() if section_rows)
         selected_positions = []
         displayed_ids = [row.opportunity_id for row in visible_rows]
         offset = 0
         for name in ("pinned", "calibrated", "relative", "insufficient_data"):
-            section_rows = [row for row in visible_rows if row_section[row.opportunity_id] == name]
+            section_rows = section_rows_by_name[name]
             if not section_rows:
                 continue
             st.markdown(f"### {labels[name]}")
             if name == "pinned":
                 st.caption(f"Gestor {pin.manager} · {format_pin_timestamp(pin)}")
+            table_key = f"portfolio-{stage}-{context}-{page}-{name}"
             selected_positions.extend(offset + position for position in render_selectable_table(
-                section_rows, name, pin, f"portfolio-{stage}-{context}-{page}-{name}"))
-            _render_open_actions(section_rows, stage, context, session)
+                section_rows, name, pin, table_key, session, stage, context, table_keys))
+            _render_open_actions(section_rows, stage, context, session, table_keys)
             offset += len(section_rows)
         navigation = st.columns((1, 1, 2))
         if navigation[0].button(f"Página anterior de {stage}", disabled=page == 0,
@@ -302,6 +363,8 @@ def render_portfolio(bundle, session):
     if session.get("view_identity") != (role, identity):
         session["view_identity"] = (role, identity)
         session["selection_by_stage"] = {}
+        session["active_table_by_stage"] = {}
+        session["table_reset_by_key"] = {}
         session["page_by_stage"] = {}
     region, seller = "Todas as regiões", "Todos da equipe"
     if role == "Gestor":
