@@ -94,6 +94,8 @@ def verify_live_revision(url, expected_revision, expected_source_digest, expecte
             page.goto(url, wait_until="domcontentloaded", timeout=120_000)
             page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for(
                 timeout=RENDER_TIMEOUT_MS)
+            page.get_by_text(re.compile(r"revisão .+fingerprint .+fonte .+"),
+                             exact=False).wait_for(timeout=RENDER_TIMEOUT_MS)
             body = page.locator("body").inner_text()
             required = (f"revisão {expected_revision}", f"fingerprint {expected_fingerprint}",
                         f"fonte {expected_source_digest}")
@@ -699,6 +701,13 @@ class VerificationGateTests(unittest.TestCase):
             self.assertTrue(verify_live_revision(url, *identity))
             with self.assertRaisesRegex(AssertionError, "Identidade renderizada divergente"):
                 verify_live_revision(url, identity[0], "source-errada", identity[2])
+        delayed = ("<html><body><h1>Prioridades comerciais explicáveis</h1><div id='app'></div>"
+                   "<script>setTimeout(() => { document.querySelector('#app').innerHTML = `"
+                   f"<p>revisão {identity[0]} · fingerprint {identity[2]} · fonte {identity[1]}</p>"
+                   "<p>Prioridade relativa</p><button role='tab'>Engaging</button>"
+                   "<button role='tab'>Prospecting</button>`; }, 100);</script></body></html>")
+        with _html_server(delayed) as url:
+            self.assertTrue(verify_live_revision(url, *identity))
         missing_stage = ("<h1>Prioridades comerciais explicáveis</h1>"
                          f"<p>revisão {identity[0]} fingerprint {identity[2]} fonte {identity[1]}</p>"
                          "<p>Prioridade relativa</p>"

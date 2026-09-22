@@ -1237,3 +1237,14 @@ Foram preservados os contratos essenciais: tela única, abas Engaging/Prospectin
 - Passada limpa 2: revisão de contratos, acessibilidade, estados e journeys automatizados, sem novo achado relevante.
 
 O objetivo específico da rodada de UI/UX foi atingido com duas passadas consecutivas sem melhoria relevante. O preflight integral não foi executado nesta rodada e não é reivindicado. Nenhum push, PR, deploy, URL pública ou comunicação aos avaliadores ocorreu; o embargo externo permanece vigente.
+
+### Correção posterior da verificação renderizada
+
+Após o primeiro commit visual, a verificação local da identidade encontrou uma corrida em `tests/test_app.py`: o título já estava visível, mas a leitura do corpo ocorria antes da linha com revisão, fingerprint e fonte. A contagem anterior de passadas limpas foi invalidada e reiniciada.
+
+- A causa raiz foi corrigida no verificador: ele agora aguarda a linha genérica completa de identidade antes de comparar os valores esperados, preservando a mensagem diagnóstica para divergências reais.
+- Uma página que injeta a identidade depois do título foi adicionada como regressão; gate específico **1/1** verde.
+- Passada limpa pós-correção 1: verificador renderizado local verde contra o commit `a77f47d`, sem reivindicar `TC47` público.
+- Passada limpa pós-correção 2: **21/21** testes focais — 14 contratos, 4 AppTests e 3 journeys Playwright — mais `py_compile` e `git diff --check`, sem novo achado.
+
+Com duas novas passadas consecutivas sem erro, gap ou melhoria relevante, a rodada profunda de UI/UX volta a atingir seu objetivo. O preflight integral e o `TC47` público continuam não executados.
