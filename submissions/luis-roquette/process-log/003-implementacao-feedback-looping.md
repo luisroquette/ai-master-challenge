@@ -911,3 +911,19 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Gargalo observado:** a reprodução integral é correta e determinística, porém lenta por executar bootstrap completo duas vezes. Esta dívida de performance não reduz a validade do resultado, mas deve ser otimizada se o pipeline virar rotina operacional.
 
 **Estado:** Fase 2 fechada com gate integral, determinismo e inspeção desktop/mobile verdes. PR e merge não foram executados; são decisões separadas de entrega.
+
+### Nova rodada — elevar a resposta central de 7,0 para pelo menos 9,5
+
+**Avaliação humana solicitada:** Luis voltou ao objetivo primário e determinou que 90% do desafio está na resposta clara, objetiva e altamente confiável à pergunta do CEO. Avaliamos a entrega vigente em 7,0/10: forte para provar a alta do churn e reconciliar médias agregadas, mas insuficiente para responder “por quê” com o mesmo nível de confiança.
+
+**Diagnóstico da lacuna:** a solução atual acerta ao não inventar causalidade, porém ainda chama `auto_renew_off` de “mecanismo mais forte” apesar de OR 1,097, IC95% 0,411–2,924, p ajustado 1,0 e múltiplos gates reprovados. Também apresenta EUA/1,08× como concentração sem relevância material, omite US$ 1.622.337 de MRR perdido no resumo e oferece uma única ação genérica.
+
+**Decisão metodológica:** separar dois alvos. Qualidade e cobertura da resposta podem chegar a 9,5/10 com os dados existentes; certeza causal de 9,5/10 não pode ser prometida sem experimento, melhor instrumentação ou pressupostos causais defensáveis. A confiança será elevada pela precisão do que afirmamos e pela clareza do que ainda não sabemos — nunca por linguagem mais assertiva.
+
+**Pesquisa antes da criação:** revisamos DoWhy, EconML, CausalML, Responsible AI Toolbox, Evidently e discussões públicas sobre cohort churn. DoWhy oferece refutadores úteis; EconML/CausalML exigem tratamento e confundidores observados; Responsible AI reforça a separação identificação→diagnóstico→decisão. Nenhuma biblioteca resolve a ausência de identificação causal. Pelo princípio Ponytail, não adicionaremos dependências: o QA, as coortes e os gates atuais já fornecem o arcabouço necessário.
+
+**Novo padrão de aceitação:** criamos uma rubrica explícita de 10 pontos: resposta direta 2,0; precisão quantitativa 2,0; reconciliação CS×Produto 2,0; calibração causal 1,5; utilidade decisória 1,5; consistência/auditoria 1,0. Causalidade indevida, população incorreta ou divergência numérica limitam a nota a no máximo 8,0. O objetivo de saída é nota documentada >=9,5 sem hard cap.
+
+**Arquitetura aprovada para planejamento:** preservar `ceo_answer.json` como fonte única; completar impacto econômico; declarar ausência de concentração material; substituir “mecanismo mais forte” por “causa ainda não demonstrada”; oferecer três validações com owner, prazo, população, métrica e condições de avançar/parar; e traduzir evidência em confiança executiva no dashboard.
+
+**Artefatos de planejamento:** SPEC criada em `.specs/tasks/todo/raise-ceo-answer-to-9-5.feature.md`; plano TDD em `docs/superpowers/plans/2026-09-22-decision-grade-ceo-answer.md`. Nenhum código de produção foi alterado nesta rodada. Implementação aguarda revisão humana da SPEC e do plano, conforme SDD.
