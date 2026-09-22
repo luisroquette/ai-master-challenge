@@ -39,6 +39,8 @@ def render_scorecard(root: Path | None = None) -> None:
         st.warning(str(error))
         st.info("Fila, modelos, gate, recuperação e auditoria ainda não estão disponíveis.")
         return
+    if summary.status == "insufficient_support":
+        st.warning(f"Diagnóstico sem suporte: {summary.reason}.")
 
     st.subheader("Histórico observado")
     st.caption(

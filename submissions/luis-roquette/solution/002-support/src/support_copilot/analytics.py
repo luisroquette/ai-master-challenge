@@ -24,6 +24,16 @@ GROUP_COLUMNS = ("Ticket Channel", "Ticket Priority", "target")
 MIN_WASTE_SUPPORT = 30
 MIN_SATISFACTION_SUPPORT = 10
 MIN_MAE_IMPROVEMENT = 0.02
+BOTTLENECK_COLUMNS = (
+    "grouping", *GROUP_COLUMNS, "n_total", "n_eligible", "n_excluded",
+    "excluded_not_closed", "excluded_missing", "excluded_invalid_timestamp",
+    "excluded_negative", "median_hours", "q1_hours", "q3_hours", "iqr_hours",
+    "interval_name", "first_response_observable", "total_resolution_observable",
+)
+WASTE_COLUMNS = (
+    "target", "Ticket Priority", "eligible_n", "peer_median_hours",
+    "observed_excess_hours", "status", "evidence_kind", "realized_savings",
+)
 
 
 @dataclass(frozen=True)
@@ -62,6 +72,8 @@ class OperationalSummary:
     satisfaction_status: str
     satisfaction_sample: int
     limitations: tuple[str, ...]
+    status: Literal["ready", "insufficient_support"] = "ready"
+    reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -129,8 +141,12 @@ def add_operational_fields(frame: pd.DataFrame) -> pd.DataFrame:
         frame, {"Ticket Status", "First Response Time", "Time to Resolution"}
     )
     result = frame.copy()
-    first = pd.to_datetime(result["First Response Time"], errors="coerce", utc=True)
-    resolved = pd.to_datetime(result["Time to Resolution"], errors="coerce", utc=True)
+    first = pd.to_datetime(
+        result["First Response Time"], errors="coerce", format="mixed", utc=True
+    )
+    resolved = pd.to_datetime(
+        result["Time to Resolution"], errors="coerce", format="mixed", utc=True
+    )
     statuses: list[str] = []
     hours: list[float | None] = []
     for closed, raw_first, raw_resolved, first_at, resolved_at in zip(
@@ -193,7 +209,7 @@ def grouped_bottlenecks(frame: pd.DataFrame) -> pd.DataFrame:
                     "total_resolution_observable": False,
                 })
                 rows.append(row)
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=BOTTLENECK_COLUMNS)
 
 
 def recoverable_excess_hours(frame: pd.DataFrame) -> pd.DataFrame:
@@ -221,7 +237,7 @@ def recoverable_excess_hours(frame: pd.DataFrame) -> pd.DataFrame:
             "evidence_kind": "observed_proxy",
             "realized_savings": False,
         })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=WASTE_COLUMNS)
 
 
 def _signal_status(baseline_mae: float, ridge_mae: float) -> tuple[str, float]:
@@ -287,16 +303,23 @@ def satisfaction_associations(frame: pd.DataFrame) -> SatisfactionReport:
     baseline_scores: list[float] = []
     ridge_scores: list[float] = []
     retained: list[tuple[object, pd.DataFrame, pd.Series]] = []
+    interval_feature_used_folds = 0
     for train_index, held_index in splitter.split(x):
         x_train, x_held = x.iloc[train_index], x.iloc[held_index]
         y_train, y_held = y.iloc[train_index], y.iloc[held_index]
         baseline = DummyRegressor(strategy="median").fit(x_train, y_train)
-        preprocessing = ColumnTransformer([
+        transformers = [
             ("categorical", make_pipeline(SimpleImputer(strategy="most_frequent"),
                                           OneHotEncoder(handle_unknown="ignore")), categorical),
-            ("numeric", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()),
-             numeric),
-        ])
+        ]
+        # An all-missing interval is absence of evidence, not an observed zero.
+        if x_train["post_response_hours"].notna().any():
+            transformers.append(
+                ("numeric", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()),
+                 numeric)
+            )
+            interval_feature_used_folds += 1
+        preprocessing = ColumnTransformer(transformers)
         ridge = make_pipeline(preprocessing, Ridge(alpha=1.0)).fit(x_train, y_train)
         baseline_scores.append(float(mean_absolute_error(y_held, baseline.predict(x_held))))
         ridge_scores.append(float(mean_absolute_error(y_held, ridge.predict(x_held))))
@@ -325,6 +348,7 @@ def satisfaction_associations(frame: pd.DataFrame) -> SatisfactionReport:
         status, len(data), len(valid), missing, invalid, len(data) - len(valid), effects,
         {"strategy": "KFold(shuffle=True, random_state=42)", "folds": folds,
          "preprocessing": "imputation, scaling and one-hot fitted inside each fold",
+         "interval_feature_used_folds": interval_feature_used_folds,
          "baseline_fold_mae": baseline_scores, "ridge_fold_mae": ridge_scores},
         baseline_mae, ridge_mae, improvement, importance, conclusion, limitation,
     )
@@ -340,6 +364,7 @@ def operational_summary(frame: pd.DataFrame) -> OperationalSummary:
     source = frame.attrs.get("source", {})
     quality = source.get("quality", frame.attrs.get("quality", {}))
     split = frame.attrs.get("split", {})
+    has_development_rows = bool(len(data))
     return OperationalSummary(
         schema_version=1,
         evidence_kind="historical_observed",
@@ -364,6 +389,8 @@ def operational_summary(frame: pd.DataFrame) -> OperationalSummary:
             satisfaction.selection_limitation,
             "O teste permanece lacrado; este relatório é diagnóstico de desenvolvimento.",
         ),
+        status="ready" if has_development_rows else "insufficient_support",
+        reason=None if has_development_rows else "no_sanitized_development_representatives",
     )
 
 

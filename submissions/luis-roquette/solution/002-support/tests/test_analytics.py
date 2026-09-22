@@ -1,4 +1,7 @@
+import json
+import runpy
 from dataclasses import asdict
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -13,6 +16,10 @@ from support_copilot.analytics import (
     satisfaction_associations,
     scenario_projection,
 )
+from support_copilot.data import CUSTOMER_COLUMNS, IT_TAXONOMY
+
+ROOT = Path(__file__).parents[1]
+reproduce = runpy.run_path(ROOT / "scripts" / "reproduce.py")["reproduce"]
 
 
 def operational_frame(rows: list[dict] | None = None) -> pd.DataFrame:
@@ -73,6 +80,21 @@ def test_intervals_use_closed_valid_ordered_rows_and_reconcile_denominators() ->
         assert not row.first_response_observable and not row.total_resolution_observable
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+def test_intervals_accept_mixed_iso_timestamp_precision_in_any_order(reverse: bool) -> None:
+    rows = [
+        {"First Response Time": "2026-01-01T00:00:00Z",
+         "Time to Resolution": "2026-01-01T00:00:01.123456Z"},
+        {"First Response Time": "2026-01-01T00:00:00.500000Z",
+         "Time to Resolution": "2026-01-01T00:00:02Z"},
+    ]
+    enriched = add_operational_fields(operational_frame(list(reversed(rows)) if reverse else rows))
+    assert enriched["interval_status"].tolist() == ["valid", "valid"]
+    assert sorted(enriched["post_response_hours"].tolist()) == pytest.approx(
+        sorted([1.123456 / 3600, 1.5 / 3600])
+    )
+
+
 def test_waste_requires_30_valid_peers_and_never_has_negative_excess() -> None:
     rows = []
     for count, priority in ((29, "Low"), (30, "High")):
@@ -104,6 +126,22 @@ def test_satisfaction_scarcity_and_two_percent_cut_are_honest() -> None:
     status, improvement = _signal_status(1.0, 0.98)
     assert status == "supported"
     assert improvement == pytest.approx(0.02)
+
+
+@pytest.mark.parametrize("valid_intervals", [0, 1])
+def test_satisfaction_handles_interval_absence_inside_folds(valid_intervals: int) -> None:
+    rows = []
+    for index in range(10):
+        rows.append({
+            "Ticket Status": "Closed" if index < valid_intervals else "Open",
+            "Customer Satisfaction Rating": index % 5 + 1,
+            "satisfaction_status": "valid",
+            "Ticket Channel": "Email" if index % 2 else "Chat",
+        })
+    report = satisfaction_associations(operational_frame(rows))
+    assert report.status in {"supported", "no_reliable_signal"}
+    assert report.cv["folds"] == 5
+    assert report.cv["interval_feature_used_folds"] == (0 if valid_intervals == 0 else 4)
 
 
 @pytest.mark.parametrize(
@@ -140,3 +178,42 @@ def test_raw_or_wrong_domain_frames_are_rejected() -> None:
         add_operational_fields(raw)
     with pytest.raises(ValueError, match="domain"):
         add_operational_fields(operational_frame().assign(domain="it"))
+
+
+def test_reproduce_emits_typed_null_diagnostic_when_split_is_insufficient(
+    tmp_path,
+) -> None:
+    customer = tmp_path / "customer.csv"
+    row = dict.fromkeys(CUSTOMER_COLUMNS, "")
+    row.update({
+        "Ticket ID": "1", "Customer Name": "Example Person",
+        "Customer Email": "example@example.invalid", "Customer Age": "31",
+        "Customer Gender": "Other", "Ticket Type": "Technical issue",
+        "Ticket Description": "device does not boot", "Ticket Status": "Closed",
+        "Ticket Priority": "High", "Ticket Channel": "Email",
+        "First Response Time": "2026-01-01T00:00:00Z",
+        "Time to Resolution": "2026-01-01T01:00:00.123456Z",
+        "Customer Satisfaction Rating": "4",
+    })
+    pd.DataFrame([row]).to_csv(customer, index=False)
+    it = tmp_path / "it.csv"
+    pd.DataFrame({
+        "Document": [f"support request {index}" for index in range(len(IT_TAXONOMY))],
+        "Topic_group": IT_TAXONOMY,
+    }).to_csv(it, index=False)
+
+    output = tmp_path / "artifacts"
+    manifest = reproduce(customer, it, output)
+    summary_payload = json.loads(
+        (output / "analytics" / "operational-summary.json").read_text()
+    )
+    waste = pd.read_csv(output / "analytics" / "waste-opportunities.csv")
+    bottlenecks = pd.read_csv(output / "analytics" / "bottlenecks.csv")
+
+    assert manifest["splits"]["customer"]["status"] == "insufficient_support"
+    assert summary_payload["status"] == "insufficient_support"
+    assert summary_payload["reason"] == "no_sanitized_development_representatives"
+    assert summary_payload["median_post_response_hours"] is None
+    assert summary_payload["observed_excess_hours"] is None
+    assert waste.empty and "status" in waste
+    assert bottlenecks.empty and "n_eligible" in bottlenecks

@@ -825,3 +825,13 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Resultado real:** 904 representantes sanitizados compõem treino + calibração; somente quatro intervalos pós-primeira-resposta são válidos. Há 21 notas válidas no desenvolvimento, contra 34 em todas as 1.392 linhas sanitizadas da fonte. Ridge não obteve ganho de MAE de 2%, portanto o estado é `no_reliable_signal` e nenhuma importância multivariada é publicada.
 - **Oportunidade:** nenhum par tipo/prioridade alcança 30 intervalos válidos; todos permanecem `insufficient_support`, sem estimativa de excesso. O relatório IT declara ausência de desfecho operacional e de chave entre registros.
 - **Motivo para avançar:** o marco executável funciona e os resultados negativos permanecem visíveis. Não há justificativa para relaxar privacidade, abrir o teste ou fabricar economia para preencher o painel.
+
+## I47 — Step 03: correções da revisão da Fase 1 — 2026-09-21 21:44 BRT
+
+- **Hipótese testada:** ausência total de intervalos em um fold não pode virar zero observado. O pipeline agora omite a feature temporal somente naquele fold quando o treino não contém valor; categóricas, baseline e demais folds permanecem intactos. O relatório conta em quantos folds a feature foi realmente usada.
+- **Correção temporal:** `pandas.to_datetime(format="mixed", utc=True)` passa a aceitar ISO válido com e sem microssegundos independentemente da ordem das linhas, sem aceitar timestamps ilegíveis.
+- **Correção de escassez:** tabelas vazias de gargalos e desperdício preservam headers. O resumo retorna `status=insufficient_support`, métricas nulas e `reason=no_sanitized_development_representatives` quando sanitização/deduplicação não sustenta split.
+- **Regressões permanentes:** avaliações suficientes com zero intervalo; um único intervalo ausente do treino de um fold; precisões temporais mistas nas duas ordens; reprodução completa após split insuficiente, incluindo manifesto, resumo JSON e CSVs vazios tipados.
+- **Erro e correção:** o primeiro teste tentou importar `scripts.reproduce` como pacote. Como `scripts/` não é pacote e não precisa virar um, o teste passou a carregar o script por `runpy`, repetindo o padrão mínimo já usado no workflow.
+- **Teste local focado:** Ruff passou; `pytest tests/test_analytics.py tests/test_workflow.py -q` concluiu 18 testes em 2,44 s; `git diff --check` passou.
+- **Motivo para repetir:** suíte completa e reprodução real ainda precisam confirmar no Codespace que o SHA corrigido conserva as contagens honestas anteriores e não reabre os defeitos da revisão.
