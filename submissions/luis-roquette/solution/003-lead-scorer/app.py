@@ -221,11 +221,16 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
             calibrated = [row for row in ordered if row.state == "calibrated"]
             st.caption(f"Receita esperada cobre {len(calibrated)}/{len(ordered)} oportunidades; "
                        f"total em valor de catálogo: {sum(row.expected_revenue for row in calibrated):.2f}")
-        accessible_id = st.selectbox(f"Abrir detalhes de {stage}",
-            ["Selecione uma oportunidade"] + [row.opportunity_id for row in ordered],
-            key=f"details-{context}")
-        if accessible_id != "Selecione uma oportunidade":
-            selected = [[row.opportunity_id for row in ordered].index(accessible_id)]
+        ordered_ids = [row.opportunity_id for row in ordered]
+        with st.form(f"details-form-{context}", clear_on_submit=False):
+            accessible_id = st.text_input(f"ID da oportunidade em {stage}",
+                key=f"details-id-{context}", placeholder="Digite o ID exato exibido na tabela")
+            submitted = st.form_submit_button(f"Abrir detalhes de {stage}")
+        if submitted:
+            if accessible_id in ordered_ids:
+                selected = [ordered_ids.index(accessible_id)]
+            else:
+                st.warning("ID não encontrado neste estágio e filtro.")
     selected_id = resolve_selection(session, stage, context,
                                     [row.opportunity_id for row in ordered], selected)
     with detail_column:
@@ -263,8 +268,8 @@ def render_portfolio(bundle, session):
     if st.button("Recalcular prioridades"):
         recalculate(session)
     rows = portfolio_rows(bundle, role, identity, region, seller)
-    st.caption(f"Versão {bundle.config_version} · dados/modelo {bundle.fingerprint[:12]} · "
-               f"fonte {bundle.source_identity.get('source_digest', '')[:12]}")
+    st.caption(f"Versão {bundle.config_version} · revisão {bundle.source_identity.get('revision') or 'indisponível'} · "
+               f"fingerprint {bundle.fingerprint} · fonte {bundle.source_identity.get('source_digest', '')}")
     unassigned = [row for row in bundle.scores if not row.sales_agent or not row.manager or not row.regional_office]
     if unassigned or bundle.input_diagnostics:
         with st.expander(f"Qualidade dos dados ({len(unassigned)} sem atribuição segura)"):

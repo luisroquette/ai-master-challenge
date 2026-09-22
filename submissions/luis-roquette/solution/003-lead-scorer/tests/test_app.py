@@ -1,14 +1,22 @@
 """Fixture-first tests for the Streamlit portfolio and session contract."""
+import argparse
+import contextlib
 from dataclasses import replace
 from datetime import datetime, timezone
+import http.server
+import ipaddress
+import json
 import math
+import os
 from pathlib import Path
 import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
+from urllib.parse import urlparse
 from urllib.request import urlopen
 from unittest.mock import patch
 
@@ -16,6 +24,109 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import scoring as s
+
+
+def _free_port():
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+def _wait_for_streamlit(process, port, timeout=120):
+    deadline = time.monotonic() + timeout
+    while process.poll() is None:
+        try:
+            with urlopen(f"http://127.0.0.1:{port}/_stcore/health", timeout=1) as response:
+                if response.status == 200:
+                    return
+        except OSError:
+            pass
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(.1)
+    raise RuntimeError(f"Streamlit não iniciou; status={process.poll()}")
+
+
+@contextlib.contextmanager
+def managed_streamlit_server(app_path, python=sys.executable, timeout=120):
+    """Own exactly one child and tear down only that process."""
+    port = _free_port()
+    process = subprocess.Popen((python, "-m", "streamlit", "run", str(app_path),
+        "--server.headless=true", "--server.address=127.0.0.1", f"--server.port={port}",
+        "--browser.gatherUsageStats=false"),
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        env={**os.environ, "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "false"})
+    try:
+        _wait_for_streamlit(process, port, timeout)
+        yield process, f"http://127.0.0.1:{port}"
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+
+
+def verify_live_revision(url, expected_revision, expected_source_digest, expected_fingerprint):
+    """Verify rendered identity and active-stage UI; TC-47 calls this after deploy."""
+    expected = {
+        "url": url,
+        "revision": expected_revision,
+        "source_digest": expected_source_digest,
+        "fingerprint": expected_fingerprint,
+    }
+    if any(not isinstance(value, str) or not value.strip() for value in expected.values()):
+        raise ValueError("url, expected_revision, expected_source_digest e expected_fingerprint são obrigatórios")
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError("URL de verificação deve ser HTTP(S) absoluta")
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        try:
+            page = browser.new_page()
+            page.goto(url, wait_until="domcontentloaded", timeout=120_000)
+            page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+            body = page.locator("body").inner_text()
+            required = (f"revisão {expected_revision}", f"fingerprint {expected_fingerprint}",
+                        f"fonte {expected_source_digest}")
+            missing = [token for token in required if token not in body]
+            if missing:
+                raise AssertionError(f"Identidade renderizada divergente: {missing}")
+            for stage in ("Engaging", "Prospecting"):
+                if page.get_by_role("tab", name=stage, exact=True).count() != 1:
+                    raise AssertionError(f"Visão de estágio ausente: {stage}")
+            if not any(label in body for label in ("Probabilidade validada", "Prioridade relativa",
+                    "Dados insuficientes", "Nenhuma oportunidade neste filtro")):
+                raise AssertionError("Visão ativa de oportunidades ausente")
+        finally:
+            browser.close()
+    return True
+
+
+@contextlib.contextmanager
+def _html_server(html):
+    payload = html.encode()
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, *_):
+            pass
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
 
 
 def _periods():
@@ -203,12 +314,14 @@ render_portfolio(bundle_fixture(), st.session_state)
 
     def test_TC35_TC37_TC38_TC39_apptest_manager_filter_pin_and_reset(self):
         at = self.fixture_app()
-        at.selectbox[2].set_value("E-A").run()
+        at.text_input[0].set_value("E-A").run()
+        next(button for button in at.button if button.label == "Abrir detalhes de Engaging").click().run()
         self.assertFalse(any(button.label == "Prioridade temporária do gestor" for button in at.button))
         at.selectbox[0].set_value("Gestor").run()
         at.selectbox[2].set_value("Norte").run()
         at.selectbox[3].set_value("Beto").run()
-        at.selectbox[4].set_value("E-B").run()
+        at.text_input[0].set_value("E-B").run()
+        next(button for button in at.button if button.label == "Abrir detalhes de Engaging").click().run()
         pin = next(button for button in at.button if button.label == "Prioridade temporária do gestor")
         pin.click().run()
         pinned = next(frame.value for frame in at.dataframe if "Gestor" in frame.value.columns)
@@ -232,62 +345,59 @@ from app import render_portfolio
 from test_app import bundle_fixture
 render_portfolio(bundle_fixture(), st.session_state)
 """, encoding="utf-8")
-        with socket.socket() as probe:
-            probe.bind(("127.0.0.1", 0))
-            cls.port = probe.getsockname()[1]
-        cls.server = subprocess.Popen((sys.executable, "-m", "streamlit", "run", str(path),
-            "--server.headless=true", f"--server.port={cls.port}", "--browser.gatherUsageStats=false"),
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        deadline = time.monotonic() + 20
-        while True:
-            try:
-                with urlopen(f"http://127.0.0.1:{cls.port}/_stcore/health", timeout=1) as response:
-                    if response.status == 200:
-                        break
-            except OSError:
-                if time.monotonic() >= deadline:
-                    raise RuntimeError("Streamlit fixture não iniciou")
-                time.sleep(.1)
+        cls.server_context = managed_streamlit_server(path, timeout=20)
+        cls.server, cls.base_url = cls.server_context.__enter__()
         cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch(headless=True)
+        try:
+            cls.browser = cls.playwright.chromium.launch(headless=True)
+        except Exception:
+            cls.playwright.stop()
+            cls.server_context.__exit__(None, None, None)
+            cls.directory.cleanup()
+            raise
 
     @classmethod
     def tearDownClass(cls):
         cls.browser.close()
         cls.playwright.stop()
-        cls.server.terminate()
-        try:
-            cls.server.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            cls.server.kill()
-            cls.server.wait(timeout=5)
+        cls.server_context.__exit__(None, None, None)
         cls.directory.cleanup()
 
+    def open_details(self, page, stage, value):
+        field = page.get_by_label(f"ID da oportunidade em {stage}", exact=True)
+        field.fill(value)
+        self.assertEqual(field.input_value(), value)
+        page.get_by_role("button", name=f"Abrir detalhes de {stage}", exact=True).click()
+
     @staticmethod
-    def choose(page, index, value):
-        page.get_by_role("combobox").nth(index).click()
+    def choose_filter(page, label, value):
+        from playwright.sync_api import expect
+        field = page.get_by_label(label, exact=True)
+        expect(field).to_be_visible()
+        field.click()
         page.get_by_role("option", name=value, exact=True).click()
+        expect(page.get_by_label(label, exact=True)).to_have_value(value)
 
     def test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys(self):
         seller_context = self.browser.new_context()
         seller = seller_context.new_page()
-        seller.goto(f"http://127.0.0.1:{self.port}")
+        seller.goto(self.base_url)
         seller.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
         seller.get_by_role("tab", name="Prospecting").click()
         seller.get_by_text("Dados insuficientes", exact=True).first.wait_for()
-        self.choose(seller, 3, "P-BAD")
+        self.open_details(seller, "Prospecting", "P-BAD")
         seller.get_by_text("Corrija product no cadastro", exact=False).wait_for()
         self.assertEqual(seller.get_by_role("button", name="Prioridade temporária do gestor").count(), 0)
         seller_context.close()
 
         manager_context = self.browser.new_context()
         manager = manager_context.new_page()
-        manager.goto(f"http://127.0.0.1:{self.port}")
+        manager.goto(self.base_url)
         manager.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
-        self.choose(manager, 0, "Gestor")
-        self.choose(manager, 2, "Norte")
-        self.choose(manager, 3, "Beto")
-        self.choose(manager, 4, "E-B")
+        self.choose_filter(manager, "Contexto demonstrado", "Gestor")
+        self.choose_filter(manager, "Escritório regional", "Norte")
+        self.choose_filter(manager, "Vendedor da equipe", "Beto")
+        self.open_details(manager, "Engaging", "E-B")
         manager.get_by_text("Origem:", exact=False).wait_for()
         manager.get_by_role("button", name="Prioridade temporária do gestor").click()
         manager.get_by_text("Gestor Mara ·", exact=False).wait_for()
@@ -296,5 +406,126 @@ render_portfolio(bundle_fixture(), st.session_state)
         manager_context.close()
 
 
+class VerificationGateTests(unittest.TestCase):
+    def test_TC44_offline_runtime_denies_external_and_permits_loopback(self):
+        import data
+        from test_data import fixture_snapshot, recovery_source
+        original_connect = socket.socket.connect
+
+        def offline_connect(sock, address):
+            if not isinstance(address, tuple):
+                return original_connect(sock, address)
+            host = address[0]
+            try:
+                loopback = host == "localhost" or ipaddress.ip_address(host).is_loopback
+            except ValueError:
+                loopback = False
+            if not loopback:
+                raise RuntimeError(f"TC-44 bloqueou rede externa: {host}")
+            return original_connect(sock, address)
+
+        with patch.object(socket.socket, "connect", offline_connect):
+            with recovery_source(fixture_snapshot()) as (snapshot, _):
+                first = next(iter(dict(snapshot.files)))
+                manifest = json.loads(snapshot.manifest_json)
+                with urlopen(manifest["files"][first]["download_url"], timeout=2) as response:
+                    self.assertEqual(response.status, 200)
+            external = socket.socket()
+            try:
+                with self.assertRaisesRegex(RuntimeError, "bloqueou rede externa"):
+                    external.connect(("203.0.113.1", 443))
+            finally:
+                external.close()
+            dataset = data.load_dataset(data.read_snapshot(ROOT / "data/raw", ROOT / "data/manifest.json"))
+            bundle = s.build_scoring_bundle(dataset)
+        self.assertEqual(len(bundle.candidate_evaluations), 4)
+        self.assertEqual(len(bundle.scores), 2089)
+
+    def test_TC45_preflight_failure_injection_returns_nonzero(self):
+        environment = {**os.environ, "LEAD_SCORER_PREFLIGHT_FAILURE_PROBE": "1",
+                       "LEAD_SCORER_PREFLIGHT_FAIL_GATE": "tests"}
+        result = subprocess.run(("bash", str(ROOT / "scripts/preflight.sh")), cwd=ROOT,
+            env=environment, capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("falha injetada no gate tests", result.stderr)
+        self.assertNotIn("PREFLIGHT OK", result.stdout)
+
+    def test_codespaces_browser_dependencies_do_not_require_foreground_tty(self):
+        script = (ROOT / "scripts/preflight.sh").read_text(encoding="utf-8")
+        self.assertIn('sudo -n "$PYTHON" -m playwright install-deps chromium', script)
+        self.assertNotIn("playwright install --with-deps", script)
+
+    def test_TC46_clean_startup_owns_only_its_child_without_recursion(self):
+        sentinel = subprocess.Popen((sys.executable, "-c", "import time; time.sleep(30)"))
+        server = None
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                app_path = Path(directory) / "smoke.py"
+                app_path.write_text("import streamlit as st\nst.title('TC-46')\n", encoding="utf-8")
+                with managed_streamlit_server(app_path, timeout=20) as (server, base_url):
+                    self.assertIsNone(server.poll())
+                    self.assertIsNone(sentinel.poll())
+                    with urlopen(base_url + "/_stcore/health", timeout=2) as response:
+                        self.assertEqual(response.status, 200)
+                    self.assertFalse(any("preflight.sh" in str(argument) for argument in server.args))
+            self.assertIsNotNone(server.poll())
+            self.assertIsNone(sentinel.poll())
+        finally:
+            sentinel.terminate()
+            sentinel.wait(timeout=5)
+
+    def test_live_verifier_local_contract_is_not_TC47(self):
+        identity = ("revision-abc", "source-def", "fingerprint-ghi")
+        html = ("<html><body><h1>Prioridades comerciais explicáveis</h1>"
+                f"<p>revisão {identity[0]} · fingerprint {identity[2]} · fonte {identity[1]}</p>"
+                "<p>Prioridade relativa</p>"
+                "<button role='tab'>Engaging</button><button role='tab'>Prospecting</button>"
+                "</body></html>")
+        with _html_server(html) as url:
+            self.assertTrue(verify_live_revision(url, *identity))
+            with self.assertRaisesRegex(AssertionError, "Identidade renderizada divergente"):
+                verify_live_revision(url, identity[0], "source-errada", identity[2])
+        missing_stage = ("<h1>Prioridades comerciais explicáveis</h1>"
+                         f"<p>revisão {identity[0]} fingerprint {identity[2]} fonte {identity[1]}</p>"
+                         "<p>Prioridade relativa</p>"
+                         "<button role='tab'>Engaging</button>")
+        with _html_server(missing_stage) as url, self.assertRaisesRegex(AssertionError, "Visão de estágio ausente"):
+            verify_live_revision(url, *identity)
+        with self.assertRaises(ValueError):
+            verify_live_revision("", *identity)
+
+
+def _run_cli(argv):
+    parser = argparse.ArgumentParser(description="Verificação renderizada do Lead Scorer")
+    commands = parser.add_subparsers(dest="command", required=True)
+    live = commands.add_parser("live", help="Executa o gate pós-deploy TC-47")
+    live.add_argument("--url", required=True)
+    live.add_argument("--revision", required=True)
+    live.add_argument("--source-digest", required=True)
+    live.add_argument("--fingerprint", required=True)
+    commands.add_parser("startup", help="Valida o app real local em um processo filho")
+    args = parser.parse_args(argv)
+    if args.command == "live":
+        verify_live_revision(args.url, args.revision, args.source_digest, args.fingerprint)
+        print("TC-47 LIVE OK")
+        return
+    with managed_streamlit_server(ROOT / "app.py") as (_, url):
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.goto(url, wait_until="domcontentloaded", timeout=120_000)
+                page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+                for stage in ("Engaging", "Prospecting"):
+                    page.get_by_role("tab", name=stage, exact=True).wait_for()
+                print("REAL STARTUP OK", " | ".join(page.locator("body").inner_text().splitlines()[:8]))
+            finally:
+                browser.close()
+
+
 if __name__ == "__main__":
-    unittest.main()
+    if len(sys.argv) > 1 and sys.argv[1] in ("live", "startup"):
+        _run_cli(sys.argv[1:])
+    else:
+        unittest.main(verbosity=2)
