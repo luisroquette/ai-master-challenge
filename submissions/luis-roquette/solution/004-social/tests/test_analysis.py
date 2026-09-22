@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import csv
+import time
 import unittest
 
 import pandas as pd
 
-from analysis import analyze, derive_metrics, follower_band, load_csv
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, follower_band, load_csv
 from tests.helpers import (
     aggregate_effect_rows,
     alert_for_target,
@@ -102,6 +103,34 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual(errors[0]["column"], "views")
         self.assertEqual(errors[0]["problem"], "integer_out_of_range")
 
+    def test_load_csv_rejects_nul_in_any_field_without_second_interpretation(self):
+        for column in ("views", "id", "comments_text"):
+            with self.subTest(column=column):
+                frame, errors = load_csv(csv_bytes([make_post(**{column: "1\x002"})]))
+                self.assertIsNone(frame)
+                self.assertEqual(errors[0]["row"], 2)
+                self.assertEqual(errors[0]["column"], column)
+                self.assertEqual(errors[0]["problem"], "nul_character")
+
+    def test_integer_grammar_is_exact_above_float_precision(self):
+        exact = 9_007_199_254_740_993
+        frame, errors = load_csv(csv_bytes([make_post(views=str(exact))]))
+        self.assertEqual(errors, [])
+        self.assertEqual(int(frame.iloc[0]["views"]), exact)
+        for value in (f"{exact}.0", "1e3", "+1", " 1"):
+            with self.subTest(value=value):
+                rejected, diagnostics = load_csv(csv_bytes([make_post(views=value)]))
+                self.assertIsNone(rejected)
+                self.assertEqual(diagnostics[0]["problem"], "invalid_nonnegative_integer")
+
+    def test_load_csv_rejects_dates_outside_nanosecond_range(self):
+        for value in ("0001-01-01", "9999-01-01"):
+            with self.subTest(value=value):
+                frame, errors = load_csv(csv_bytes([make_post(post_date=value)]))
+                self.assertIsNone(frame)
+                self.assertEqual(errors[0]["column"], "post_date")
+                self.assertEqual(errors[0]["problem"], "invalid_date")
+
     def test_load_csv_accepts_one_explicit_offset_with_datetime_dtype(self):
         raw = csv_bytes([
             make_post(id="1", content_id="a", post_date="2025-01-01T00:00:00+02:00"),
@@ -119,6 +148,21 @@ class CsvBoundaryTests(unittest.TestCase):
         result = analyze(frame, explicit_scope, str(frame.iloc[0]["source_hash"]))
         self.assertEqual(result["source"]["rows"], 2)
         self.assertTrue(str(result["scope"]["target_start"]).endswith("+02:00"))
+        aligned = align_scope_timestamp(pd.Timestamp("2025-01-01"), frame["post_date"])
+        self.assertEqual(aligned.isoformat(), "2025-01-01T00:00:00+02:00")
+
+    def test_scope_includes_last_nanosecond_with_semi_open_end(self):
+        frame, errors = load_csv(
+            csv_bytes([make_post(post_date="2025-01-01T23:59:59.999999999")])
+        )
+        self.assertEqual(errors, [])
+        result = analyze(
+            frame,
+            default_scope(target_start="2025-01-01", target_end="2025-01-01"),
+            str(frame.iloc[0]["source_hash"]),
+        )
+        self.assertEqual(result["metrics"]["posts"], 1)
+        self.assertEqual(result["scope"]["target_end_exclusive"], "2025-01-02T00:00:00")
 
     def test_load_csv_diagnostics_use_physical_line_after_multiline_field(self):
         raw = csv_bytes([
@@ -195,6 +239,28 @@ class CsvBoundaryTests(unittest.TestCase):
 
 
 class ContextEvidenceTests(unittest.TestCase):
+    def test_editorial_uses_same_platform_and_audience_filter_universe(self):
+        frames = []
+        for platform, location in (("Instagram", "BR"), ("TikTok", "BR"), ("TikTok", "US")):
+            frame = aggregate_effect_rows(creators=5)
+            frame["platform"] = platform
+            frame["audience_location"] = location
+            marker = f"{platform}-{location}"
+            frame["id"] = [f"{marker}-{index}" for index in range(len(frame))]
+            frame["content_id"] = [f"{marker}-content-{index}" for index in range(len(frame))]
+            frame["source_row_id"] = [f"hash:{value}" for value in frame["id"]]
+            frames.append(frame)
+        combined = pd.concat(frames, ignore_index=True)
+        scope = default_scope(
+            target_start="2025-01-08",
+            target_end="2025-01-14",
+            filters={"platform": ["TikTok"], "audience_location": ["BR"]},
+        )
+        result = analyze(combined, scope, "hash")
+        self.assertTrue(result["recommendations"])
+        self.assertTrue(all(item["context"]["platform"] == "TikTok" for item in result["recommendations"]))
+        self.assertTrue(all(item["context"]["audience_location"] == "BR" for item in result["recommendations"]))
+
     def test_analysis_exposes_auditable_required_dimensions(self):
         frame = frame_from_rows([
             make_post(id="a", content_id="a", platform="Instagram", content_type="video"),
@@ -286,6 +352,38 @@ class ContextEvidenceTests(unittest.TestCase):
         self.assertEqual(pd.Timestamp(evidence["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
         self.assertEqual(pd.Timestamp(recommendation["representative_date"]), pd.Timestamp("2025-01-31T12:00:00"))
         self.assertEqual(recommendation["priority_components"]["recency"], 1.0)
+
+    def test_sponsorship_volume_guard_uses_post_medians_not_extreme_means(self):
+        rows = []
+        for sponsored in (False, True):
+            for index in range(100):
+                extreme = sponsored and index == 99
+                views = 100_000 if extreme else 1 if sponsored else 100
+                interactions = 200_000 if extreme else 2 if sponsored else 100
+                marker = f"{'s' if sponsored else 'o'}-{index}"
+                rows.append(make_post(
+                    id=marker,
+                    content_id=f"content-{marker}",
+                    creator_id=f"creator-{index % 20}",
+                    post_date="2025-01-15T12:00:00",
+                    views=views,
+                    likes=interactions,
+                    shares=0,
+                    comments_count=0,
+                    is_sponsored=str(sponsored).upper(),
+                ))
+        result = analyze(
+            frame_from_rows(rows),
+            default_scope(target_start="2025-01-01", target_end="2025-01-31", reference_date="2025-01-31"),
+            "hash",
+        )
+        evidence = result["sponsorship"]["strata"][0]
+        recommendation = next(item for item in result["recommendations"] if item["evidence_id"] == evidence["evidence_id"])
+        self.assertEqual(evidence["volume_guard"]["delta_views"], -99.0)
+        self.assertEqual(evidence["volume_guard"]["delta_interactions"], -98.0)
+        self.assertEqual(recommendation["action_type"], "test")
+        self.assertEqual(recommendation["evidence_snapshot"]["target"]["creator_median_erv"], 200.0)
+        self.assertEqual(recommendation["evidence_snapshot"]["comparator"]["creator_median_erv"], 100.0)
 
     def test_aggregate_normalization_includes_large_ineligible_nonempty_group(self):
         scope = default_scope(target_start="2025-01-01", target_end="2025-01-31", reference_date="2025-01-31")
@@ -396,11 +494,73 @@ class ContextEvidenceTests(unittest.TestCase):
     def test_priority_is_reproducible_and_exposes_components(self):
         reference = make_cohort(20, 5, [2, 4, 6, 8, 10])
         frame = frame_with_target(reference, 30)
-        first = analyze(frame, default_scope(), "hash")["recommendations"]
+        first_result = analyze(frame, default_scope(), "hash")
+        first = first_result["recommendations"]
         second = analyze(frame, default_scope(), "hash")["recommendations"]
         self.assertEqual(first, second)
         self.assertEqual(set(first[0]["priority_components"]), {"impact", "strength", "recency"})
         self.assertEqual(first[0]["action_type"], "test")
+        snapshot = first[0]["evidence_snapshot"]
+        self.assertEqual(snapshot["family"], "post")
+        self.assertEqual(snapshot["evidence_id"], first[0]["evidence_id"])
+        self.assertTrue(snapshot["comparator"]["eligible"])
+        alert = next(item for item in first_result["alerts"] if item["evidence_id"] == first[0]["evidence_id"])
+        self.assertEqual(set(snapshot["comparator"]["source_row_ids"]), set(alert["benchmark"]["source_row_ids"]))
+
+    def test_evidence_ids_use_canonical_scope_and_method_v2(self):
+        frame = frame_from_rows([
+            make_post(id="a", content_id="a", post_date="2025-01-01T12:00:00"),
+            make_post(id="b", content_id="b", post_date="2025-01-15T12:00:00"),
+        ])
+        first = analyze(frame, default_scope(
+            target_start="2025-01-01", target_end="2025-01-15",
+            filters={"platform": ["Instagram"], "content_type": ["video", "image"]},
+        ), "hash")
+        equivalent = analyze(frame, default_scope(
+            target_start=pd.Timestamp("2025-01-01"), target_end=pd.Timestamp("2025-01-15"),
+            filters={"content_type": ["image", "video"], "platform": ["Instagram"]},
+        ), "hash")
+        changed = analyze(frame, default_scope(
+            target_start="2025-01-15", target_end="2025-01-15",
+            filters={"platform": ["Instagram"], "content_type": ["video", "image"]},
+        ), "hash")
+        first_id = first["dimensions"]["platform"][0]["evidence_id"]
+        self.assertEqual(first_id, equivalent["dimensions"]["platform"][0]["evidence_id"])
+        self.assertNotEqual(first_id, changed["dimensions"]["platform"][0]["evidence_id"])
+        self.assertEqual(first["scope"]["method_version"], METHOD_VERSION)
+        self.assertEqual(METHOD_VERSION, "2.0.0")
+
+    def test_insufficiency_diagnostics_and_source_rate_warning_are_preserved(self):
+        frame = frame_with_target(make_cohort(4, 6, [4]), 20)
+        frame["engagement_rate"] = "source-value"
+        result = analyze(frame, default_scope(), "hash")
+        self.assertEqual(result["alerts"], [])
+        self.assertEqual(result["quality"]["benchmark_levels_attempted"], 5)
+        diagnostic = result["quality"]["benchmark_diagnostics"][0]
+        self.assertEqual(diagnostic["target_count"], 1)
+        self.assertEqual(len(diagnostic["attempts"]), 5)
+        self.assertTrue(all("n_rate" in item and "n_creators" in item and item["reason"] for item in diagnostic["attempts"]))
+        self.assertEqual(result["quality"]["warnings"][0]["code"], "source_engagement_rate_ignored")
+
+    def test_full_history_post_analysis_is_bounded_and_keeps_diagnostics(self):
+        rows = [make_post(
+            id=f"history-{index}",
+            content_id=f"history-content-{index}",
+            creator_id=f"history-creator-{index}",
+            post_date="2025-01-01T12:00:00",
+        ) for index in range(5_000)]
+        frame = frame_from_rows(rows)
+        started = time.perf_counter()
+        result = analyze(
+            frame,
+            default_scope(target_start="2025-01-01", target_end="2025-01-01", reference_date="2025-01-01"),
+            "hash",
+        )
+        elapsed = time.perf_counter() - started
+        self.assertLess(elapsed, 10.0)
+        self.assertEqual(result["alerts"], [])
+        self.assertEqual(result["quality"]["benchmark_levels_attempted"], 25_000)
+        self.assertEqual(sum(item["target_count"] for item in result["quality"]["benchmark_diagnostics"]), 5_000)
 
     def test_strength_formula_penalizes_creator_concentration(self):
         balanced = analyze(frame_with_target(make_cohort(20, 5), 20), default_scope(), "hash")

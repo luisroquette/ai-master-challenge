@@ -21,7 +21,8 @@ from typing import Any
 import pandas as pd
 
 
-METHOD_VERSION = "1.0.0"
+METHOD_VERSION = "2.0.0"
+HISTORICAL_METHOD_VERSIONS = ("1.0.0",)
 MAX_CSV_BYTES = 50 * 1024 * 1024
 MAX_INT64 = 2**63 - 1
 DATE_TIME_POLICY = "datas todas sem offset ou todas com o mesmo offset UTC explícito"
@@ -113,6 +114,20 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
     if not rows or not rows[0]:
         return None, [_error(None, None, "missing_header", "cabeçalho CSV")]
     header = rows[0]
+    nul_errors: list[dict[str, object]] = []
+    for record_index, record in enumerate(rows):
+        for column_index, value in enumerate(record):
+            if "\x00" in value:
+                column = (
+                    f"header[{column_index + 1}]"
+                    if record_index == 0
+                    else header[column_index] if column_index < len(header) else f"column[{column_index + 1}]"
+                )
+                nul_errors.append(
+                    _error(physical_lines[record_index], column, "nul_character", "texto UTF-8 sem byte NUL")
+                )
+    if nul_errors:
+        return None, nul_errors
     duplicates = sorted({name for name in header if header.count(name) > 1})
     if duplicates:
         return None, [_error(1, name, "duplicate_header", "nomes de colunas únicos") for name in duplicates]
@@ -124,10 +139,7 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
     if missing:
         return None, [_error(1, name, "missing_required_column", "coluna obrigatória") for name in missing]
 
-    try:
-        frame = pd.read_csv(io.StringIO(text), dtype=str, keep_default_na=False)
-    except (pd.errors.ParserError, UnicodeError, ValueError) as exc:
-        return None, [_error(None, None, "malformed_csv", str(exc))]
+    frame = pd.DataFrame(rows[1:], columns=header, dtype=str)
     if frame.empty:
         return None, [_error(None, None, "empty_file", "ao menos uma linha de dados")]
     data_physical_lines = physical_lines[1:]
@@ -145,18 +157,26 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
 
     numeric_columns: dict[str, pd.Series] = {}
     for column in METRIC_COLUMNS:
-        numeric = pd.to_numeric(frame[column], errors="coerce")
-        numeric_columns[column] = numeric
-        out_of_range = numeric.gt(MAX_INT64)
-        invalid = numeric.isna() | ~numeric.map(math.isfinite) | numeric.lt(0) | numeric.mod(1).ne(0)
-        errors.extend(
-            _error(physical_line(index), column, "invalid_nonnegative_integer", "inteiro finito maior ou igual a zero")
-            for index in frame.index[invalid & ~out_of_range]
-        )
-        errors.extend(
-            _error(physical_line(index), column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
-            for index in frame.index[out_of_range]
-        )
+        parsed_integers: list[int | None] = []
+        for index, value in frame[column].items():
+            if not value.isascii() or not value.isdigit():
+                parsed_integers.append(None)
+                errors.append(
+                    _error(
+                        physical_line(index),
+                        column,
+                        "invalid_nonnegative_integer",
+                        "inteiro decimal sem sinal, ponto ou expoente",
+                    )
+                )
+                continue
+            integer = int(value)
+            parsed_integers.append(integer)
+            if integer > MAX_INT64:
+                errors.append(
+                    _error(physical_line(index), column, "integer_out_of_range", f"inteiro entre 0 e {MAX_INT64}")
+                )
+        numeric_columns[column] = pd.Series(parsed_integers, index=frame.index, dtype="object")
 
     allowed_flags = {"TRUE": True, "FALSE": False, "true": True, "false": False}
     invalid_flags = ~frame["is_sponsored"].isin(allowed_flags)
@@ -172,7 +192,7 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
     timezone_offsets: list[tuple[int, float]] = []
     for index, value in frame["post_date"].items():
         try:
-            parsed = pd.Timestamp(value)
+            parsed = pd.Timestamp(value).as_unit("ns")
             if pd.isna(parsed):
                 raise ValueError("NaT is not an analytical date")
             if parsed.tzinfo is not None:
@@ -181,7 +201,7 @@ def load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]:
                     raise ValueError("timezone has no UTC offset")
                 timezone_offsets.append((int(index), offset.total_seconds()))
             parsed_dates.append(parsed)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             parsed_dates.append(None)
             errors.append(_error(physical_line(index), "post_date", "invalid_date", "ISO-8601 ou %m/%d/%y %I:%M %p"))
     if timezone_offsets:
@@ -307,20 +327,33 @@ def _summary(rows: pd.DataFrame) -> dict[str, object]:
         "undefined_rates": int(rows["erv"].isna().sum()),
         "zero_interaction_share": float(rows["interactions"].eq(0).mean()) if len(rows) else None,
         "median_erv": float(rates.median()) if len(rates) else None,
+        "median_views_per_post": float(rows["views"].median()) if len(rows) else None,
+        "median_interactions_per_post": float(rows["interactions"].median()) if len(rows) else None,
         "q1_erv": float(rates.quantile(0.25)) if len(rates) else None,
         "q3_erv": float(rates.quantile(0.75)) if len(rates) else None,
         "weighted_erv": float(100.0 * eligible_interactions / eligible_views) if eligible_views else None,
     }
 
 
-def _dimensions(rows: pd.DataFrame, source_hash: str) -> dict[str, list[dict[str, object]]]:
+def _dimensions(
+    rows: pd.DataFrame, source_hash: str, scope_identity: dict[str, object]
+) -> dict[str, list[dict[str, object]]]:
     dimensions: dict[str, list[dict[str, object]]] = {}
     for name, column in DIMENSION_KEYS.items():
         items: list[dict[str, object]] = []
         for value, group in rows.groupby(column, dropna=False, sort=True):
             items.append(
                 {
-                    "evidence_id": _stable_id("dimension", source_hash, {"dimension": name, "value": value}),
+                    "evidence_id": _stable_id(
+                        "dimension",
+                        source_hash,
+                        {
+                            "scope": scope_identity,
+                            "statistic": "descriptive_group_summary",
+                            "dimension": name,
+                            "value": value,
+                        },
+                    ),
                     "dimension": name,
                     "value": str(value),
                     **_summary(group),
@@ -331,19 +364,20 @@ def _dimensions(rows: pd.DataFrame, source_hash: str) -> dict[str, list[dict[str
     return dimensions
 
 
+def align_scope_timestamp(value: object, post_dates: pd.Series) -> pd.Timestamp:
+    """Align a UI/date boundary to the dataset timezone without changing its civil date."""
+    dataset_timezone = post_dates.dt.tz
+    timestamp = pd.Timestamp(value)
+    if dataset_timezone is None:
+        return timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
+    return timestamp.tz_localize(dataset_timezone) if timestamp.tzinfo is None else timestamp.tz_convert(dataset_timezone)
+
+
 def _scope_dates(frame: pd.DataFrame, scope: dict[str, object]) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
-    dataset_timezone = frame["post_date"].dt.tz
-
-    def align(value: object) -> pd.Timestamp:
-        timestamp = pd.Timestamp(value)
-        if dataset_timezone is None:
-            return timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
-        return timestamp.tz_localize(dataset_timezone) if timestamp.tzinfo is None else timestamp.tz_convert(dataset_timezone)
-
-    reference = align(scope.get("reference_date") or max(frame["post_date"]))
-    end = align(scope.get("target_end") or reference).normalize() + timedelta(days=1) - timedelta(microseconds=1)
-    start = align(scope.get("target_start") or (reference - timedelta(days=6))).normalize()
-    return start, end, reference
+    reference = align_scope_timestamp(scope.get("reference_date") or max(frame["post_date"]), frame["post_date"])
+    end_exclusive = align_scope_timestamp(scope.get("target_end") or reference, frame["post_date"]).normalize() + timedelta(days=1)
+    start = align_scope_timestamp(scope.get("target_start") or (reference - timedelta(days=6)), frame["post_date"]).normalize()
+    return start, end_exclusive, reference
 
 
 def _match(rows: pd.DataFrame, target: pd.Series, keys: Iterable[str]) -> pd.DataFrame:
@@ -353,7 +387,7 @@ def _match(rows: pd.DataFrame, target: pd.Series, keys: Iterable[str]) -> pd.Dat
     return matched
 
 
-def _benchmark(frame: pd.DataFrame, target: pd.Series, target_start: pd.Timestamp, strict: bool) -> dict[str, object]:
+def _benchmark_levels(strict: bool) -> list[tuple[str, int, tuple[str, ...]]]:
     levels = [
         ("core+age+gender+location/90d", 90, AUDIENCE_KEYS),
         ("core+age+gender+location/365d", 365, AUDIENCE_KEYS),
@@ -361,19 +395,47 @@ def _benchmark(frame: pd.DataFrame, target: pd.Series, target_start: pd.Timestam
         ("core+age/365d", 365, AUDIENCE_KEYS[:1]),
         ("core/365d", 365, ()),
     ]
-    if strict:
-        levels = levels[:2]
-    attempts: list[dict[str, object]] = []
-    for name, days, audience in levels:
-        candidates = frame.loc[
+    return levels[:2] if strict else levels
+
+
+def _benchmark_index(
+    frame: pd.DataFrame, target_start: pd.Timestamp, strict: bool
+) -> list[tuple[str, tuple[str, ...], pd.DataFrame, dict[object, object]]]:
+    indexed = []
+    for name, days, audience in _benchmark_levels(strict):
+        pool = frame.loc[
             (frame["post_date"] < target_start)
             & (frame["post_date"] >= target_start - timedelta(days=days))
-            & (frame["creator_id"] != target["creator_id"])
         ]
-        candidates = _match(candidates, target, (*CORE_KEYS, *audience)).dropna(subset=["erv"])
+        keys = (*CORE_KEYS, *audience)
+        groups = pool.groupby(list(keys), dropna=False, sort=False).indices if len(pool) else {}
+        indexed.append((name, audience, pool, groups))
+    return indexed
+
+
+def _benchmark(
+    index: list[tuple[str, tuple[str, ...], pd.DataFrame, dict[object, object]]],
+    target: pd.Series,
+) -> dict[str, object]:
+    attempts: list[dict[str, object]] = []
+    for name, audience, pool, groups in index:
+        keys = (*CORE_KEYS, *audience)
+        group_key = tuple(target[key] for key in keys)
+        positions = groups.get(group_key, [])
+        candidates = pool.iloc[positions]
+        candidates = candidates.loc[candidates["creator_id"] != target["creator_id"]].dropna(subset=["erv"])
         n_rate = len(candidates)
         n_creators = int(candidates["creator_id"].nunique())
-        attempt = {"level": name, "n_rate": n_rate, "n_creators": n_creators}
+        reason = (
+            None
+            if n_rate >= 30 and n_creators >= 5
+            else "insufficient_posts_and_creators"
+            if n_rate < 30 and n_creators < 5
+            else "insufficient_posts"
+            if n_rate < 30
+            else "insufficient_creators"
+        )
+        attempt = {"level": name, "n_rate": n_rate, "n_creators": n_creators, "reason": reason}
         attempts.append(attempt)
         if n_rate >= 30 and n_creators >= 5:
             rates = candidates["erv"]
@@ -418,7 +480,34 @@ def _stable_id(kind: str, source_hash: str, payload: object) -> str:
     return f"{kind}-{hashlib.sha256(f'{METHOD_VERSION}|{source_hash}|{encoded}'.encode()).hexdigest()[:16]}"
 
 
-def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
+def _canonical_filters(filters: dict[str, object]) -> dict[str, object]:
+    canonical: dict[str, object] = {}
+    for key in sorted(filters):
+        value = filters[key]
+        if isinstance(value, (list, tuple, set)):
+            canonical[key] = sorted(value, key=lambda item: json.dumps(item, ensure_ascii=False, sort_keys=True, default=str))
+        else:
+            canonical[key] = value
+    return canonical
+
+
+def _canonical_scope(
+    scope: dict[str, object], start: pd.Timestamp, end_exclusive: pd.Timestamp, reference: pd.Timestamp
+) -> dict[str, object]:
+    return {
+        "target_start": start.isoformat(),
+        "target_end_exclusive": end_exclusive.isoformat(),
+        "reference_date": reference.isoformat(),
+        "filters": _canonical_filters(dict(scope.get("filters") or {})),
+        "strict_audience": bool(scope.get("strict_audience", False)),
+        "include_post_alerts": bool(scope.get("include_post_alerts", True)),
+        "method_version": METHOD_VERSION,
+    }
+
+
+def _sponsorship(
+    targets: pd.DataFrame, source_hash: str, scope_identity: dict[str, object]
+) -> dict[str, object]:
     strata: list[dict[str, object]] = []
     uncovered: list[dict[str, object]] = []
     comparable_posts = 0
@@ -452,12 +541,27 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
         comparable_posts += len(group)
         strata.append(
             {
-                "evidence_id": _stable_id("sponsorship", source_hash, context),
+                "evidence_id": _stable_id(
+                    "sponsorship",
+                    source_hash,
+                    {"scope": scope_identity, "statistic": "creator_median_erv_difference", "context": context},
+                ),
                 "context": context,
                 "organic": {**_summary(arms[False]), "creator_median_erv": organic, "strength_factors": factors_org},
                 "sponsored": {**_summary(arms[True]), "creator_median_erv": sponsored, "strength_factors": factors_spon},
                 "delta_erv_pp": delta,
                 "relative_difference_pct": (100 * delta / organic) if organic > 0 else None,
+                "volume_guard": {
+                    "statistic": "median_per_post",
+                    "organic_views": float(arms[False]["views"].median()),
+                    "sponsored_views": float(arms[True]["views"].median()),
+                    "delta_views": float(arms[True]["views"].median() - arms[False]["views"].median()),
+                    "organic_interactions": float(arms[False]["interactions"].median()),
+                    "sponsored_interactions": float(arms[True]["interactions"].median()),
+                    "delta_interactions": float(
+                        arms[True]["interactions"].median() - arms[False]["interactions"].median()
+                    ),
+                },
                 "strength": min(strength_org, strength_spon),
                 "creator_overlap": int(len(set(creator_medians[False].index) & set(creator_medians[True].index))),
                 "representative_date": arms[True]["post_date"].median(),
@@ -466,7 +570,17 @@ def _sponsorship(targets: pd.DataFrame, source_hash: str) -> dict[str, object]:
             }
         )
     return {
-        "evidence_id": _stable_id("sponsorship-overview", source_hash, {"posts": len(targets), "strata": len(strata), "uncovered": len(uncovered)}),
+        "evidence_id": _stable_id(
+            "sponsorship-overview",
+            source_hash,
+            {
+                "scope": scope_identity,
+                "statistic": "comparable_post_coverage",
+                "posts": len(targets),
+                "strata": len(strata),
+                "uncovered": len(uncovered),
+            },
+        ),
         "posts": int(len(targets)),
         "eligible_strata": len(strata),
         "uncovered_count": len(uncovered),
@@ -587,12 +701,26 @@ def _context_rows(rows: pd.DataFrame, context: dict[str, object], sponsored: boo
     return selected
 
 
-def _editorial(frame: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, source_hash: str) -> list[dict[str, object]]:
-    duration = int((end.normalize() - start.normalize()).days) + 1
-    previous_end = start - timedelta(microseconds=1)
+def _apply_filters(rows: pd.DataFrame, filters: dict[str, object]) -> pd.DataFrame:
+    selected = rows
+    for key, value in filters.items():
+        if key in selected.columns and value not in (None, "", []):
+            accepted = value if isinstance(value, (list, tuple, set)) else [value]
+            selected = selected.loc[selected[key].isin(accepted)]
+    return selected
+
+
+def _editorial(
+    frame: pd.DataFrame,
+    start: pd.Timestamp,
+    end_exclusive: pd.Timestamp,
+    source_hash: str,
+    scope_identity: dict[str, object],
+) -> list[dict[str, object]]:
+    duration = int((end_exclusive.normalize() - start.normalize()).days)
     previous_start = start.normalize() - timedelta(days=duration)
-    current = frame.loc[(frame["post_date"] >= start) & (frame["post_date"] <= end) & ~frame["is_sponsored"]]
-    previous = frame.loc[(frame["post_date"] >= previous_start) & (frame["post_date"] <= previous_end) & ~frame["is_sponsored"]]
+    current = frame.loc[(frame["post_date"] >= start) & (frame["post_date"] < end_exclusive) & ~frame["is_sponsored"]]
+    previous = frame.loc[(frame["post_date"] >= previous_start) & (frame["post_date"] < start) & ~frame["is_sponsored"]]
     evidence: list[dict[str, object]] = []
     keys = [*GROUP_KEYS, *AUDIENCE_KEYS]
     for key, now in current.groupby(keys, dropna=False, sort=True):
@@ -611,7 +739,11 @@ def _editorial(frame: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, sour
         delta_interactions = float(now["interactions"].median() - before["interactions"].median())
         evidence.append(
             {
-                "evidence_id": _stable_id("editorial", source_hash, {**context, "start": start, "end": end}),
+                "evidence_id": _stable_id(
+                    "editorial",
+                    source_hash,
+                    {"scope": scope_identity, "statistic": "period_median_erv_difference", "context": context},
+                ),
                 "context": context,
                 "current": _summary(now),
                 "previous": _summary(before),
@@ -629,23 +761,75 @@ def _editorial(frame: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, sour
 
 def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dict[str, object]:
     frame = derive_metrics(df)
-    start, end, reference = _scope_dates(frame, scope)
+    start, end_exclusive, reference = _scope_dates(frame, scope)
+    scope_identity = _canonical_scope(scope, start, end_exclusive, reference)
     filters = dict(scope.get("filters") or {})
-    targets = frame.loc[(frame["post_date"] >= start) & (frame["post_date"] <= end)]
-    for key, value in filters.items():
-        if key in targets.columns and value not in (None, "", []):
-            accepted = value if isinstance(value, (list, tuple, set)) else [value]
-            targets = targets.loc[targets[key].isin(accepted)]
-    frequency_coverage_start = max(start.normalize(), min(frame["post_date"]).normalize())
-    frequency_coverage_end = min(end.normalize(), max(frame["post_date"]).normalize())
+    filtered_frame = _apply_filters(frame, filters)
+    targets = filtered_frame.loc[
+        (filtered_frame["post_date"] >= start) & (filtered_frame["post_date"] < end_exclusive)
+    ]
+    coverage_frame = filtered_frame if len(filtered_frame) else frame
+    frequency_coverage_start = max(start.normalize(), min(coverage_frame["post_date"]).normalize())
+    frequency_coverage_end = min(
+        (end_exclusive - pd.Timedelta(1, unit="ns")).normalize(),
+        max(coverage_frame["post_date"]).normalize(),
+    )
 
     alerts: list[dict[str, object]] = []
+    benchmark_diagnostics: dict[str, dict[str, object]] = {}
+    benchmark_levels_attempted = 0
+    benchmark_resolver = _benchmark_index(frame, start, bool(scope.get("strict_audience", False)))
     alert_targets = targets if bool(scope.get("include_post_alerts", True)) else targets.iloc[0:0]
+    if len(alert_targets) and not any(len(pool) for _, _, pool, _ in benchmark_resolver):
+        valid_targets = alert_targets.dropna(subset=["erv"])
+        empty_attempts = [
+            {
+                "level": name,
+                "n_rate": 0,
+                "n_creators": 0,
+                "reason": "insufficient_posts_and_creators",
+            }
+            for name, _, _ in _benchmark_levels(bool(scope.get("strict_audience", False)))
+        ]
+        benchmark_levels_attempted = len(valid_targets) * len(empty_attempts)
+        for context_key, group in valid_targets.groupby(
+            list((*CORE_KEYS, *AUDIENCE_KEYS)), dropna=False, sort=True
+        ):
+            requested_context = dict(zip((*CORE_KEYS, *AUDIENCE_KEYS), context_key, strict=True))
+            benchmark_diagnostics[json.dumps(requested_context, sort_keys=True, default=str)] = {
+                "context": requested_context,
+                "reason": "fewer_than_30_rates_or_5_creators",
+                "attempts": empty_attempts,
+                "target_count": int(len(group)),
+                "sample_target_ids": sorted(group["id"].astype(str))[:5],
+            }
+        alert_targets = alert_targets.iloc[0:0]
     for _, target in alert_targets.sort_values(["post_date", "id"]).iterrows():
         if pd.isna(target["erv"]):
             continue
-        benchmark = _benchmark(frame, target, start, bool(scope.get("strict_audience", False)))
+        benchmark = _benchmark(benchmark_resolver, target)
+        benchmark_levels_attempted += len(benchmark["attempts"])
         if not benchmark["eligible"]:
+            requested_context = {key: target[key] for key in (*CORE_KEYS, *AUDIENCE_KEYS)}
+            signature = json.dumps(
+                {"context": requested_context, "attempts": benchmark["attempts"]},
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            )
+            diagnostic = benchmark_diagnostics.setdefault(
+                signature,
+                {
+                    "context": requested_context,
+                    "reason": benchmark["abstention_reason"],
+                    "attempts": benchmark["attempts"],
+                    "target_count": 0,
+                    "sample_target_ids": [],
+                },
+            )
+            diagnostic["target_count"] = int(diagnostic["target_count"]) + 1
+            if len(diagnostic["sample_target_ids"]) < 5:
+                diagnostic["sample_target_ids"].append(str(target["id"]))
             continue
         iqr = float(benchmark["iqr"])
         rate = float(target["erv"])
@@ -657,7 +841,16 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         context = {key: target[key] for key in (*CORE_KEYS, *AUDIENCE_KEYS)}
         alerts.append(
             {
-                "evidence_id": _stable_id("post", source_hash, {"id": target["id"], "context": context, "scope": scope}),
+                "evidence_id": _stable_id(
+                    "post",
+                    source_hash,
+                    {
+                        "scope": scope_identity,
+                        "statistic": "post_erv_vs_tukey_benchmark",
+                        "id": target["id"],
+                        "context": context,
+                    },
+                ),
                 "evidence_type": "post",
                 "source_id": str(target["id"]),
                 "source_row_id": str(target["source_row_id"]),
@@ -675,8 +868,8 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             }
         )
 
-    sponsorship = _sponsorship(targets, source_hash)
-    editorial = _editorial(frame, start, end, source_hash)
+    sponsorship = _sponsorship(targets, source_hash, scope_identity)
+    editorial = _editorial(filtered_frame, start, end_exclusive, source_hash, scope_identity)
     candidates: list[dict[str, object]] = []
 
     platform_denominators: dict[str, dict[str, float]] = {}
@@ -718,6 +911,22 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                     frequency_coverage_end,
                     alert["context"].get("period_month"),
                 ),
+                "evidence_snapshot": {
+                    "family": "post",
+                    "evidence_id": alert["evidence_id"],
+                    "method_version": METHOD_VERSION,
+                    "scope": scope_identity,
+                    "statistic": "post_erv_vs_tukey_benchmark",
+                    "context": alert["context"],
+                    "target": {
+                        "source_id": alert["source_id"],
+                        "source_row_id": alert["source_row_id"],
+                        "post_date": alert["post_date"],
+                        "erv": alert["erv"],
+                        "values": alert["values"],
+                    },
+                    "comparator": alert["benchmark"],
+                },
             }
         )
 
@@ -739,8 +948,8 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         arm = item["sponsored"]
         values = {"views": float(arm["views"]), "interactions": float(arm["interactions"]), "followers": float(arm["creator_exposure"])}
         delta = float(item["delta_erv_pp"])
-        delta_views = float(arm["views"]) / arm["posts"] - float(item["organic"]["views"]) / item["organic"]["posts"]
-        delta_interactions = float(arm["interactions"]) / arm["posts"] - float(item["organic"]["interactions"]) / item["organic"]["posts"]
+        delta_views = float(item["volume_guard"]["delta_views"])
+        delta_interactions = float(item["volume_guard"]["delta_interactions"])
         if float(item["strength"]) >= 0.40 and delta > 0 and delta_views >= 0 and delta_interactions >= 0:
             action_type = "sponsorship_test_after_costs"
         elif float(item["strength"]) >= 0.70 and delta < 0 and delta_views <= 0 and delta_interactions <= 0:
@@ -784,6 +993,22 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                     frequency_coverage_end,
                     item["context"].get("period_month"),
                 ),
+                "evidence_snapshot": {
+                    "family": kind,
+                    "evidence_id": item["evidence_id"],
+                    "method_version": METHOD_VERSION,
+                    "scope": scope_identity,
+                    "statistic": (
+                        "creator_median_erv_difference"
+                        if kind == "sponsorship"
+                        else "period_median_erv_difference"
+                    ),
+                    "context": item["context"],
+                    "target": item["sponsored"] if kind == "sponsorship" else item["current"],
+                    "comparator": item["organic"] if kind == "sponsorship" else item["previous"],
+                    "source_row_ids": item["source_row_ids"],
+                    **({"volume_guard": item["volume_guard"]} if kind == "sponsorship" else {}),
+                },
             }
         )
 
@@ -792,7 +1017,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
     seen: set[tuple[object, ...]] = set()
     for item in candidates:
         context = item["context"]
-        key = tuple(context.get(name) for name in (*GROUP_KEYS, *AUDIENCE_KEYS)) + (start.isoformat(), end.isoformat())
+        key = tuple(context.get(name) for name in (*GROUP_KEYS, *AUDIENCE_KEYS)) + (start.isoformat(), end_exclusive.isoformat())
         if key in seen:
             continue
         seen.add(key)
@@ -800,8 +1025,13 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         if len(recommendations) == 3:
             break
 
-    attempted = sum(len(alert.get("benchmark", {}).get("attempts", [])) for alert in alerts)
-    pending = [] if recommendations else [{"evidence_id": _stable_id("pending", source_hash, scope), "action_type": "collect", "reason": "no_eligible_performance_evidence"}]
+    pending = [] if recommendations else [{
+        "evidence_id": _stable_id(
+            "pending", source_hash, {"scope": scope_identity, "statistic": "eligibility_abstention"}
+        ),
+        "action_type": "collect",
+        "reason": "no_eligible_performance_evidence",
+    }]
     return {
         "source": {
             "source_hash": source_hash,
@@ -810,18 +1040,35 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             "period_end": max(frame["post_date"]).isoformat(),
             "platforms": sorted(frame["platform"].unique().tolist()),
         },
-        "scope": {**scope, "target_start": start.isoformat(), "target_end": end.isoformat(), "reference_date": reference.isoformat(), "method_version": METHOD_VERSION},
+        "scope": {
+            **scope,
+            **scope_identity,
+            "target_end": (end_exclusive - timedelta(days=1)).normalize().isoformat(),
+        },
         "quality": {
             "optional_columns_missing": sorted(set(OPTIONAL_COLUMNS) - set(frame.columns)),
             "ignored_source_engagement_rate": "engagement_rate" in frame.columns,
-            "benchmark_levels_attempted": attempted,
+            "warnings": ([{
+                "code": "source_engagement_rate_ignored",
+                "message": "A coluna engagement_rate foi ignorada; ERv foi recalculada a partir das contagens.",
+            }] if "engagement_rate" in frame.columns else []),
+            "benchmark_levels_attempted": benchmark_levels_attempted,
+            "benchmark_diagnostics": list(benchmark_diagnostics.values()),
+            "method_compatibility": {
+                "current": METHOD_VERSION,
+                "historical_versions": list(HISTORICAL_METHOD_VERSIONS),
+                "compatible_for_outcome_comparison": [],
+            },
         },
         "metrics": _summary(targets),
-        "dimensions": _dimensions(targets, source_hash),
+        "dimensions": _dimensions(targets, source_hash, scope_identity),
         "cohorts": {"editorial": editorial},
         "alerts": alerts,
         "sponsorship": sponsorship,
         "recommendations": recommendations,
+        "evidence_snapshots": {
+            str(item["evidence_id"]): item["evidence_snapshot"] for item in recommendations
+        },
         "pending": pending,
         "row_references": {str(row["source_row_id"]): int(row["source_line"]) for _, row in frame.iterrows()},
     }
