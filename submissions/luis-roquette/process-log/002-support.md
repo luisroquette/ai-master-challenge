@@ -1374,3 +1374,7 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   Evidências renderizaram com a nova navegação, hierarquia, KPIs, tabelas e formulários.
   A revisão ocorreu no browser contra o deploy público; nenhum merge ou envio final foi
   realizado.
+- **Fechamento visual:** o reboot final iniciado às `20:46 UTC` carregou o commit
+  `72f485a`; os títulos “Fila diária” e “Diagnóstico operacional” foram confirmados
+  visíveis no hero do deploy público. O primeiro carregamento levou cerca de 17 minutos
+  sob limitação temporária de CPU do Streamlit, sem traceback ou falha funcional.
