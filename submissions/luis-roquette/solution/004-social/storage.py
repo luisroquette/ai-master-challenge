@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -212,9 +212,16 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
 
     execution_status = str(event["execution_status"])
     execution_date = event.get("execution_date")
+    decided_at = datetime.fromisoformat(str(decision["decided_at"]))
+    decision_date = decided_at.astimezone(timezone.utc).date() if decided_at.tzinfo else decided_at.date()
+    observed_start = date.fromisoformat(str(observed["period_start"]))
     if execution_status == "yes" and not execution_date:
         return "pending", "execution_date_unknown", comparison
-    if execution_status == "yes" and date.fromisoformat(str(observed["period_start"])) <= date.fromisoformat(str(execution_date)):
+    if execution_status == "yes" and date.fromisoformat(str(execution_date)) < decision_date:
+        return "pending", "execution_before_decision", comparison
+    if observed_start <= decision_date:
+        return "pending", "observed_before_or_on_decision", comparison
+    if execution_status == "yes" and observed_start <= date.fromisoformat(str(execution_date)):
         return "pending", "observed_before_execution", comparison
     if execution_status == "yes":
         return "observed", "comparable_after_declared_execution", comparison
@@ -228,7 +235,7 @@ def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
     if existing:
         return str(existing[0])
     row = conn.execute(
-        """SELECT decision_id, source_hash, scope_json, baseline_json, method_version
+        """SELECT decision_id, source_hash, scope_json, baseline_json, method_version, decided_at
            FROM decisions WHERE decision_id = ?""",
         (str(event["decision_id"]),),
     ).fetchone()
@@ -240,6 +247,7 @@ def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
         "scope": _decoded(row[2]),
         "baseline": _decoded(row[3]),
         "method_version": row[4],
+        "decided_at": row[5],
     }
     status, reason, comparison = _outcome_assessment(decision, event)
     outcome_id = str(uuid.uuid4())

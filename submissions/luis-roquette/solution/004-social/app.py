@@ -77,6 +77,45 @@ def _baseline(frame: pd.DataFrame, result: dict[str, object], recommendation: di
     }
 
 
+def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dict[str, Any]) -> None:
+    """Present the engine's evidence without recomputing its comparison."""
+    benchmark = evidence.get("benchmark", {})
+    target = evidence.get("current", evidence.get("sponsored", evidence.get("values", {})))
+    reference = evidence.get("previous", evidence.get("organic", benchmark))
+    sponsorship = "sponsored" in evidence
+    rate_key = "creator_median_erv" if sponsorship else "median_erv"
+    rate = evidence.get("erv", target.get(rate_key))
+    median = reference.get("median", reference.get(rate_key))
+    q1, q3 = reference.get("q1", reference.get("q1_erv")), reference.get("q3", reference.get("q3_erv"))
+    st.write("Taxa-alvo ERv (%):", rate)
+    st.write("Volume-alvo — visualizações / interações:", target.get("views"), "/", target.get("interactions"))
+    st.write("Benchmark — mediana ERv (%):", median)
+    st.write("Benchmark — quartis Q1 / Q3 ERv (%):", q1, "/", q3)
+    if sponsorship:
+        st.caption("Patrocínio: medianas das medianas por creator; quartis descritivos dos posts orgânicos, não usados no delta.")
+    else:
+        st.caption("ERv = 100 × (likes + shares + comments_count) / views; medianas e quartis dos posts com taxa definida.")
+    st.write("Delta ERv (p.p.):", evidence.get("delta_erv_pp"))
+    st.write("Amostra-alvo — posts elegíveis / creators:", target.get("n_rate", 1 if "erv" in evidence else 0), "/", target.get("creators", 1 if "erv" in evidence else 0))
+    st.write("Amostra do benchmark — posts elegíveis / creators:", reference.get("n_rate", 0), "/", reference.get("n_creators", reference.get("creators", 0)))
+    st.write("Contexto solicitado:")
+    st.json(item.get("context", {}))
+    st.write("Contexto efetivo:")
+    st.json(benchmark.get("effective_context", evidence.get("context", {})))
+    st.write("Nível efetivo / fallback:", benchmark.get("effective_level", "núcleo de patrocínio; audiência apenas nos filtros" if sponsorship else "mesmo contexto; período anterior de igual duração" if "current" in evidence else "nenhum comparador elegível"))
+    st.write("Controles removidos:", benchmark.get("removed_controls", []))
+    st.write("Suficiência:", "suficiente" if benchmark.get("eligible") or "current" in evidence or sponsorship else "insuficiente")
+    st.write("Força da evidência (C):", evidence.get("strength", 0.0), evidence.get("strength_label", ""))
+    st.write("Volumes usados no score / denominadores P95:")
+    st.json({"volumes": item.get("priority_values", {}), "P95": item.get("normalization", {})})
+    refs = sorted(set(evidence.get("source_row_ids", []) + benchmark.get("source_row_ids", []) + ([evidence["source_row_id"]] if "source_row_id" in evidence else [])))
+    st.write("Referências de origem:")
+    if refs:
+        st.dataframe(pd.DataFrame({"source_row_id": refs, "source_line": [result["row_references"].get(value) for value in refs]}), hide_index=True, width="stretch")
+    else:
+        st.caption("Sem linhas elegíveis: a pendência exige nova coleta.")
+
+
 def _decision_export(items: list[dict[str, object]]) -> list[dict[str, object]]:
     return [
         {
@@ -122,6 +161,7 @@ if uploaded is not None:
 decisions = list_decisions(connection)
 active_frame = st.session_state.get("active_frame")
 metadata = st.session_state.get("active_metadata")
+result = None
 
 if active_frame is None or metadata is None:
     st.info("Nenhuma fonte ativa. Envie um CSV válido para iniciar a análise; o histórico local continua disponível.")
@@ -215,25 +255,11 @@ else:
                 components = item.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
                 component_columns = st.columns(3)
                 for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
-                    column.number_input(label, value=float(components.get(key, 0.0)), disabled=True, key=f"{label}-{rank}")
+                    column.number_input(label, value=float(components.get(key, 0.0)), disabled=True, key=f"{label}-{item['evidence_id']}")
                 st.caption(f"Evidência `{item['evidence_id']}` · prioridade {float(item.get('priority', 0)):.4f}")
                 evidence = _find_evidence(result, str(item["evidence_id"])) or {}
-                refs = evidence.get("source_row_ids", [])
                 with st.expander("Registros de origem e contexto"):
-                    st.json(item.get("context", {}))
-                    if refs:
-                        st.dataframe(
-                            pd.DataFrame(
-                                {
-                                    "source_row_id": refs,
-                                    "source_line": [result["row_references"].get(value) for value in refs],
-                                }
-                            ),
-                            hide_index=True,
-                            width="stretch",
-                        )
-                    else:
-                        st.caption("Sem linhas elegíveis: a pendência exige nova coleta.")
+                    _render_evidence(evidence, item, result)
 
         st.subheader("Ranking secundário")
         platform_rows = result["dimensions"].get("platform", [])
@@ -352,32 +378,53 @@ else:
                     st.session_state["outcome_event_id"] = str(uuid.uuid4())
                     decisions = refreshed
 
-        decision_rows = _decision_export(decisions)
-        st.download_button(
-            "Baixar resumo executivo (HTML)",
-            executive_summary(result, decision_rows).encode("utf-8"),
-            file_name="resumo-executivo.html",
-            mime="text/html",
-        )
-        st.download_button(
-            "Baixar evidências e decisões (CSV)",
-            export_evidence(result, decision_rows),
-            file_name="evidencias-decisoes.csv",
-            mime="text/csv",
-        )
-
 st.subheader("Histórico de decisões")
 if not decisions:
     st.caption("Nenhuma decisão registrada.")
 else:
+    with st.expander("Revisar decisão existente"):
+        original = st.selectbox("Decisão para revisar", decisions, format_func=lambda item: f"{item['decision_id']} — {item['status']}", key="revision_decision")
+        with st.form("revision_form"):
+            revision_status = st.selectbox("Nova decisão", ("accepted", "rejected", "edited"), format_func={"accepted": "Aceitar", "rejected": "Rejeitar", "edited": "Editar"}.get, key="revision_status")
+            revision_text = st.text_area("Texto da revisão (obrigatório se editar)", key="revision_text")
+            revision_submitted = st.form_submit_button("Registrar revisão", key="save_revision")
+        if revision_submitted:
+            if revision_status == "edited" and not revision_text.strip():
+                st.error("Informe o texto da revisão antes de registrar.")
+            else:
+                event = {**original, "event_id": st.session_state.setdefault("revision_event_id", str(uuid.uuid4())), "revision_of": original["decision_id"], "decided_at": datetime.now(timezone.utc).isoformat(), "status": revision_status, "edited_text": revision_text.strip()}
+                try:
+                    revision_id = record_decision(connection, event)
+                    decisions = list_decisions(connection)
+                    confirmed = next(item for item in decisions if item["decision_id"] == revision_id)
+                except (sqlite3.Error, StopIteration) as exc:
+                    st.error(f"A revisão não foi salva: {exc}")
+                else:
+                    st.success(f"Revisão registrada: {confirmed['decision_id']}")
+                    st.session_state["revision_event_id"] = str(uuid.uuid4())
     active_hash = str(metadata["source_hash"]) if metadata else None
     for item in reversed(decisions):
         text = item["edited_text"] or item["original_text"]
         st.markdown(f"**{item['status']}** · {text}")
         st.caption(f"{item['decided_at']} · fonte `{str(item['source_hash'])[:12]}…` · decisão `{item['decision_id']}`")
+        if item["revision_of"]:
+            st.caption(f"Revisão da decisão `{item['revision_of']}`; baseline original preservado.")
         if item["source_hash"] != active_hash:
             st.caption("Reenvie o CSV com este hash para abrir o detalhamento histórico.")
         if not item["outcomes"]:
             st.caption("Resultado pendente: nenhuma observação posterior comparável registrada.")
+        for outcome in item["outcomes"]:
+            observed, comparison = outcome["observed"], outcome["comparison"]
+            st.markdown(f"**Observação {outcome['status']}** · motivo: `{outcome['reason']}`")
+            st.caption(f"Execução declarada: {outcome['execution_status']} · data: {outcome['execution_date'] or 'não informada'} · registro: {outcome['recorded_at']}")
+            st.write(f"Janela observada: {observed['period_start']} a {observed['period_end']} · cobertura: {observed['coverage_days']} dias")
+            st.write("Comparação ERv (%) — mediana baseline / observada / delta (p.p.):", comparison["baseline_median"], "/", comparison["observed_median"], "/", comparison["median_delta"])
+            st.write("Visualizações por dia — baseline / observada:", comparison["baseline_volume_per_day"], "/", comparison["observed_volume_per_day"])
+            st.caption("Observação não causal: diferença descritiva; pendência não comprova resultado da ação.")
+
+if result is not None:
+    decision_rows = _decision_export(decisions)
+    st.download_button("Baixar resumo executivo (HTML)", executive_summary(result, decision_rows).encode("utf-8"), file_name="resumo-executivo.html", mime="text/html")
+    st.download_button("Baixar evidências e decisões (CSV)", export_evidence(result, decision_rows), file_name="evidencias-decisoes.csv", mime="text/csv")
 
 connection.close()

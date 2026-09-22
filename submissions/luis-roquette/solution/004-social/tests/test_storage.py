@@ -44,7 +44,7 @@ def decision_event(**overrides: object) -> dict[str, object]:
         "recommendation_key": "recommendation-1",
         "revision_of": None,
         "source_hash": "source-a",
-        "decided_at": "2026-09-21T20:05:00+00:00",
+        "decided_at": "2025-01-07T20:05:00+00:00",
         "status": "accepted",
         "original_text": "Testar dois vídeos no contexto.",
         "edited_text": "",
@@ -198,6 +198,23 @@ class StorageTests(unittest.TestCase):
         outcome = list_decisions(self.conn)[0]["outcomes"][0]
         self.assertEqual(outcome["status"], "observed")
         self.assertEqual(outcome["reason"], "comparable_execution_unknown")
+
+    def test_decision_execution_and_observation_chronology(self) -> None:
+        record_import(self.conn, import_event("source-b"))
+        cases = (
+            ("2026-09-21T20:05:00+00:00", "yes", "2025-01-07", "execution_before_decision"),
+            ("2026-09-21T20:05:00+00:00", "unknown", None, "observed_before_or_on_decision"),
+            ("2026-09-21T20:05:00+00:00", "no", None, "observed_before_or_on_decision"),
+            ("2025-01-08T00:00:00+00:00", "yes", "2025-01-08", "observed_before_or_on_decision"),
+            ("2025-01-07T20:05:00+00:00", "yes", "2025-01-08", "observed_before_execution"),
+            ("2025-01-07T23:30:00-03:00", "yes", "2025-01-07", "execution_before_decision"),
+        )
+        for index, (decided_at, execution_status, execution_date, reason) in enumerate(cases):
+            with self.subTest(reason=reason, decided_at=decided_at):
+                decision_id = record_decision(self.conn, decision_event(event_id=f"chronology-{index}", decided_at=decided_at))
+                record_outcome(self.conn, outcome_event(event_id=f"chronology-outcome-{index}", decision_id=decision_id, execution_status=execution_status, execution_date=execution_date))
+                outcome = next(item for item in list_decisions(self.conn) if item["decision_id"] == decision_id)["outcomes"][0]
+                self.assertEqual((outcome["status"], outcome["reason"]), ("pending", reason))
 
 
 if __name__ == "__main__":
