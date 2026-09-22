@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import warnings
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.proportion import proportion_confint
 from statsmodels.tools.sm_exceptions import (
     PerfectSeparationError,
@@ -108,6 +110,62 @@ REASON_DISTRIBUTION_COLUMNS = (
     "mrr_unknown_accounts",
     "currency",
 )
+
+EVIDENCE_LEVELS = frozenset(
+    {"confirmed_fact", "supported_mechanism", "plausible_hypothesis", "rejected_claim"}
+)
+GATE_STATES = frozenset({"pass", "fail", "unavailable"})
+
+EVENT_METRIC_DEFINITIONS = {
+    "F-product-usage-drop": (
+        "usage_count_30d",
+        "usage_coverage_30d",
+        "usage_events/account/day",
+        1 / 30,
+        None,
+        False,
+    ),
+    "F-product-errors": (
+        "error_rate_30d",
+        "error_rate_30d_available",
+        "errors/usage_event",
+        1.0,
+        None,
+        False,
+    ),
+    "F-support-escalation": (
+        "escalations_30d",
+        "support_coverage_30d",
+        "escalations/account/30d",
+        1.0,
+        None,
+        False,
+    ),
+    "F-support-satisfaction": (
+        "mean_satisfaction_30d",
+        "support_coverage_30d",
+        "satisfaction_points/response",
+        1.0,
+        "satisfaction_responses_30d",
+        False,
+    ),
+    "F-commercial-downgrade": (
+        "downgrade_90d",
+        "includes_90d_context",
+        "share_of_accounts",
+        1.0,
+        None,
+        True,
+    ),
+    "F-commercial-renewal": (
+        "auto_renew_off",
+        "includes_90d_context",
+        "share_of_accounts",
+        1.0,
+        None,
+        True,
+    ),
+}
 
 CANDIDATES = {
     "F-product-usage-drop": ("usage_change_30_vs_90", "lower", "product", "le", -0.30),
@@ -727,6 +785,368 @@ def build_reason_distribution(
     return pd.DataFrame(rows, columns=REASON_DISTRIBUTION_COLUMNS)
 
 
+def _event_observed_mask(
+    frame: pd.DataFrame,
+    value_column: str,
+    coverage_column: str,
+    response_column: str | None,
+) -> pd.Series:
+    observed = (
+        frame["eligible_at_window_cutoff"].fillna(False)
+        & frame[coverage_column].fillna(False)
+        & frame[value_column].notna()
+    )
+    if response_column:
+        observed &= frame[response_column].fillna(0).gt(0)
+    return observed
+
+
+def _cluster_bootstrap_event_metric(
+    frame: pd.DataFrame,
+    value_column: str,
+    coverage_column: str,
+    scale: float,
+    response_column: str | None,
+    anchors: list[pd.Timestamp],
+    replicates: int,
+) -> dict[str, object]:
+    accounts = pd.Index(sorted(frame["account_id"].astype(str).unique()))
+    if len(accounts) < 2 or not anchors:
+        return {"status": "unavailable", "limitation": "insufficient_accounts_or_anchors"}
+    account_position = {account_id: position for position, account_id in enumerate(accounts)}
+    weights = np.random.default_rng(RANDOM_SEED).multinomial(
+        len(accounts), np.full(len(accounts), 1 / len(accounts)), size=replicates
+    )
+    case_weights = []
+    cohort_values: dict[str, list[np.ndarray]] = {
+        "terminal_cases": [],
+        "contemporaneous_controls": [],
+    }
+    for anchor in anchors:
+        anchor_frame = frame.loc[frame["anchor_date"].eq(anchor)]
+        case_vector = np.zeros(len(accounts))
+        case_rows = anchor_frame.loc[anchor_frame["cohort"].eq("terminal_cases")]
+        for account_id in case_rows["account_id"].astype(str).unique():
+            case_vector[account_position[account_id]] = 1
+        case_weights.append(weights @ case_vector)
+
+        for cohort, values in cohort_values.items():
+            cohort_frame = anchor_frame.loc[anchor_frame["cohort"].eq(cohort)]
+            observed = _event_observed_mask(
+                cohort_frame, value_column, coverage_column, response_column
+            )
+            observed_frame = cohort_frame.loc[observed]
+            numerator = np.zeros(len(accounts))
+            denominator = np.zeros(len(accounts))
+            for row in observed_frame.itertuples(index=False):
+                position = account_position[str(row.account_id)]
+                response_weight = float(getattr(row, response_column)) if response_column else 1.0
+                numerator[position] += float(getattr(row, value_column)) * scale * response_weight
+                denominator[position] += response_weight
+            bootstrap_denominator = weights @ denominator
+            values.append(
+                np.divide(
+                    weights @ numerator,
+                    bootstrap_denominator,
+                    out=np.full(replicates, np.nan),
+                    where=bootstrap_denominator > 0,
+                )
+            )
+
+    case_weight_matrix = np.column_stack(case_weights)
+    aggregate: dict[str, np.ndarray] = {}
+    terminal_matrix = np.column_stack(cohort_values["terminal_cases"])
+    control_matrix = np.column_stack(cohort_values["contemporaneous_controls"])
+    comparable = (
+        np.isfinite(terminal_matrix) & np.isfinite(control_matrix) & (case_weight_matrix > 0)
+    )
+    comparable_weight = np.where(comparable, case_weight_matrix, 0)
+    total_weight = comparable_weight.sum(axis=1)
+    for cohort, values in (
+        ("terminal_cases", terminal_matrix),
+        ("contemporaneous_controls", control_matrix),
+    ):
+        aggregate[cohort] = np.divide(
+            (np.where(comparable, values, 0) * comparable_weight).sum(axis=1),
+            total_weight,
+            out=np.full(replicates, np.nan),
+            where=total_weight > 0,
+        )
+    difference = aggregate["terminal_cases"] - aggregate["contemporaneous_controls"]
+    valid_difference = difference[np.isfinite(difference)]
+    if len(valid_difference) < 0.95 * replicates:
+        return {"status": "unavailable", "limitation": "insufficient_valid_bootstrap_replicates"}
+
+    result: dict[str, object] = {
+        "status": "available",
+        "limitation": "",
+        "difference_ci_low": float(np.quantile(valid_difference, 0.025)),
+        "difference_ci_high": float(np.quantile(valid_difference, 0.975)),
+    }
+    for cohort, values in aggregate.items():
+        valid = values[np.isfinite(values)]
+        result[f"{cohort}_ci_low"] = float(np.quantile(valid, 0.025))
+        result[f"{cohort}_ci_high"] = float(np.quantile(valid, 0.975))
+    return result
+
+
+def build_event_cohort_metrics(
+    event_panel: pd.DataFrame,
+    replicates: int = BOOTSTRAP_REPLICATES,
+) -> pd.DataFrame:
+    if event_panel.empty:
+        return pd.DataFrame()
+    rows: list[dict[str, object]] = []
+    grouping = ["anchor_kind", "chronology", "relative_window_start", "relative_window_end"]
+    for group_key, frame in event_panel.groupby(grouping, sort=True, dropna=False):
+        anchor_kind, chronology, window_start, window_end = group_key
+        for mechanism_id, definition in EVENT_METRIC_DEFINITIONS.items():
+            value_column, coverage_column, unit, scale, response_column, primary_only = definition
+            if value_column not in frame or coverage_column not in frame:
+                continue
+            if primary_only and int(window_start) != -30:
+                continue
+
+            anchor_values = []
+            for (anchor_date, cohort), anchor_frame in frame.groupby(
+                ["anchor_date", "cohort"], sort=True
+            ):
+                observed = _event_observed_mask(
+                    anchor_frame, value_column, coverage_column, response_column
+                )
+                observed_frame = anchor_frame.loc[observed]
+                if response_column:
+                    responses = pd.to_numeric(
+                        observed_frame[response_column], errors="coerce"
+                    ).fillna(0)
+                    denominator = float(responses.sum())
+                    value = (
+                        float(
+                            np.average(
+                                pd.to_numeric(observed_frame[value_column]),
+                                weights=responses,
+                            )
+                            * scale
+                        )
+                        if denominator
+                        else np.nan
+                    )
+                else:
+                    value = (
+                        float(pd.to_numeric(observed_frame[value_column]).mean() * scale)
+                        if len(observed_frame)
+                        else np.nan
+                    )
+                anchor_values.append(
+                    {
+                        "anchor_date": anchor_date,
+                        "cohort": cohort,
+                        "value": value,
+                        "eligible_cases": int(
+                            frame.loc[
+                                frame["anchor_date"].eq(anchor_date)
+                                & frame["cohort"].eq("terminal_cases"),
+                                "account_id",
+                            ].nunique()
+                        ),
+                    }
+                )
+            anchor_values_frame = pd.DataFrame(anchor_values)
+            if anchor_values_frame.empty:
+                continue
+            pivot = anchor_values_frame.pivot(index="anchor_date", columns="cohort", values="value")
+            cohorts = ("terminal_cases", "contemporaneous_controls")
+            required = set(cohorts)
+            comparable_anchors = sorted(
+                pivot.dropna(subset=list(required)).index
+                if required.issubset(pivot.columns)
+                else []
+            )
+            case_weights = (
+                anchor_values_frame.drop_duplicates("anchor_date")
+                .set_index("anchor_date")["eligible_cases"]
+                .reindex(comparable_anchors)
+            )
+            aggregate_values = {
+                cohort: (
+                    float(np.average(pivot.loc[comparable_anchors, cohort], weights=case_weights))
+                    if comparable_anchors and case_weights.sum() > 0
+                    else np.nan
+                )
+                for cohort in cohorts
+            }
+            difference = (
+                aggregate_values["terminal_cases"] - aggregate_values["contemporaneous_controls"]
+                if all(pd.notna(value) for value in aggregate_values.values())
+                else np.nan
+            )
+            bootstrap = _cluster_bootstrap_event_metric(
+                frame,
+                value_column,
+                coverage_column,
+                scale,
+                response_column,
+                comparable_anchors,
+                replicates,
+            )
+            comparable_frame = frame.loc[frame["anchor_date"].isin(comparable_anchors)]
+            for cohort in ("terminal_cases", "contemporaneous_controls"):
+                cohort_frame = comparable_frame.loc[comparable_frame["cohort"].eq(cohort)]
+                observed = _event_observed_mask(
+                    cohort_frame, value_column, coverage_column, response_column
+                )
+                observed_frame = cohort_frame.loc[observed]
+                eligible_pairs = cohort_frame.drop_duplicates(["account_id", "anchor_date"])
+                observed_pairs = observed_frame.drop_duplicates(["account_id", "anchor_date"])
+                evidence_id = (
+                    f"event:{anchor_kind}:{chronology}:{mechanism_id}:"
+                    f"{cohort}:{int(window_start)}:{int(window_end)}"
+                )
+                status = "available" if comparable_anchors else "unavailable"
+                limitation = "" if comparable_anchors else "no_comparable_anchors"
+                if comparable_anchors and bootstrap["status"] != "available":
+                    status = "inconclusive"
+                    limitation = str(bootstrap["limitation"])
+                rows.append(
+                    {
+                        "evidence_id": evidence_id,
+                        "period_start": min(comparable_anchors) if comparable_anchors else pd.NaT,
+                        "period_end": max(comparable_anchors) if comparable_anchors else pd.NaT,
+                        "population": anchor_kind,
+                        "chronology": chronology,
+                        "status": status,
+                        "limitation": limitation,
+                        "source_refs": "event_aligned_panel",
+                        "calculation": "build_event_cohort_metrics:v1",
+                        "metric": mechanism_id,
+                        "cohort": cohort,
+                        "relative_window_start": int(window_start),
+                        "relative_window_end": int(window_end),
+                        "anchor_period_start": (
+                            min(comparable_anchors) if comparable_anchors else pd.NaT
+                        ),
+                        "anchor_period_end": (
+                            max(comparable_anchors) if comparable_anchors else pd.NaT
+                        ),
+                        "eligible_accounts": int(cohort_frame["account_id"].nunique()),
+                        "observed_accounts": int(observed_frame["account_id"].nunique()),
+                        "unique_accounts": int(cohort_frame["account_id"].nunique()),
+                        "account_anchor_rows": len(eligible_pairs),
+                        "eligible_account_anchors": len(eligible_pairs),
+                        "observed_account_anchors": len(observed_pairs),
+                        "reused_control_accounts": int(
+                            cohort_frame.loc[
+                                cohort_frame["reused_control"].fillna(False), "account_id"
+                            ].nunique()
+                        ),
+                        "coverage": (
+                            len(observed_pairs) / len(eligible_pairs)
+                            if len(eligible_pairs)
+                            else np.nan
+                        ),
+                        "coverage_unit": "covered_account_anchors/eligible_account_anchors",
+                        "response_count": (
+                            int(observed_frame[response_column].fillna(0).sum())
+                            if response_column
+                            else pd.NA
+                        ),
+                        "ticket_count": (
+                            int(
+                                cohort_frame.get("tickets_30d", pd.Series(dtype=float))
+                                .fillna(0)
+                                .sum()
+                            )
+                            if response_column
+                            else pd.NA
+                        ),
+                        "respondent_accounts": (
+                            int(observed_frame["account_id"].nunique())
+                            if response_column
+                            else pd.NA
+                        ),
+                        "value": aggregate_values[cohort],
+                        "unit": unit,
+                        "weighting": (
+                            "responses_within_anchor;eligible_cases_between_anchors"
+                            if response_column
+                            else "accounts_within_anchor;eligible_cases_between_anchors"
+                        ),
+                        "comparator_id": evidence_id.replace(
+                            cohort,
+                            cohorts[1] if cohort == cohorts[0] else cohorts[0],
+                        ),
+                        "difference": difference,
+                        "ci_low": bootstrap.get(f"{cohort}_ci_low", np.nan),
+                        "ci_high": bootstrap.get(f"{cohort}_ci_high", np.nan),
+                        "difference_ci_low": bootstrap.get("difference_ci_low", np.nan),
+                        "difference_ci_high": bootstrap.get("difference_ci_high", np.nan),
+                        "ci_method": "cluster_bootstrap_account",
+                        "ci_level": 0.95,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def build_mechanism_scorecard(
+    findings: pd.DataFrame,
+    event_metrics: pd.DataFrame,
+    reasons: pd.DataFrame,
+) -> pd.DataFrame:
+    del event_metrics, reasons
+    rows = []
+    gate_columns = (
+        "temporal_support",
+        "comparison_support",
+        "sample_support",
+        "association_support",
+        "chronology_support",
+        "cross_table_support",
+    )
+    for finding in findings.itertuples(index=False):
+        confidence = getattr(finding, "confidence", "inconclusive")
+        evidence_level = getattr(finding, "evidence_level", None)
+        if evidence_level not in EVIDENCE_LEVELS:
+            evidence_level = (
+                "supported_mechanism" if confidence == "accepted" else "plausible_hypothesis"
+            )
+        gates = {column: getattr(finding, column, "unavailable") for column in gate_columns}
+        rows.append(
+            {
+                "evidence_id": f"mechanism:{finding.finding_id}",
+                "period_start": getattr(finding, "diagnostic_cutoff", pd.NaT),
+                "period_end": getattr(finding, "diagnostic_cutoff", pd.NaT),
+                "population": "diagnostic_horizon",
+                "chronology": "strict",
+                "status": "available" if confidence == "accepted" else "inconclusive",
+                "limitation": getattr(finding, "limitation", ""),
+                "source_refs": f"finding:{finding.finding_id}|event_cohort_metrics|reason_distribution",
+                "calculation": "build_mechanism_scorecard:v1",
+                "mechanism_id": finding.finding_id,
+                "finding_id": finding.finding_id,
+                "claim": finding.claim,
+                "evidence_level": evidence_level,
+                **gates,
+                "gate_reasons": getattr(finding, "gate_reasons", json.dumps({})),
+                "effect": getattr(finding, "adjusted_odds_ratio", np.nan),
+                "effect_unit": "adjusted_odds_ratio",
+                "comparator_id": "diagnostic_unexposed",
+                "ci_low": getattr(finding, "ci_low", np.nan),
+                "ci_high": getattr(finding, "ci_high", np.nan),
+                "ci_level": 0.95,
+                "ci_method": "glm_hc3",
+                "p_adjusted": getattr(finding, "p_adjusted", np.nan),
+                "observed_coverage": getattr(finding, "observed_coverage", np.nan),
+                "strict_coverage": getattr(finding, "candidate_coverage", np.nan),
+                "counterevidence": getattr(finding, "counterevidence", None),
+                "rejected_statement": (
+                    getattr(finding, "claim", None) if evidence_level == "rejected_claim" else None
+                ),
+                "recommended_validation": "Executar experimento prospectivo com grupo comparável.",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame:
     labeled = panel.loc[
         panel["churn_next_30d"].notna() & panel["cutoff"].le(pd.Timestamp("2024-11-30"))
@@ -785,6 +1205,8 @@ def _fit_association(snapshot: pd.DataFrame, feature: str) -> dict[str, Any]:
             "odds_ratio": odds_ratio,
             "ci_low": ci_low,
             "ci_high": ci_high,
+            "p_value": float(result.pvalues["candidate"]),
+            "effective_n": len(outcome),
             "coverage": coverage,
             "failure_reason": None,
         }
@@ -809,6 +1231,8 @@ def _reason_corroborates(
     driver_group: str,
     exposed_accounts: set[str],
     churn_events: pd.DataFrame,
+    cutoff: pd.Timestamp | None = None,
+    reasons: pd.DataFrame | None = None,
 ) -> bool:
     terminal = (
         churn_events.loc[~churn_events["is_reactivation"].fillna(False)]
@@ -816,6 +1240,16 @@ def _reason_corroborates(
         .drop_duplicates("account_id", keep="first")
         .copy()
     )
+    if cutoff is not None:
+        cutoff = pd.Timestamp(cutoff)
+        terminal = terminal.loc[
+            terminal["churn_date"].gt(cutoff)
+            & terminal["churn_date"].le(cutoff + pd.Timedelta(days=30))
+        ]
+    if reasons is not None:
+        diagnostic = reasons.loc[reasons["population"].eq("diagnostic_horizon")]
+        if diagnostic.empty or int(diagnostic["eligible_events"].max()) < MIN_SEGMENT_CHURNS:
+            return False
     if len(terminal) < MIN_SEGMENT_CHURNS:
         return False
     patterns = {
@@ -833,6 +1267,34 @@ def _reason_corroborates(
     if not exposed.any() or overall == 0:
         return False
     return bool(reason_match.loc[exposed].mean() / overall >= 1.25)
+
+
+def _event_gate_inputs(
+    event_metrics: pd.DataFrame | None,
+    finding_id: str,
+) -> pd.DataFrame:
+    if event_metrics is None or event_metrics.empty:
+        return pd.DataFrame(
+            columns=[
+                "chronology",
+                "cohort",
+                "status",
+                "difference",
+                "difference_ci_low",
+                "difference_ci_high",
+                "unique_accounts",
+                "coverage",
+            ]
+        )
+    return event_metrics.loc[
+        event_metrics["metric"].eq(finding_id)
+        & event_metrics["population"].eq("terminal_event")
+        & event_metrics["relative_window_start"].eq(-30)
+    ].copy()
+
+
+def _direction_passes(value: float, expected_direction: str) -> bool:
+    return bool(value < 0 if expected_direction == "lower" else value > 0)
 
 
 def rank_findings(findings: pd.DataFrame) -> pd.DataFrame:
@@ -912,16 +1374,39 @@ def evaluate_candidates(
     observed: pd.DataFrame,
     strict: pd.DataFrame,
     churn_events: pd.DataFrame,
+    event_metrics: pd.DataFrame | None = None,
+    reasons: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     observed_snapshot = build_diagnostic_snapshot(observed)
     strict_snapshot = build_diagnostic_snapshot(strict)
     scoring = strict.loc[strict["cutoff"].eq(SCORING_CUTOFF)].copy()
+    fits = {
+        finding_id: {
+            "observed": _fit_association(observed_snapshot, candidate[0]),
+            "strict": _fit_association(strict_snapshot, candidate[0]),
+        }
+        for finding_id, candidate in CANDIDATES.items()
+    }
+    valid_ids = [
+        finding_id
+        for finding_id, fit in fits.items()
+        if not fit["strict"].get("failure_reason")
+        and np.isfinite(fit["strict"].get("p_value", np.nan))
+    ]
+    adjusted_p = {finding_id: np.nan for finding_id in CANDIDATES}
+    if valid_ids:
+        corrected = multipletests(
+            [fits[finding_id]["strict"]["p_value"] for finding_id in valid_ids],
+            alpha=0.05,
+            method="holm",
+        )[1]
+        adjusted_p.update(dict(zip(valid_ids, corrected, strict=True)))
     rows = []
 
     for finding_id, candidate in CANDIDATES.items():
         feature, expected_direction, driver_group, operator, threshold = candidate
-        observed_fit = _fit_association(observed_snapshot, feature)
-        strict_fit = _fit_association(strict_snapshot, feature)
+        observed_fit = fits[finding_id]["observed"]
+        strict_fit = fits[finding_id]["strict"]
         failure_reason = strict_fit.get("failure_reason") or observed_fit.get("failure_reason")
         observed_effect = observed_fit.get("coefficient", np.nan)
         strict_effect = strict_fit.get("coefficient", np.nan)
@@ -936,7 +1421,7 @@ def evaluate_candidates(
             and np.sign(observed_effect) == np.sign(strict_effect)
             and sensitivity_delta <= 0.25
         )
-        expected = strict_effect < 0 if expected_direction == "lower" else strict_effect > 0
+        expected = _direction_passes(strict_effect, expected_direction)
         interval_passes = bool(
             strict_fit.get("ci_high", np.inf) < 1
             if expected_direction == "lower"
@@ -950,23 +1435,113 @@ def evaluate_candidates(
             and int(exposed_snapshot["churn_next_30d"].sum()) >= MIN_SEGMENT_CHURNS
             and strict_fit.get("coverage", 0.0) >= MIN_COVERAGE
         )
-        corroborated = _reason_corroborates(driver_group, exposed_accounts, churn_events)
-        accepted = bool(
-            not failure_reason
-            and direction_stable
+        metric_rows = _event_gate_inputs(event_metrics, finding_id)
+        chronology_rows = {
+            chronology: metric_rows.loc[
+                metric_rows["chronology"].eq(chronology)
+                & metric_rows["cohort"].eq("terminal_cases")
+            ]
+            for chronology in ("observed", "strict")
+        }
+        temporal_available = all(
+            len(frame) == 1 and frame.iloc[0]["status"] != "unavailable"
+            for frame in chronology_rows.values()
+        )
+        temporal_passes = temporal_available and all(
+            _direction_passes(float(frame.iloc[0]["difference"]), expected_direction)
+            for frame in chronology_rows.values()
+        )
+        strict_metric = chronology_rows["strict"]
+        comparison_available = temporal_available and strict_metric.iloc[0]["status"] == "available"
+        comparison_passes = comparison_available and _direction_passes(
+            float(
+                strict_metric.iloc[0][
+                    "difference_ci_high" if expected_direction == "lower" else "difference_ci_low"
+                ]
+            ),
+            expected_direction,
+        )
+        strict_sample = metric_rows.loc[metric_rows["chronology"].eq("strict")]
+        cohort_sample_passes = bool(
+            {"terminal_cases", "contemporaneous_controls"}.issubset(set(strict_sample["cohort"]))
+            and strict_sample.groupby("cohort")["unique_accounts"].max().ge(30).all()
+            and strict_sample.groupby("cohort")["coverage"].min().ge(MIN_COVERAGE).all()
+        )
+        sample_available = bool(
+            {"terminal_cases", "contemporaneous_controls"}.issubset(set(strict_sample["cohort"]))
+            and strict_sample["coverage"].notna().all()
+        )
+        sample_gate_passes = sample_passes and cohort_sample_passes
+        association_available = bool(
+            not strict_fit.get("failure_reason") and np.isfinite(adjusted_p[finding_id])
+        )
+        association_passes = bool(
+            association_available
             and expected
             and interval_passes
-            and sample_passes
-            and corroborated
+            and adjusted_p[finding_id] <= 0.05
         )
-        if not failure_reason and not direction_stable:
+        chronology_available = not (
+            observed_fit.get("failure_reason") or strict_fit.get("failure_reason")
+        )
+        corroborated = _reason_corroborates(
+            driver_group,
+            exposed_accounts,
+            churn_events,
+            strict_snapshot["cutoff"].max(),
+            reasons,
+        )
+        diagnostic_reasons = (
+            reasons.loc[reasons["population"].eq("diagnostic_horizon")]
+            if reasons is not None and not reasons.empty
+            else pd.DataFrame()
+        )
+        reason_available = bool(
+            not diagnostic_reasons.empty
+            and int(diagnostic_reasons["eligible_events"].max()) >= MIN_SEGMENT_CHURNS
+        )
+
+        gate_states = {
+            "temporal_support": (
+                "pass" if temporal_passes else "fail" if temporal_available else "unavailable"
+            ),
+            "comparison_support": (
+                "pass" if comparison_passes else "fail" if comparison_available else "unavailable"
+            ),
+            "sample_support": (
+                "pass" if sample_gate_passes else "fail" if sample_available else "unavailable"
+            ),
+            "association_support": (
+                "pass" if association_passes else "fail" if association_available else "unavailable"
+            ),
+            "chronology_support": (
+                "pass" if direction_stable else "fail" if chronology_available else "unavailable"
+            ),
+            "cross_table_support": (
+                "pass" if corroborated else "fail" if reason_available else "unavailable"
+            ),
+        }
+        accepted = all(state == "pass" for state in gate_states.values())
+        gate_reasons = {
+            "temporal_support": "strict_and_observed_event_contrast_expected_direction",
+            "comparison_support": "strict_event_difference_ci_expected_side_of_zero",
+            "sample_support": "snapshot_and_event_cohort_sample_coverage_thresholds",
+            "association_support": "glm_direction_ci_and_holm_adjusted_p",
+            "chronology_support": "observed_strict_direction_and_relative_delta",
+            "cross_table_support": "diagnostic_horizon_reason_share_ratio_at_least_1.25",
+        }
+        if not failure_reason and gate_states["chronology_support"] != "pass":
             failure_reason = "chronology_instability"
-        elif not failure_reason and not sample_passes:
+        elif not failure_reason and gate_states["sample_support"] != "pass":
             failure_reason = "sample_or_coverage_gate"
-        elif not failure_reason and not corroborated:
+        elif not failure_reason and gate_states["cross_table_support"] != "pass":
             failure_reason = "cross_table_gate"
-        elif not failure_reason and (not expected or not interval_passes):
+        elif not failure_reason and gate_states["association_support"] != "pass":
             failure_reason = "association_gate"
+        elif not failure_reason and gate_states["temporal_support"] != "pass":
+            failure_reason = "temporal_gate"
+        elif not failure_reason and gate_states["comparison_support"] != "pass":
+            failure_reason = "comparison_gate"
 
         scoring_exposure = (
             _exposure_mask(scoring[feature], operator, threshold).fillna(False)
@@ -1003,10 +1578,13 @@ def evaluate_candidates(
                 "finding_id": finding_id,
                 "driver_group": driver_group,
                 "claim": f"{feature} está associado ao churn futuro de 30 dias.",
-                "evidence_level": "association_controlled" if accepted else "inconclusive",
+                "evidence_level": ("supported_mechanism" if accepted else "plausible_hypothesis"),
                 "adjusted_odds_ratio": strict_fit.get("odds_ratio", np.nan),
                 "ci_low": strict_fit.get("ci_low", np.nan),
                 "ci_high": strict_fit.get("ci_high", np.nan),
+                "p_value": strict_fit.get("p_value", np.nan),
+                "p_adjusted": adjusted_p[finding_id],
+                "effective_n": strict_fit.get("effective_n", pd.NA),
                 "observed_effect": observed_effect,
                 "strict_effect": strict_effect,
                 "sensitivity_delta": sensitivity_delta,
@@ -1016,6 +1594,7 @@ def evaluate_candidates(
                 "diagnostic_exposed_accounts": len(exposed_snapshot),
                 "diagnostic_exposed_churns": diagnostic_churns,
                 "candidate_coverage": strict_fit.get("coverage", 0.0),
+                "observed_coverage": observed_fit.get("coverage", 0.0),
                 "source_tables": "accounts|subscriptions|feature_usage|support_tickets|churn_events",
                 "affected_accounts": len(exposed_scoring),
                 "mrr_exposed_max": float(exposed_scoring["mrr_active"].sum()),
@@ -1024,6 +1603,8 @@ def evaluate_candidates(
                 "counterevidence": counterevidence,
                 "limitation": "Dados observacionais sustentam associação, não causalidade comprovada.",
                 "actionability": "immediate",
+                **gate_states,
+                "gate_reasons": json.dumps(gate_reasons, sort_keys=True),
                 **actions,
             }
         )

@@ -1,12 +1,17 @@
 import numpy as np
 import pandas as pd
 
+from ravenstack_churn import diagnosis
 from ravenstack_churn.diagnosis import (
+    EVIDENCE_LEVELS,
+    GATE_STATES,
     _bootstrap_rate_contrast,
     _reason_corroborates,
     _segment_metrics,
     build_claim_checks,
     build_diagnostic_snapshot,
+    build_event_cohort_metrics,
+    build_mechanism_scorecard,
     build_monthly_churn,
     build_reason_distribution,
     evaluate_candidates,
@@ -20,6 +25,105 @@ def _terminal_events(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
         tables["accounts"], tables["churn_events"], pd.Timestamp("2024-12-31")
     )
     return selected
+
+
+def test_satisfaction_two_level_weighting_is_3_35() -> None:
+    rows = []
+    anchors = (("2024-06-10", 1, 1.4), ("2024-07-10", 3, 4.0))
+    for anchor, case_count, case_value in anchors:
+        for cohort, count, value in (
+            ("terminal_cases", case_count, case_value),
+            ("contemporaneous_controls", 2, 3.0),
+        ):
+            for index in range(count):
+                rows.append(
+                    {
+                        "account_id": f"{anchor}-{cohort}-{index}",
+                        "anchor_date": pd.Timestamp(anchor),
+                        "anchor_kind": "terminal_event",
+                        "chronology": "strict",
+                        "cohort": cohort,
+                        "relative_window_start": -30,
+                        "relative_window_end": -1,
+                        "eligible_at_window_cutoff": True,
+                        "reused_control": False,
+                        "mean_satisfaction_30d": value,
+                        "satisfaction_responses_30d": 1,
+                        "tickets_30d": 1,
+                        "support_coverage_30d": True,
+                    }
+                )
+
+    metrics = build_event_cohort_metrics(pd.DataFrame(rows), replicates=200)
+    satisfaction = metrics.loc[
+        metrics["metric"].eq("F-support-satisfaction") & metrics["cohort"].eq("terminal_cases")
+    ].iloc[0]
+
+    assert satisfaction["value"] == 3.35
+    assert satisfaction["weighting"] == "responses_within_anchor;eligible_cases_between_anchors"
+
+
+def test_wide_interval_remains_plausible_and_inconclusive() -> None:
+    findings = pd.DataFrame(
+        [
+            {
+                "finding_id": "F-product-usage-drop",
+                "claim": "Uso menor antecede churn.",
+                "confidence": "inconclusive",
+                "adjusted_odds_ratio": 1.1,
+                "ci_low": 0.8,
+                "ci_high": 1.4,
+                "candidate_coverage": 1.0,
+                "counterevidence": "Intervalo inclui 1.",
+            }
+        ]
+    )
+
+    scorecard = build_mechanism_scorecard(findings, pd.DataFrame(), pd.DataFrame())
+    row = scorecard.iloc[0]
+
+    assert row["evidence_level"] == "plausible_hypothesis"
+    assert row["status"] == "inconclusive"
+    assert pd.isna(row["rejected_statement"])
+
+
+def test_all_gates_have_closed_states_before_ranking(candidate_frames) -> None:
+    findings, _ = evaluate_candidates(*candidate_frames)
+    gates = [
+        "temporal_support",
+        "comparison_support",
+        "sample_support",
+        "association_support",
+        "chronology_support",
+        "cross_table_support",
+    ]
+
+    assert set(findings[gates].stack()) <= GATE_STATES
+    assert set(findings["evidence_level"]) <= EVIDENCE_LEVELS
+    assert findings.loc[findings["confidence"].ne("accepted"), "priority_rank"].isna().all()
+
+
+def test_holm_correction_restricts_six_candidate_tests(candidate_frames, monkeypatch) -> None:
+    lower = {"usage_change_30_vs_90", "mean_satisfaction_90d"}
+
+    def stable_fit(_snapshot, feature):
+        coefficient = -1.0 if feature in lower else 1.0
+        return {
+            "coefficient": coefficient,
+            "odds_ratio": 0.5 if coefficient < 0 else 2.0,
+            "ci_low": 0.2 if coefficient < 0 else 1.2,
+            "ci_high": 0.8 if coefficient < 0 else 3.0,
+            "p_value": 0.01,
+            "effective_n": 100,
+            "coverage": 1.0,
+            "failure_reason": None,
+        }
+
+    monkeypatch.setattr(diagnosis, "_fit_association", stable_fit)
+    findings, _ = diagnosis.evaluate_candidates(*candidate_frames)
+
+    assert np.allclose(findings["p_adjusted"], 0.06)
+    assert findings["association_support"].eq("fail").all()
 
 
 def test_monthly_churn_uses_registered_at_start_denominator(mini_tables) -> None:

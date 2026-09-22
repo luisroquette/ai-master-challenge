@@ -835,3 +835,17 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Limitação registrada:** o preflight remoto e a execução integral sobre as 136 datas de âncora observadas ficaram adiados por decisão explícita, não declarados como verdes. Esse gate deve ser retomado antes de PR ou merge.
 
 **Estado:** Task 3 concluída no escopo autorizado. Próximo ciclo: Task 4, integração das métricas, gates e escada de evidência.
+
+### Task 4 — métricas, gates e escada de evidência
+
+**Pesquisa e planejamento:** antes da implementação, revisamos a SPEC e fontes públicas do statsmodels para correção de múltiplos testes por Holm, além de padrões públicos de bootstrap por cluster. A solução reutiliza pandas, NumPy e statsmodels já instalados; nenhuma dependência ou abstração paralela foi criada.
+
+**RED:** os testes de ponderação de satisfação e de intervalo amplo falharam inicialmente por ausência de `build_event_cohort_metrics`. O RED foi observado de fato, sem reconstrução retroativa.
+
+**Execução e feedback:** implementamos métricas por coorte/âncora, ponderação de satisfação por respostas dentro da âncora e por casos entre âncoras, bootstrap por conta, scorecard e seis gates explícitos (`pass`, `fail`, `unavailable`). O GLM passou a registrar p-valor e tamanho efetivo; Holm restringe a família de seis candidatos. Findings inconclusivos permanecem hipóteses plausíveis, nunca rejeições automáticas. O CLI agora calcula seleção terminal comum, histórico, motivos, painel relativo, métricas, gates e scorecard antes do ranking, sem publicar ainda os quatro novos payloads reservados à Task 5.
+
+**Loops de correção:** o primeiro GREEN parcial encontrou duas operações pandas aplicadas indevidamente a arrays NumPy; após a correção, `2 passed`. A suíte de diagnóstico encontrou três regressões no caminho legado sem métricas novas; a causa era um DataFrame vazio sem schema. O vazio tipado restaurou compatibilidade e levou a `19 passed`. Depois da integração e de regressões para enum fechado, fila restrita e Holm, o gate direcionado final retornou `53 passed in 3.37s`, Ruff sem erros e formatação aplicada em dois arquivos.
+
+**Bypass mantido:** por ordem explícita de Luis, nenhum Codespace, `make reproduce` ou `make check` foi executado nesta etapa. O resultado verde cobre somente testes locais direcionados e lint dos arquivos alterados. O preflight integral continua adiado e obrigatório antes de PR ou merge; não foi registrado como aprovado.
+
+**Estado:** implementação funcional da Task 4 validada no escopo local autorizado. Fase 1 possui os quatro DataFrames em memória; reprodução integral e artefatos canônicos permanecem pendentes do gate adiado.

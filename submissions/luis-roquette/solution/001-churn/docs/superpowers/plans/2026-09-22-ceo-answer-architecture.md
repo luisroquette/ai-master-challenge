@@ -222,7 +222,7 @@ Adaptação autorizada: a execução deixou de ser paralela e passou a ser crono
 - Produces: `build_mechanism_scorecard(findings, event_metrics, reasons) -> pd.DataFrame`.
 - Extends: `evaluate_candidates(observed, strict, churn_events, event_metrics, reasons)`.
 
-- [ ] **Step 1: escrever testes RED dos gates e enums**
+- [x] **Step 1: escrever testes RED dos gates e enums**
 
 ```python
 def test_satisfaction_two_level_weighting_is_3_35(): ...
@@ -231,13 +231,13 @@ def test_all_gates_finish_before_queue_eligibility(): ...
 def test_holm_can_only_restrict_acceptance(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_diagnosis.py tests/test_publish.py -k "3_35 or plausible or gates_finish or holm"`
 
 Expected: FAIL porque scorecard, métricas e gates separados ainda não existem.
 
-- [ ] **Step 3: implementar os contratos mínimos**
+- [x] **Step 3: implementar os contratos mínimos**
 
 ```python
 EVIDENCE_LEVELS = {
@@ -248,7 +248,7 @@ GATE_STATES = {"pass", "fail", "unavailable"}
 
 Calcular todos os gates antes de confiança, ranking e fila; `fail` de sustentação não cria `rejected_claim`.
 
-- [ ] **Step 4: confirmar GREEN e fechar a Fase 1**
+- [ ] **Step 4: confirmar GREEN e fechar a Fase 1** — testes locais direcionados: 53 passed; Ruff verde. `make reproduce && make check` adiado por bypass explícito de Luis, sem declaração de gate integral verde.
 
 Run: `.venv/bin/python -m pytest -q tests/test_diagnosis.py tests/test_panel.py tests/test_quality.py tests/test_publish.py`
 
@@ -256,7 +256,7 @@ Run no ambiente autorizado: `make reproduce && make check`
 
 Expected: aplicação legada e dez arquivos atuais permanecem válidos; quatro DataFrames novos existem em memória, ainda não publicados.
 
-- [ ] **Step 5: entregar o diff; o orquestrador registra o checkpoint**
+- [x] **Step 5: entregar o diff; o orquestrador registra o checkpoint local**
 
 ```bash
 git add src/ravenstack_churn/diagnosis.py src/ravenstack_churn/cli.py tests/test_diagnosis.py tests/test_publish.py tests/conftest.py

@@ -5,11 +5,18 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import DEFAULT_CUTOFFS, SCORING_CUTOFF
+from .config import DEFAULT_CUTOFFS, OBSERVATION_END, SCORING_CUTOFF
 from .contracts import load_raw_tables, validate_contracts
-from .diagnosis import build_claim_checks, evaluate_candidates
+from .diagnosis import (
+    build_claim_checks,
+    build_event_cohort_metrics,
+    build_mechanism_scorecard,
+    build_monthly_churn,
+    build_reason_distribution,
+    evaluate_candidates,
+)
 from .modeling import evaluate_model
-from .panel import build_account_panel
+from .panel import build_account_panel, build_event_aligned_panel, select_first_terminal_events
 from .publish import (
     AnalysisResult,
     compare_artifact_sets,
@@ -26,9 +33,29 @@ def reproduce(raw_dir: Path, output_dir: Path) -> dict[str, Path]:
     quality["contract_warnings"] = warnings.to_dict(orient="records")
 
     cutoffs = DEFAULT_CUTOFFS.append(pd.DatetimeIndex([SCORING_CUTOFF]))
+    terminal_events, _ = select_first_terminal_events(
+        tables["accounts"], tables["churn_events"], OBSERVATION_END
+    )
     observed = build_account_panel(tables, cutoffs, "observed")
     strict = build_account_panel(tables, cutoffs, "strict")
-    findings, segments = evaluate_candidates(observed, strict, tables["churn_events"])
+    _monthly_churn = build_monthly_churn(tables, terminal_events)
+    reasons = build_reason_distribution(tables, terminal_events)
+    event_panel = pd.concat(
+        [
+            build_event_aligned_panel(tables, terminal_events, chronology)
+            for chronology in ("observed", "strict")
+        ],
+        ignore_index=True,
+    )
+    event_metrics = build_event_cohort_metrics(event_panel)
+    findings, segments = evaluate_candidates(
+        observed,
+        strict,
+        terminal_events,
+        event_metrics,
+        reasons,
+    )
+    _scorecard = build_mechanism_scorecard(findings, event_metrics, reasons)
     claims = build_claim_checks(strict)
     model_evaluation, model_scores = evaluate_model(strict)
     result = AnalysisResult(
