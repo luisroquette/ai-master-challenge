@@ -15,6 +15,7 @@ Construí uma aplicação Streamlit que transforma 8.800 oportunidades reais em 
 1. **Experiência guiada:** após clonar o repositório, rode `python3 -m http.server 50400 --directory submissions/luis-roquette` e abra `http://127.0.0.1:50400/delivery/`.
 2. **Produto funcional:** siga o [setup e o preflight do Lead Scorer](solution/003-lead-scorer/README.md).
 3. **Construção visual:** veja o [walkthrough humano legendado de 6:05](delivery/assets/video-construcao-legendado.mp4), o [resumo audiovisual do NotebookLM de 5:48](delivery/assets/video-notebooklm.mp4), o [infográfico](delivery/assets/infografico-notebooklm.png) e o [mapa mental](delivery/assets/mapa-mental-notebooklm.png).
+4. **Grafo interativo:** abra o [mapa navegável da solução](graphify-out/graph.html) e confira o [relatório de rastreabilidade](graphify-out/QUESTION_TRACE_REPORT.md).
 
 ## Solução
 
@@ -52,6 +53,7 @@ Dados estáticos, perfis demonstrativos sem autenticação, nenhuma escrita no C
 | SDD Context Engineering Kit | SPEC, plano executável e critérios de aceite |
 | Frontend Design | Lapidação da interface e do tour guiado |
 | NotebookLM | Vídeo, infográfico e mapa mental a partir de fonte curada |
+| Graphify | Grafo estrutural e semântico, comunidades, hubs e trilhas de evidência |
 
 ### Workflow
 
@@ -75,6 +77,7 @@ O Método de Construção Cognitiva em Loops (MCCL): documentação contemporân
 - [Método MCCL](docs/metodologia-construcao-cognitiva-em-loops.md) e [prompts-chave](docs/prompts-chave.md)
 - [Métricas e avaliação](solution/003-lead-scorer/docs/evaluation.md)
 - [Checklist de segurança](solution/003-lead-scorer/docs/security-checklist.md)
+- [Grafo Graphify](graphify-out/README.md), [relatório de auditoria](graphify-out/GRAPH_REPORT.md) e [rastreabilidade integral](graphify-out/QUESTION_TRACE_REPORT.md)
 - Histórico Git com a evolução incremental da solução
 
 ---

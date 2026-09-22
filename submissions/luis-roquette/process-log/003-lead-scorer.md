@@ -1549,3 +1549,16 @@ Esse PR é o canal oficial de entrega previsto pelo regulamento. Nenhum deploy p
 Luis solicitou uma revisão geral adicional antes de considerar a entrega encerrada. A branch local, o fork e o PR foram comparados no mesmo SHA; o PR permaneceu público, `OPEN`, não-draft e `CLEAN`, com todos os 63 arquivos restritos à pasta autorizada.
 
 A inspeção da página pública sem login encontrou um único refinamento de comunicação: os quatro caminhos da seção “Como avaliar” estavam formatados como código, não como links. A descrição do PR foi atualizada com links diretos para o README, a experiência guiada, o setup da aplicação e o diário. Nenhuma lógica, dado, métrica ou limitação foi alterada nessa lapidação.
+
+## I37 — Grafo estrutural e semântico com Graphify — 2026-09-22
+
+Luis decidiu criar e documentar um grafo da entrega para transformar o conjunto de código, testes, SPECs, diário e materiais visuais em uma superfície única de navegação e auditoria.
+
+- Escopo: toda a submissão, com 51 fontes detectadas; 36 documentos ou transcrições, oito arquivos de código, cinco imagens e dois vídeos transcritos localmente.
+- Construção: AST local combinado com sete lotes semânticos; nenhuma API paga foi acionada.
+- Resultado final: 570 nós, 989 relações e 21 comunidades rotuladas, com visualização HTML autocontida.
+- Rastreabilidade: os 10 God Nodes, as cinco Surprising Connections e as sete Suggested Questions foram verificados integralmente e registrados com fonte e limite de interpretação.
+- Integridade final: zero endpoints ausentes ou pendentes, zero duplicatas exatas e zero colapsos; cinco auto-relações AST foram mantidas e declaradas.
+- Limites: o diagnóstico pré-build registrou 95 arestas pendentes normalizadas ou descartadas e 17 pares multirrelação; o DOCX foi representado pelo Markdown equivalente porque o extra opcional de Office não estava instalado; relações `INFERRED` não são apresentadas como prova causal ou de runtime.
+
+A versão instalada do Graphify era `0.9.64`, enquanto a skill local declarava `0.9.51`. A ferramenta global não foi alterada durante a entrega; o comportamento efetivamente executado foi validado pelos diagnósticos do pacote instalado.

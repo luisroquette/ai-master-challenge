@@ -1,0 +1,207 @@
+{
+  "node_count": 532,
+  "unverified_node_count": 0,
+  "raw_edge_count": 1006,
+  "non_object_edges": 0,
+  "missing_endpoint_edges": 0,
+  "dangling_endpoint_edges": 95,
+  "external_reference_edges": 0,
+  "self_loop_edges": 5,
+  "valid_candidate_edges": 911,
+  "exact_duplicate_edges": 0,
+  "directed_unique_endpoint_pairs": 894,
+  "directed_same_endpoint_collapsed_edges": 17,
+  "undirected_unique_endpoint_pairs": 894,
+  "undirected_same_endpoint_collapsed_edges": 17,
+  "same_endpoint_group_count": 16,
+  "relation_variant_groups": 15,
+  "source_file_variant_groups": 0,
+  "source_location_variant_groups": 1,
+  "context_variant_groups": 0,
+  "post_build_graph_type": "Graph",
+  "post_build_node_count": 570,
+  "post_build_edge_count": 989,
+  "post_build_error": "",
+  "producer_suppression": {
+    "path": "graphify/extract.py (installed package 0.9.64)",
+    "total_sites": 12,
+    "sites": [
+      {
+        "line": 1337,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 1870,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 1872,
+        "name": "seen_doc_refs",
+        "tuple_arity": 0,
+        "sample": "seen_doc_refs: set[str] = set()"
+      },
+      {
+        "line": 2242,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2389,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n.get(\"id\") for n in nodes}"
+      },
+      {
+        "line": 3109,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 3278,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 5334,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 5442,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 5521,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 6036,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 6037,
+        "name": "seen_edges",
+        "tuple_arity": 4,
+        "sample": "seen_edges: set[tuple[str, str, str, str | None]] = set()"
+      }
+    ],
+    "error": ""
+  },
+  "examples": [
+    {
+      "source": "solution_003_lead_scorer_data_normalize_opportunity",
+      "target": "solution_003_lead_scorer_data_normalize_opportunity_issue",
+      "edge_count": 3,
+      "relations": [
+        "calls",
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "solution/003-lead-scorer/data.py"
+      ],
+      "source_locations": [
+        "L270",
+        "L277",
+        "L282"
+      ],
+      "contexts": [
+        "",
+        "argument",
+        "call"
+      ]
+    },
+    {
+      "source": "solution_003_lead_scorer_app",
+      "target": "solution_003_lead_scorer_app_cached_bundle",
+      "edge_count": 2,
+      "relations": [
+        "contains"
+      ],
+      "source_files": [
+        "solution/003-lead-scorer/app.py"
+      ],
+      "source_locations": [
+        "L341",
+        "L347"
+      ],
+      "contexts": [
+        ""
+      ]
+    },
+    {
+      "source": "solution_003_lead_scorer_data_read_snapshot_07b6dc",
+      "target": "solution_003_lead_scorer_data_read_snapshot_07b6dc_check_marker",
+      "edge_count": 2,
+      "relations": [
+        "calls",
+        "contains"
+      ],
+      "source_files": [
+        "solution/003-lead-scorer/data.py"
+      ],
+      "source_locations": [
+        "L118",
+        "L123"
+      ],
+      "contexts": [
+        "",
+        "call"
+      ]
+    },
+    {
+      "source": "solution_003_lead_scorer_scoring_rank_stage",
+      "target": "solution_003_lead_scorer_scoring_rank_stage_key",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "solution/003-lead-scorer/scoring.py"
+      ],
+      "source_locations": [
+        "L1105",
+        "L1113"
+      ],
+      "contexts": [
+        "",
+        "argument"
+      ]
+    },
+    {
+      "source": "solution_003_lead_scorer_tests_test_app_verificationgatetests_test_tc44_offline_runtime_denies_external_and_permits_loopback",
+      "target": "solution_003_lead_scorer_tests_test_app_verificationgatetests_test_tc44_offline_runtime_denies_external_and_permits_loopback_offline_connect",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "solution/003-lead-scorer/tests/test_app.py"
+      ],
+      "source_locations": [
+        "L675",
+        "L687"
+      ],
+      "contexts": [
+        "",
+        "argument"
+      ]
+    }
+  ]
+}
