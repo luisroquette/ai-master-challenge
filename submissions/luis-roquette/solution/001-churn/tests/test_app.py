@@ -30,7 +30,8 @@ def test_queue_filter_and_download_match_canonical_artifact(
     selected = app.selectbox(key="finding_filter").select("F-support-escalation").run()
     canonical = pd.read_csv(generated_artifacts / "account_queue.csv")
     expected = canonical.query("finding_id == 'F-support-escalation'")
-    assert selected.dataframe[0].value["Conta"].tolist() == expected["account_id"].tolist()
+    queue_frame = next(frame.value for frame in selected.dataframe if "Conta" in frame.value)
+    assert queue_frame["Conta"].tolist() == expected["account_id"].tolist()
     assert len(selected.download_button) == 1
 
 

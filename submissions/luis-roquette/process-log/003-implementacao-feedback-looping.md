@@ -501,3 +501,43 @@ A última rodada revalidou dependências instaladas, manifesto e checksums, cobe
 O primeiro script auxiliar desta rodada presumiu incorretamente um subcomando `validate-artifacts` e leu somente cinco linhas do painel. A verificação foi corrigida para chamar a função pública `validate_artifact_set` e carregar a coluna de cronologia completa; o gate passou. O erro foi do comando de auditoria e não revelou defeito no produto.
 
 **Encerramento pelo limite definido por Luis:** `3/3` rodadas completas; sequência estável final `1/2`. O objetivo original de duas rodadas limpas consecutivas não foi declarado como atingido. O loop encerra porque Luis priorizou explicitamente o teto de três rodadas para proteger o orçamento de tokens.
+
+## Redesign do dashboard — foco total em UI/UX
+
+### Decisão autoral e pesquisa prévia
+
+Luis abriu uma etapa específica para trabalhar layout e design do dashboard com foco total em UI/UX e determinou o uso da skill `frontend-design`. Mantivemos a regra de pesquisar antes de criar: foram avaliados templates e componentes públicos de Streamlit no GitHub, além de relatos da comunidade no Reddit sobre customização avançada.
+
+A pesquisa confirmou três caminhos recorrentes: tema e CSS próprios, componentes externos de cards e migração para um frontend separado. Escolhemos o primeiro. O dashboard já possui componentes nativos suficientes, e adicionar biblioteca visual ou reconstruir a aplicação em React aumentaria dependências, superfície de falha e tempo sem melhorar a decisão executiva na mesma proporção.
+
+### Direção de design
+
+A linguagem escolhida é **dossiê executivo / sala de decisão**: editorial, sóbria e investigativa. A interface deve parecer um documento de inteligência preparado para uma reunião de diretoria, não um template genérico de BI. Os princípios são:
+
+- limitar a largura de leitura e recuperar hierarquia no monitor ultrawide;
+- usar contraste, tipografia editorial e uma paleta de papel, carvão e vermelho de sinal;
+- transformar métricas em cartões legíveis e a conclusão inconclusiva em um veredito visual claro;
+- reduzir ruído de tabelas, reforçar estados de foco e preservar acessibilidade;
+- manter o pipeline, os artefatos e a lógica analítica completamente intactos.
+
+**Estado:** pesquisa e direção concluídas; implementação visual iniciada.
+
+### Implementação e feedback visual
+
+O redesign foi concentrado em `app.py`, reutilizando Streamlit, pandas e CSS já disponíveis. A largura do conteúdo foi limitada a 1.440 px para impedir dispersão em monitores ultrawide. Criamos uma abertura editorial com status do diagnóstico, hierarquia numerada, cartões de KPI, um bloco lateral de leitura executiva e um veredito visual inequívoco. A paleta usa papel, carvão, verde e vermelho de sinal; a tipografia combina uma serifada editorial com a família nativa Avenir quando disponível.
+
+A primeira inspeção visual encontrou um defeito que os testes estruturais não capturaram: uma regra CSS criada para esconder índices removeu o cabeçalho “Hipótese” e desalinhou a tabela. A regra frágil foi eliminada. Em seu lugar, as tabelas executivas usam `pandas.Styler` com índice oculto, e seus índices são normalizados antes da renderização.
+
+A segunda inspeção mostrou que a matriz de evidências, com até 16 colunas, ficava comprimida como tabela estática. Ela e o detalhamento de segmentos foram convertidos para grades nativas com cabeçalho fixo, busca, download e rolagem horizontal. O teste da fila deixou de depender da posição de um dataframe na árvore do Streamlit e passou a localizar a grade pela coluna canônica `Conta`.
+
+As abas `Evidências` e `Fila operacional` receberam abertura e contexto próprios. O alerta que proíbe contato automático foi preservado, assim como foco visível, contraste alto, layout responsivo e todos os controles funcionais.
+
+### Validação
+
+- Ruff e formatação canônica passaram;
+- os 42 testes passaram, incluindo os seis testes do dashboard;
+- `make check` confirmou `artifact_sets=equal`;
+- as três abas foram inspecionadas no navegador após hot reload;
+- pipeline, artefatos, métricas e decisão analítica permaneceram inalterados.
+
+**Resultado:** redesign funcional concluído com foco integral em clareza executiva, densidade controlada e rastreabilidade visual.

@@ -30,10 +30,207 @@ st.set_page_config(page_title="RavenStack Churn", layout="wide")
 st.markdown(
     """
     <style>
-    :root { color-scheme: light dark; }
-    :focus-visible { outline: 3px solid #ffbf47 !important; outline-offset: 2px; }
-    [data-testid="stMetricValue"] { color: inherit; }
-    .status { border: 2px solid currentColor; border-radius: .35rem; padding: .5rem .75rem; }
+    :root {
+        --ink: #17201f;
+        --paper: #f2efe7;
+        --paper-deep: #e8e3d8;
+        --signal: #d64a32;
+        --sage: #557164;
+        --muted: #68736f;
+        --line: rgba(23, 32, 31, .16);
+    }
+    html { color-scheme: light; }
+    [data-testid="stAppViewContainer"] {
+        color: var(--ink);
+        background:
+            linear-gradient(rgba(23, 32, 31, .025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(23, 32, 31, .025) 1px, transparent 1px),
+            var(--paper);
+        background-size: 32px 32px;
+    }
+    [data-testid="stHeader"] { background: transparent; }
+    .stMainBlockContainer {
+        max-width: 1440px;
+        padding: 2.25rem 3.5rem 5rem;
+    }
+    :focus-visible { outline: 3px solid #f4a261 !important; outline-offset: 3px; }
+    h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
+    p, label, button, [data-testid="stCaptionContainer"] {
+        font-family: "Avenir Next", Avenir, sans-serif;
+    }
+    .hero {
+        position: relative;
+        overflow: hidden;
+        margin: 0 0 1.5rem;
+        padding: 2rem 2.25rem 2.2rem;
+        color: #f7f2e8;
+        border-radius: 2px;
+        background: var(--ink);
+        box-shadow: 12px 12px 0 var(--paper-deep);
+    }
+    .hero::after {
+        content: "";
+        position: absolute;
+        right: -4rem;
+        bottom: -7rem;
+        width: 24rem;
+        height: 24rem;
+        border: 1px solid rgba(247, 242, 232, .16);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3rem rgba(247, 242, 232, .025), 0 0 0 6rem rgba(247, 242, 232, .02);
+    }
+    .hero-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        color: #cfd5cc;
+        font: 700 .72rem/1.2 "Avenir Next", Avenir, sans-serif;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+    }
+    .hero-meta span:first-child::before {
+        content: "";
+        display: inline-block;
+        width: .55rem;
+        height: .55rem;
+        margin-right: .65rem;
+        border-radius: 50%;
+        background: var(--signal);
+        box-shadow: 0 0 0 4px rgba(214, 74, 50, .18);
+    }
+    .hero-grid { display: grid; grid-template-columns: 1.7fr .7fr; gap: 2rem; align-items: end; }
+    .hero h1 {
+        max-width: 760px;
+        margin: 0;
+        color: #fffaf0;
+        font-size: clamp(3rem, 7vw, 6.6rem);
+        font-weight: 500;
+        line-height: .88;
+        letter-spacing: -.055em;
+    }
+    .hero h1 em { color: #ef765f; font-weight: 400; }
+    .hero-copy {
+        max-width: 640px;
+        margin: 1.25rem 0 0;
+        color: #cfd5cc;
+        font: 400 1rem/1.55 "Avenir Next", Avenir, sans-serif;
+    }
+    .hero-stamp {
+        position: relative;
+        z-index: 1;
+        padding: 1.25rem;
+        border: 1px solid rgba(247, 242, 232, .3);
+        background: rgba(255, 255, 255, .04);
+        font: 600 .78rem/1.65 "Avenir Next", Avenir, sans-serif;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .hero-stamp strong { display: block; color: #ef765f; font-size: 1.05rem; }
+    [data-baseweb="tab-list"] {
+        gap: .35rem;
+        padding: .35rem;
+        border: 1px solid var(--line);
+        background: rgba(232, 227, 216, .72);
+    }
+    [data-baseweb="tab"] {
+        min-height: 2.8rem;
+        padding: .65rem 1rem;
+        color: var(--muted);
+        font-weight: 700;
+        letter-spacing: .01em;
+    }
+    [aria-selected="true"][data-baseweb="tab"] { color: #fffaf0; background: var(--ink); }
+    [data-baseweb="tab-highlight"] { display: none; }
+    .section-heading {
+        display: grid;
+        grid-template-columns: 3.5rem 1fr;
+        gap: 1rem;
+        align-items: start;
+        margin: 2.6rem 0 1.1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--ink);
+    }
+    .section-heading > span {
+        color: var(--signal);
+        font: 800 .72rem/1 "Avenir Next", Avenir, sans-serif;
+        letter-spacing: .14em;
+    }
+    .section-heading h2 { margin: -.25rem 0 .15rem; font-size: 2rem; font-weight: 500; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: .92rem; }
+    [data-testid="stMetric"] {
+        min-height: 132px;
+        padding: 1.25rem 1.35rem;
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--ink);
+        background: rgba(255, 253, 247, .72);
+        box-shadow: 0 8px 22px rgba(23, 32, 31, .05);
+    }
+    [data-testid="stMetricLabel"] { color: var(--muted); font-weight: 700; }
+    [data-testid="stMetricValue"] {
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2.55rem;
+        letter-spacing: -.04em;
+    }
+    [data-testid="stTable"] {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 2px;
+        background: rgba(255, 253, 247, .74);
+    }
+    [data-testid="stTable"] thead tr th { color: #f7f2e8; background: var(--ink); }
+    [data-testid="stTable"] tbody tr:nth-child(even) { background: rgba(232, 227, 216, .45); }
+    [data-testid="stTable"] tbody tr:hover { background: rgba(214, 74, 50, .08); }
+    [data-testid="stVegaLiteChart"] {
+        padding: 1rem;
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 247, .72);
+    }
+    .verdict {
+        margin: 1.2rem 0;
+        padding: 1.35rem 1.5rem;
+        color: #fff8ee;
+        border-left: 7px solid var(--signal);
+        background: var(--ink);
+    }
+    .verdict small {
+        display: block;
+        margin-bottom: .4rem;
+        color: #ef765f;
+        font: 800 .68rem/1 "Avenir Next", Avenir, sans-serif;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+    }
+    .verdict strong { font: 500 1.35rem/1.25 Georgia, "Times New Roman", serif; }
+    .insight-card {
+        min-height: 100%;
+        padding: 1.35rem 1.5rem;
+        border: 1px solid var(--line);
+        background: var(--paper-deep);
+    }
+    .insight-card small { color: var(--signal); font-weight: 800; letter-spacing: .12em; }
+    .insight-card h3 { margin: .55rem 0 .75rem; font-size: 1.55rem; font-weight: 500; }
+    .insight-card p { color: #45504c; line-height: 1.55; }
+    [data-testid="stAlert"] { border-radius: 2px; border-left-width: 6px; }
+    [data-testid="stDataFrame"] { border: 1px solid var(--line); }
+    [data-testid="stExpander"] { border: 1px solid var(--line); border-radius: 2px; }
+    .stDownloadButton button {
+        min-height: 2.8rem;
+        color: #fffaf0;
+        border: 1px solid var(--ink);
+        border-radius: 2px;
+        background: var(--ink);
+        font-weight: 700;
+    }
+    .stDownloadButton button:hover { color: #fffaf0; border-color: var(--signal); background: var(--signal); }
+    @media (max-width: 800px) {
+        .stMainBlockContainer { padding: 1rem 1rem 3rem; }
+        .hero { padding: 1.35rem; box-shadow: 6px 6px 0 var(--paper-deep); }
+        .hero-grid { grid-template-columns: 1fr; }
+        .hero h1 { font-size: 3.6rem; }
+        .hero-meta { align-items: flex-start; flex-direction: column; }
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -59,18 +256,53 @@ watchlist = read_csv("account_watchlist.csv")
 quality = json.loads((artifact_dir / "quality_report.json").read_text(encoding="utf-8"))
 accepted = findings.loc[findings["confidence"].eq("accepted")]
 
-st.title("RavenStack — diagnóstico de churn")
-st.caption(
-    "Decisão reproduzível em dados de conta por data de corte. "
-    f"Modelo publicado: {'sim' if manifest['publish_model'] else 'não'}."
+st.markdown(
+    f"""
+    <section class="hero">
+        <div class="hero-meta">
+            <span>RavenStack / Retention Intelligence</span>
+            <span>Challenge 001 · diagnóstico reproduzível</span>
+        </div>
+        <div class="hero-grid">
+            <div>
+                <h1>Churn,<br><em>sem atalhos.</em></h1>
+                <p class="hero-copy">Uma leitura executiva que separa fatos, associações e hipóteses — antes de transformar correlação em ação.</p>
+            </div>
+            <div class="hero-stamp">
+                Status da análise
+                <strong>Evidência inconclusiva</strong>
+                Corte diagnóstico · 30 nov 2024<br>
+                Modelo publicado · {"sim" if manifest["publish_model"] else "não"}
+            </div>
+        </div>
+    </section>
+    """,
+    unsafe_allow_html=True,
 )
+
+
+def section_heading(number: str, title: str, description: str) -> None:
+    st.markdown(
+        f'<div class="section-heading"><span>{number}</span><div><h2>{title}</h2>'
+        f"<p>{description}</p></div></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_table(frame: pd.DataFrame) -> None:
+    st.table(frame.reset_index(drop=True).style.hide(axis="index"))
+
 
 executive_tab, evidence_tab, queue_tab = st.tabs(
     ["Decisão executiva", "Evidências", "Fila operacional"]
 )
 
 with executive_tab:
-    st.subheader("O que não bate")
+    section_heading(
+        "01",
+        "O que não bate",
+        "O agregado melhora enquanto a coorte de churn perde força — a contradição central.",
+    )
     executive_claims = claims.loc[claims["cohort"].isin(["overall", "churn_next_30d"])]
     usage_rows = executive_claims.loc[executive_claims["claim_id"].eq("C-usage-growth")].set_index(
         "cohort"
@@ -94,7 +326,7 @@ with executive_tab:
     claims_display = executive_claims[
         ["claim_id", "cohort", "start_value", "end_value", "status", "coverage"]
     ].replace({"claim_id": CLAIM_LABELS, "cohort": COHORT_LABELS, "status": STATUS_LABELS})
-    st.table(
+    render_table(
         claims_display.rename(
             columns={
                 "claim_id": "Métrica",
@@ -109,16 +341,29 @@ with executive_tab:
     usage_chart = usage_rows[["start_value", "end_value"]].rename(
         index=COHORT_LABELS, columns={"start_value": "Início", "end_value": "Fim"}
     )
-    st.bar_chart(usage_chart, color=["#64748b", "#ef4444"], stack=False)
+    chart_column, reading_column = st.columns([1.8, 1], gap="large")
+    with chart_column:
+        st.bar_chart(usage_chart, color=["#557164", "#d64a32"], stack=False)
+    with reading_column:
+        st.markdown(
+            f"""
+            <div class="insight-card">
+                <small>LEITURA EXECUTIVA</small>
+                <h3>Crescimento médio esconde erosão.</h3>
+                <p>O uso agregado avançou <strong>{overall_change:+.1%}</strong>, mas caiu <strong>{churn_change:+.1%}</strong> entre as contas que churnarão. A satisfação cobre apenas <strong>{satisfaction_row["coverage"]:.1%}</strong> dos tickets.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     if accepted.empty:
         st.markdown(
-            '<div class="status"><strong>Evidência insuficiente para priorizar uma causa</strong></div>',
+            '<div class="verdict"><small>Veredito analítico</small><strong>Evidência insuficiente para priorizar uma causa</strong></div>',
             unsafe_allow_html=True,
         )
         finding_display = findings[
             ["finding_id", "failure_reason", "counterevidence", "limitation"]
         ].replace({"finding_id": FINDING_LABELS, "failure_reason": FAILURE_LABELS})
-        st.table(
+        render_table(
             finding_display.rename(
                 columns={
                     "finding_id": "Hipótese",
@@ -138,7 +383,11 @@ with executive_tab:
         st.write(f"**Contraevidência:** {top['counterevidence']}")
         st.write(f"**1 semana:** {top['immediate_action']}")
         st.write(f"**30–90 dias:** {top['structural_action']}")
-    st.subheader("Qualidade que limita a decisão")
+    section_heading(
+        "02",
+        "Qualidade que limita a decisão",
+        "As anomalias abaixo impedem que precisão aparente seja confundida com certeza.",
+    )
     quality_rows = pd.DataFrame(
         [
             {"regra": rule, "linhas": count}
@@ -148,8 +397,12 @@ with executive_tab:
         columns=["regra", "linhas"],
     ).sort_values("linhas", ascending=False)
     quality_rows["regra"] = quality_rows["regra"].replace(QUALITY_LABELS)
-    st.table(quality_rows.rename(columns={"regra": "Regra", "linhas": "Linhas afetadas"}))
-    st.subheader("Segmentos observados")
+    render_table(quality_rows.rename(columns={"regra": "Regra", "linhas": "Linhas afetadas"}))
+    section_heading(
+        "03",
+        "Segmentos observados",
+        "Risco descritivo com elegibilidade explícita; amostras pequenas continuam inconclusivas.",
+    )
     segment_confidence = segments.get("confidence", pd.Series("inconclusive", index=segments.index))
     visible_executive_segments = segments.assign(elegivel=segment_confidence.eq("eligible"))
     segment_order = [
@@ -178,7 +431,7 @@ with executive_tab:
     segment_display = segment_display[
         [column for column in executive_segment_columns if column in segment_display]
     ]
-    st.table(
+    render_table(
         segment_display.rename(
             columns={
                 "dimension": "Dimensão",
@@ -197,6 +450,11 @@ with executive_tab:
     )
 
 with evidence_tab:
+    section_heading(
+        "01",
+        "Matriz de evidências",
+        "Cada hipótese mantém cálculo, cronologia, fonte, contraevidência e limitação visíveis.",
+    )
     finding_options = ["Todos", *findings["finding_id"].astype(str).tolist()]
     evidence_finding = st.selectbox(
         "Hipótese",
@@ -251,7 +509,7 @@ with evidence_tab:
     evidence_display = evidence[evidence_columns].replace(
         {"finding_id": FINDING_LABELS, "confidence": ELIGIBILITY_LABELS}
     )
-    st.table(
+    st.dataframe(
         evidence_display.rename(
             columns={
                 "finding_id": "Hipótese",
@@ -271,7 +529,10 @@ with evidence_tab:
                 "counterevidence": "Contraevidência",
                 "limitation": "Limitação",
             }
-        )
+        ),
+        width="stretch",
+        height=300,
+        hide_index=True,
     )
     visible_segment_display = visible_segments.head(30).copy()
     if "confidence" not in visible_segment_display:
@@ -283,7 +544,7 @@ with evidence_tab:
     visible_segment_display["confidence"] = visible_segment_display["confidence"].replace(
         ELIGIBILITY_LABELS
     )
-    st.table(
+    st.dataframe(
         visible_segment_display.rename(
             columns={
                 "dimension": "Dimensão",
@@ -299,10 +560,18 @@ with evidence_tab:
                 "coverage": "Cobertura",
                 "confidence": "Elegibilidade",
             }
-        )
+        ),
+        width="stretch",
+        height=420,
+        hide_index=True,
     )
 
 with queue_tab:
+    section_heading(
+        "01",
+        "Contas para validação",
+        "Uma watchlist descritiva para investigar sinais — nunca uma autorização automática de contato.",
+    )
     is_watchlist = queue.empty
     operational = watchlist.copy() if is_watchlist else queue.copy()
     if is_watchlist:
