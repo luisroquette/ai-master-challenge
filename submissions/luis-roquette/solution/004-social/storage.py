@@ -123,6 +123,10 @@ def record_decision(conn: sqlite3.Connection, event: dict[str, object]) -> str:
     if existing:
         return str(existing[0])
 
+    status = str(event["status"])
+    edited_text = str(event.get("edited_text", "")).strip() if status == "edited" else ""
+    if status == "edited" and not edited_text:
+        raise ValueError("Informe o texto editado antes de registrar.")
     baseline = event["baseline"]
     revision_of = event.get("revision_of")
     if revision_of:
@@ -150,9 +154,9 @@ def record_decision(conn: sqlite3.Connection, event: dict[str, object]) -> str:
                 str(revision_of) if revision_of else None,
                 str(event["source_hash"]),
                 str(event["decided_at"]),
-                str(event["status"]),
+                status,
                 str(event["original_text"]),
-                str(event.get("edited_text", "")),
+                edited_text,
                 str(event["owner"]),
                 str(event["execution_window"]),
                 _json(event["scope"]),
@@ -225,6 +229,8 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
         return "pending", "observed_before_execution", comparison
     if execution_status == "yes":
         return "observed", "comparable_after_declared_execution", comparison
+    if execution_status == "no":
+        return "observed", "comparable_action_not_executed", comparison
     return "observed", "comparable_execution_unknown", comparison
 
 

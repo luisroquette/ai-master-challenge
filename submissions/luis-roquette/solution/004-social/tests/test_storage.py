@@ -140,6 +140,20 @@ class StorageTests(unittest.TestCase):
             record_decision(self.conn, decision_event(source_hash="missing"))
         self.assertEqual(self.conn.execute("SELECT count(*) FROM decisions").fetchone()[0], 0)
 
+    def test_decision_and_revision_text_match_status(self) -> None:
+        original_id = record_decision(self.conn, decision_event())
+        for revision_of in (None, original_id):
+            for status in ("accepted", "rejected", "edited"):
+                with self.subTest(revision_of=revision_of, status=status):
+                    decision_id = record_decision(self.conn, decision_event(event_id=f"{revision_of}-{status}", revision_of=revision_of, status=status, edited_text="  Ação alterada.  "))
+                    decision = next(item for item in list_decisions(self.conn) if item["decision_id"] == decision_id)
+                    self.assertEqual(decision["edited_text"], "Ação alterada." if status == "edited" else "")
+                    self.assertEqual(decision["original_text"], decision_event()["original_text"])
+            before = len(list_decisions(self.conn))
+            with self.assertRaisesRegex(ValueError, "texto editado"):
+                record_decision(self.conn, decision_event(event_id=f"empty-{revision_of}", revision_of=revision_of, status="edited", edited_text=" \n "))
+            self.assertEqual(len(list_decisions(self.conn)), before)
+
     def test_database_contains_no_raw_csv_or_source_text_fields(self) -> None:
         columns = {
             row[1]
@@ -184,20 +198,14 @@ class StorageTests(unittest.TestCase):
                 self.assertEqual(outcome["status"], "pending")
                 self.assertEqual(outcome["reason"], expected)
 
-    def test_unknown_execution_is_observation_not_action_result(self) -> None:
+    def test_no_and_unknown_execution_have_distinct_observation_reasons(self) -> None:
         decision_id = record_decision(self.conn, decision_event())
         record_import(self.conn, import_event("source-b"))
-        record_outcome(
-            self.conn,
-            outcome_event(
-                decision_id=decision_id,
-                execution_status="unknown",
-                execution_date=None,
-            ),
-        )
-        outcome = list_decisions(self.conn)[0]["outcomes"][0]
-        self.assertEqual(outcome["status"], "observed")
-        self.assertEqual(outcome["reason"], "comparable_execution_unknown")
+        for status, reason in (("no", "comparable_action_not_executed"), ("unknown", "comparable_execution_unknown")):
+            with self.subTest(execution_status=status):
+                outcome_id = record_outcome(self.conn, outcome_event(event_id=f"observation-{status}", decision_id=decision_id, execution_status=status, execution_date=None))
+                outcome = next(item for item in list_decisions(self.conn)[0]["outcomes"] if item["outcome_id"] == outcome_id)
+                self.assertEqual((outcome["status"], outcome["reason"], outcome["execution_status"]), ("observed", reason, status))
 
     def test_decision_execution_and_observation_chronology(self) -> None:
         record_import(self.conn, import_event("source-b"))

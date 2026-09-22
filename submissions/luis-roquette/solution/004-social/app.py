@@ -122,7 +122,7 @@ def _decision_export(items: list[dict[str, object]]) -> list[dict[str, object]]:
             "decision_id": item["decision_id"],
             "evidence_id": item["recommendation_key"],
             "status": item["status"],
-            "text": item["edited_text"] or item["original_text"],
+            "text": item["edited_text"] if item["status"] == "edited" else item["original_text"],
             "owner": item["owner"],
             "execution_window": item["execution_window"],
             "outcomes": item["outcomes"],
@@ -286,7 +286,7 @@ else:
                     format_func={"accepted": "Aceitar", "rejected": "Rejeitar", "edited": "Editar"}.get,
                     key="decision_status",
                 )
-                edited_text = st.text_area("Texto editado (obrigatório se editar)", key="decision_text")
+                edited_text = st.text_area("Texto editado (obrigatório se editar)", help="Usado somente quando a decisão é Editar; Aceitar ou Rejeitar preserva o texto original.", key="decision_text")
                 submitted = st.form_submit_button("Registrar decisão", key="save_decision")
             if submitted:
                 if status == "edited" and not edited_text.strip():
@@ -301,7 +301,7 @@ else:
                         "decided_at": datetime.now(timezone.utc).isoformat(),
                         "status": status,
                         "original_text": selected["action"],
-                        "edited_text": edited_text.strip(),
+                        "edited_text": edited_text.strip() if status == "edited" else "",
                         "owner": selected.get("owner", "Gestor de Social Media"),
                         "execution_window": selected.get("execution_window", "próximos 7 dias"),
                         "scope": result["scope"],
@@ -311,7 +311,7 @@ else:
                     try:
                         decision_id = record_decision(connection, event)
                         confirmed = next(item for item in list_decisions(connection) if item["decision_id"] == decision_id)
-                    except (sqlite3.Error, StopIteration) as exc:
+                    except (sqlite3.Error, StopIteration, ValueError) as exc:
                         st.error(f"A decisão não foi salva: {exc}")
                     else:
                         st.success(f"Decisão registrada: {confirmed['decision_id']}")
@@ -386,25 +386,25 @@ else:
         original = st.selectbox("Decisão para revisar", decisions, format_func=lambda item: f"{item['decision_id']} — {item['status']}", key="revision_decision")
         with st.form("revision_form"):
             revision_status = st.selectbox("Nova decisão", ("accepted", "rejected", "edited"), format_func={"accepted": "Aceitar", "rejected": "Rejeitar", "edited": "Editar"}.get, key="revision_status")
-            revision_text = st.text_area("Texto da revisão (obrigatório se editar)", key="revision_text")
+            revision_text = st.text_area("Texto da revisão (obrigatório se editar)", help="Usado somente quando a nova decisão é Editar; Aceitar ou Rejeitar preserva o texto original.", key="revision_text")
             revision_submitted = st.form_submit_button("Registrar revisão", key="save_revision")
         if revision_submitted:
             if revision_status == "edited" and not revision_text.strip():
                 st.error("Informe o texto da revisão antes de registrar.")
             else:
-                event = {**original, "event_id": st.session_state.setdefault("revision_event_id", str(uuid.uuid4())), "revision_of": original["decision_id"], "decided_at": datetime.now(timezone.utc).isoformat(), "status": revision_status, "edited_text": revision_text.strip()}
+                event = {**original, "event_id": st.session_state.setdefault("revision_event_id", str(uuid.uuid4())), "revision_of": original["decision_id"], "decided_at": datetime.now(timezone.utc).isoformat(), "status": revision_status, "edited_text": revision_text.strip() if revision_status == "edited" else ""}
                 try:
                     revision_id = record_decision(connection, event)
                     decisions = list_decisions(connection)
                     confirmed = next(item for item in decisions if item["decision_id"] == revision_id)
-                except (sqlite3.Error, StopIteration) as exc:
+                except (sqlite3.Error, StopIteration, ValueError) as exc:
                     st.error(f"A revisão não foi salva: {exc}")
                 else:
                     st.success(f"Revisão registrada: {confirmed['decision_id']}")
                     st.session_state["revision_event_id"] = str(uuid.uuid4())
     active_hash = str(metadata["source_hash"]) if metadata else None
     for item in reversed(decisions):
-        text = item["edited_text"] or item["original_text"]
+        text = item["edited_text"] if item["status"] == "edited" else item["original_text"]
         st.markdown(f"**{item['status']}** · {text}")
         st.caption(f"{item['decided_at']} · fonte `{str(item['source_hash'])[:12]}…` · decisão `{item['decision_id']}`")
         if item["revision_of"]:

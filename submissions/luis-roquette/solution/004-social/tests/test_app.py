@@ -190,6 +190,65 @@ class AppTests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertTrue(any("Filtro vazio" in item.value for item in app.warning))
 
+    def test_accepted_and_rejected_ignore_stray_text_in_decisions_and_revisions(self) -> None:
+        app = self.app()
+        app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
+        for status in ("accepted", "rejected"):
+            with self.subTest(status=status):
+                app.selectbox(key="decision_status").set_value(status)
+                app.text_area(key="decision_text").set_value("Texto indevido da decisão.")
+                app.button(key="save_decision").click().run()
+                self.assertFalse(app.exception)
+                app.selectbox(key="revision_status").set_value(status)
+                app.text_area(key="revision_text").set_value("Texto indevido da revisão.")
+                app.button(key="save_revision").click().run()
+                self.assertFalse(app.exception)
+        with closing(sqlite3.connect(Path(self.directory.name) / "cockpit.sqlite3")) as connection:
+            rows = connection.execute("SELECT status, original_text, edited_text, revision_of FROM decisions ORDER BY decided_at").fetchall()
+        self.assertEqual([row[0] for row in rows], ["accepted", "accepted", "rejected", "rejected"])
+        self.assertTrue(all(row[1] == rows[0][1] and row[2] == "" for row in rows))
+        self.assertEqual([row[3] is not None for row in rows], [False, True, False, True])
+        reopened = self.app()
+        text = "\n".join(item.value for item in reopened.markdown)
+        self.assertNotIn("Texto indevido", text)
+        self.assertEqual(text.count(rows[0][1]), 4)
+
+    def test_edited_decision_and_revision_require_nonempty_text(self) -> None:
+        app = self.app()
+        app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
+        app.selectbox(key="decision_status").set_value("edited")
+        app.text_area(key="decision_text").set_value("   ")
+        app.button(key="save_decision").click().run()
+        self.assertTrue(any("Informe o texto editado" in item.value for item in app.error))
+        app.text_area(key="decision_text").set_value("Ação editada inicial.")
+        app.button(key="save_decision").click().run()
+        app.selectbox(key="revision_status").set_value("edited")
+        app.text_area(key="revision_text").set_value("   ")
+        app.button(key="save_revision").click().run()
+        self.assertTrue(any("Informe o texto da revisão" in item.value for item in app.error))
+        app.text_area(key="revision_text").set_value("Ação revisada depois.")
+        app.button(key="save_revision").click().run()
+        with closing(sqlite3.connect(Path(self.directory.name) / "cockpit.sqlite3")) as connection:
+            rows = connection.execute("SELECT status, edited_text FROM decisions ORDER BY decided_at").fetchall()
+        self.assertEqual(rows, [("edited", "Ação editada inicial."), ("edited", "Ação revisada depois.")])
+
+    def test_no_and_unknown_execution_remain_distinct_after_reopen(self) -> None:
+        app = self.app()
+        app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
+        app.button(key="save_decision").click().run()
+        synthetic_start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None)
+        app.file_uploader[0].set_value(("synthetic-future.csv", later_upload(synthetic_start), "text/csv")).run()
+        for status, reason in (("no", "comparable_action_not_executed"), ("unknown", "comparable_execution_unknown")):
+            app.selectbox(key="execution_status").set_value(status)
+            app.button(key="save_outcome").click().run()
+            self.assertTrue(any(f"Observação registrada: observed — {reason}" in item.value for item in app.success))
+        reopened = self.app()
+        self.assertFalse(reopened.exception)
+        text = "\n".join(item.value for item in (*reopened.markdown, *reopened.caption))
+        for expected in ("comparable_action_not_executed", "comparable_execution_unknown", "Execução declarada: no", "Execução declarada: unknown"):
+            self.assertIn(expected, text)
+        self.assertEqual(text.count("Observação não causal"), 2)
+
     def test_partial_period_label_and_posterior_observation(self) -> None:
         app = self.app()
         app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
