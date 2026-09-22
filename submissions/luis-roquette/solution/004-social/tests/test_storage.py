@@ -217,19 +217,81 @@ class StorageTests(unittest.TestCase):
     def test_decision_execution_and_observation_chronology(self) -> None:
         record_import(self.conn, import_event("source-b"))
         cases = (
-            ("2026-09-21T20:05:00+00:00", "yes", "2025-01-07", "execution_before_decision"),
-            ("2026-09-21T20:05:00+00:00", "unknown", None, "observed_before_or_on_decision"),
-            ("2026-09-21T20:05:00+00:00", "no", None, "observed_before_or_on_decision"),
-            ("2025-01-08T00:00:00+00:00", "yes", "2025-01-08", "observed_before_or_on_decision"),
-            ("2025-01-07T20:05:00+00:00", "yes", "2025-01-08", "observed_before_execution"),
-            ("2025-01-07T23:30:00-03:00", "yes", "2025-01-07", "execution_before_decision"),
+            ("2026-09-21T20:05:00+00:00", "yes", "2025-01-07", "pending", "execution_before_decision"),
+            ("2026-09-21T20:05:00+00:00", "unknown", None, "pending", "observed_before_or_on_decision"),
+            ("2026-09-21T20:05:00+00:00", "no", None, "pending", "observed_before_or_on_decision"),
+            ("2025-01-08T00:00:00+00:00", "yes", "2025-01-08", "pending", "observed_before_or_on_decision"),
+            ("2025-01-07T20:05:00+00:00", "yes", "2025-01-08", "pending", "observed_before_execution"),
+            # With a naive source calendar, do not silently reinterpret this
+            # timestamp as UTC: its written civil date is 2025-01-07.
+            ("2025-01-07T23:30:00-03:00", "yes", "2025-01-07", "observed", "comparable_after_declared_execution"),
         )
-        for index, (decided_at, execution_status, execution_date, reason) in enumerate(cases):
+        for index, (decided_at, execution_status, execution_date, status, reason) in enumerate(cases):
             with self.subTest(reason=reason, decided_at=decided_at):
                 decision_id = record_decision(self.conn, decision_event(event_id=f"chronology-{index}", decided_at=decided_at))
                 record_outcome(self.conn, outcome_event(event_id=f"chronology-outcome-{index}", decision_id=decision_id, execution_status=execution_status, execution_date=execution_date))
                 outcome = next(item for item in list_decisions(self.conn) if item["decision_id"] == decision_id)["outcomes"][0]
-                self.assertEqual((outcome["status"], outcome["reason"]), ("pending", reason))
+                self.assertEqual((outcome["status"], outcome["reason"]), (status, reason))
+
+    def test_source_calendar_drives_offset_and_naive_chronology_after_reopen(self) -> None:
+        record_import(self.conn, import_event("source-b"))
+        cases = (
+            # Exact +14:00 reproduction: 23:00 UTC is already the next civil day.
+            ("plus-14", "2025-01-15T00:00:00+14:00", "2025-01-14T23:00:00+00:00",
+             "unknown", None, "2025-01-21", datetime(2025, 1, 22, 18, tzinfo=timezone.utc),
+             "pending", "observed_before_or_on_decision"),
+            # At -12:00 the decision still belongs to the previous source day;
+            # execution on that source day is not falsely classified as earlier.
+            ("minus-12", "2025-01-15T00:00:00-12:00", "2025-01-15T11:00:00+00:00",
+             "yes", "2025-01-14", "2025-01-21", datetime(2025, 1, 22, 18, tzinfo=timezone.utc),
+             "observed", "comparable_after_declared_execution"),
+            # A naive source keeps the wall-calendar date exactly as declared.
+            ("naive", "2025-01-15T00:00:00", "2025-01-14T23:30:00-12:00",
+             "unknown", None, "2025-01-21", datetime(2025, 1, 21, 23, 45, tzinfo=timezone.utc),
+             "observed", "comparable_execution_unknown"),
+            # Future guards use the same +14:00 source calendar.
+            ("plus-14-as-of", "2025-01-15T00:00:00+14:00", "2025-01-14T00:00:00+00:00",
+             "unknown", None, "2025-01-22", datetime(2025, 1, 21, 11, tzinfo=timezone.utc),
+             "observed", "comparable_execution_unknown"),
+            # Declared execution uses that same as-of day (local 22, UTC 21).
+            ("plus-14-execution-as-of", "2025-01-15T00:00:00+14:00", "2025-01-13T00:00:00+00:00",
+             "yes", "2025-01-22", "2025-01-21", datetime(2025, 1, 21, 11, tzinfo=timezone.utc),
+             "pending", "observed_before_execution"),
+        )
+        for name, target_start, decided_at, execution_status, execution_date, period_end, now, status, reason in cases:
+            with self.subTest(name=name):
+                controls = {"filters": {"platform": ["Instagram"]}, "strict_audience": False}
+                decision_id = record_decision(
+                    self.conn,
+                    decision_event(
+                        event_id=f"calendar-decision-{name}",
+                        decided_at=decided_at,
+                        scope={**controls, "target_start": target_start},
+                    ),
+                )
+                record_outcome(
+                    self.conn,
+                    outcome_event(
+                        event_id=f"calendar-outcome-{name}",
+                        decision_id=decision_id,
+                        execution_status=execution_status,
+                        execution_date=execution_date,
+                        scope={**controls, "target_start": target_start},
+                        observed={**outcome_event()["observed"], "period_start": "2025-01-15", "period_end": period_end},
+                        recorded_at=now.isoformat(),
+                    ),
+                    clock=lambda now=now: now,
+                )
+                self.conn.commit()
+                with tempfile.TemporaryDirectory() as tmp:
+                    path = Path(tmp) / "history.sqlite3"
+                    persisted = sqlite3.connect(path)
+                    self.conn.backup(persisted)
+                    persisted.close()
+                    reopened = sqlite3.connect(path)
+                    stored = next(item for item in list_decisions(reopened) if item["decision_id"] == decision_id)
+                    self.assertEqual((stored["outcomes"][0]["status"], stored["outcomes"][0]["reason"]), (status, reason))
+                    reopened.close()
 
     def test_future_dates_and_forged_recording_clock_remain_pending(self):
         decision_id = record_decision(self.conn, decision_event())

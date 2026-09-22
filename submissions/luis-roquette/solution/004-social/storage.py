@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, tzinfo
 from pathlib import Path
 from typing import Any
 from collections.abc import Callable
@@ -18,6 +18,22 @@ SCHEMA_VERSION = 1
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _source_timezone(scope: dict[str, object]) -> tzinfo | None:
+    """Return the source's declared offset, or keep its civil time naive."""
+    for key in ("target_start", "target_end_exclusive"):
+        value = scope.get(key)
+        if value:
+            return datetime.fromisoformat(str(value)).tzinfo
+    return None
+
+
+def _civil_date(value: datetime, source_timezone: tzinfo | None) -> date:
+    """Project an instant onto the source calendar without inventing an offset."""
+    if source_timezone is not None and value.tzinfo is not None:
+        value = value.astimezone(source_timezone)
+    return value.date()
 
 
 def connect(path: Path) -> sqlite3.Connection:
@@ -228,15 +244,16 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object], n
 
     execution_status = str(event["execution_status"])
     execution_date = event.get("execution_date")
+    source_timezone = _source_timezone(event_scope)
     recorded = datetime.fromisoformat(str(event["recorded_at"]))
-    recorded_date = recorded.astimezone(timezone.utc).date() if recorded.tzinfo else recorded.date()
-    as_of = min(now.astimezone(timezone.utc).date(), recorded_date)
+    recorded_date = _civil_date(recorded, source_timezone)
+    as_of = min(_civil_date(now, source_timezone), recorded_date)
     if execution_date and date.fromisoformat(str(execution_date)) > as_of:
         return "pending", "execution_in_future", comparison
     if date.fromisoformat(str(observed["period_end"])) > as_of:
         return "pending", "observation_in_future", comparison
     decided_at = datetime.fromisoformat(str(decision["decided_at"]))
-    decision_date = decided_at.astimezone(timezone.utc).date() if decided_at.tzinfo else decided_at.date()
+    decision_date = _civil_date(decided_at, source_timezone)
     observed_start = date.fromisoformat(str(observed["period_start"]))
     if execution_status == "yes" and not execution_date:
         return "pending", "execution_date_unknown", comparison
