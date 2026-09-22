@@ -484,6 +484,7 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **CSV canônico:** a CLI reproduziu as 52.214 linhas em 23,77 s, pico residente 519.471.104 bytes e zero swap. Os hashes foram `5e124331…` (CSV), `772b159b…` (HTML) e `2b2fb7d…` (Markdown); CSV e Markdown foram idênticos byte a byte aos publicados.
 - **A4 e exports:** Chrome imprimiu o resumo em uma página A4 (594,96 × 841,92 pt); causalidade, ausência de ROI e necessidade de custos reais permanecem visíveis. Os testes reconciliam IDs, ordem, componentes, referências e neutralização de fórmulas/controles.
 - **Navegador real:** upload do CSV de 23,3 MB mostrou hash `693a2df6e609…`, 52.214 linhas, cinco plataformas e, na janela recente, 468 posts, 4.724.954 views e 940.289 interações. A tela exibiu as três prioridades, impacto, força, atualidade, drill-down e downloads. A captura exata da aba validada foi persistida em `process-log/evidence/004/cockpit-proof.png` (1502×776; SHA-256 `a1945b57366d7fccef79675532240a04cbf5c6c489b50b879404da16e928f1d6`). A validação anterior de decisão, erro atômico e reinício permanece em I26.
+- **Atualização após I28:** o refresh de S4 validou 58/58 testes em 9,243 s, CLI canônica em 16,69 s, resumo em uma página A4 e artefatos analíticos idênticos. A prova visual passou a mostrar o histórico corrigido após reinício, com revisão vinculada, outcome `pending / execution_before_decision` e outcome `observed / comparable_after_declared_execution`: PNG 1502×817, SHA-256 `130408568727ed1aac8e21e2283f7c9f39a8caac017e13a43f80a69de8bbcf9c`.
 - **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
 
 ### Matriz de aceitação final
@@ -497,13 +498,13 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 | CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
 | CK-06 | pass | prioridade recomposta e ordem estável em `test_acceptance.py` |
 | CK-07 | pass | esforço, público, frequência, patrocínio, creators, interrupção e quick wins em `analysis.md` |
-| CK-08 | pass | decisões, revisões, idempotência e reinício em `test_storage.py`/`test_app.py` |
-| CK-09 | pass | guards temporais, execução humana e pendência em `test_storage.py` |
+| CK-08 | pass | decisões, revisões vinculadas, idempotência e reinício em `test_storage.py`/`test_app.py`; I28 |
+| CK-09 | pass | guards temporais, execução humana, outcome persistido e pendência em `test_storage.py`; I28 |
 | CK-10 | pass | HTML A4 de uma página, CSV reconciliado e downloads no navegador |
-| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I27 |
+| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I28 |
 | HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
 | HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
-| HR-03 | pass | I01–I27 preservam pesquisa, 24 ondas, decisões, erros e correções |
+| HR-03 | pass | I01–I30 preservam pesquisa, 24 ondas, decisões, erros e correções |
 | HR-04 | pass | setup, screenshot e auditoria Git final restritos à submissão |
 
 ### Rubricas finais
@@ -527,3 +528,17 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Navegador → novo feedback:** o seletor automatizado falhou antes do envio; o acesso nativo teve timeout. A inspeção revelou o nome acessível completo `upload Upload`, incluindo o ícone; corrigido o seletor, o envio ocorreu. Chrome mostrou taxa 8%, benchmark mediana/Q1/Q3 de 4%, delta 4 p.p., 30 posts/cinco creators nos dois períodos, contexto, suficiência, C=0,06 e referências. Ao trocar a fonte, os componentes de score conservavam valores do upload anterior porque a chave era o ranking: a chave passou a usar `evidence_id`, com regressão conferindo três zeros para a nova fonte insuficiente. Não houve mudança de ranking ou fórmula.
 - **Persistência real:** a decisão `5967b3e3-afa2-47fb-95d7-592aab6332cb` e a revisão `3f414a84-5a9f-4932-9e3a-cb93b008715a` foram criadas pela UI. Execução declarada em 14/01/2025 para a decisão de 22/09/2026 produziu `pending / execution_before_decision`. Uma fixture explicitamente sintética de 23–29/09/2026, com execução declarada em 22/09, produziu `observed / comparable_after_declared_execution`. Após parar o processo de `8517` e iniciar outro em `8518` com o mesmo SQLite, Chrome reabriu sem CSV e mostrou original, revisão vinculada e ambos outcomes, suas datas, motivo, medianas 8/9%, delta 1 p.p., 428,5714 views/dia em cada janela e rótulo não causal. Capturas da sessão confirmaram a apresentação; S4 deve renovar o arquivo visual publicado.
 - **Gate final e limites:** `PYTHONWARNINGS=error /tmp/ai-master-004-s4.u57Rt2/.venv/bin/python -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` aprovou **58/58 em 11,098 s**, incluindo dez AppTests, dez testes de storage e três de aceitação. `compileall -q` e `git diff --check` passaram. SQLite e fixtures ficaram em `/tmp`; dados de teste futuros não comprovam resultado real. Outcomes gravados por versões anteriores não são reclassificados retroativamente. HR-01 continua pendente; não houve API paga, push, PR ou deploy.
+
+## I29 — Redundância Necessária — 2026-09-22 07:05 BRT
+
+- **Decisão e autoria humana:** Luis instituiu a etapa **Redundância Necessária**. Depois do primeiro resultado, a construção deve ser reavaliada exaustivamente em loops sucessivos para buscar erros, falhas, lacunas, melhorias e otimizações que ainda possam ser executadas.
+- **Goal obrigatório:** somente considerar essa assimilação encerrada após **pelo menos duas passadas consecutivas sem erros, falhas, lacunas, melhorias ou otimizações executáveis**. Um gate verde isolado não encerra a busca.
+- **Fluxo:** cada descoberta retorna ao ciclo Planejamento → Revisão → Execução → Teste; após a correção, a contagem de passadas limpas reinicia. Achado não é apenas relatado: quando pertence ao escopo, é implementado e novamente validado.
+- **Jornada construtiva:** o arquiteto confronta o projeto com o que foi construído; o engenheiro reforça o ponto fraco; a evidência decide se uma passada foi realmente limpa. Esta é uma etapa posterior à primeira implementação e distinta da revisão P2 atual.
+
+## I30 — Lapidação e melhoria/otimização — 2026-09-22 07:05 BRT
+
+- **Decisão e autoria humana:** Luis instituiu uma segunda etapa, **Lapidação e melhoria/otimização**, executada depois da busca e correção de bugs. Seu objeto é o que já funciona, mas ainda pode ser elevado.
+- **Escopo de inspeção:** gargalos, erros residuais, bugs, refinamentos técnicos, layout, design, UI/UX, código e segurança. A etapa não autoriza complexidade especulativa: melhoria precisa ser relevante, demonstrável e compatível com o briefing.
+- **Goal obrigatório:** concluir somente após **pelo menos duas passadas consecutivas sem correções ou otimizações relevantes**. Toda descoberta aplicável entra em Feedback Looping, é implementada e retestada; uma alteração reinicia a contagem.
+- **Jornada construtiva:** o arquiteto verifica proporção, coerência e experiência; o engenheiro lapida a solução sem quebrar seus contratos; testes e evidências demonstram a elevação. Esta etapa vem depois da Redundância Necessária e não deve ser confundida com a revisão P2 em andamento.

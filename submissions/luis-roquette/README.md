@@ -30,7 +30,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 - Mediana ERv geral: 19,8992%; ERv ponderado: 19,9035%. As diferenças agregadas entre plataformas, formatos e categorias são pequenas e não justificam redistribuição isolada.
 - Patrocínio: 137 estratos elegíveis, 162 insuficientes e cobertura de 93,7909% dos posts, controlando plataforma, formato, categoria, faixa de creator e período.
 - Maior associação patrocinada observada: YouTube / mixed / beauty / 500.000+, +0,212889 p.p. de ERv; menor: TikTok / video / lifestyle / 10.000–49.999, −0,262464 p.p. Nenhuma é efeito causal ou ROI.
-- O cockpit mantém posts zero/taxas indefinidas, mostra amostra e força, chega às linhas de origem, registra aceitar/rejeitar/editar e preserva resultado pendente quando falta snapshot posterior comparável.
+- O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, registra aceitar/rejeitar/editar, vincula revisões e preserva outcomes após reinício; cronologia inválida permanece pendente.
 
 ![Cockpit com CSV real e prioridades](./process-log/evidence/004/cockpit-proof.png)
 
@@ -73,7 +73,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 
 ### Onde a IA errou e como corrigi
 
-A IA inicialmente confundiu seleções editoriais com a fila do motor, normalizou recomendações sobre candidatos elegíveis em vez de todos os grupos e deixou controles CSV escaparem da neutralização. Revisões e regressões devolveram cada erro à origem. A fila passou a ser única, recência/P95 foram corrigidos e todo controle inicial ou marcador de fórmula ganhou proteção. No gate final, o primeiro comando falhou porque o Python global não tinha Streamlit; a correção foi reproduzir tudo em ambiente virtual limpo, sem alterar o produto.
+A IA inicialmente confundiu seleções editoriais com a fila do motor, normalizou recomendações sobre candidatos elegíveis em vez de todos os grupos e deixou controles CSV escaparem da neutralização. Revisões e regressões devolveram cada erro à origem. Na revisão P2, também foram corrigidos benchmark omitido, cronologia futura inválida, revisão apenas na API e outcomes ocultos após reinício. No gate final, a reprodução ocorreu em ambiente virtual limpo, sem mascarar dependências.
 
 ### O que eu adicionei que a IA sozinha não faria
 

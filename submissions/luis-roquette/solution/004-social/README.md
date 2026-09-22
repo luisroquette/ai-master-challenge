@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-O gate limpo final aprovou 52/52 testes em 9,993 s. A CLI processou as 52.214 linhas em 23,77 s, com pico residente de 519.471.104 bytes e zero swap; os arquivos gerados foram idênticos aos artefatos publicados.
+Após a correção documentada em I28, o gate limpo aprovou 58/58 testes em 9,243 s (9,81 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 16,69 s, com pico residente de 557.023.232 bytes e zero swap; os arquivos gerados foram idênticos aos artefatos publicados.
 
 ## Executar o cockpit
 
@@ -54,7 +54,7 @@ Sem `SOCIAL_COCKPIT_DB_PATH`, o banco fica em `~/.local/share/ai-master-challeng
 4. Aceite, rejeite ou edite a recomendação; confirme a decisão no histórico.
 5. Reinicie a aplicação, confira a persistência e baixe HTML/CSV.
 
-O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda de estado e reinício. O cronômetro de um Gestor de Social Media real permanece como único gate humano pendente (HR-01); automação não o substitui.
+O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda de estado, revisão vinculada, guarda cronológica de outcomes e reinício com histórico completo. O cronômetro de um Gestor de Social Media real permanece como único gate humano pendente (HR-01); automação não o substitui.
 
 ## O que ler
 
