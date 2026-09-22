@@ -1179,6 +1179,22 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   corte foi feito porque os contratos existentes são necessários para os gates seguros.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
 
+## I75 — Lapidação R1: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação
+  reiniciado em `0/2`.
+- **Correções publicadas:** o SHA `c4ab1074a75555939f7412b7491ba41d58ebba6a`
+  incorpora as três correções de UI: preservação segura do rascunho por ticket na sessão,
+  localização/apresentação em PT-BR e hierarquia legível do scorecard. A validação focada
+  concluiu 44 testes; Ruff e `git diff --check` passaram.
+- **Melhoria visual opcional:** a nova screenshot da fila não foi executada por ordem do
+  owner de manter o bypass e não iniciar Codespace. A tentativa não iniciou ambiente nem
+  realizou mutação. Nenhuma captura ou alegação de evidência nova foi produzida.
+- **Evidência preservada:** a screenshot pública atual continua sendo apenas o Scorecard e
+  permanece corretamente rotulada como tal; ela não é apresentada como captura da fila.
+- **Próximo critério:** a streak permanece em `0/2`; são necessárias duas rodadas limpas
+  consecutivas para encerrar a Lapidação.
+
 ## I74 — Lapidação R1: checkpoint de UI, NOT CLEAN — 2026-09-22
 
 - **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação `0/2`. Este checkpoint corrige a UI, não encerra a rodada nem substitui nova inspeção visual. A captura atualizada continua pendente para o agente de evidence; nenhum screenshot foi produzido ou alterado aqui.
