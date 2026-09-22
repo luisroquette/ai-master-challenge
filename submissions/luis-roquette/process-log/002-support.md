@@ -1206,6 +1206,18 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   rodada; nenhuma alegação de evidência visual ou gate verde foi acrescentada.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Lapidação.
 
+## I77 — Lapidação R3: CLEAN — 2026-09-22
+
+- **Base auditada:** SHA `1a569740051dffcf498ef9ce6221c38621f65f38`.
+- **Correção do parecer:** a suposta duplicação em I73 era falso positivo; existe uma única
+  frase `Streak e encerramento`, quebrada visualmente em duas linhas. Nada foi removido.
+- **Resultado:** `CLEAN`; a regressão da UI e a verificação de consistência não encontraram
+  nova correção, melhoria ou otimização relevante.
+- **Boundary preservado:** nenhum preflight, navegador ou `make reproduce` foi executado;
+  nenhuma alegação de gate remoto, prova visual nova ou reprodução foi acrescentada.
+- **Streak e encerramento:** `2/2` rodadas limpas consecutivas. A etapa de Lapidação está
+  encerrada.
+
 ## I74 — Lapidação R1: checkpoint de UI, NOT CLEAN — 2026-09-22
 
 - **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação `0/2`. Este checkpoint corrige a UI, não encerra a rodada nem substitui nova inspeção visual. A captura atualizada continua pendente para o agente de evidence; nenhum screenshot foi produzido ou alterado aqui.
