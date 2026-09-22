@@ -2,7 +2,9 @@
 
 import csv
 import hashlib
+import importlib.metadata
 import json
+import platform
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
@@ -383,6 +385,22 @@ class FixtureModel:
                           "fixture", False)
 
 
+def cli_manifest_metadata(manifest):
+    """Protocol fixtures still obey the shared pre-deserialization boundary."""
+    from support_copilot.ui import current_environment
+
+    environment = current_environment()
+    manifest.update(schema_version=1, code_revision="fixture+code." + environment["code"],
+                    configuration_sha256=environment["configuration_sha256"],
+                    lock_sha256=environment["lock_sha256"],
+                    runtime={"python": platform.python_version(), "dependencies": {
+                        name: importlib.metadata.version(name) for name in (
+                            "scikit-learn", "joblib", "pandas", "numpy", "scipy")}})
+    for entry in manifest["artifacts"].values():
+        entry.update(schema_version=1, dependencies=[],
+                     type="domain-model" if entry["path"].endswith(".joblib") else "json")
+
+
 def test_cli_calibration_template_lock_then_test_without_reading_test_early(dataset, tmp_path):
     manifest = {"artifacts": {}, "splits": {"customer": dataset["manifest"]},
                 "sources": {"customer": {"sha256": "a" * 64}},
@@ -403,6 +421,7 @@ def test_cli_calibration_template_lock_then_test_without_reading_test_early(data
             "status": "ready", "path": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
+    cli_manifest_metadata(manifest)
     (tmp_path / "manifest.json").write_text(json.dumps(manifest))
     common = ["--artifacts", str(tmp_path)]
     assert main(["prepare-review", *common, "--split", "test"]) == 1
@@ -413,7 +432,10 @@ def test_cli_calibration_template_lock_then_test_without_reading_test_early(data
     assert main(["prepare-review", *common, "--split", "test"]) == 0
     final = rate(tmp_path, "test")
     assert main(["lock-review", *common, "--split", "test", "--rubric", str(final)]) == 0
-    assert load_retrieval_policy(fit(dataset), tmp_path).drafts_enabled
+    retriever = fit_retriever(dataset["train"], split_manifest=dataset["manifest"],
+                              source_sha256="a" * 64,
+                              configuration_sha256=manifest["configuration_sha256"])
+    assert load_retrieval_policy(retriever, tmp_path).drafts_enabled
 
 
 def test_cli_unsupported_without_model_binary_is_explicitly_insufficient(dataset, tmp_path, capsys):
@@ -433,6 +455,7 @@ def test_cli_unsupported_without_model_binary_is_explicitly_insufficient(dataset
         "status": "ready", "path": path.name,
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
     }
+    cli_manifest_metadata(manifest)
     (tmp_path / "manifest.json").write_text(json.dumps(manifest))
     assert main(["prepare-review", "--artifacts", str(tmp_path)]) == 0
     result = json.loads(capsys.readouterr().out)

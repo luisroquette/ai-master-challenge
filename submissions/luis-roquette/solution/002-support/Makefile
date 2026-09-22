@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-PYTHON ?= python3
+PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 VENV := .venv
 BIN := $(VENV)/bin
 CUSTOMER_CSV := data/raw/customer_support_tickets.csv
@@ -21,8 +21,7 @@ doctor:
 	test -f requirements.lock || { echo "ERRO: requirements.lock ausente; execute make bootstrap-lock no ambiente Python 3.12."; status=1; }; \
 	mkdir -p data/runtime 2>/dev/null && test -w data/runtime || { echo "ERRO: data/runtime não é gravável; corrija as permissões."; status=1; }; \
 	if test ! -s "$(CUSTOMER_CSV)" || test ! -s "$(IT_CSV)"; then \
-		curl -fsSL --max-time 30 --range 0-0 -o /dev/null "$(CUSTOMER_URL)" || { echo "ERRO: fonte Customer indisponível; baixe manualmente para $(CUSTOMER_CSV)."; status=1; }; \
-		curl -fsSL --max-time 30 --range 0-0 -o /dev/null "$(IT_URL)" || { echo "ERRO: fonte IT indisponível; baixe manualmente para $(IT_CSV)."; status=1; }; \
+		echo "ERRO: fontes ausentes. Execute make data ou baixe $(CUSTOMER_URL) para $(CUSTOMER_CSV) e $(IT_URL) para $(IT_CSV)."; status=1; \
 	else \
 		echo "OK: fontes locais preparadas; conectividade externa não é necessária."; \
 	fi; \
@@ -31,6 +30,7 @@ doctor:
 	else \
 		exit "$$status"; \
 	fi
+	@"$(BIN)/python" -c 'import importlib.metadata as m; from pathlib import Path; rows=[line.split("==") for line in Path("requirements.lock").read_text().splitlines() if "==" in line]; assert all(m.version(name)==version for name,version in rows), "Dependências divergentes; execute make setup"' || { echo "ERRO: ambiente/lock incompatível; execute make setup."; exit 2; }
 
 bootstrap-lock:
 	@test ! -e requirements.lock || { echo "ERRO: requirements.lock já existe; não sobrescrito."; exit 2; }
@@ -73,6 +73,7 @@ reproduce:
 	"$(BIN)/python" scripts/reproduce.py --customer "$(CUSTOMER_CSV)" --it "$(IT_CSV)" --output artifacts
 
 app:
+	@test -x "$(BIN)/streamlit" || { echo "ERRO: ambiente ausente; execute make setup."; exit 2; }
 	"$(BIN)/streamlit" run app.py
 
-demo: doctor setup app
+demo: doctor app

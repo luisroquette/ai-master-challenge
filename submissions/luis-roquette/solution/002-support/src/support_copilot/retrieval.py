@@ -343,7 +343,14 @@ def verify_test_gate(retriever: TicketRetriever, artifacts: Path, model_locks: d
 
 def prepare_review(retriever: TicketRetriever, unseen: pd.DataFrame,
                    signals: dict[str, TicketSignals], *, artifacts: Path,
-                   split: str = "calibration", model_locks: dict | None = None) -> dict:
+                   split: str = "calibration", model_locks: dict | None = None,
+                   created_at: str | None = None) -> dict:
+    # Pipeline supplies the frozen evaluation-start timestamp from configuration.json.
+    # It is a real configuration input, not an ignored or fabricated wall-clock receipt.
+    if created_at is not None:
+        stamp = datetime.fromisoformat(created_at)
+        if stamp.tzinfo is None or stamp > datetime.now(UTC):
+            raise ValueError("review_invalid_creation_timestamp")
     packet_path, template_path = _paths(artifacts, split)
     test_gate = None
     if split == "test":
@@ -392,10 +399,11 @@ def prepare_review(retriever: TicketRetriever, unseen: pd.DataFrame,
     packet["packet_id"] = content_hash(packet)
     if packet_path.exists():
         old = _read_sealed(packet_path)
-        if old.get("packet_id") != packet["packet_id"]:
+        if (old.get("packet_id") != packet["packet_id"]
+                or created_at is not None and old.get("created_at") != created_at):
             raise ValueError("review_packet_already_frozen")
         return old
-    packet["created_at"] = datetime.now(UTC).isoformat()
+    packet["created_at"] = created_at or datetime.now(UTC).isoformat()
     _freeze_json(packet, packet_path)
     # Exclusive creation preserves human edits; a missing template is recoverable manually.
     with template_path.open("x", encoding="utf-8", newline="") as stream:
@@ -589,17 +597,9 @@ def finalize_review(retriever: TicketRetriever, unseen: pd.DataFrame, rubric_pat
 
 def _artifact(root: Path, manifest: dict, key: str):
     """Only the trusted local pipeline can supply manifest-registered binary artifacts."""
-    import joblib
+    from support_copilot.ui import read_artifact
 
-    entry = manifest["artifacts"].get(key, {})
-    if entry.get("status") != "ready" or not entry.get("path"):
-        raise ValueError("review_artifact_unavailable:make reproduce")
-    path = (root / entry["path"]).resolve()
-    if not path.is_relative_to(root.resolve()):
-        raise ValueError("artifact_path_outside_root")
-    if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
-        raise ValueError("artifact_hash_mismatch:make reproduce")
-    return joblib.load(path) if path.suffix == ".joblib" else json.loads(path.read_text())
+    return read_artifact(root, manifest, key)
 
 
 def _model_state(root: Path, manifest: dict, domain: str):

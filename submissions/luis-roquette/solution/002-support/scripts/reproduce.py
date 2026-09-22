@@ -1,4 +1,4 @@
-"""Build sanitized development artifacts; never consume final-test features."""
+"""Build development first; only explicit, frozen review decisions release test."""
 
 import argparse
 import hashlib
@@ -6,12 +6,14 @@ import importlib.metadata
 import json
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
+import joblib
 import pandas as pd
 
 from support_copilot.analytics import (
@@ -33,6 +35,15 @@ from support_copilot.data import (
     make_split,
     write_manifest,
 )
+from support_copilot.decision import derive_signals
+from support_copilot.modeling import Prediction, evaluate_frozen_test, train_domain_model
+from support_copilot.retrieval import (
+    fit_retriever,
+    load_retrieval_policy,
+    prepare_review,
+    verify_test_gate,
+)
+from support_copilot.ui import assess_ticket, current_environment, logical_payload
 
 
 def _atomic_csv(frame: pd.DataFrame, destination: Path) -> None:
@@ -59,32 +70,33 @@ def _records(frame: pd.DataFrame) -> list[dict]:
 
 
 def _register_artifact(manifest: dict, output: Path, key: str, relative: str,
-                       artifact_type: str, logical_value: object) -> None:
+                       artifact_type: str, logical_value: object, *, domain="customer",
+                       dependencies=None) -> None:
     destination = output / relative
     manifest["artifacts"][key] = {
         "path": relative, "type": artifact_type, "schema_version": 1,
         "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
-        "logical_sha256": content_hash(logical_value), "domain": "customer",
-        "dependencies": ["data.customer.train", "data.customer.calibration"],
+        "logical_sha256": content_hash(logical_value), "domain": domain,
+        "dependencies": dependencies if dependencies is not None else
+        ["data.customer.train", "data.customer.calibration"],
         "status": "ready", "reason": None,
     }
 
 
-def reproduce(customer: Path, it: Path, output: Path) -> dict:
-    configuration = {"seed": 42, "sanitizer": SANITIZER_VERSION, "grouping": GROUPING_VERSION,
-                     "mode": "development_only"}
+def _build(customer: Path, it: Path, output: Path) -> dict:
     solution = Path(__file__).resolve().parents[1]
+    configuration = json.loads((solution / "configuration.json").read_text())
+    stamp = datetime.fromisoformat(configuration["evaluation_created_at"])
+    if (configuration.get("schema_version") != 1 or configuration.get("seed") != 42
+            or stamp.tzinfo is None or stamp > datetime.now(UTC)):
+        raise ValueError("invalid_evaluation_configuration")
+    configuration.update(sanitizer=SANITIZER_VERSION, grouping=GROUPING_VERSION,
+                         mode="development_then_locked_test", protocol=1)
     revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=solution, text=True
     ).strip()
     # Include uncommitted/untracked implementation bytes, not raw/runtime/artifacts.
-    code_files = sorted([*solution.joinpath("src").rglob("*.py"),
-                         *solution.joinpath("scripts").rglob("*.py"),
-                         solution / "pyproject.toml", solution / "Makefile"])
-    fingerprint = content_hash({
-        str(p.relative_to(solution)): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in code_files
-    })
+    fingerprint = current_environment()["code"]
     manifest = {
         "schema_version": 1, "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "code_revision": f"{revision}+code.{fingerprint}",
@@ -92,7 +104,8 @@ def reproduce(customer: Path, it: Path, output: Path) -> dict:
         "lock_sha256": hashlib.sha256((solution / "requirements.lock").read_bytes()).hexdigest(),
         "runtime": {"python": platform.python_version(), "dependencies": {
             name: importlib.metadata.version(name)
-            for name in ("pandas", "scikit-learn", "streamlit", "joblib", "pytest", "ruff")
+            for name in (line.split("==")[0] for line in
+                         (solution / "requirements.lock").read_text().splitlines() if "==" in line)
         }},
         "sources": {}, "splits": {}, "models": {},
         "retrieval": {
@@ -103,6 +116,7 @@ def reproduce(customer: Path, it: Path, output: Path) -> dict:
         },
         "artifacts": {},
     }
+    frames, splits, results = {}, {}, {}
     customer_frame = None
     customer_split = None
     for domain, path, loader, taxonomy in (
@@ -111,6 +125,7 @@ def reproduce(customer: Path, it: Path, output: Path) -> dict:
     ):
         frame = loader(path)
         split = make_split(frame, "target")
+        frames[domain], splits[domain] = frame, split
         if domain == "customer":
             customer_frame, customer_split = frame, split
         manifest["sources"][domain] = frame.attrs["source"]
@@ -199,7 +214,165 @@ def reproduce(customer: Path, it: Path, output: Path) -> dict:
     for key, (relative, table) in tables.items():
         _atomic_csv(table, output / relative)
         _register_artifact(manifest, output, key, relative, "csv-report", _records(table))
+
+    def save(key, relative, payload, artifact_type="json", domain=None, dependencies=()):
+        destination = output / relative
+        if artifact_type in {"domain-model", "retriever"}:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            joblib.dump(payload, destination)
+        else:
+            atomic_json(payload, destination)
+        _register_artifact(manifest, output, key, relative, artifact_type,
+                           logical_payload(payload), domain=domain,
+                           dependencies=list(dependencies))
+
+    for domain, split in splits.items():
+        result = train_domain_model(domain, split)
+        results[domain] = result
+        manifest["models"][domain] = {
+            "status": result.status, "reason": ",".join(result.reason_codes),
+            "candidate": result.selection.candidate, "features": ["text"],
+            "taxonomy": list(CUSTOMER_TAXONOMY if domain == "customer" else IT_TAXONOMY),
+            "cv": asdict(result.selection), "calibration": result.development,
+            "model_version": result.policy.model_version,
+            "automation_enabled": result.policy.automation_enabled,
+            "threshold": result.policy.threshold,
+            "configuration_lock_sha256": result.configuration_sha256,
+        }
+        save(f"policies.{domain}", f"models/{domain}-policy.json", asdict(result.policy),
+             domain=domain, dependencies=(f"sources.{domain}", f"splits.{domain}"))
+        if result.model is not None:
+            save(f"models.{domain}", f"models/{domain}.joblib", result, "domain-model",
+                 domain, (f"policies.{domain}", f"data.{domain}.train",
+                          f"data.{domain}.calibration"))
+        else:
+            manifest["artifacts"][f"models.{domain}"]["reason"] = result.status
+        predictions = [asdict(result.model.predict_one(row.text)) if result.model else
+                       asdict(Prediction(domain, "unsupported", reason_codes=result.reason_codes))
+                       for row in split.calibration.itertuples()]
+        save(f"predictions.{domain}.development", f"models/{domain}-development.json",
+             {"ids": split.calibration.ticket_id.tolist(), "predictions": predictions},
+             domain=domain, dependencies=(f"policies.{domain}",))
+    save("risk_policy", "risk-policy.json",
+         {domain: asdict(result.policy) for domain, result in results.items()},
+         dependencies=("policies.customer", "policies.it"))
+
+    retriever = fit_retriever(
+        customer_split.train, split_manifest=customer_split.manifest,
+        source_sha256=manifest["sources"]["customer"]["sha256"],
+        configuration_sha256=manifest["configuration_sha256"],
+    )
+    save("retrieval.customer", "retrieval/customer.joblib", retriever, "retriever", "customer",
+         ("data.customer.train", "splits.customer"))
+
+    def signals_for(frame):
+        result = results["customer"]
+        return {row["ticket_id"]: derive_signals(
+            row["text"], domain="customer", ticket_id=row["ticket_id"],
+            priority=row["Ticket Priority"], prediction=result.model.predict_one(row["text"])
+            if result.model else Prediction("customer", "unsupported",
+                                            reason_codes=result.reason_codes),
+            policy=result.policy, artifact_valid=True, privacy_passed=True,
+        ) for row in frame.to_dict("records")}
+
+    packet = prepare_review(retriever, customer_split.calibration,
+                            signals_for(customer_split.calibration), artifacts=output,
+                            created_at=configuration["evaluation_created_at"])
+    retrieval_policy = None
+    model_locks = {domain: result.policy for domain, result in results.items()}
+    if (output / "review/retrieval-policy-lock.json").exists():
+        retrieval_policy = load_retrieval_policy(retriever, output)
+        verify_test_gate(retriever, output, model_locks)
+    elif (output / "review/retrieval-test-opened.json").exists():
+        raise ValueError("test_opened_lock_missing")
+
+    metrics = {"status": "sealed", "domains": {
+        domain: {"status": "sealed", "reason": "retrieval_review_decision_pending"}
+        for domain in results}}
+    if retrieval_policy is not None:
+        metrics["status"] = "released_after_locks"
+        for domain, split in splits.items():
+            # This is the only final payload materialization, AFTER verify_test_gate.
+            test = frames[domain].set_index("ticket_id").loc[split.test.ticket_id].reset_index()
+            test["text_group_id"] = split.test.text_group_id.to_numpy()
+            save(f"data.{domain}.test", f"data/{domain}-test.json", test.to_dict("records"),
+                 "sanitized-frame", domain, (f"sources.{domain}", f"splits.{domain}"))
+            metrics["domains"][domain] = asdict(evaluate_frozen_test(
+                results[domain], test, results[domain].policy))
+            if domain == "customer":
+                prepare_review(retriever, test, signals_for(test), artifacts=output,
+                               split="test", model_locks=model_locks,
+                               created_at=configuration["evaluation_created_at"])
+                queue = [assess_ticket(row, results[domain].model, results[domain].policy,
+                                       retriever, retrieval_policy) for row in
+                         test.to_dict("records")]
+                queue.sort(key=lambda row: (*[-v for v in row["priority_score"]],
+                                           row["ticket_id"]))
+                save("queue.customer", "queue/customer-test.json", queue, domain="customer",
+                     dependencies=("data.customer.test", "policies.customer",
+                                   "retrieval.customer", "retrieval.policy"))
+                _atomic_csv(pd.DataFrame([{"ticket_id": row["ticket_id"],
+                                          "text": row["text"], "priority": row["priority"],
+                                          "gate_action": row["route"]["action"]}
+                                         for row in queue], columns=["ticket_id", "text",
+                                         "priority", "gate_action"]),
+                            output / "queue/customer-test.csv")
+        save("retrieval.policy", "retrieval/policy.json", asdict(retrieval_policy),
+             dependencies=("retrieval.customer",))
+    else:
+        manifest["artifacts"]["queue.customer"]["reason"] = "test_sealed_review_pending"
+        manifest["artifacts"]["retrieval.policy"] = {
+            "path": None, "type": "json", "schema_version": 1, "sha256": None,
+            "logical_sha256": None, "domain": "customer", "dependencies": [],
+            "status": "unavailable", "reason": packet["status"],
+        }
+    save("models.metrics", "models/metrics.json", metrics)
+    save("retrieval.metrics", "retrieval/metrics.json", {
+        "status": packet["status"] if retrieval_policy is None else retrieval_policy.status,
+        "eligible": packet["eligible"], "reviewed": 0,
+        "reason": "human_evaluation_not_completed", "complete": False,
+    })
+    manifest["retrieval"] = {
+        "status": packet["status"] if retrieval_policy is None else retrieval_policy.status,
+        "reason": "human_evaluation_pending", "reference_split": customer_split.split_version,
+        "index_version": retriever.index_version,
+        "policy_version": retrieval_policy.policy_version if retrieval_policy else None,
+        "packet_ids": [packet["packet_id"]], "rubric_sha256": {},
+        "lock_sha256": hashlib.sha256((output / "review/retrieval-policy-lock.json").read_bytes())
+        .hexdigest() if retrieval_policy else None,
+        "threshold": retrieval_policy.threshold if retrieval_policy else None,
+        "eligible_queries": packet["eligible"], "reviewed_queries": 0,
+    }
+    for path in sorted((output / "review").glob("*")):
+        if path.suffix == ".json":
+            value, kind = json.loads(path.read_text()), "json"
+        else:
+            value, kind = _records(pd.read_csv(path, keep_default_na=False)), "review-template"
+        _register_artifact(manifest, output, "review." + path.stem,
+                           str(path.relative_to(output)), kind, value, dependencies=[])
     write_manifest(manifest, output / "manifest.json")
+    return manifest
+
+
+def reproduce(customer: Path, it: Path, output: Path) -> dict:
+    """Stage complete files; publish manifest last, never touch runtime decisions."""
+    output = output.absolute()
+    if output.is_symlink() or any(path.is_symlink() for path in output.parents):
+        raise ValueError("artifact_root_symlink")
+    output.mkdir(parents=True, exist_ok=True)
+    if any(path.is_symlink() for path in output.rglob("*")):
+        raise ValueError("artifact_symlink_rejected")
+    with tempfile.TemporaryDirectory(prefix=".reproduce-", dir=output.parent) as directory:
+        staging = Path(directory)
+        if (output / "review").exists():
+            shutil.copytree(output / "review", staging / "review", symlinks=False)
+        manifest = _build(customer, it, staging)
+        for path in sorted(staging.rglob("*")):
+            if path.is_file() and path.name != "manifest.json":
+                target = output / path.relative_to(staging)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(path, target)
+        os.replace(staging / "manifest.json", output / "manifest.json")
     return manifest
 
 
