@@ -927,7 +927,7 @@ git commit -m "feat(004): add sponsorship break-even scenario"
 - Produces: `executive_summary(result, decisions, financial_scenario=None) -> str`; `analysis_report` continua canônico e não recebe cenário manual.
 - Answer fields: `question`, `verdict`, `kpi`, `comparison`, `sample`, `action`, `strength`, `coverage`, `stability`, `evidence_id`, `change_trigger`.
 
-- [ ] **Step 1: Escrever testes vermelhos para as respostas e quatro semanas**
+- [x] **Step 1: Escrever testes vermelhos para as respostas e quatro semanas**
 
 Em `test_analysis.py`, criar `ExecutiveAnswerTests` e dois helpers locais: `result_with_stable_driver()` analisa `driver_rows([1.0, 1.2, 0.8])`; `result_without_stable_driver()` analisa `driver_rows([1.0, -1.0, 1.0, -1.0])`. Ambos usam `default_scope_all_history` e `source_hash="hash"`.
 
@@ -956,13 +956,13 @@ def test_no_stable_driver_yields_explicit_collection_strategy(self):
     self.assertIn("mudaria", answers[0]["change_trigger"].lower())
 ```
 
-- [ ] **Step 2: Confirmar o vermelho**
+- [x] **Step 2: Confirmar o vermelho**
 
 Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_analysis.ExecutiveAnswerTests`
 
 Expected: FAIL porque os campos novos e `content_strategy_30d` ainda não existem.
 
-- [ ] **Step 3: Implementar o programa relativo de quatro semanas**
+- [x] **Step 3: Implementar o programa relativo de quatro semanas**
 
 Retornar esta estrutura mínima:
 
@@ -1000,17 +1000,17 @@ context = dict(driver["context"]) if driver else {}
 
 Semana 4 só permite propor ampliação como novo teste se `C>=0,70`, efeito acima da materialidade, duas janelas concordantes e guards de views/interações não negativos. Caso contrário, manter/revisar/coletar. Usar cadência observada apenas quando seu status for `test`; `collect` não recebe número inventado.
 
-- [ ] **Step 4: Reescrever as três respostas a partir dos novos contratos**
+- [x] **Step 4: Reescrever as três respostas a partir dos novos contratos**
 
 Engajamento usa `engagement_drivers`, não a maior marginal de formato, e declara se views/interações estão alinhadas ou em trade-off. Patrocínio nomeia o melhor e o pior contexto comparável, com seus deltas, amostras e força; continua “não escalar” enquanto a cobertura/força forem insuficientes e, com cenário manual válido, acrescenta o ponto de equilíbrio sem mudar a classificação observacional. Estratégia resume as quatro semanas, incluindo janela e cadência. Cada resposta mostra força heurística, cobertura, estabilidade temporal, `evidence_id` e condição mensurável que mudaria o veredicto. Para patrocínio, agrupar os estratos por `platform + content_type + content_category + follower_band`, excluir `period_month` da chave e calcular, dentro de cada contexto, a mediana dos deltas e a proporção de meses com o mesmo sinal; somente contextos com pelo menos três meses elegíveis entram como estáveis. Melhor/pior contexto e `evidence_id` derivam desses agregados, sem misturar composição entre plataformas. Para estratégia, a estabilidade herda o driver que fundamenta o plano. Ausência de base produz “não mensurável”, nunca zero inventado.
 
-- [ ] **Step 5: Atualizar HTML e Markdown sem recalcular análise**
+- [x] **Step 5: Atualizar HTML e Markdown sem recalcular análise**
 
 `executive_summary` e `analysis_report` iteram os onze campos de `executive_answers`; HTML aplica `html.escape` em todos. Inserir a estratégia de quatro semanas antes da fila legada. O relatório vazio mantém três abstenções completas.
 
 Ampliar `_iter_export_rows` com registros `record_type="evidence"`: um por contexto de `engagement_drivers` (`metric_name="driver_context"`) e um por semana (`metric_name="strategy_week"`). Cada registro inclui `evidence_id`, método, fonte, escopo e payload JSON determinístico; nenhum campo do cenário manual entra no CSV.
 
-- [ ] **Step 6: Rodar regressões e commit**
+- [x] **Step 6: Rodar regressões e commit**
 
 ```bash
 uv run --with-requirements requirements.txt python -m unittest \

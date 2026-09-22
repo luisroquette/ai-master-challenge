@@ -12,7 +12,8 @@ from contextlib import closing
 
 from analysis import METHOD_VERSION, executive_summary, export_evidence, analysis_report, analyze, load_csv
 from tests.helpers import (aggregate_effect_rows, csv_bytes, default_scope,
-                           frame_from_rows, make_post, sponsorship_frequency_rows)
+                           default_scope_all_history, driver_rows, frame_from_rows,
+                           make_post, sponsorship_frequency_rows)
 from storage import connect, list_decisions, record_decision, record_import, record_outcome
 from tests.test_storage import decision_event, import_event, outcome_event
 
@@ -78,6 +79,18 @@ def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
 
 
 class ExportTests(unittest.TestCase):
+    def test_driver_and_strategy_are_exported_as_deterministic_evidence(self):
+        rows = driver_rows([1.0, 1.2, 0.8])
+        result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+        first = parse_export(export_evidence(result, []))
+        second = parse_export(export_evidence(result, []))
+        self.assertEqual(first, second)
+        metrics = [row["metric_name"] for row in first if row["record_type"] == "evidence"]
+        self.assertIn("driver_context", metrics)
+        self.assertEqual(metrics.count("strategy_week"), 4)
+        driver = next(row for row in first if row["metric_name"] == "driver_context")
+        self.assertEqual(driver["unit"], "percentage_points")
+
     def test_reopened_history_retains_abc_provenance_chronology_and_revision(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "history.sqlite3"

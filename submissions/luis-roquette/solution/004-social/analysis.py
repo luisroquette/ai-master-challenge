@@ -1732,6 +1732,23 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
     if result.get("sponsorship", {}).get("evidence_id"):
         evidence.append(result["sponsorship"])
     evidence.extend(result.get("sponsorship", {}).get("strata", []))
+    for driver in result.get("engagement_drivers", {}).get("contexts", []):
+        evidence.append({
+            **driver,
+            "export_metric_name": "driver_context",
+            "metric_value": driver.get("median_delta_erv_pp"),
+            "comparator_source_row_ids": driver.get("peer_source_row_ids", []),
+            "comparator": driver.get("peer", {}),
+        })
+    strategy = content_strategy_30d(result)
+    for week in strategy["weeks"]:
+        evidence.append({
+            **week,
+            "export_metric_name": "strategy_week",
+            "metric_value": week["week"],
+            "context": {**strategy["context"], "window": week["window"], "phase": week["phase"]},
+            "source_row_ids": [],
+        })
     evidence.extend(result.get("pending", []))
     for overview in result.get("audience", []):
         evidence.append(overview)
@@ -1743,7 +1760,7 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
         if not evidence_id or evidence_id in emitted:
             continue
         emitted.add(evidence_id)
-        metric_name = "metric_value" if item.get("metric_value") is not None else "median_erv" if "median_erv" in item else "delta_erv_pp" if item.get("delta_erv_pp") is not None else "coverage" if item.get("coverage") is not None else "posts"
+        metric_name = str(item.get("export_metric_name") or ("metric_value" if item.get("metric_value") is not None else "median_erv" if "median_erv" in item else "delta_erv_pp" if item.get("delta_erv_pp") is not None else "coverage" if item.get("coverage") is not None else "posts"))
         metric_value = item.get(metric_name, item.get("metric_value", item.get("posts", "")))
         text = item.get("value", item.get("action", item.get("reason", item.get("claim", item.get("direction", item.get("dimension", "evidence"))))))
         context = dict(item.get("context") or {"dimension": item.get("dimension"), "value": item.get("value")})
@@ -1757,10 +1774,14 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
             formula = "posts in eligible within-stratum label pairs / scoped posts; each label >=30 defined rates and >=5 creators"
         elif evidence_id.startswith("audience-"):
             formula = "median(target label ERv) - median(comparator label ERv); matched monthly core and sponsorship"
+        elif metric_name == "driver_context":
+            formula = "median(monthly target ERv - same-platform-and-follower-band peer ERv); organic posts only"
+        elif metric_name == "strategy_week":
+            formula = "deterministic 30-day operating sequence derived from the selected driver and decision gates"
         statistics = {key: value for key, value in item.items() if key not in (
             "source_row_ids", "source_row_id", "current_source_row_ids", "previous_source_row_ids",
-            "target_source_row_ids", "comparator_source_row_ids", "strata", "uncovered_strata", "comparisons", "benchmark")}
-        yield from analytical_row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name == "delta_erv_pp" else "percent" if "erv" in metric_name else "count", context=context, statistics=statistics, formula=formula)
+            "target_source_row_ids", "peer_source_row_ids", "comparator_source_row_ids", "strata", "uncovered_strata", "comparisons", "benchmark")}
+        yield from analytical_row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name in ("delta_erv_pp", "driver_context") else "percent" if "erv" in metric_name else "count", context=context, statistics=statistics, formula=formula)
         roles = {"target": item.get("source_row_ids", [])}
         if "benchmark" in item:
             roles = {"target": [item["source_row_id"]], "comparator": item["benchmark"]["source_row_ids"]}
@@ -1973,135 +1994,230 @@ def _decision_lines(result: dict[str, object], decisions: list[dict[str, object]
     return lines or ["Nenhuma decisão registrada nesta fonte."]
 
 
-def executive_answers(result: dict[str, object]) -> list[dict[str, str]]:
-    """Answer the Head of Marketing's three questions from one evidence source."""
+def _executive_context(context: dict[str, object]) -> str:
+    labels = {
+        "text": "texto", "video": "vídeo", "image": "imagem", "mixed": "misto",
+        "lifestyle": "estilo de vida",
+    }
+    values = [labels.get(str(context[key]).lower(), str(context[key])).replace(",", ".") for key in GROUP_KEYS if context.get(key) is not None]
+    return _short(" / ".join(values), 140)
+
+
+def content_strategy_30d(result: dict[str, object]) -> dict[str, object]:
+    drivers = result.get("engagement_drivers", {})
+    driver = drivers.get("leader")
+    collection = drivers.get("runner_up") or next(iter(drivers.get("contexts", [])), None)
+    selected = driver or collection
+    context = dict(selected.get("context", {})) if selected else {}
+    recommendation = next(
+        (
+            item for item in result.get("all_recommendations", result.get("recommendations", []))
+            if all(item.get("context", {}).get(key) == context.get(key) for key in GROUP_KEYS)
+        ),
+        None,
+    )
+    frequency = recommendation.get("frequency_hypothesis", {}) if recommendation else {}
+    if frequency.get("status") == "test" and frequency.get("value") is not None:
+        tested_cadence = f"testar {float(frequency['value']):g} posts por creator/semana ISO completa"
+    else:
+        tested_cadence = "coletar cadência comparável sem inventar quantidade"
+    strength = float(selected.get("strength", 0)) if selected else 0.0
+    scale_gate = bool(
+        driver
+        and strength >= 0.70
+        and float(driver.get("median_delta_erv_pp", 0)) >= float(drivers.get("materiality_threshold_pp", 0.10))
+        and int(driver.get("eligible_months", 0)) >= 2
+        and driver.get("volume_guard", {}).get("status") == "aligned"
+    )
+    strategy_id = _stable_id(
+        "strategy",
+        str(result.get("source", {}).get("source_hash", "")),
+        {"method": METHOD_VERSION, "context": context, "driver": selected.get("evidence_id") if selected else None},
+    )
+    week_specs = (
+        (1, "D1–D7", "baseline", "Congelar o contexto e registrar o baseline orgânico comparável",
+         "ERv mediano, visualizações e interações por post", "manter o mix corrente fora do teste",
+         "30 taxas definidas e cinco creators em alvo e comparador"),
+        (2, "D8–D14", "test", "Testar o contexto vencedor sem alterar o mix fora do experimento",
+         "Delta de ERv contra pares da mesma plataforma e faixa", tested_cadence,
+         "Efeito acima da materialidade e guards não negativos"),
+        (3, "D15–D21", "replicate_or_revise", "Replicar uma vez se o sinal persistir; revisar se divergir",
+         "Concordância entre duas janelas e concentração por creator",
+         tested_cadence if driver else "coletar sem número inventado",
+         "Duas janelas concordantes e força sem queda"),
+        (4, "D22–D30", "decide",
+         "Propor ampliação como novo teste" if scale_gate else "Manter, revisar ou coletar; não escalar",
+         "Confiança, materialidade, visualizações e interações", "manter até decisão humana registrada",
+         "C>=0,70, efeito material, duas janelas concordantes e guards não negativos"),
+    )
+    weeks = [
+        {
+            "evidence_id": _stable_id("strategy-week", str(result.get("source", {}).get("source_hash", "")),
+                                      {"strategy": strategy_id, "week": week}),
+            "week": week,
+            "window": window,
+            "phase": phase,
+            "owner": "Gestor de Social Media",
+            "action": action,
+            "metric": metric,
+            "cadence": cadence,
+            "gate": gate,
+        }
+        for week, window, phase, action, metric, cadence, gate in week_specs
+    ]
+    return {
+        "evidence_id": strategy_id,
+        "mix_policy": "preserve_current_mix_outside_tests",
+        "context": context,
+        "driver_evidence_id": selected.get("evidence_id") if selected else drivers.get("evidence_id", ""),
+        "weeks": weeks,
+        "scale_gate_met": scale_gate,
+        "automatic_publication_or_spend": False,
+    }
+
+
+def executive_answers(
+    result: dict[str, object], financial_scenario: dict[str, object] | None = None
+) -> list[dict[str, str]]:
+    """Answer the Head's three questions from deterministic observed evidence."""
     metrics = result.get("metrics", {})
     posts = int(metrics.get("posts", 0))
     count = lambda value: f"{int(value):,}".replace(",", ".")
     decimal = lambda value, digits: f"{float(value):.{digits}f}".replace(".", ",")
     signed = lambda value, digits: f"{float(value):+.{digits}f}".replace(".", ",")
-    format_labels = {"image": "imagem", "mixed": "misto", "text": "texto", "video": "vídeo"}
+    questions = ("O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?")
     if not result.get("analysis_state", {}).get("has_observations", posts > 0):
-        action = "Ajustar filtros ou importar dados válidos antes de decidir."
         return [
-            {"question": question, "verdict": "SEM BASE PARA RESPONDER", "kpi": "0 posts elegíveis",
-             "comparison": "Nenhum recorte comparável.", "sample": "Cobertura: 0 posts.", "action": action}
-            for question in ("O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?")
+            {
+                "question": question,
+                "verdict": "SEM BASE PARA RESPONDER",
+                "kpi": "0 posts elegíveis",
+                "comparison": "Nenhum recorte comparável.",
+                "sample": "Cobertura: 0 posts.",
+                "action": "Ajustar filtros ou importar dados válidos antes de decidir.",
+                "strength": "Força: não mensurável",
+                "coverage": "Cobertura: 0 posts",
+                "stability": "Estabilidade: não mensurável",
+                "evidence_id": str(result.get("pending", [{}])[0].get("evidence_id", "sem-evidência")),
+                "change_trigger": "A decisão mudaria após existir um recorte válido e comparável.",
+            }
+            for question in questions
         ]
 
-    formats = [item for item in result.get("dimensions", {}).get("content_type", []) if item.get("median_erv") is not None]
-    if formats:
-        leader = max(formats, key=lambda item: (float(item["median_erv"]), str(item.get("value", ""))))
-        trailer = min(formats, key=lambda item: (float(item["median_erv"]), str(item.get("value", ""))))
-        spread = float(leader["median_erv"]) - float(trailer["median_erv"])
-        leader_label = _short(format_labels.get(str(leader["value"]).lower(), str(leader["value"])), 80)
-        trailer_label = _short(format_labels.get(str(trailer["value"]).lower(), str(trailer["value"])), 80)
+    drivers = result.get("engagement_drivers", {})
+    leader = drivers.get("leader")
+    if leader:
+        context_text = _executive_context(leader["context"])
+        target, peer = leader["target"], leader["peer"]
+        guard = leader["volume_guard"]
         engagement = {
-            "question": "O que gera engajamento?",
-            "verdict": f"NÃO HÁ DRIVER CAUSAL COMPROVADO; {leader_label.upper()} LIDERA NUMERICAMENTE",
-            "kpi": f"ERv mediano: {decimal(leader['median_erv'], 3)}%",
+            "question": questions[0],
+            "verdict": f"{context_text.upper()} É O MELHOR SINAL ORGÂNICO SUSTENTADO; NÃO É PROVA CAUSAL",
+            "kpi": f"ΔERv mediano mensal: {signed(leader['median_delta_erv_pp'], 3)} p.p.",
             "comparison": (
-                f"{leader_label}: {decimal(leader['median_erv'], 3)}% vs. "
-                f"{trailer_label}: {decimal(trailer['median_erv'], 3)}% "
-                f"({signed(spread, 4)} p.p.)."
+                f"ERv {decimal(target['median_erv'], 3)}% vs. pares {decimal(peer['median_erv'], 3)}%; "
+                f"views/post {decimal(guard['target_median_views'], 0)} vs. {decimal(guard['peer_median_views'], 0)}; "
+                f"interações/post {decimal(guard['target_median_interactions'], 0)} vs. "
+                f"{decimal(guard['peer_median_interactions'], 0)}; volume {guard['status']}."
             ),
-            "sample": f"Base: {count(posts)} posts; {count(leader.get('posts', 0))} no formato líder.",
-            "action": "Não redistribuir o mix por formato sozinho; validar o contexto em teste controlado.",
+            "sample": f"{count(leader['posts'])} posts, {count(leader['creators'])} creators, {leader['eligible_months']} meses elegíveis.",
+            "action": "Priorizar este contexto em teste controlado; preservar o mix fora do teste.",
+            "strength": f"Força heurística C={decimal(leader['strength'], 3)} ({leader['strength_label']}).",
+            "coverage": f"Cobertura: {leader['eligible_months']} meses; alvo {count(leader['posts'])}, pares {count(leader['peer_posts'])} posts.",
+            "stability": f"Estabilidade: {decimal(100 * leader['stability'], 1)}% dos meses no mesmo sinal.",
+            "evidence_id": str(leader["evidence_id"]),
+            "change_trigger": "A decisão mudaria se o efeito cair abaixo da materialidade, a estabilidade ficar <2/3 ou C<0,40.",
         }
     else:
+        candidates = list(drivers.get("contexts", []))
+        best = max(candidates, key=lambda item: float(item.get("strength", 0)), default={})
+        trigger = str(drivers.get("change_trigger", "houver evidência comparável suficiente"))
         engagement = {
-            "question": "O que gera engajamento?", "verdict": "NÃO HÁ FORMATO COMPARÁVEL",
-            "kpi": "ERv por formato indisponível", "comparison": "Sem duas categorias de formato elegíveis.",
-            "sample": f"Base: {count(posts)} posts.", "action": "Coletar formatos comparáveis antes de alterar o mix.",
+            "question": questions[0],
+            "verdict": "NÃO EXISTE VENCEDOR SUSTENTADO; NÃO REDISTRIBUIR O MIX",
+            "kpi": f"Limiar material: {decimal(drivers.get('materiality_threshold_pp', 0.10), 3)} p.p.",
+            "comparison": f"{len(candidates)} contextos avaliados; nenhum passou simultaneamente amostra, materialidade, estabilidade e força.",
+            "sample": f"Base: {count(posts)} posts.",
+            "action": "Manter o mix e coletar/testar contextos comparáveis antes de priorizar.",
+            "strength": f"Melhor força disponível: C={decimal(best.get('strength', 0), 3)}.",
+            "coverage": f"Cobertura: {len(candidates)} contextos com ao menos um mês comparável.",
+            "stability": "Estabilidade: insuficiente para declarar vencedor.",
+            "evidence_id": str(drivers.get("evidence_id", "sem-evidência")),
+            "change_trigger": trigger if "mudaria" in trigger.lower() else f"A decisão mudaria quando: {trigger}",
         }
 
     sponsorship = result.get("sponsorship", {})
-    strata = sponsorship.get("strata", [])
-    strengths = [float(item.get("strength", 0)) for item in strata]
-    deltas = [float(item["delta_erv_pp"]) for item in strata]
+    summaries = _sponsorship_context_summaries(result)
     eligible = int(sponsorship.get("eligible_strata", 0))
-    strong = sum(value >= 0.40 for value in strengths)
-    context_summaries = _sponsorship_context_summaries(result)
-    delta_range = (
-        f"ΔERv de {signed(min(deltas), 3)} a {signed(max(deltas), 3)} p.p."
-        if deltas else "Nenhuma comparação elegível."
-    )
-    if context_summaries:
-        best, worst = context_summaries[0], context_summaries[-1]
-        best_label = _short(" / ".join(str(best["context"][key]) for key in GROUP_KEYS), 120)
-        worst_label = _short(" / ".join(str(worst["context"][key]) for key in GROUP_KEYS), 120)
-        context_range = (
-            f"Melhor contexto comparável: {best_label} ({signed(best['median_delta_erv_pp'], 3)} p.p.); "
-            f"pior contexto comparável: {worst_label} ({signed(worst['median_delta_erv_pp'], 3)} p.p.)."
+    if summaries:
+        best, worst = summaries[0], summaries[-1]
+        comparison = (
+            f"Melhor contexto comparável: {_executive_context(best['context'])} "
+            f"({signed(best['median_delta_erv_pp'], 3)} p.p.); pior contexto comparável: "
+            f"{_executive_context(worst['context'])} ({signed(worst['median_delta_erv_pp'], 3)} p.p.)."
         )
+        sponsor_strength = f"Força do melhor contexto: C={decimal(best['strength'], 3)}."
+        sponsor_stability = (
+            f"Estabilidade: {decimal(100 * best['stability'], 1)}% em {best['months']} meses."
+            if best["months"] >= 3 else "Estabilidade: não mensurável; menos de três meses elegíveis no mesmo contexto."
+        )
+        sponsor_evidence = str(best["evidence_id"])
     else:
-        context_range = delta_range
+        comparison = "Nenhum contexto orgânico/patrocinado comparável."
+        sponsor_strength = "Força: não mensurável."
+        sponsor_stability = "Estabilidade: não mensurável."
+        sponsor_evidence = str(sponsorship.get("evidence_id", "sem-evidência"))
+    scenario_status = financial_scenario.get("status") if financial_scenario else None
+    if scenario_status == "meets_break_even_scenario":
+        sponsor_verdict = "CENÁRIO MANUAL ATINGE O EQUILÍBRIO; TESTAR, NÃO ESCALAR"
+        sponsor_kpi = (
+            f"Custo máximo de patrocínio: {decimal(financial_scenario['max_sponsorship_cost'], 2)}; "
+            f"uplift mínimo: {decimal(financial_scenario['required_uplift_pp'], 3)} p.p."
+        )
+    elif scenario_status == "below_break_even_scenario":
+        sponsor_verdict = "CENÁRIO MANUAL NÃO ATINGE O EQUILÍBRIO; NÃO INVESTIR"
+        sponsor_kpi = f"Custo máximo de patrocínio: {decimal(financial_scenario['max_sponsorship_cost'], 2)}."
+    else:
+        sponsor_verdict = "NÃO ESCALAR PATROCÍNIO AGORA"
+        sponsor_kpi = f"Cobertura comparável: {decimal(100 * float(sponsorship.get('coverage', 0)), 2)}%."
     sponsorship_answer = {
-        "question": "Vale patrocinar influenciadores?",
-        "verdict": "NÃO ESCALAR PATROCÍNIO AGORA",
-        "kpi": f"Cobertura comparável: {decimal(100 * float(sponsorship.get('coverage', 0)), 2)}%",
-        "comparison": f"{strong}/{eligible} comparações com força ≥ 0,40; {context_range}",
-        "sample": (
-            f"{eligible} estratos elegíveis; {count(sponsorship.get('uncovered_count', 0))} insuficientes; "
-            "ROI indisponível por ausência de custos e conversões."
-        ),
-        "action": "Coletar custo e conversão; só então testar de forma controlada antes de investir mais.",
+        "question": questions[1],
+        "verdict": sponsor_verdict,
+        "kpi": sponsor_kpi,
+        "comparison": comparison,
+        "sample": f"{eligible} estratos elegíveis; {count(sponsorship.get('uncovered_count', 0))} insuficientes; ROI observado indisponível.",
+        "action": "Coletar custo/conversão e testar apenas o estrato selecionado antes de ampliar investimento.",
+        "strength": sponsor_strength,
+        "coverage": f"Cobertura: {decimal(100 * float(sponsorship.get('coverage', 0)), 2)}% dos posts.",
+        "stability": sponsor_stability,
+        "evidence_id": sponsor_evidence,
+        "change_trigger": "A decisão mudaria somente com três meses estáveis, força suficiente e cenário financeiro abaixo do ponto de equilíbrio.",
     }
 
-    recommendation = next(iter(result.get("recommendations", [])), None)
-    if recommendation:
-        context = recommendation.get("context", {})
-        labels = ("platform", "content_type", "content_category", "follower_band")
-        context_values = []
-        for key in labels:
-            if context.get(key) is None:
-                continue
-            value = str(context[key])
-            if key == "content_type":
-                value = format_labels.get(value.lower(), value)
-            elif key == "content_category" and value.lower() == "lifestyle":
-                value = "estilo de vida"
-            elif key == "follower_band":
-                value = value.replace(",", ".")
-            context_values.append(value)
-        context_text = " / ".join(context_values)
-        cadence = recommendation.get("frequency_hypothesis", {})
-        snapshot = recommendation.get("evidence_snapshot", {})
-        target, comparator = snapshot.get("target", {}), snapshot.get("comparator", {})
-        cadence_value = cadence.get("value")
-        cadence_text = (
-            f"{float(cadence_value):g} post/creator/semana".replace(".", ",")
-            if cadence_value is not None else "cadência a coletar"
-        )
-        strategy = {
-            "question": "Qual deve ser a estratégia?",
-            "verdict": f"MANTER O MIX E TESTAR {context_text.upper()} POR 7 DIAS",
-            "kpi": (
-                f"{cadence_text}; "
-                f"ΔERv {signed(recommendation.get('delta_erv_pp', 0), 3)} p.p.; "
-                f"força {decimal(recommendation.get('priority_components', {}).get('strength', 0), 2)}"
-            ),
-            "comparison": (
-                f"Alvo vs. comparador: {count(target.get('posts', target.get('n_rate', 0)))} vs. "
-                f"{count(comparator.get('posts', comparator.get('n_rate', 0)))} posts."
-            ),
-            "sample": (
-                f"{count(cadence.get('sample_creators', 0))} creators em "
-                f"{count(cadence.get('observed_complete_weeks', 0))} semanas ISO completas."
-            ),
-            "action": "Executar teste limitado nos próximos 7 dias e revisar 7 dias após o teste; não escalar automaticamente.",
-        }
-    else:
-        strategy = {
-            "question": "Qual deve ser a estratégia?", "verdict": "MANTER O MIX E COLETAR EVIDÊNCIA COMPARÁVEL",
-            "kpi": "0 recomendações elegíveis", "comparison": "Nenhum contexto superou os critérios mínimos.",
-            "sample": f"Base: {count(posts)} posts.",
-            "action": "Criar um teste de 7 dias com grupo comparável antes de mudar conteúdo ou investimento.",
-        }
+    program = content_strategy_30d(result)
+    program_context = _executive_context(program["context"]) or "CONTEXTO A COLETAR"
+    selected = leader or {}
+    strategy = {
+        "question": questions[2],
+        "verdict": f"EXECUTAR PROGRAMA DE 30 DIAS PARA {program_context.upper()}; PRESERVAR O MIX FORA DO TESTE",
+        "kpi": "4 semanas: baseline → teste → replicação/revisão → decisão humana.",
+        "comparison": f"Contexto escolhido pelo ranking multivariado; escala automática: não; gate final: {'atingido' if program['scale_gate_met'] else 'não atingido'}.",
+        "sample": f"Base: {count(posts)} posts; {len(program['weeks'])} janelas operacionais.",
+        "action": "Executar D1–D30 com Gestor de Social Media responsável e registrar a decisão na semana 4.",
+        "strength": f"Força herdada do driver: C={decimal(selected.get('strength', 0), 3)}.",
+        "coverage": f"Cobertura: {selected.get('eligible_months', 0)} meses elegíveis no contexto selecionado.",
+        "stability": f"Estabilidade herdada: {decimal(100 * selected.get('stability', 0), 1)}%.",
+        "evidence_id": str(program["evidence_id"]),
+        "change_trigger": "A decisão mudaria na semana 4 conforme força, materialidade, concordância temporal e guards de volume.",
+    }
     return [engagement, sponsorship_answer, strategy]
 
 
-def executive_summary(result: dict[str, object], decisions: list[dict[str, object]]) -> str:
+def executive_summary(
+    result: dict[str, object],
+    decisions: list[dict[str, object]],
+    financial_scenario: dict[str, object] | None = None,
+) -> str:
     source = dict(result.get("source", {}))
     source["source_hash"] = _short(source.get("source_hash", ""), 64)
     metrics = result.get("metrics", {})
@@ -2126,9 +2242,19 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
     decisions_html = "".join(f"<li>{html.escape(line)}</li>" for line in _decision_lines(result, decisions))
     answers_html = "".join(
         "<article><h3>" + html.escape(item["question"]) + "</h3><strong>" + html.escape(item["verdict"]) +
-        "</strong><p>" + html.escape(item["kpi"]) + "</p><p>" + html.escape(item["comparison"]) +
-        "</p><p>" + html.escape(item["sample"]) + "</p><p><b>Ação:</b> " + html.escape(item["action"]) + "</p></article>"
-        for item in executive_answers(result)
+        "</strong><p><b>KPI:</b> " + html.escape(item["kpi"]) + "</p><p><b>Comparação:</b> " + html.escape(item["comparison"]) +
+        "</p><p><b>Amostra:</b> " + html.escape(item["sample"]) + "</p><p><b>Ação:</b> " + html.escape(item["action"]) +
+        "</p><p>" + html.escape(item["strength"]) + "</p><p>" + html.escape(item["coverage"]) +
+        "</p><p>" + html.escape(item["stability"]) + "</p><details><summary>Critério de mudança e evidência</summary><p>" +
+        html.escape(item["change_trigger"]) + "</p><small>" + html.escape(item["evidence_id"]) + "</small></details></article>"
+        for item in executive_answers(result, financial_scenario)
+    )
+    program = content_strategy_30d(result)
+    strategy_html = "".join(
+        f"<tr><td>{week['week']}</td><td>{html.escape(week['window'])}</td><td>{html.escape(week['owner'])}</td>"
+        f"<td>{html.escape(week['action'])}</td><td>{html.escape(week['metric'])}</td>"
+        f"<td>{html.escape(week['cadence'])}</td><td>{html.escape(week['gate'])}</td></tr>"
+        for week in program["weeks"]
     )
     warnings = " ".join(_short(item.get("message", ""), 160) for item in result.get("quality", {}).get("warnings", [])[:2])
     state = result.get("analysis_state", {})
@@ -2137,10 +2263,14 @@ def executive_summary(result: dict[str, object], decisions: list[dict[str, objec
                 f"<b>{int(metrics.get('interactions', 0))} interações</b>")
     else:
         kpis = f"<b>{html.escape(str(state.get('message', 'Nenhum registro corresponde ao recorte.')))}</b>"
-    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}h3{{margin:.2em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}.answers{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}.answers article{{border:1px solid #9aa;padding:12px}}.answers strong{{display:block}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\">{kpis}</div><h2>Três respostas para o Head de Marketing</h2><section class=\"answers\">{answers_html}</section><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}h3{{margin:.2em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}.answers{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}.answers article{{border:1px solid #9aa;padding:12px}}.answers strong{{display:block}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #9aa;padding:6px;text-align:left;vertical-align:top}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\">{kpis}</div><h2>Três respostas para o Head de Marketing</h2><section class=\"answers\">{answers_html}</section><h2>Estratégia de conteúdo — 30 dias</h2><table><thead><tr><th>Semana</th><th>Janela</th><th>Responsável</th><th>Ação</th><th>Métrica</th><th>Cadência</th><th>Gate</th></tr></thead><tbody>{strategy_html}</tbody></table><p><b>Regra:</b> preservar o mix fora dos testes; nenhuma publicação ou verba é executada automaticamente.</p><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
 
 
-def analysis_report(result: dict[str, object], decisions: list[dict[str, object]] | None = None) -> str:
+def analysis_report(
+    result: dict[str, object],
+    decisions: list[dict[str, object]] | None = None,
+    financial_scenario: dict[str, object] | None = None,
+) -> str:
     """Render the standalone strategy from the same evidence and queue as HTML/CSV."""
     source, scope, metrics = result["source"], result["scope"], result["metrics"]
     summary_id = _stable_id("summary", str(source["source_hash"]), scope)
@@ -2170,11 +2300,24 @@ def analysis_report(result: dict[str, object], decisions: list[dict[str, object]
         )
 
     lines = ["# Estratégia Social Media — Challenge 004", "", "## Três respostas para o Head de Marketing", ""]
-    for item in executive_answers(result):
+    for item in executive_answers(result, financial_scenario):
         lines += [f"### {text(item['question'])}", "", f"**{text(item['verdict'])}**", "",
                   f"- KPI: {text(item['kpi'])}", f"- Comparação: {text(item['comparison'])}",
-                  f"- Amostra/cobertura: {text(item['sample'])}", f"- Ação: {text(item['action'])}", ""]
-    lines += ["## Decisão para segunda-feira", "",
+                  f"- Amostra: {text(item['sample'])}", f"- Ação: {text(item['action'])}",
+                  f"- {text(item['strength'])}", f"- {text(item['coverage'])}",
+                  f"- {text(item['stability'])}", f"- Muda se: {text(item['change_trigger'])}",
+                  f"- Evidência: `{text(item['evidence_id'])}`", ""]
+    program = content_strategy_30d(result)
+    lines += ["## Estratégia de conteúdo — 30 dias", "",
+              "| Semana | Janela | Responsável | Ação | Métrica | Cadência | Gate |",
+              "|---:|---|---|---|---|---|---|"]
+    for week in program["weeks"]:
+        lines.append(
+            f"| {week['week']} | {text(week['window'])} | {text(week['owner'])} | {text(week['action'])} | "
+            f"{text(week['metric'])} | {text(week['cadence'])} | {text(week['gate'])} |"
+        )
+    lines += ["", "Preservar o mix fora dos testes; nenhuma publicação ou verba é executada automaticamente.", "",
+             "## Decisão para segunda-feira", "",
              "Fila única: o top 3 abaixo vem de `result[recommendations]`, na mesma ordem do HTML e do início do CSV; "
              "o CSV preserva a fila completa `result[all_recommendations]`, incluindo as demais ações decidíveis na UI. "
              "São propostas para decisão humana; não executam gasto, publicação ou interrupção.", ""]

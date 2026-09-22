@@ -902,3 +902,12 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Execução:** `sponsorship_break_even` valida custos, taxas, valor por conversão, views, contexto e evidência; calcula conversões/valor incrementais hipotéticos, custo máximo e uplift mínimo. A síntese de patrocínio passou a nomear melhor e pior contexto comparável sem misturar plataformas ou faixas.
 - **Feedback:** a primeira execução verde encontrou somente ruído binário (`2.799,999999999999`). As saídas financeiras passaram a nove casas decimais, preservando fórmula e decisão.
 - **Validação:** testes focais e de decisão aprovaram **7/7**; a regressão ampliada `ContextEvidenceTests + ReconstructionTests` aprovou **44/44**. `py_compile` e `git diff --check` passaram; inputs manuais não aparecem no CSV analítico. Task 8 validada antes do avanço.
+
+## I66 — Feedback looping, Task 9: respostas completas e estratégia de 30 dias — 2026-09-22
+
+- **Planejamento e revisão:** o contrato executivo foi ampliado para onze campos por resposta, sem criar segundo motor: veredicto, KPI, comparação, amostra, ação, força, cobertura, estabilidade, evidência e gatilho de mudança derivam do mesmo resultado analítico.
+- **Teste vermelho:** os testes falharam pela ausência de `content_strategy_30d` e das linhas `driver_context`/`strategy_week` no CSV, confirmando as fronteiras previstas.
+- **Execução:** o sistema passou a gerar quatro janelas relativas `D1–D7`, `D8–D14`, `D15–D21` e `D22–D30`, sempre com Gestor de Social Media, cadência observada ou coleta explícita, preservação do mix fora do teste e nenhuma publicação ou verba automática. HTML, Markdown e CSV reutilizam o mesmo contrato.
+- **Feedback 1:** o primeiro ciclo encontrou gatilho sem a expressão inequívoca “a decisão mudaria” e excedeu em 198 caracteres o limite de impressão. O texto foi normalizado; IDs e gatilhos completos permanecem em detalhe expansível e no CSV.
+- **Feedback 2:** a regressão ampliada encontrou uma expectativa antiga de seis campos e uma suíte inexistente digitada no comando. O teste antigo migrou para o contrato de onze campos; o erro de nome não foi atribuído ao produto.
+- **Validação:** os focais aprovaram **34/34** e a regressão ampliada válida aprovou **95/95**. `py_compile` e `git diff --check` passaram. Task 9 validada antes do avanço; sem preflight pesado, push, PR, deploy ou API paga.

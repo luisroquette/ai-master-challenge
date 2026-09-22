@@ -8,7 +8,7 @@ import unittest
 
 import pandas as pd
 
-from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, executive_answers, export_evidence, follower_band, load_csv, sponsorship_break_even
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, content_strategy_30d, derive_metrics, executive_answers, export_evidence, follower_band, load_csv, sponsorship_break_even
 from tests.helpers import (
     aggregate_effect_rows,
     alert_for_target,
@@ -29,6 +29,16 @@ from tests.helpers import (
 )
 
 
+def result_with_stable_driver() -> dict[str, object]:
+    rows = driver_rows([1.0, 1.2, 0.8])
+    return analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+
+
+def result_without_stable_driver() -> dict[str, object]:
+    rows = driver_rows([1.0, -1.0, 1.0, -1.0])
+    return analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+
+
 class CsvBoundaryTests(unittest.TestCase):
     def test_load_csv_accepts_valid_single_platform_subset(self):
         frame, errors = load_csv(csv_bytes([make_post(platform="Instagram")]))
@@ -45,9 +55,12 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual([item["question"] for item in answers], [
             "O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?",
         ])
-        self.assertTrue(all(set(item) == {"question", "verdict", "kpi", "comparison", "sample", "action"}
+        self.assertTrue(all(set(item) == {
+            "question", "verdict", "kpi", "comparison", "sample", "action",
+            "strength", "coverage", "stability", "evidence_id", "change_trigger",
+        }
                             and all(item.values()) for item in answers))
-        self.assertIn("TEXTO", answers[0]["verdict"])
+        self.assertIn("NÃO EXISTE VENCEDOR SUSTENTADO", answers[0]["verdict"])
         self.assertEqual(answers[1]["verdict"], "NÃO ESCALAR PATROCÍNIO AGORA")
         self.assertIn("COLETAR", answers[2]["verdict"])
 
@@ -887,6 +900,34 @@ class ContextEvidenceTests(unittest.TestCase):
             set(result["evidence_snapshots"]),
             {item["evidence_id"] for item in result["all_recommendations"]},
         )
+
+
+class ExecutiveAnswerTests(unittest.TestCase):
+    def test_executive_answers_use_driver_ranking_and_disclose_decision_trigger(self):
+        answers = executive_answers(result_with_stable_driver())
+        self.assertEqual(len(answers), 3)
+        self.assertTrue(all(set(answer) == {
+            "question", "verdict", "kpi", "comparison", "sample", "action",
+            "strength", "coverage", "stability", "evidence_id", "change_trigger",
+        } for answer in answers))
+        self.assertIn("INSTAGRAM / TEXTO / TECH", answers[0]["verdict"])
+
+    def test_strategy_has_four_ordered_weeks_and_no_automatic_scale(self):
+        strategy = content_strategy_30d(result_with_stable_driver())
+        self.assertEqual([item["week"] for item in strategy["weeks"]], [1, 2, 3, 4])
+        self.assertEqual(
+            [item["window"] for item in strategy["weeks"]],
+            ["D1–D7", "D8–D14", "D15–D21", "D22–D30"],
+        )
+        self.assertTrue(all("cadence" in item for item in strategy["weeks"]))
+        self.assertEqual(strategy["mix_policy"], "preserve_current_mix_outside_tests")
+        self.assertTrue(all(item["owner"] == "Gestor de Social Media" for item in strategy["weeks"]))
+        self.assertFalse(strategy["automatic_publication_or_spend"])
+
+    def test_no_stable_driver_yields_explicit_collection_strategy(self):
+        answers = executive_answers(result_without_stable_driver())
+        self.assertIn("NÃO EXISTE VENCEDOR SUSTENTADO", answers[0]["verdict"])
+        self.assertIn("mudaria", answers[0]["change_trigger"].lower())
 
 
 if __name__ == "__main__":
