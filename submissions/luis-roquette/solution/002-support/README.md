@@ -81,3 +81,10 @@ JSON é finito, canônico e escrito por substituição atômica; o manifesto é 
 último e não inclui seu próprio hash. Ele registra hash da fonte/lock/configuração,
 fingerprint dos arquivos de código, versões, exclusões e IDs/grupos. Comparações entre
 reproduções removem somente `generated_at`; hashes binários e lógicos são registrados.
+
+Na reprodução real do step 02, Customer passou de 8.469 linhas a 1.392 sanitizadas e
+1.136 representantes após retirar 255 linhas conflitantes e uma duplicata. IT passou
+de 47.837 a 26.472 representantes sanitizados. Quarentena: 7.077 Customer e 21.365 IT.
+Essas exclusões podem enviesar análises e devem acompanhar seus denominadores; somente
+34 linhas Customer sanitizadas têm satisfação observada. Os dois splits tiveram
+suporte suficiente; isso não comprova sinal preditivo nem qualidade das respostas.

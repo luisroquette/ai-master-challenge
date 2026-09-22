@@ -797,3 +797,12 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Pivot do step 02:** snapshot/PTTY falhou em três tentativas. A premissa do transporte artesanal foi revista; commit e push do SHA exato substituíram esse caminho. O código foi publicado em `497ab03962f6f23481e580dfebb3c483ab55b190`, depois de seis testes focados, lint e verificação de whitespace aprovados.
 - **Concorrência preservada:** o Codespace voltou a `Available` por uma execução concorrente de `lead-step01-manifest`. Nenhum processo dessa sessão foi interrompido. O suporte aguarda `Shutdown` e checkout limpo antes de executar seus gates.
 - **Critério para avançar:** validar o SHA publicado no ambiente gerenciado, concluir os gates de dados e registrar resultados reais. Falha de código retorna ao ciclo correção → teste focado → commit/push → novo gate; ausência de evidência permanece explícita.
+
+## I44 — Step 02: reprodução real validada — 2026-09-21 20:59 BRT
+
+- **SHA conferido:** `69d15f60c4f10aa4b2a0f82989a80364b5414734`, obtido por fetch/fast-forward da branch publicada no Codespace `codex-preflight-657v7q4ggx7f5557`. O checkout estava limpo antes e depois; nenhum snapshot foi usado.
+- **Gates reais:** `make lint` passou; `make test` concluiu `9 passed` em 12,92 s; `make data` obteve as duas fontes públicas; `make reproduce` executou duas vezes. Os manifestos foram iguais após remover somente `generated_at`; o comparador emitiu `REPRODUCIBILITY_OK`.
+- **Customer:** 8.469 linhas de origem, 7.077 em quarentena de privacidade, 1.392 sanitizadas; 255 linhas de 29 grupos com rótulos conflitantes e uma duplicata foram excluídas do split. Restaram 1.136 representantes: 679 treino, 225 calibração e 232 teste lacrado.
+- **IT:** 47.837 linhas de origem, 21.365 em quarentena e 26.472 representantes, sem duplicata/conflito canônico detectado. Splits independentes mantiveram as oito classes; ambos os domínios registraram `ready`.
+- **Limitação para o diagnóstico:** 1.358 das 1.392 linhas Customer sanitizadas não têm nota de satisfação. A seleção conservadora de privacidade reduz e pode enviesar a amostra; o próximo step deve exibir esses denominadores e retornar insuficiência quando aplicável. Revisão humana de exemplos públicos continua pendente e nenhuma amostra foi publicada.
+- **Motivo para avançar:** contratos e reprodução real foram exercitados com fontes efetivas, resultados determinísticos e teste final sem features/rótulos exportados. O step 03 pode consumir o desenvolvimento sanitizado, mantendo explícitas as exclusões e limitações.
