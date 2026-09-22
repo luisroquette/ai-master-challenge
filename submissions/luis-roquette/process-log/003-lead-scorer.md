@@ -1562,3 +1562,12 @@ Luis decidiu criar e documentar um grafo da entrega para transformar o conjunto 
 - Limites: o diagnóstico pré-build registrou 95 arestas pendentes normalizadas ou descartadas e 17 pares multirrelação; o DOCX foi representado pelo Markdown equivalente porque o extra opcional de Office não estava instalado; relações `INFERRED` não são apresentadas como prova causal ou de runtime.
 
 A versão instalada do Graphify era `0.9.64`, enquanto a skill local declarava `0.9.51`. A ferramenta global não foi alterada durante a entrega; o comportamento efetivamente executado foi validado pelos diagnósticos do pacote instalado.
+
+## I38 — Arquivo local organizado da entrega — 2026-09-22
+
+Luis solicitou que todos os entregáveis e uma réplica do sistema fossem preservados de forma organizada no computador. Foi criada a pasta `Documents/AI-Master-Challenge/Challenge-003-Lead-Scorer-Entrega-Final-2026-09-22/` com a entrega completa, instruções de abertura, origem, inventário e checksums SHA-256.
+
+- Foram preservados 81 arquivos úteis, incluindo aplicação, dados, testes, experiência guiada, vídeos, documentação, diário e grafo.
+- Dez arquivos temporários `__pycache__/*.pyc` foram omitidos por não fazerem parte do sistema ou da entrega.
+- A comparação com a origem terminou sem diferenças de conteúdo, considerando apenas essa exclusão organizacional.
+- Os 81 checksums foram recalculados e validados; nenhum arquivo `.env` ou credencial pessoal foi incluído.
