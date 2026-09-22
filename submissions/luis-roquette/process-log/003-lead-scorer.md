@@ -1519,3 +1519,15 @@ Luis entregou a gravação final legendada e acelerada em 1,25× para integrar o
 - README, portal e links finais foram atualizados sem criar uma nova etapa ou ampliar a navegação de doze telas.
 
 Nenhum push, reabertura de PR, deploy ou contato com avaliadores ocorreu durante a incorporação.
+
+## I34 — Auditoria final, publicação da branch e bypass do preflight — 2026-09-22
+
+Luis autorizou a análise final de conformidade e determinou seguir com a entrega caso o resultado fosse positivo. O pacote foi novamente confrontado com o briefing, o guia, o template e as regras do PR.
+
+- Resultado estático: todos os obrigatórios presentes; zero arquivos fora de `submissions/luis-roquette/`; zero blobs acima de 100 MB; zero padrões de segredo; branch contendo integralmente `upstream/main`.
+- O commit `d1c351fef9f7a4cea36a4095e6c4eb1468b40c5d` foi enviado à branch do fork. O GitHub aceitou todo o pacote e apenas recomendou reduzir o vídeo de 82,8 MiB abaixo de 50 MiB; não houve bloqueio.
+- Um Codespace limpo recuperou a branch e confirmou a disponibilidade externa do commit, concluindo o item de backup externo do checklist de segurança.
+- A primeira tentativa de preflight encerrou antes dos testes porque a automação comparou o SHA correto abreviado com um sufixo completo inferido incorretamente. A segunda tentativa ficou condicionada à inicialização de outro Codespace.
+- Luis então determinou: **“bypass no preflight. vamos direto”**. A execução pendente foi interrompida; nenhum resultado integral final é reivindicado.
+
+A válvula de escape foi usada de forma explícita e transparente. Permanecem válidos os gates leves e focais registrados, mas eles não são apresentados como substitutos de um novo preflight integral.

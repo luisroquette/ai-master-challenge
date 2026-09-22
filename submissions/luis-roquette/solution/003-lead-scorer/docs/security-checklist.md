@@ -17,7 +17,7 @@ Escopo: aplicação Streamlit do Challenge 003, dados estáticos públicos CC0, 
 - [ ] **NÃO APLICÁVEL — Gerar segredo ou chave de API do frontend.** Não existe API própria. Um segredo nunca deverá ser embarcado no frontend; caso uma API seja criada, a credencial deverá permanecer no servidor.
 - [ ] **NÃO APLICÁVEL — WAF e detecção avançada de bots no Cloudflare.** Não existe deploy público, domínio próprio ou camada Cloudflare. Reavaliar antes de uma exposição pública fora da hospedagem do challenge.
 - [x] **FEITO — Logs de auditoria.** A prioridade temporária grava antes da mutação um evento append-only em `data/audit/manager-priorities.jsonl`, com permissão `0600`, `fsync`, lock exclusivo e cadeia SHA-256 validada integralmente. Falha ou adulteração impede a prioridade. O ator é marcado `actor_verified=false`, pois o perfil continua demonstrativo.
-- [ ] **NÃO FEITO — Backup externo de todo o sistema.** Código e quatro CSVs estão versionados; o dataset pode ser recuperado por manifesto, HTTPS e SHA-256, com rollback transacional. Existe um bundle Git local completo e restaurado com sucesso, mas ele permanece no mesmo Mac. A branch remota foi removida por embargo e não há cópia externa atualizada e testada.
+- [x] **FEITO — Backup externo de todo o sistema.** Código, documentação, mídia e os quatro CSVs foram enviados para a branch remota `submission/luis-roquette-003-lead-scorer`. Um Codespace limpo recuperou a branch e confirmou o commit publicado, provando restauração externa. O dataset também permanece recuperável por manifesto, HTTPS e SHA-256, com rollback transacional.
 - [ ] **NÃO APLICÁVEL — Sentry.** Não existe runtime público ou serviço persistente a monitorar. Sentry é observabilidade, não blindagem de segurança; reavaliar somente quando houver deploy autorizado.
 - [ ] **NÃO APLICÁVEL — Alertas de custo.** O runtime não usa API paga, banco, fila, armazenamento ou infraestrutura faturável própria. O preview é local.
 - [x] **FEITO — Ocultar chaves de API.** O projeto não precisa de chaves e nenhuma credencial está presente no código, manifesto, requisitos ou configuração.
@@ -39,9 +39,7 @@ Ele **não deve receber dados reais de CRM nem ser tratado como sistema autentic
 
 ## Fila de tratamento
 
-1. **Backup externo:** executar somente depois da autorização expressa para remover o embargo e publicar a revisão validada.
-
-Nenhuma remediação foi implementada nesta etapa; este documento é apenas o diagnóstico solicitado.
+Nenhum item pertinente ao protótipo permanece como **NÃO FEITO**. Controles hoje não aplicáveis devem ser reavaliados se surgirem autenticação, dados privados, banco, e-mail, API ou deploy público.
 
 ## Segunda passada de certificação
 
@@ -65,11 +63,11 @@ Status alterado de **NÃO FEITO** para **FEITO** em 22 de setembro de 2026.
 - A ausência de autenticação não é ocultada: `actor_verified=false` impede que o nome selecionado seja interpretado como identidade comprovada.
 - Validação: **20/20 testes focais** verdes, incluindo recuperação segura, contratos de pin, nova regressão de durabilidade/adulteração/fail-closed, quatro jornadas AppTest e três jornadas Playwright; `py_compile` e `git diff --check` também verdes.
 
-**Estado atual:** **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. O único item pendente é backup externo, bloqueado pelo embargo de publicação vigente.
+**Estado após o tratamento local:** **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. Esse estado foi posteriormente superado pela publicação autorizada da branch, registrada abaixo.
 
 ## Tratamento do item 2 — backup
 
-Camada local concluída e validada em 22 de setembro de 2026; camada externa continua pendente.
+Camada local e camada externa concluídas e validadas em 22 de setembro de 2026.
 
 - Snapshot: `/Users/luisroquette/Projects/ai-master-challenge-backups/003-lead-scorer-2026-09-22.bundle`.
 - O bundle contém a história completa da branch `submission/luis-roquette-003-lead-scorer`, incluindo código, documentação e os quatro CSVs versionados.
@@ -77,7 +75,7 @@ Camada local concluída e validada em 22 de setembro de 2026; camada externa con
 - Recuperação: `git clone --branch submission/luis-roquette-003-lead-scorer CAMINHO_DO_BUNDLE DIRETORIO_DE_RESTAURACAO`.
 - O arquivo deve ser regenerado após cada novo commit relevante. Ele protege contra dano ao checkout, mas não contra perda do computador ou disco.
 
-**Bloqueio restante:** copiar o bundle para armazenamento externo ou recriar a branch remota seria transmissão externa. O embargo vigente proíbe essa ação sem autorização específica de Luis; por isso, o item permanece **NÃO FEITO**.
+Após autorização expressa de Luis, a branch foi recriada no fork do GitHub. Um Codespace limpo fez fetch da referência e conferiu o commit publicado antes de qualquer teste, validando que código, documentação, mídia e dados versionados são recuperáveis fora do Mac. O item passa a **FEITO**.
 
 ## Encerramento do ciclo
 
@@ -89,4 +87,4 @@ Luis decidiu não autorizar o backup externo neste momento para preservar o emba
 - o backup externo permanece **NÃO FEITO por decisão consciente do owner**, não por omissão técnica;
 - nenhuma publicação, push, deploy ou comunicação externa foi realizada.
 
-O checklist deverá ser reaberto imediatamente antes de qualquer autorização de publicação, troca para dados privados, autenticação, banco ou integração com CRM.
+Esse encerramento descreve o estado anterior à autorização de publicação. Na reabertura pré-entrega, o backup externo foi concluído e o estado final passou a **5 FEITO, 0 NÃO FEITO e 14 NÃO APLICÁVEL**. O checklist deverá ser reaberto novamente se houver troca para dados privados, autenticação, banco ou integração com CRM.

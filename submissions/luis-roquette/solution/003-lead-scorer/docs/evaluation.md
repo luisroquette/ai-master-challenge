@@ -19,6 +19,12 @@ O último preflight canônico integral concluído terminou com `PREFLIGHT OK`: 7
 
 O segundo retrabalho residual adicionou regressões em `2dbc3e5` e implementação em `af046c4` para seleção única entre grades e transparência do suporte histórico em Prospecting. Por bypass explícito do owner e ausência de Codespace limpo do repositório, esses quatro testes foram revisados estaticamente, mas não executados. Os únicos gates pós-mudança são `py_compile`, `bash -n scripts/preflight.sh` e `git diff --check`, todos aprovados; não se reivindica GREEN executado.
 
+### Gate final da entrega
+
+A revisão final publicada inicialmente foi `d1c351fef9f7a4cea36a4095e6c4eb1468b40c5d`. Ela passou por `py_compile`, validação sintática do preflight, `git diff --check` com preservação deliberada dos CSVs-fonte, auditoria de escopo/tamanho/segredos/links e jornada Playwright focal do portal com o vídeo real. O navegador confirmou doze etapas, vídeo H.264/AAC de 6min05s em 1280 × 720 e zero erros de console.
+
+O preflight integral final **não foi concluído**. A primeira orquestração chegou ao Codespace e recuperou o commit exato, mas uma comparação montada com SHA completo incorreto encerrou o comando antes dos testes. A segunda aguardava/iniciava outro Codespace quando Luis determinou explicitamente o bypass por congestionamento. A execução foi interrompida e não é contabilizada como evidência de teste. Esta limitação permanece exposta; o último integral válido continua sendo o já registrado acima.
+
 ## Entrega Git e tentativa de publicação — 2026-09-22
 
 | Campo | Evidência |
