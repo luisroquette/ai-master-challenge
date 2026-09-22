@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import fcntl
 from functools import partial
 import hashlib
 from html import escape
 import json
+import os
 from pathlib import Path
 from typing import Mapping
 from zoneinfo import ZoneInfo
@@ -20,6 +22,8 @@ from scoring import DEFAULT_CONFIG, build_scoring_bundle, rank_stage, source_ide
 ROOT = Path(__file__).resolve().parent
 PAGE_SIZE = 25
 PIN_TIMEZONE = ZoneInfo("America/Sao_Paulo")
+AUDIT_LOG = Path(os.environ.get("LEAD_SCORER_AUDIT_LOG",
+                                ROOT / "data" / "audit" / "manager-priorities.jsonl"))
 
 THEME_CSS = """
 <style>
@@ -266,6 +270,67 @@ class TemporaryPin:
     generation: int
 
 
+class AuditLogError(ValueError):
+    """The append-only audit chain is malformed or was altered."""
+
+
+def _canonical_event(event):
+    return json.dumps(event, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"), allow_nan=False)
+
+
+def _validated_audit_tail(handle):
+    handle.seek(0)
+    previous = "0" * 64
+    # ponytail: full validation is O(n); rotate the log if intervention volume becomes material.
+    for number, line in enumerate(handle, 1):
+        try:
+            stored = json.loads(line)
+            event_hash = stored.pop("event_hash")
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise AuditLogError(f"Linha de auditoria inválida: {number}") from exc
+        expected = hashlib.sha256(_canonical_event(stored).encode()).hexdigest()
+        if stored.get("previous_hash") != previous or event_hash != expected:
+            raise AuditLogError(f"Cadeia de auditoria adulterada: linha {number}")
+        previous = event_hash
+    return previous
+
+
+def append_priority_audit(path, pin, stage):
+    directory = Path(path).parent
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if directory.is_symlink():
+        raise AuditLogError("Diretório de auditoria simbólico recusado")
+    os.chmod(directory, 0o700)
+    flags = os.O_APPEND | os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "a+", encoding="utf-8") as handle:
+            fd = -1
+            fcntl.flock(handle, fcntl.LOCK_EX)
+            event = {
+                "actor": pin.manager,
+                "actor_verified": False,
+                "created_at_utc": pin.created_at_utc.isoformat().replace("+00:00", "Z"),
+                "event": "temporary_priority_set",
+                "fingerprint": pin.fingerprint,
+                "generation": pin.generation,
+                "opportunity_id": pin.opportunity_id,
+                "previous_hash": _validated_audit_tail(handle),
+                "stage": stage,
+                "version": 1,
+            }
+            event["event_hash"] = hashlib.sha256(_canonical_event(event).encode()).hexdigest()
+            handle.write(_canonical_event(event) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            return event
+    finally:
+        if fd >= 0:
+            os.close(fd)
+
+
 def bundle_cache_key(snapshot, config, identity):
     payload = {"data_config": fingerprint(snapshot, config), "source": dict(identity)}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -313,7 +378,7 @@ def recalculate(session):
 
 
 def set_temporary_priority(session, role, stage, opportunity_id, manager, allowed_ids,
-                           current_fingerprint, now=None):
+                           current_fingerprint, now=None, audit_path=None):
     if role != "Gestor" or not manager:
         raise PermissionError("A prioridade temporária é exclusiva do contexto gestor")
     if opportunity_id not in set(allowed_ids):
@@ -325,6 +390,8 @@ def set_temporary_priority(session, role, stage, opportunity_id, manager, allowe
         raise ValueError("O horário da prioridade deve incluir fuso")
     pin = TemporaryPin(opportunity_id, manager, created_at.astimezone(timezone.utc),
         current_fingerprint, session["calculation_generation"])
+    if audit_path is not None:
+        append_priority_audit(audit_path, pin, stage)
     session["pins_by_stage"][stage] = pin
     return pin
 
@@ -689,9 +756,14 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
                     st.markdown(f"**{label}:** {value}")
             if role == "Gestor" and st.button("Prioridade temporária do gestor",
                     key=f"pin-{stage}-{context}", type="primary", width="stretch"):
-                set_temporary_priority(session, role, stage, row.opportunity_id, identity,
-                                       {item.opportunity_id for item in rows}, bundle.fingerprint)
-                st.rerun()
+                try:
+                    set_temporary_priority(session, role, stage, row.opportunity_id, identity,
+                        {item.opportunity_id for item in rows}, bundle.fingerprint,
+                        audit_path=AUDIT_LOG)
+                except (AuditLogError, OSError):
+                    st.error("A prioridade não foi alterada: não foi possível registrar a auditoria.")
+                else:
+                    st.rerun()
 
 
 def render_portfolio(bundle, session):

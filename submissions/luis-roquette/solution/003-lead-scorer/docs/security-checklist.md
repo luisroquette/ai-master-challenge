@@ -16,7 +16,7 @@ Escopo: aplicação Streamlit do Challenge 003, dados estáticos públicos CC0, 
 - [ ] **NÃO APLICÁVEL — Rate limit no envio de e-mail e proteção contra aliases.** A aplicação não recebe nem envia e-mails.
 - [ ] **NÃO APLICÁVEL — Gerar segredo ou chave de API do frontend.** Não existe API própria. Um segredo nunca deverá ser embarcado no frontend; caso uma API seja criada, a credencial deverá permanecer no servidor.
 - [ ] **NÃO APLICÁVEL — WAF e detecção avançada de bots no Cloudflare.** Não existe deploy público, domínio próprio ou camada Cloudflare. Reavaliar antes de uma exposição pública fora da hospedagem do challenge.
-- [ ] **NÃO FEITO — Logs de auditoria.** A única mutação é a prioridade temporária do gestor. Ela registra gestor, horário UTC, fingerprint e geração apenas em `st.session_state`, mas não produz trilha durável. O estado some no recálculo, refresh ou encerramento da sessão.
+- [x] **FEITO — Logs de auditoria.** A prioridade temporária grava antes da mutação um evento append-only em `data/audit/manager-priorities.jsonl`, com permissão `0600`, `fsync`, lock exclusivo e cadeia SHA-256 validada integralmente. Falha ou adulteração impede a prioridade. O ator é marcado `actor_verified=false`, pois o perfil continua demonstrativo.
 - [ ] **NÃO FEITO — Backup de todo o sistema.** Código e quatro CSVs estão versionados; o dataset pode ser recuperado por manifesto, HTTPS e SHA-256, com rollback transacional. Porém, a revisão atual existe somente na branch local porque a branch remota foi removida por embargo. Não há cópia externa atualizada e testada.
 - [ ] **NÃO APLICÁVEL — Sentry.** Não existe runtime público ou serviço persistente a monitorar. Sentry é observabilidade, não blindagem de segurança; reavaliar somente quando houver deploy autorizado.
 - [ ] **NÃO APLICÁVEL — Alertas de custo.** O runtime não usa API paga, banco, fila, armazenamento ou infraestrutura faturável própria. O preview é local.
@@ -39,8 +39,7 @@ Ele **não deve receber dados reais de CRM nem ser tratado como sistema autentic
 
 ## Fila de tratamento
 
-1. **Logs de auditoria persistentes:** decidir se a repriorização continuará efêmera ou se o produto passará a persistir intervenções.
-2. **Backup externo:** executar somente depois da autorização expressa para remover o embargo e publicar a revisão validada.
+1. **Backup externo:** executar somente depois da autorização expressa para remover o embargo e publicar a revisão validada.
 
 Nenhuma remediação foi implementada nesta etapa; este documento é apenas o diagnóstico solicitado.
 
@@ -55,3 +54,15 @@ Executada em 22 de setembro de 2026, sem alterar o escopo nem implementar remedi
 - A referência remota da branch continua ausente. Isso reconfirma o backup externo como **NÃO FEITO**, sem transformar a recuperação reproduzível do dataset em backup do trabalho local.
 
 **Parecer certificado dentro do escopo:** o checklist representa fielmente o estado atual do protótipo. Esta certificação não equivale a pentest, SCA completa de dependências ou homologação de uma arquitetura futura com dados privados.
+
+## Tratamento do item 1 — logs de auditoria
+
+Status alterado de **NÃO FEITO** para **FEITO** em 22 de setembro de 2026.
+
+- O arquivo local é criado sob `data/audit/`, diretório ignorado pelo Git; arquivo e diretório recebem permissões `0600` e `0700`, respectivamente.
+- Cada evento contém versão, tipo, oportunidade, estágio, gestor demonstrado, horário UTC, fingerprint, geração, hash anterior e hash próprio.
+- A cadeia completa é validada sob lock antes de cada append. Linha inválida, hash divergente, symlink ou falha de I/O interrompe a operação antes de alterar `st.session_state`.
+- A ausência de autenticação não é ocultada: `actor_verified=false` impede que o nome selecionado seja interpretado como identidade comprovada.
+- Validação: **20/20 testes focais** verdes, incluindo recuperação segura, contratos de pin, nova regressão de durabilidade/adulteração/fail-closed, quatro jornadas AppTest e três jornadas Playwright; `py_compile` e `git diff --check` também verdes.
+
+**Estado atual:** **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. O único item pendente é backup externo, bloqueado pelo embargo de publicação vigente.

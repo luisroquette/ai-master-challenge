@@ -344,6 +344,31 @@ class PortfolioContractTests(unittest.TestCase):
                          "22/09/2026 12:30:00 (America/Sao_Paulo)")
         self.assertEqual(before, next(r for r in self.bundle.scores if r.opportunity_id == "E-B").to_dict())
 
+    def test_security_priority_audit_is_durable_chained_and_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "audit" / "manager-priorities.jsonl"
+            state = {}
+            self.app.ensure_session(state, "fixture")
+            first = datetime(2026, 9, 22, 15, 30, tzinfo=timezone.utc)
+            self.app.set_temporary_priority(state, "Gestor", "Engaging", "E-B", "Mara",
+                {"E-B"}, "fixture", first, path)
+            self.app.set_temporary_priority(state, "Gestor", "Prospecting", "P-A", "Mara",
+                {"P-A"}, "fixture", first, path)
+            events = [json.loads(line) for line in path.read_text().splitlines()]
+            self.assertEqual([event["event"] for event in events],
+                             ["temporary_priority_set", "temporary_priority_set"])
+            self.assertFalse(events[0]["actor_verified"])
+            self.assertEqual(events[1]["previous_hash"], events[0]["event_hash"])
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+            path.write_text(path.read_text().replace('"stage":"Engaging"',
+                                                      '"stage":"Prospecting"', 1))
+            state["pins_by_stage"].pop("Engaging", None)
+            with self.assertRaisesRegex(self.app.AuditLogError, "adulterada"):
+                self.app.set_temporary_priority(state, "Gestor", "Engaging", "E-B", "Mara",
+                    {"E-B"}, "fixture", first, path)
+            self.assertNotIn("Engaging", state["pins_by_stage"])
+
     def test_TC39_pin_lifetime_filter_retention_and_resets(self):
         state = {}
         self.app.ensure_session(state, "fixture")

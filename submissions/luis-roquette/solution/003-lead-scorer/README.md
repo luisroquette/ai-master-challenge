@@ -23,6 +23,12 @@ python3.11 -m venv .venv
 
 Abra o endereço exibido pelo Streamlit. A tela começa no portfólio do primeiro vendedor; o contexto gestor abre a equipe e habilita filtros e prioridade temporária.
 
+Cada prioridade temporária confirmada pelo gestor é registrada localmente em
+`data/audit/manager-priorities.jsonl`. O arquivo usa permissão `0600`, append com
+`fsync` e encadeamento SHA-256. O campo `actor_verified=false` deixa explícito que
+o perfil é demonstrativo, não uma identidade autenticada. Se a cadeia estiver
+inválida ou o append falhar, a prioridade não é aplicada.
+
 ## Recuperação explícita dos dados
 
 ```bash

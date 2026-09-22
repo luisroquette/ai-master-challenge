@@ -1369,3 +1369,23 @@ Luis solicitou uma nova passada antes do tratamento dos gaps. Os 19 controles fo
 - Validação focal: **12/12** testes verdes — dez de recuperação segura e dois da prioridade temporária.
 - A branch remota segue ausente, confirmando que o trabalho local ainda não possui backup externo verificado.
 - Nenhuma remediação foi executada. O parecer certifica a classificação dentro do protótipo atual; não reivindica pentest, SCA integral nem segurança de uma futura arquitetura com dados privados.
+
+## I22 — Segurança, item 1: auditoria persistente — 2026-09-22
+
+Luis autorizou atacar os itens “NÃO FEITO” um a um, validando cada aplicação antes de avançar. O primeiro item tratado foi a trilha de auditoria da prioridade temporária do gestor.
+
+### Implementação
+
+- Cada prioridade confirmada grava primeiro um evento append-only em `data/audit/manager-priorities.jsonl`.
+- Diretório e arquivo usam permissões `0700` e `0600`; o append ocorre sob lock exclusivo e termina com `fsync`.
+- Eventos são encadeados por SHA-256 e toda a cadeia é revalidada antes do próximo append.
+- A operação falha fechado: log ausente de integridade, symlink, adulteração ou erro de I/O impede a alteração da prioridade.
+- Como não existe login, o evento registra `actor_verified=false`; o nome do gestor permanece demonstrativo e não é promovido a identidade autenticada.
+
+### Feedback looping e validação
+
+- A regressão nova prova persistência de dois eventos, encadeamento, permissão `0600`, detecção de adulteração e ausência de mutação quando o append falha.
+- Validação final: **20/20** testes focais verdes — dez de recuperação, três contratos diretos de pin/auditoria, quatro AppTest e três Playwright — além de `py_compile` e `git diff --check`.
+- O checklist passou de **3 FEITO / 2 NÃO FEITO / 14 NÃO APLICÁVEL** para **4 FEITO / 1 NÃO FEITO / 14 NÃO APLICÁVEL**.
+
+O único item “NÃO FEITO” restante é backup externo. Sua execução permanece bloqueada pelo embargo que proíbe push, deploy ou envio sem autorização mais que expressa de Luis.
