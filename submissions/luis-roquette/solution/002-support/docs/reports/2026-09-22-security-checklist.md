@@ -64,9 +64,17 @@ teste de regressão, evidência no diário e nova medição de risco residual.
 
 ## Tratamento 01 — autenticação e autorização
 
-- Estado: código concluído; configuração do provedor pendente.
+- Estado: publicado em modo fail-closed; configuração do provedor pendente.
 - Identidade: OIDC nativo do Streamlit, sem senha local e sem token exposto.
 - Autorização: allowlist simultânea de `iss` e `sub`; e-mail/alias não concede acesso.
 - Falha segura: sem IdP, segredo ou allowlist, mutações, leitura e export ficam desativados.
 - Regressão: modo anônimo não cria SQLite; quatro ações ficam desabilitadas; issuer ou
   subject divergente é rejeitado.
+- Evidência publicada: commit `0f98402c1108c5a65d3617a27b5edf9981ad2f58`; página
+  executiva pública; fila anônima com quatro ações e dois campos desabilitados; página de
+  evidências sem leitura de decisões ou export operacional.
+- Validação: `50` testes locais e Ruff verdes. O preflight remoto não ficou verde porque
+  o semáforo global de Codespaces permaneceu ocupado; a exceção por congestionamento foi
+  registrada, sem ocultar o gate ausente.
+- Risco residual: alto para uso operacional até cadastrar o cliente OIDC no IdP,
+  configurar os secrets no Streamlit Cloud e preencher as allowlists de `iss` e `sub`.

@@ -1538,3 +1538,15 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   e `git diff --check` passaram.
 - **Pendente externo:** cadastrar cliente no IdP, guardar secrets no Streamlit Cloud e
   informar os `sub` autorizados. Nenhuma credencial foi criada ou inferida.
+- **Publicação:** commit `0f98402c1108c5a65d3617a27b5edf9981ad2f58` enviado à branch
+  da submissão e carregado por reboot explícito no Streamlit Community Cloud.
+- **Prova no navegador:** a página executiva permaneceu pública; `/queue` exibiu o aviso
+  de acesso somente leitura, desabilitou Aprovar, Editar e aprovar, Rejeitar e Escalonar,
+  além dos campos de resposta e motivo; `/evidence` mostrou a mesma restrição e não
+  expôs decisões persistidas nem o export operacional.
+- **Gate remoto:** o preflight completo tentou usar exclusivamente
+  `codespace-manager`, mas não obteve vaga no semáforo compartilhado após mais de seis
+  minutos. Aplicou-se a válvula de congestionamento autorizada; o gate remoto não é
+  declarado verde. Permanecem verdes os `50` testes locais e Ruff.
+- **Limite operacional observado:** o Streamlit aplicou redução temporária de CPU durante
+  o bootstrap; o sistema concluiu a reprodução e voltou a renderizar sem erro.
