@@ -6,7 +6,7 @@
 
 **Architecture:** Um pacote Python transforma cinco CSVs imutáveis em um painel temporal de conta por data de corte, executa diagnóstico controlado e, condicionalmente, valida um modelo de risco. Um publicador grava artefatos canônicos consumidos pelo relatório Markdown e por uma aplicação Streamlit de três visões; nenhuma interface recalcula métricas.
 
-**Tech Stack:** Python 3.12, pandas 3.0.6, NumPy 2.5.3, SciPy 1.18.1, statsmodels 0.15.0, scikit-learn 1.9.1, Streamlit 1.64.0, Plotly 7.1.0, pytest 9.1.1 e Ruff 0.16.8.
+**Tech Stack:** Python 3.12, pandas 3.0.6, NumPy 2.5.3, SciPy 1.18.1, statsmodels 0.15.0, scikit-learn 1.9.1, Streamlit 1.64.0, pytest 9.1.1 e Ruff 0.16.8.
 
 **Spec:** `submissions/luis-roquette/solution/001-churn/.specs/tasks/in-progress/implement-churn-diagnostic.feature.md`
 
@@ -75,6 +75,7 @@ submissions/luis-roquette/solution/001-churn/
 ├── artifacts/
 │   ├── account_panel.csv
 │   ├── account_queue.csv
+│   ├── account_watchlist.csv
 │   ├── claim_checks.csv
 │   ├── findings.csv
 │   ├── segment_metrics.csv
@@ -156,7 +157,6 @@ requires-python = "==3.12.*"
 dependencies = [
   "numpy==2.5.3",
   "pandas==3.0.6",
-  "plotly==7.1.0",
   "scikit-learn==1.9.1",
   "scipy==1.18.1",
   "statsmodels==0.15.0",
@@ -472,7 +472,7 @@ git commit -m "feat(churn): build leak-free temporal account panel"
 
 **Interfaces:**
 - Consumes: observed and strict account panels plus churn feedback.
-- Produces: `build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame`, one row per account at the last eligible pre-churn cutoff or `2024-11-30` for controls; the `2024-12-31` scoring rows never enter coefficient estimation.
+- Produces: `build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame`, one active row per account no último cutoff rotulado comum; o cutoff `2024-12-31` nunca entra na estimação e o outcome não escolhe uma data diferente por conta.
 - Produces: `evaluate_candidates(observed: pd.DataFrame, strict: pd.DataFrame, churn_events: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]` returning `findings` and `segment_metrics`.
 - Produces: `build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame`, an auditable six-month reconciliation of overall versus next-30-day-churn usage and satisfaction.
 - Produces finding columns: `finding_id`, `driver_group`, `claim`, `evidence_level`, `adjusted_odds_ratio`, `ci_low`, `ci_high`, `observed_effect`, `strict_effect`, `sensitivity_delta`, `source_tables`, `affected_accounts`, `mrr_exposed_max`, `confidence`, `counterevidence`, `limitation`, `immediate_action`, `structural_action`, `priority_rank`.
@@ -583,7 +583,7 @@ ACTIONS = {
 
 - [x] **Step 8: Reconcile the CEO's two aggregate claims**
 
-Use the last six labeled monthly cutoffs. Define `retained` as `churn_next_30d == 0`, `churn_next_30d` as `churn_next_30d == 1`, and `overall` as both cohorts. For `C-usage-growth`, calculate covered-account daily usage (`usage_count_30d / 30`) and its ordinary least-squares slope over cutoff ordinal; status is `up`, `down` or `flat` using slope tolerance `1e-9`. For `C-satisfaction-ok`, calculate the ticket-response-weighted mean from `mean_satisfaction_90d` and `satisfaction_responses_90d`; status is `ok` only when mean is at least `4.0` and response coverage is at least `70%`, otherwise `concern`, with `insufficient` when either value is unavailable. Emit `claim_id`, `cohort`, `start_value`, `end_value`, `slope`, `status`, `coverage`, `cutoff_start`, `cutoff_end` and `limitation`. These are observed facts, not causal findings.
+Use the last six labeled monthly cutoffs. Define `retained` as `churn_next_30d == 0`, `churn_next_30d` as `churn_next_30d == 1`, and `overall` as both cohorts. For `C-usage-growth`, calculate covered-account daily usage (`usage_count_30d / 30`), preserve the ordinary least-squares slope as context and classify `up`, `down` or `flat` by the endpoint change with tolerance `1e-9`; the executive wording must agree with the displayed start and end. For `C-satisfaction-ok`, calculate the ticket-response-weighted mean from `mean_satisfaction_90d` and `satisfaction_responses_90d`; status is `ok` only when mean is at least `4.0` and response coverage is at least `70%`, otherwise `concern`, with `insufficient` when either value is unavailable. Emit `claim_id`, `cohort`, `start_value`, `end_value`, `slope`, `status`, `coverage`, `cutoff_start`, `cutoff_end` and `limitation`. These are observed facts, not causal findings.
 
 - [x] **Step 9: Produce segment metrics**
 
@@ -782,11 +782,11 @@ Use a frozen dataclass with `quality_report`, `panel`, `claim_checks`, `findings
 
 - [x] **Step 5: Build the operational queue**
 
-Create one row per active account exposed to an accepted finding. Columns: `account_id`, `priority`, `finding_id`, `mrr_exposed_max`, `risk_probability`, `signals`, `immediate_action`, `structural_action`, `owner`, `status`. Copy the reviewed owner into `owner` and leave `status` empty. If the model is unpublished, leave `risk_probability` empty and rank by finding priority, MRR and reach. If no finding passes, write an empty CSV with these headers; do not promote model scores into an action queue without an accepted driver.
+Create one row per active account exposed to an accepted finding. Columns: `account_id`, `priority`, `finding_id`, `mrr_exposed_max`, `plan_tier`, `mrr_band`, `risk_probability`, `signals`, `immediate_action`, `structural_action`, `owner`, `status`. Copy the reviewed owner into `owner` and leave `status` empty. If the model is unpublished, leave `risk_probability` empty and rank by finding priority, MRR and reach. If no finding passes, write an empty CSV with these headers; do not promote model scores into an action queue without an accepted driver. Gere separadamente `account_watchlist.csv` com contas expostas a sinais descritivos, ordenadas por quantidade de sinais e MRR, sempre com `status=validation_only` e sem autorização de intervenção.
 
 - [x] **Step 6: Generate the executive report from data**
 
-Write `artifacts/report.md` with: executive decision; section `O que não bate` showing `C-usage-growth` and `C-satisfaction-ok` overall versus the next-30-day-churn cohort; top accepted cause; counterevidence; segment table; named priority accounts; one-week containment; 30–90-day correction; expected measurement; methodology and limitations. Insert metrics from DataFrames; do not hard-code numbers into prose. If no finding passes, replace the decision and action ranking with `Evidência insuficiente para priorizar uma causa`, list the failed gates, preserve the two claim checks and descriptive facts, and emit no named priority account.
+Write `artifacts/report.md` with: executive decision; section `O que não bate` showing `C-usage-growth` and `C-satisfaction-ok` overall versus the next-30-day-churn cohort; top accepted cause; counterevidence; segment table; named priority accounts; one-week containment; 30–90-day correction; expected measurement; methodology and limitations. Insert metrics from DataFrames; do not hard-code numbers into prose. If no finding passes, replace the decision and action ranking with `Evidência insuficiente para priorizar uma causa`, list the failed gates, preserve the two claim checks and descriptive facts, keep the operational queue empty and name only validation accounts from the separate watchlist, explicitly without intervention authorization.
 
 - [x] **Step 7: Write the run manifest last**
 
@@ -900,7 +900,7 @@ Add filters for finding, segment dimension and chronology. Display adjusted effe
 
 - [x] **Step 6: Implement operational queue**
 
-Filter by priority, finding, plan and MRR band. Display account ID, MRR exposed, signals and actions. Use `st.download_button` with the filtered DataFrame encoded as UTF-8 CSV. Keep `owner` and `status` editable only after download; the web app remains read-only.
+Filter by priority, finding, plan and MRR band. Display account ID, MRR exposed, signals and actions. Use `st.download_button` with the filtered DataFrame encoded as UTF-8 CSV. Keep `owner` and `status` editable only after download; the web app remains read-only. Quando a fila estiver vazia, mostrar e exportar a watchlist separada com aviso explícito de validação sem contato.
 
 - [x] **Step 7: Add the Cloud runtime dependency file**
 
@@ -909,7 +909,6 @@ Create `requirements.txt` beside `app.py` with exactly:
 ```text
 numpy==2.5.3
 pandas==3.0.6
-plotly==7.1.0
 scikit-learn==1.9.1
 scipy==1.18.1
 statsmodels==0.15.0
@@ -1014,6 +1013,7 @@ git add -f \
   submissions/luis-roquette/solution/001-churn/README.md \
   submissions/luis-roquette/solution/001-churn/artifacts/account_panel.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/account_queue.csv \
+  submissions/luis-roquette/solution/001-churn/artifacts/account_watchlist.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/claim_checks.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/findings.csv \
   submissions/luis-roquette/solution/001-churn/artifacts/segment_metrics.csv \
@@ -1102,7 +1102,7 @@ Confirm that process logs `000`, `001` and `002` plus setup evidence are present
 | Cross all five tables | Tasks 1–4 | contract, orphan, panel and corroboration tests |
 | Explain churn without claiming proven causality | Task 4 | direction, confidence interval, chronology and sensitivity gates |
 | Reconcile “usage grew” and “satisfaction is okay” | Tasks 4, 6 and 7 | six-month claim checks, canonical artifact and executive section |
-| Identify risky segments and named accounts | Tasks 4 and 6 | segment thresholds plus canonical account queue |
+| Identify risky segments and named accounts | Tasks 4 and 6 | segment thresholds plus action queue or validation-only watchlist |
 | Prioritize concrete action by MRR | Tasks 3, 4 and 6 | MRR-at-churn test, deterministic ranking and shared finding IDs |
 | Prevent leakage and expose contradictory dates | Tasks 2 and 3 | known-data assertions and observed-versus-strict panel tests |
 | Keep model optional and useful outside time | Task 5 | grouped temporal split and fail-closed model gate |

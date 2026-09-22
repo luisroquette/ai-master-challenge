@@ -1,15 +1,16 @@
 {
   "artifact_checksums": {
-    "account_panel.csv": "d38be9ba3716c6f4fa7fba35630f8ea396cdb490ab48da37152ead384afe2897",
-    "account_queue.csv": "27516a5480c06f5b5dfe3be827adf412f1141c6b4c03a0a399e494fb17dacf3d",
-    "claim_checks.csv": "dc7bb31d4d86296afc3ce6ffd4e3ce7d5b4099cd431de152f280b7265c818401",
-    "findings.csv": "de92f158c7c7cb7fcd93ac8f88eddad90c89313eaf5dd45f37b40fa45c3e1f2b",
-    "model_evaluation.json": "17dd73794e8a69d069acb95c0eadc9ec1dc92921c41b0096f92cd0f5bd03bd1c",
-    "quality_report.json": "a533f7989d40f61bc764cbe0ba1e8c649be3da0b1405251ac83710f97096860f",
-    "report.md": "c38fe445135985e364f54ea6313aebd05737b672109aae75d920ff54c5c2bfa3",
-    "segment_metrics.csv": "00fc66d91762ab08dee2cca2c82414cef5941d5a5dab7e5f91dfd886abe34042"
+    "account_panel.csv": "06fb9376fcc031e8e87df7c75c0edc2cdc9b71b4a4381f9a85e78167abeaaa5b",
+    "account_queue.csv": "9fd1d7b8aa462317b7146e11de82c9ccb88d1fb459b6e0fafe1b74ea72edbc32",
+    "account_watchlist.csv": "5da3d0dd1577f48c31992cf9163f41ae5a299115772193c3efe42dcddbbba769",
+    "claim_checks.csv": "0ef0296c4070a9f06236df99eab62bf99999bb22a19d7593dcca77e275ed5d87",
+    "findings.csv": "2ad17a1643bb79c174b05a7e76bf1a3047a2beff7a364bef2d96bd92648b6d2d",
+    "model_evaluation.json": "bb9eb9e81c5d6e37707869ae398bd075b254f6d53397b20b3d815865acd486b2",
+    "quality_report.json": "37a7dba1c20aad819b6f100f934375f7ee9b600cfdc39ca7ad505a62282593fc",
+    "report.md": "732d1785592c8a82c45dea61403ec5933446706102ad12ce7bc0712b9b83de02",
+    "segment_metrics.csv": "3245cae0b716b09280606f6e785b241a7285eedc6775ef5e77a06ec11a12fee9"
   },
-  "generated_at_utc": "2026-09-21T23:37:51.759074+00:00",
+  "generated_at_utc": "2026-09-22T00:44:29.604146+00:00",
   "input_checksums": {
     "ravenstack_accounts.csv": "348d8ba906b7776894b5236b2e7aa91a503d41670dbc9aad30c37b503c9abef5",
     "ravenstack_churn_events.csv": "6391c41d8291b7b4845ec9a84d3837c2ed230a33a32a854ec33d4e66dc150940",
@@ -48,6 +49,6 @@
     },
     "python": "3.12.13"
   },
-  "source_git_sha": "203c11922f19b6abb4a72c08b21813637180d5e8",
+  "source_git_sha": "464a3337f4c1d55acf00b2e1fdbb7ba90c1ceafc",
   "test_status": "passed"
 }

@@ -334,3 +334,91 @@ Assim, o diário não pode virar apenas uma lista de comandos, commits ou gates 
 - a diferença entre produto construído, produto demonstrado e produto publicado.
 
 Esta própria etapa exemplifica o princípio: havia um app construído, mas ainda faltava torná-lo visível ao autor. A intervenção de Luis corrigiu a narrativa e melhorou a entrega. Documentar essa correção é tão importante quanto registrar os 29 testes aprovados.
+
+## Redundância Necessária — auditoria exaustiva pós-resultado
+
+### Decisão autoral
+
+Com o primeiro resultado funcional em mãos, Luis abriu uma etapa que aplica habitualmente em seus projetos: **Redundância Necessária**. A intenção é não confundir “funciona” com “está exaustivamente resolvido”. Assim como um arquiteto revisita o desenho depois de enxergar a obra de pé, a solução será relida como produto completo para descobrir erros, falhas, gaps, melhorias e otimizações que a construção inicial não revelou.
+
+O ponto de partida informado foi:
+
+- app local em `http://localhost:8501`;
+- projeto em `submissions/luis-roquette/solution/001-churn`;
+- interface em `app.py`;
+- relatório em `artifacts/report.md`;
+- submissão em `submissions/luis-roquette/README.md`;
+- branch `submission/luis-roquette`.
+
+Luis citou o commit `b703c87`, que era o SHA válido no momento da primeira demonstração. O ponto de partida efetivo desta auditoria é `464a333`, commit posterior que adicionou ao diário a própria jornada construtiva. A correção do SHA é registrada para não produzir uma cronologia artificial.
+
+### Método
+
+O objetivo da etapa é alcançar **duas passadas completas consecutivas sem novos apontamentos**. Cada passada deve reavaliar, sem herdar automaticamente a conclusão anterior:
+
+1. briefing, SPEC, plano, rastreabilidade e submissão;
+2. contratos, qualidade, painel temporal, diagnóstico, modelo e publicação;
+3. artefatos canônicos e coerência entre relatório, dashboard e CSV;
+4. experiência funcional e visual do app local;
+5. reprodução, testes, dependências, escopo Git e documentação da jornada.
+
+Quando uma passada encontrar qualquer problema material, a sequência estável volta a `0/2`. O achado entra no ciclo `Planejamento → Revisão → Execução → Teste`; somente depois da correção e validação começa uma nova passada integral. Ajustes puramente subjetivos não serão usados para prolongar artificialmente o loop.
+
+### Estado inicial
+
+**Sequência estável:** `0/2`.
+**Estado:** primeira passada iniciada.
+**Observação operacional:** o gerenciador de `/goal` já possuía o objetivo anterior pausado e recusou criar um segundo objetivo simultâneo. A Redundância Necessária permanece como continuação mais rigorosa do mesmo objetivo de implementação, sem apagar ou declarar prematuramente concluído o goal original.
+
+### Passada 1 — falhas materiais encontradas
+
+**Resultado:** sequência estável reiniciada para `0/2`.
+
+A primeira releitura integral mostrou que testes verdes não bastavam. Foram encontrados estes problemas conectados:
+
+1. O snapshot diagnóstico escolhia a última linha disponível de cada conta. Como contas churnadas deixam de aparecer após o evento, a própria data futura de churn influenciava a linha selecionada. A amostra resultante tinha 64,9% de positivos, contra 3,0%–18,5% nos cutoffs mensais: viés de seleção material.
+2. A cronologia `strict` removia uso anterior ao início, mas ainda aceitava os 290 usos posteriores ao fim da assinatura.
+3. A divergência entre flag de assinatura e evento terminal era contada por assinatura, comparando 5.000 linhas com um estado da conta. O número 3.204 parecia preciso, mas misturava granularidades; a reconciliação correta deve agregar a flag por conta.
+4. `C-usage-growth` classificava a coorte de churn como `up` pelo slope, embora o valor final (0,319) fosse inferior ao inicial (0,374). Para responder à frase “uso cresceu”, o status executivo precisa usar variação ponta a ponta e preservar o slope como informação auxiliar.
+5. O CLI publicava os checksums esperados no manifesto, mas não verificava os bytes reais durante `reproduce`; somente um teste separado fazia isso.
+6. `mrr_lost_at_churn` existia e estava testado, porém não alimentava o painel nem os segmentos. O campo publicado como `mrr_lost` somava MRR no cutoff, não a perda real imediatamente anterior ao churn.
+7. No app, o filtro de cronologia mudava apenas a legenda; a fila não oferecia todos os filtros previstos; termos internos e motivos de falha eram expostos sem tradução executiva.
+8. O preflight executava `ruff check`, mas não `ruff format --check`; sete arquivos estavam fora do formato canônico.
+9. Plotly permanecia como dependência sem uso. O app também não materializava as comparações principais em visualizações.
+10. O relatório não mostrava as contradições de qualidade e chamava hipóteses recusadas de “evidências causais candidatas”, linguagem forte demais para o próprio resultado.
+
+O reparo será feito em cascata: primeiro integridade e amostra analítica; depois publicação e interface; por fim reprodução completa e reinício da auditoria desde o briefing.
+
+### Passada 1 — reparos guiados pelos achados
+
+**Resultado:** correções implementadas; a primeira passada não conta como estável porque encontrou falhas.
+
+O ciclo começou pelos contratos e pela unidade analítica. `reproduce` agora verifica os cinco SHA-256 antes de ler os CSVs; a divergência de flags de assinatura passou a ser reconciliada por conta; a cronologia `strict` também exclui uso posterior ao fim da assinatura. O snapshot diagnóstico usa um cutoff comum e somente contas com assinatura ativa, eliminando a escolha de datas condicionada ao outcome. A perda de MRR publicada vem da assinatura ativa no dia anterior ao churn.
+
+Na camada de decisão, o claim de uso preserva o slope, mas classifica a frase executiva pela variação entre início e fim. Os segmentos ganharam taxa geral e risco relativo. O modelo permaneceu opcional e foi novamente recusado sem publicar scores. Como nenhuma hipótese passou todos os gates, mantivemos a fila operacional vazia e criamos `account_watchlist.csv`: 125 contas nomeadas para validação descritiva, sem autorização de contato ou intervenção.
+
+Relatório e dashboard passaram a mostrar contradições de qualidade, contas para validação, métricas comparativas e tradução executiva. Plotly foi removido por não ser necessário; o gráfico usa o componente nativo do Streamlit. O preflight ganhou `ruff format --check`, e o manifesto passou a proteger nove artefatos além dele próprio.
+
+### Feedback looping visual
+
+A inspeção no navegador encontrou problemas que os primeiros testes não mostraram:
+
+1. Os sinais separados por `|` quebravam a tabela Markdown. O publicador agora escapa separadores genericamente e apresenta os sinais por vírgulas; um teste de regressão preserva esse contrato.
+2. O processo Streamlit antigo manteve o módulo anterior em cache e exibiu `ImportError`. Reiniciamos somente o servidor; o processo limpo carregou normalmente.
+3. O Streamlit avisou que `use_container_width` estava removido. Migramos para `width="stretch"`.
+4. O gráfico empilhava início e fim, sugerindo soma em vez de comparação. Ele agora usa barras lado a lado e rótulos `Início`/`Fim`.
+5. A watchlist transformava 125 posições em 125 chips. Substituímos por um slider `Até a posição`, limitado inicialmente às 25 primeiras, preservando acesso às 125.
+
+Os testes revelaram duas suposições estreitas durante os reparos: a fixture mínima de segmentos não tinha `confidence` nem todas as métricas do dataset real. Em vez de engrossar artificialmente a fixture, o app e o relatório passaram a aceitar colunas opcionais válidas e continuam exigindo o conjunto completo na reprodução canônica.
+
+### Fechamento da Passada 1
+
+Após as correções:
+
+- Ruff, `ruff format --check` e 37 testes estão verdes;
+- `make reproduce` regenera o conjunto canônico;
+- `make check` retorna `artifact_sets=equal` em diretório temporário;
+- as três abas foram inspecionadas no navegador, incluindo troca de cronologia, watchlist limitada e download;
+- o plano canônico foi corrigido para refletir cutoff comum, status ponta a ponta, watchlist e stack sem Plotly.
+
+**Sequência estável:** `0/2`. A próxima passada recomeça do briefing e precisa terminar sem novo apontamento para valer `1/2`.

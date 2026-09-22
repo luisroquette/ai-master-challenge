@@ -31,8 +31,8 @@
       "severity": "warning"
     },
     {
-      "count": 3204,
-      "rule": "subscriptions_flag_vs_terminal_event",
+      "count": 211,
+      "rule": "subscription_accounts_flag_vs_terminal_event",
       "severity": "warning"
     }
   ],
@@ -40,7 +40,7 @@
     "accounts_flag_vs_terminal_event": 301,
     "duplicate_usage_id_groups": 21,
     "events_before_signup": 0,
-    "subscriptions_flag_vs_terminal_event": 3204,
+    "subscription_accounts_flag_vs_terminal_event": 211,
     "tickets_before_signup": 1077,
     "tickets_closed_before_submission": 0,
     "usage_after_subscription": 290,

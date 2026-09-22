@@ -25,6 +25,54 @@ from .config import (
 )
 from .diagnosis import CANDIDATES, rank_findings
 
+CLAIM_LABELS = {
+    "C-usage-growth": "Uso da plataforma (C-usage-growth)",
+    "C-satisfaction-ok": "Satisfação dos clientes (C-satisfaction-ok)",
+}
+COHORT_LABELS = {"overall": "Todas as contas", "churn_next_30d": "Churn em até 30 dias"}
+STATUS_LABELS = {
+    "up": "Aumentou",
+    "down": "Caiu",
+    "concern": "Exige atenção",
+    "ok": "Adequada",
+}
+FINDING_LABELS = {
+    "F-product-usage-drop": "Queda de uso",
+    "F-product-errors": "Erros de produto",
+    "F-support-escalation": "Escalações de suporte",
+    "F-support-satisfaction": "Baixa satisfação",
+    "F-commercial-downgrade": "Downgrade comercial",
+    "F-commercial-renewal": "Renovação automática desligada",
+}
+FAILURE_LABELS = {
+    "association_gate": "Associação insuficiente",
+    "chronology_instability": "Instável entre cronologias",
+    "sample_or_coverage_gate": "Amostra ou cobertura insuficiente",
+    "cross_table_gate": "Sem confirmação entre tabelas",
+    "model_failure:LinAlgError": "Modelo estatístico instável",
+    "model_failure:ValueError": "Modelo estatístico inválido",
+}
+QUALITY_LABELS = {
+    "usage_before_subscription": "Usos anteriores à assinatura",
+    "usage_before_signup": "Usos anteriores ao cadastro",
+    "tickets_before_signup": "Tickets anteriores ao cadastro",
+    "accounts_flag_vs_terminal_event": "Flags de conta divergentes do evento",
+    "usage_after_subscription": "Usos posteriores ao fim da assinatura",
+    "subscription_accounts_flag_vs_terminal_event": "Flags de assinatura divergentes por conta",
+    "duplicate_usage_id_groups": "Grupos de IDs de uso duplicados",
+}
+DIMENSION_LABELS = {
+    "industry": "Indústria",
+    "country": "País",
+    "referral_source": "Origem",
+    "plan_tier": "Plano",
+    "billing_frequency": "Cobrança",
+    "is_trial": "Trial",
+    "mrr_band": "Faixa de MRR",
+}
+ELIGIBILITY_LABELS = {"eligible": "Elegível", "inconclusive": "Inconclusivo"}
+MRR_BAND_LABELS = {"low": "Baixo", "mid": "Médio", "high": "Alto"}
+
 
 class ArtifactConsistencyError(ValueError):
     pass
@@ -46,6 +94,8 @@ QUEUE_COLUMNS = (
     "priority",
     "finding_id",
     "mrr_exposed_max",
+    "plan_tier",
+    "mrr_band",
     "risk_probability",
     "signals",
     "immediate_action",
@@ -53,6 +103,18 @@ QUEUE_COLUMNS = (
     "owner",
     "status",
 )
+
+
+def _mrr_band(value: float) -> str:
+    if value <= 500:
+        return "low"
+    if value <= 2_000:
+        return "mid"
+    return "high"
+
+
+def _translated_signals(value: str) -> str:
+    return ", ".join(FINDING_LABELS.get(signal, signal) for signal in value.split("|"))
 
 
 def _json_default(value: object) -> object:
@@ -75,21 +137,24 @@ def _accepted_findings(findings: pd.DataFrame) -> pd.DataFrame:
     return rank_findings(findings).loc[lambda frame: frame["confidence"].eq("accepted")]
 
 
+def _exposed(values: pd.Series, operator: str, threshold: object) -> pd.Series:
+    return {
+        "le": values.le(threshold),
+        "ge": values.ge(threshold),
+        "eq": values.eq(threshold),
+    }[operator].fillna(False)
+
+
 def _build_queue(result: AnalysisResult) -> pd.DataFrame:
     accepted = _accepted_findings(result.findings)
     scoring = result.panel.loc[
-        result.panel["cutoff"].eq(SCORING_CUTOFF)
-        & result.panel["chronology"].eq("strict")
+        result.panel["cutoff"].eq(SCORING_CUTOFF) & result.panel["chronology"].eq("strict")
     ].copy()
     rows: list[dict[str, object]] = []
     for finding in accepted.itertuples(index=False):
         feature, _, _, operator, threshold = CANDIDATES[finding.finding_id]
         values = scoring[feature]
-        exposed = {
-            "le": values.le(threshold),
-            "ge": values.ge(threshold),
-            "eq": values.eq(threshold),
-        }[operator].fillna(False)
+        exposed = _exposed(values, operator, threshold)
         for account in scoring.loc[exposed].itertuples(index=False):
             rows.append(
                 {
@@ -97,6 +162,8 @@ def _build_queue(result: AnalysisResult) -> pd.DataFrame:
                     "priority": finding.priority_rank,
                     "finding_id": finding.finding_id,
                     "mrr_exposed_max": account.mrr_active,
+                    "plan_tier": getattr(account, "plan_tier", "n/d"),
+                    "mrr_band": _mrr_band(float(account.mrr_active)),
                     "risk_probability": np.nan,
                     "signals": f"{feature}={getattr(account, feature)}",
                     "immediate_action": finding.immediate_action,
@@ -127,12 +194,62 @@ def _build_queue(result: AnalysisResult) -> pd.DataFrame:
     )
 
 
+def _build_watchlist(result: AnalysisResult) -> pd.DataFrame:
+    scoring = result.panel.loc[
+        result.panel["cutoff"].eq(SCORING_CUTOFF) & result.panel["chronology"].eq("strict")
+    ].copy()
+    signal_map: dict[str, list[str]] = {str(account_id): [] for account_id in scoring.account_id}
+    for finding_id, (feature, _, _, operator, threshold) in CANDIDATES.items():
+        if feature not in scoring:
+            continue
+        exposed_accounts = scoring.loc[
+            _exposed(scoring[feature], operator, threshold), "account_id"
+        ]
+        for account_id in exposed_accounts:
+            signal_map[str(account_id)].append(finding_id)
+
+    rows = []
+    for account in scoring.itertuples(index=False):
+        signals = signal_map[str(account.account_id)]
+        if not signals:
+            continue
+        mrr = float(account.mrr_active)
+        rows.append(
+            {
+                "account_id": account.account_id,
+                "signal_count": len(signals),
+                "mrr_exposed_max": mrr,
+                "plan_tier": getattr(account, "plan_tier", "n/d"),
+                "mrr_band": _mrr_band(mrr),
+                "signals": "|".join(signals),
+                "status": "validation_only",
+            }
+        )
+    columns = (
+        "account_id",
+        "validation_rank",
+        "signal_count",
+        "mrr_exposed_max",
+        "plan_tier",
+        "mrr_band",
+        "signals",
+        "status",
+    )
+    if not rows:
+        return pd.DataFrame(columns=columns)
+    watchlist = pd.DataFrame(rows).sort_values(
+        ["signal_count", "mrr_exposed_max", "account_id"], ascending=[False, False, True]
+    )
+    watchlist.insert(1, "validation_rank", range(1, len(watchlist) + 1))
+    return watchlist.loc[:, columns].reset_index(drop=True)
+
+
 def _value(value: object) -> str:
     if pd.isna(value):
         return "n/d"
     if isinstance(value, (float, np.floating)):
         return f"{value:.3f}"
-    return str(value)
+    return str(value).replace("|", r"\|").replace("\n", "<br>")
 
 
 def _markdown_table(frame: pd.DataFrame, columns: tuple[str, ...]) -> list[str]:
@@ -147,7 +264,7 @@ def _markdown_table(frame: pd.DataFrame, columns: tuple[str, ...]) -> list[str]:
     return lines
 
 
-def _build_report(result: AnalysisResult, queue: pd.DataFrame) -> str:
+def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame) -> str:
     accepted = _accepted_findings(result.findings)
     decision = (
         f"Priorizar {accepted.iloc[0]['finding_id']}."
@@ -156,21 +273,65 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame) -> str:
     )
     lines = ["# Diagnóstico executivo de churn", "", "## Decisão executiva", "", decision, ""]
 
+    claim_index = result.claim_checks.set_index(["claim_id", "cohort"])
+    usage_overall = STATUS_LABELS[claim_index.loc[("C-usage-growth", "overall"), "status"]]
+    usage_churn = STATUS_LABELS[claim_index.loc[("C-usage-growth", "churn_next_30d"), "status"]]
+    satisfaction = STATUS_LABELS[claim_index.loc[("C-satisfaction-ok", "overall"), "status"]]
+    lines.extend(
+        [
+            (
+                "**Leitura em uma frase:** uso "
+                f"{usage_overall} no agregado e {usage_churn} na coorte que churnará em 30 dias; "
+                f"satisfação {satisfaction.lower()}, mas nenhuma hipótese causal passou todos os gates."
+            ),
+            "",
+        ]
+    )
+
     lines.extend(["## O que não bate", ""])
     claims = result.claim_checks.loc[
         result.claim_checks["cohort"].isin(["overall", "churn_next_30d"])
-    ]
+    ].copy()
+    claims = claims.replace(
+        {"claim_id": CLAIM_LABELS, "cohort": COHORT_LABELS, "status": STATUS_LABELS}
+    ).rename(
+        columns={
+            "claim_id": "métrica",
+            "cohort": "coorte",
+            "start_value": "início",
+            "end_value": "fim",
+            "slope": "tendência",
+            "status": "leitura",
+            "coverage": "cobertura",
+        }
+    )
     lines.extend(
         _markdown_table(
             claims,
-            ("claim_id", "cohort", "start_value", "end_value", "status", "coverage"),
+            ("métrica", "coorte", "início", "fim", "tendência", "leitura", "cobertura"),
         )
     )
 
-    lines.extend(["", "## Evidências causais candidatas", ""])
+    quality_rows = pd.DataFrame(
+        [
+            {"regra": rule, "linhas": count}
+            for rule, count in result.quality_report.get("contradictions", {}).items()
+            if count
+        ],
+        columns=["regra", "linhas"],
+    ).sort_values("linhas", ascending=False)
+    quality_rows["regra"] = quality_rows["regra"].replace(QUALITY_LABELS)
+    lines.extend(["", "## Qualidade que limita a decisão", ""])
+    lines.extend(_markdown_table(quality_rows, ("regra", "linhas")))
+
+    lines.extend(["", "## Hipóteses avaliadas", ""])
     if accepted.empty:
-        failed = result.findings[["finding_id", "failure_reason"]]
-        lines.extend(_markdown_table(failed, ("finding_id", "failure_reason")))
+        failed = (
+            result.findings[["finding_id", "failure_reason"]]
+            .replace({"finding_id": FINDING_LABELS, "failure_reason": FAILURE_LABELS})
+            .rename(columns={"finding_id": "hipótese", "failure_reason": "por que não passou"})
+        )
+        lines.extend(_markdown_table(failed, ("hipótese", "por que não passou")))
     else:
         lines.extend(
             _markdown_table(
@@ -186,17 +347,80 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame) -> str:
             )
         )
 
-    lines.extend(["", "## Segmentos", ""])
+    lines.extend(["", "## Segmentos descritivos", ""])
+    segment_confidence = result.segment_metrics.get(
+        "confidence", pd.Series("inconclusive", index=result.segment_metrics.index)
+    )
+    ordered_segments = result.segment_metrics.assign(_eligible=segment_confidence.eq("eligible"))
+    segment_order = [
+        column
+        for column in ("_eligible", "relative_risk", "mrr_lost")
+        if column in ordered_segments
+    ]
+    ordered_segments = ordered_segments.sort_values(segment_order, ascending=False)
+    ordered_segments["confidence"] = segment_confidence
+    ordered_segments["dimension"] = ordered_segments["dimension"].replace(DIMENSION_LABELS)
+    ordered_segments["confidence"] = ordered_segments["confidence"].replace(ELIGIBILITY_LABELS)
+    ordered_segments = ordered_segments.rename(
+        columns={
+            "dimension": "dimensão",
+            "segment": "segmento",
+            "sample_size": "contas",
+            "churn_rate": "taxa de churn",
+            "overall_churn_rate": "taxa geral",
+            "relative_risk": "risco relativo",
+            "mrr_lost": "MRR perdido",
+            "confidence": "elegibilidade",
+        }
+    )
     segment_columns = tuple(
         column
-        for column in ("dimension", "segment", "sample_size", "churn_rate", "mrr_lost", "confidence")
-        if column in result.segment_metrics
+        for column in (
+            "dimensão",
+            "segmento",
+            "contas",
+            "taxa de churn",
+            "taxa geral",
+            "risco relativo",
+            "MRR perdido",
+            "elegibilidade",
+        )
+        if column in ordered_segments
     )
-    lines.extend(_markdown_table(result.segment_metrics.head(15), segment_columns))
+    lines.extend(_markdown_table(ordered_segments.head(15), segment_columns))
 
-    lines.extend(["", "## Contas prioritárias", ""])
+    lines.extend(["", "## Contas para validação" if queue.empty else "## Contas prioritárias", ""])
     if queue.empty:
-        lines.append("Nenhuma conta nomeada: não há finding aceito.")
+        lines.append(
+            "Nenhuma conta está autorizada para intervenção: não há finding aceito. "
+            "As contas abaixo servem somente para validação dos sinais e dos dados."
+        )
+        visible_watchlist = watchlist.head(10).copy()
+        visible_watchlist["signals"] = visible_watchlist["signals"].map(_translated_signals)
+        visible_watchlist["status"] = "Somente validação"
+        visible_watchlist = visible_watchlist.rename(
+            columns={
+                "account_id": "conta",
+                "validation_rank": "ordem de validação",
+                "signal_count": "quantidade de sinais",
+                "mrr_exposed_max": "MRR exposto máximo",
+                "signals": "sinais",
+                "status": "uso permitido",
+            }
+        )
+        lines.extend(
+            _markdown_table(
+                visible_watchlist,
+                (
+                    "conta",
+                    "ordem de validação",
+                    "quantidade de sinais",
+                    "MRR exposto máximo",
+                    "sinais",
+                    "uso permitido",
+                ),
+            )
+        )
     else:
         lines.extend(
             _markdown_table(
@@ -207,7 +431,23 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame) -> str:
 
     lines.extend(["", "## Plano de ação", ""])
     if accepted.empty:
-        lines.append("Revisar qualidade, cobertura e estabilidade antes de direcionar uma intervenção.")
+        lines.extend(
+            [
+                (
+                    "- **1 semana:** colocar eventos fora do ciclo de vida em quarentena analítica, "
+                    "auditar uma amostra das 97 contas com renovação automática desligada e corrigir "
+                    "os vínculos de data."
+                ),
+                (
+                    "- **30–90 dias:** instrumentar o ciclo de vida com chaves e relógios confiáveis, "
+                    "acompanhar uma coorte prospectiva e repetir os gates antes de automatizar contato."
+                ),
+                (
+                    "- **Medição:** cobertura temporal válida, estabilidade observed/strict e MRR "
+                    "realmente perdido na coorte prospectiva."
+                ),
+            ]
+        )
     else:
         top = accepted.iloc[0]
         lines.extend(
@@ -260,15 +500,17 @@ def publish_artifacts(result: AnalysisResult, output_dir: Path) -> dict[str, Pat
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     queue = _build_queue(result)
+    watchlist = _build_watchlist(result)
     payloads: dict[str, tuple[str, object]] = {
         "account_panel": ("csv", result.panel),
         "account_queue": ("csv", queue),
+        "account_watchlist": ("csv", watchlist),
         "claim_checks": ("csv", result.claim_checks),
         "findings": ("csv", rank_findings(result.findings)),
         "segment_metrics": ("csv", result.segment_metrics),
         "quality_report": ("json", result.quality_report),
         "model_evaluation": ("json", result.model_evaluation),
-        "report": ("md", _build_report(result, queue)),
+        "report": ("md", _build_report(result, queue, watchlist)),
     }
     paths: dict[str, Path] = {}
     for key, (suffix, payload) in payloads.items():

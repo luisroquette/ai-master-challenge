@@ -4,17 +4,17 @@ Pipeline Python 3.12 que cruza as cinco tabelas do Challenge 001, testa as alega
 
 ## Decisão executiva
 
-Os dados não sustentam priorizar uma causa como raiz. As seis hipóteses falharam pelo menos um gate de estabilidade cronológica, associação controlada, cobertura ou corroboração entre tabelas. Portanto, a fila operacional está deliberadamente vazia e o relatório recomenda corrigir a confiabilidade da medição antes de lançar uma intervenção causal.
+Os dados não sustentam priorizar uma causa como raiz. As seis hipóteses falharam pelo menos um gate de estabilidade cronológica, associação controlada, cobertura ou corroboração entre tabelas. Portanto, a fila operacional está deliberadamente vazia; uma watchlist separada nomeia contas somente para validar sinais e o relatório recomenda corrigir a confiabilidade da medição antes de lançar uma intervenção causal.
 
 Ainda assim, há fatos úteis:
 
-- o uso médio ajustado por cobertura tem tendência de alta no agregado e entre contas que churnam em até 30 dias;
+- o uso médio ajustado por cobertura sobe no agregado, mas cai entre as contas que churnam em até 30 dias;
 - satisfação é `concern`, não “ok”: média e cobertura de respostas não passam juntas pelo gate;
 - 19.142 usos antecedem o início da assinatura, 13.198 antecedem o cadastro e 1.077 tickets antecedem o cadastro;
 - desligamento de renovação automática expõe no máximo US$ 2.096.221 de MRR em 97 contas, mas não passou o gate entre tabelas;
-- o modelo opcional foi recusado por lift, Brier e não convergência; nenhum score foi publicado.
+- o modelo opcional foi recusado por ganho de average precision, Brier e não convergência; nenhum score foi publicado.
 
-Leia primeiro o [relatório executivo](artifacts/report.md). A [fila CSV](artifacts/account_queue.csv) é vazia por desenho, não por falha do pipeline.
+Leia primeiro o [relatório executivo](artifacts/report.md). A [fila CSV](artifacts/account_queue.csv) é vazia por desenho, não por falha do pipeline; a [watchlist](artifacts/account_watchlist.csv) não autoriza contato ou intervenção.
 
 ## Reproduzir
 
@@ -47,7 +47,7 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 ## Estrutura
 
 - `src/ravenstack_churn/`: contratos, painel temporal, diagnóstico, modelo e publicação.
-- `tests/`: 29 testes de dados, vazamento, gates, consistência e dashboard.
+- `tests/`: 37 testes de dados, vazamento, gates, consistência, Markdown e dashboard.
 - `artifacts/`: saídas canônicas protegidas por `run_manifest.json`.
 - `app.py`: Streamlit somente leitura; nunca recalcula a análise.
 - `.specs/` e `docs/superpowers/plans/`: SPEC e plano SDD executado.
@@ -62,9 +62,10 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 | `segment_metrics.csv` | snapshot diagnóstico por segmento; não é taxa populacional histórica |
 | `account_panel.csv` | painel completo `observed` + `strict` |
 | `account_queue.csv` | contas acionáveis apenas quando existe finding aceito |
+| `account_watchlist.csv` | contas nomeadas para validação descritiva, sem ação autorizada |
 | `quality_report.json` | schema, nulos, duplicidades e contradições |
 | `model_evaluation.json` | métricas fora do tempo e motivos de recusa |
-| `run_manifest.json` | ambiente, parâmetros e SHA-256 dos outros oito artefatos |
+| `run_manifest.json` | ambiente, parâmetros e SHA-256 dos outros nove artefatos |
 
 ## Gates analíticos
 

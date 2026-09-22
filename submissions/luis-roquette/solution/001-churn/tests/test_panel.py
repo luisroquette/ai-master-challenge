@@ -33,6 +33,18 @@ def test_strict_panel_excludes_pre_lifecycle_events(mini_tables) -> None:
     assert not bool(strict_a2["support_coverage_90d"])
 
 
+def test_strict_panel_excludes_usage_after_subscription_end(mini_tables) -> None:
+    mini_tables["subscriptions"].loc[
+        mini_tables["subscriptions"].subscription_id.eq("S-1"), "end_date"
+    ] = "2024-05-01"
+    observed = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "observed")
+    strict = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
+    observed_a1 = observed.loc[observed.account_id.eq("A-1")].iloc[0]
+    strict_a1 = strict.loc[strict.account_id.eq("A-1")].iloc[0]
+    assert observed_a1["usage_count_30d"] == 4
+    assert strict_a1["usage_count_30d"] == 0
+
+
 def test_annual_renewal_uses_next_start_anniversary(mini_tables) -> None:
     panel = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
     annual = panel.loc[panel.account_id.eq("A-1")].iloc[0]
@@ -44,6 +56,8 @@ def test_mrr_lost_is_active_revenue_immediately_before_churn(mini_tables) -> Non
     terminal = first_terminal_churn(mini_tables["churn_events"])
     lost = mrr_lost_at_churn(mini_tables["subscriptions"], terminal)
     assert lost["A-1"] == 1200
+    panel = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
+    assert panel.loc[panel.account_id.eq("A-1"), "mrr_lost_next_30d"].iloc[0] == 1200
 
 
 def test_concurrent_subscriptions_preserve_revenue_and_mixed_dimensions(mini_tables) -> None:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import RAW_FILE_SHA256
+from .config import RAW_FILE_SHA256, sha256_file
 
 SCHEMAS = {
     "accounts": (
@@ -126,9 +126,7 @@ def _parse_boolean(series: pd.Series, table: str, column: str) -> pd.Series:
     return parsed.astype("boolean")
 
 
-def _parse_numeric(
-    series: pd.Series, table: str, column: str, *, integer: bool
-) -> pd.Series:
+def _parse_numeric(series: pd.Series, table: str, column: str, *, integer: bool) -> pd.Series:
     parsed = pd.to_numeric(series, errors="coerce")
     invalid = series.notna() & parsed.isna()
     if integer:
@@ -177,6 +175,8 @@ def load_raw_tables(raw_dir: Path) -> dict[str, pd.DataFrame]:
         path = raw_dir / filename
         if not path.is_file():
             raise DataContractError(f"missing file: {path}")
+        if sha256_file(path) != RAW_FILE_SHA256[filename]:
+            raise DataContractError(f"{filename}: checksum mismatch")
         name = filename.removeprefix("ravenstack_").removesuffix(".csv")
         tables[name] = pd.read_csv(path, dtype="string")
     return _coerce_tables(tables)

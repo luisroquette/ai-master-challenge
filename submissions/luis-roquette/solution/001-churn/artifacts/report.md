@@ -4,53 +4,81 @@
 
 Evidência insuficiente para priorizar uma causa
 
+**Leitura em uma frase:** uso Aumentou no agregado e Caiu na coorte que churnará em 30 dias; satisfação exige atenção, mas nenhuma hipótese causal passou todos os gates.
+
 ## O que não bate
 
-| claim id | cohort | start value | end value | status | coverage |
-| --- | --- | --- | --- | --- | --- |
-| C-usage-growth | overall | 0.356 | 0.520 | up | 0.845 |
-| C-satisfaction-ok | overall | 3.940 | 4.021 | concern | 0.640 |
-| C-usage-growth | churn_next_30d | 0.374 | 0.319 | up | 0.634 |
-| C-satisfaction-ok | churn_next_30d | 4.500 | 3.667 | concern | 0.659 |
+| métrica | coorte | início | fim | tendência | leitura | cobertura |
+| --- | --- | --- | --- | --- | --- | --- |
+| Uso da plataforma (C-usage-growth) | Todas as contas | 0.336 | 0.493 | 0.039 | Aumentou | 0.884 |
+| Satisfação dos clientes (C-satisfaction-ok) | Todas as contas | 3.940 | 4.021 | n/d | Exige atenção | 0.640 |
+| Uso da plataforma (C-usage-growth) | Churn em até 30 dias | 0.349 | 0.304 | 0.002 | Caiu | 0.729 |
+| Satisfação dos clientes (C-satisfaction-ok) | Churn em até 30 dias | 4.500 | 3.667 | n/d | Exige atenção | 0.659 |
 
-## Evidências causais candidatas
+## Qualidade que limita a decisão
 
-| finding id | failure reason |
+| regra | linhas |
 | --- | --- |
-| F-commercial-renewal | cross_table_gate |
-| F-product-usage-drop | model_failure:ValueError |
-| F-product-errors | model_failure:ValueError |
-| F-commercial-downgrade | cross_table_gate |
-| F-support-satisfaction | model_failure:ValueError |
-| F-support-escalation | model_failure:ValueError |
+| Usos anteriores à assinatura | 19142 |
+| Usos anteriores ao cadastro | 13198 |
+| Tickets anteriores ao cadastro | 1077 |
+| Flags de conta divergentes do evento | 301 |
+| Usos posteriores ao fim da assinatura | 290 |
+| Flags de assinatura divergentes por conta | 211 |
+| Grupos de IDs de uso duplicados | 21 |
 
-## Segmentos
+## Hipóteses avaliadas
 
-| dimension | segment | sample size | churn rate | mrr lost | confidence |
+| hipótese | por que não passou |
+| --- | --- |
+| Renovação automática desligada | Associação insuficiente |
+| Queda de uso | Instável entre cronologias |
+| Erros de produto | Instável entre cronologias |
+| Downgrade comercial | Amostra ou cobertura insuficiente |
+| Baixa satisfação | Modelo estatístico instável |
+| Escalações de suporte | Amostra ou cobertura insuficiente |
+
+## Segmentos descritivos
+
+| dimensão | segmento | contas | taxa de churn | taxa geral | risco relativo | MRR perdido | elegibilidade |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| País | US | 106 | 0.160 | 0.149 | 1.075 | 223111.000 | Elegível |
+| Trial | False | 146 | 0.151 | 0.149 | 1.010 | 374777.000 | Elegível |
+| Faixa de MRR | high | 170 | 0.141 | 0.149 | 0.946 | 459183.000 | Elegível |
+| Cobrança | mixed | 171 | 0.140 | 0.149 | 0.941 | 449951.000 | Elegível |
+| Plano | mixed | 168 | 0.137 | 0.149 | 0.918 | 435486.000 | Elegível |
+| Plano | Basic | 4 | 0.500 | 0.149 | 3.352 | 6685.000 | Inconclusivo |
+| Cobrança | annual | 5 | 0.400 | 0.149 | 2.681 | 15917.000 | Inconclusivo |
+| Faixa de MRR | mid | 10 | 0.300 | 0.149 | 2.011 | 7863.000 | Inconclusivo |
+| País | AU | 15 | 0.267 | 0.149 | 1.788 | 131919.000 | Inconclusivo |
+| Plano | Enterprise | 8 | 0.250 | 0.149 | 1.676 | 24875.000 | Inconclusivo |
+| Origem | event | 38 | 0.211 | 0.149 | 1.411 | 142010.000 | Inconclusivo |
+| Cobrança | monthly | 5 | 0.200 | 0.149 | 1.341 | 1178.000 | Inconclusivo |
+| Indústria | Cybersecurity | 37 | 0.189 | 0.149 | 1.268 | 103707.000 | Inconclusivo |
+| Origem | partner | 27 | 0.185 | 0.149 | 1.241 | 39525.000 | Inconclusivo |
+| Indústria | DevTools | 36 | 0.167 | 0.149 | 1.117 | 86210.000 | Inconclusivo |
+
+## Contas para validação
+
+Nenhuma conta está autorizada para intervenção: não há finding aceito. As contas abaixo servem somente para validação dos sinais e dos dados.
+| conta | ordem de validação | quantidade de sinais | MRR exposto máximo | sinais | uso permitido |
 | --- | --- | --- | --- | --- | --- |
-| industry | Cybersecurity | 89 | 0.663 | 362645.000 | eligible |
-| industry | DevTools | 100 | 0.700 | 558429.000 | eligible |
-| industry | EdTech | 71 | 0.676 | 313110.000 | eligible |
-| industry | FinTech | 98 | 0.582 | 503672.000 | eligible |
-| industry | HealthTech | 84 | 0.631 | 435392.000 | eligible |
-| country | AU | 29 | 0.621 | 156205.000 | inconclusive |
-| country | CA | 21 | 0.714 | 56012.000 | inconclusive |
-| country | DE | 25 | 0.560 | 77630.000 | inconclusive |
-| country | FR | 18 | 0.722 | 70523.000 | inconclusive |
-| country | IN | 42 | 0.595 | 317109.000 | eligible |
-| country | UK | 55 | 0.727 | 229150.000 | eligible |
-| country | US | 252 | 0.643 | 1266619.000 | eligible |
-| referral_source | ads | 90 | 0.556 | 425283.000 | eligible |
-| referral_source | event | 85 | 0.647 | 365083.000 | eligible |
-| referral_source | organic | 102 | 0.696 | 676986.000 | eligible |
-
-## Contas prioritárias
-
-Nenhuma conta nomeada: não há finding aceito.
+| A-49b828 | 1 | 4 | 31108.000 | Queda de uso, Escalações de suporte, Baixa satisfação, Renovação automática desligada | Somente validação |
+| A-e60f9d | 2 | 3 | 50095.000 | Queda de uso, Downgrade comercial, Renovação automática desligada | Somente validação |
+| A-92a3af | 3 | 3 | 34538.000 | Queda de uso, Downgrade comercial, Renovação automática desligada | Somente validação |
+| A-d4ac0e | 4 | 3 | 27215.000 | Queda de uso, Baixa satisfação, Renovação automática desligada | Somente validação |
+| A-4e631b | 5 | 3 | 24398.000 | Erros de produto, Downgrade comercial, Renovação automática desligada | Somente validação |
+| A-bcf87c | 6 | 3 | 13611.000 | Queda de uso, Downgrade comercial, Renovação automática desligada | Somente validação |
+| A-bc4d48 | 7 | 3 | 12390.000 | Queda de uso, Escalações de suporte, Renovação automática desligada | Somente validação |
+| A-e98302 | 8 | 3 | 9725.000 | Queda de uso, Erros de produto, Renovação automática desligada | Somente validação |
+| A-1b707d | 9 | 3 | 9180.000 | Queda de uso, Erros de produto, Renovação automática desligada | Somente validação |
+| A-019782 | 10 | 3 | 5169.000 | Erros de produto, Baixa satisfação, Renovação automática desligada | Somente validação |
 
 ## Plano de ação
 
-Revisar qualidade, cobertura e estabilidade antes de direcionar uma intervenção.
+- **1 semana:** colocar eventos fora do ciclo de vida em quarentena analítica, auditar uma amostra das 97 contas com renovação automática desligada e corrigir os vínculos de data.
+- **30–90 dias:** instrumentar o ciclo de vida com chaves e relógios confiáveis, acompanhar uma coorte prospectiva e repetir os gates antes de automatizar contato.
+- **Medição:** cobertura temporal válida, estabilidade observed/strict e MRR realmente perdido na coorte prospectiva.
 
 ## Metodologia e limitações
 

@@ -10,16 +10,72 @@ def mini_tables() -> dict[str, pd.DataFrame]:
     tables = {
         "accounts": pd.DataFrame(
             [
-                ["A-1", "Acme", "FinTech", "BR", "2023-01-01", "organic", "Enterprise", 20, False, False],
+                [
+                    "A-1",
+                    "Acme",
+                    "FinTech",
+                    "BR",
+                    "2023-01-01",
+                    "organic",
+                    "Enterprise",
+                    20,
+                    False,
+                    False,
+                ],
                 ["A-2", "Beta", "EdTech", "US", "2024-05-20", "partner", "Basic", 5, False, True],
             ],
             columns=SCHEMAS["accounts"],
         ),
         "subscriptions": pd.DataFrame(
             [
-                ["S-1", "A-1", "2023-06-15", "2024-06-15", "Enterprise", 20, 1000, 12000, False, False, False, True, "annual", True],
-                ["S-2", "A-1", "2024-04-01", None, "Pro", 10, 200, 2400, False, False, False, False, "monthly", True],
-                ["S-3", "A-2", "2024-05-20", None, "Basic", 5, 300, 3600, False, False, False, False, "monthly", True],
+                [
+                    "S-1",
+                    "A-1",
+                    "2023-06-15",
+                    "2024-06-15",
+                    "Enterprise",
+                    20,
+                    1000,
+                    12000,
+                    False,
+                    False,
+                    False,
+                    True,
+                    "annual",
+                    True,
+                ],
+                [
+                    "S-2",
+                    "A-1",
+                    "2024-04-01",
+                    None,
+                    "Pro",
+                    10,
+                    200,
+                    2400,
+                    False,
+                    False,
+                    False,
+                    False,
+                    "monthly",
+                    True,
+                ],
+                [
+                    "S-3",
+                    "A-2",
+                    "2024-05-20",
+                    None,
+                    "Basic",
+                    5,
+                    300,
+                    3600,
+                    False,
+                    False,
+                    False,
+                    False,
+                    "monthly",
+                    True,
+                ],
             ],
             columns=SCHEMAS["subscriptions"],
         ),
@@ -42,7 +98,17 @@ def mini_tables() -> dict[str, pd.DataFrame]:
         ),
         "churn_events": pd.DataFrame(
             [
-                ["C-1", "A-1", "2024-06-15", "product", 0.0, False, False, False, "missing feature"],
+                [
+                    "C-1",
+                    "A-1",
+                    "2024-06-15",
+                    "product",
+                    0.0,
+                    False,
+                    False,
+                    False,
+                    "missing feature",
+                ],
                 ["C-2", "A-1", "2024-07-01", "reactivation", 0.0, False, False, True, "returned"],
             ],
             columns=SCHEMAS["churn_events"],
@@ -76,9 +142,7 @@ def candidate_frames() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
                 "account_id": f"A-{index:03d}",
                 "cutoff": pd.Timestamp("2024-11-30"),
                 "churn_next_30d": churn,
-                "first_terminal_churn_date": (
-                    pd.Timestamp("2024-12-15") if churn else pd.NaT
-                ),
+                "first_terminal_churn_date": (pd.Timestamp("2024-12-15") if churn else pd.NaT),
                 "usage_change_30_vs_90": -0.5 if churn else -0.1,
                 "error_rate_30d": 0.2 if churn else 0.02,
                 "escalations_90d": 2 if churn else 0,
@@ -176,9 +240,7 @@ def model_panel() -> pd.DataFrame:
     from hashlib import sha256
 
     rows = []
-    cutoffs = pd.to_datetime(
-        ["2024-08-31", "2024-09-30", "2024-10-31", "2024-11-30", "2024-12-31"]
-    )
+    cutoffs = pd.to_datetime(["2024-08-31", "2024-09-30", "2024-10-31", "2024-11-30", "2024-12-31"])
     for account_number in range(30):
         account_id = f"M-{account_number:03d}"
         for month, cutoff in enumerate(cutoffs):
@@ -244,6 +306,7 @@ def analysis_result(accepted_findings, claim_panel):
                 "cutoff": pd.Timestamp("2024-12-31"),
                 "chronology": "strict",
                 "mrr_active": 1_000,
+                "plan_tier": "Pro",
                 "escalations_90d": 2,
                 "auto_renew_off": True,
             },
@@ -252,6 +315,7 @@ def analysis_result(accepted_findings, claim_panel):
                 "cutoff": pd.Timestamp("2024-12-31"),
                 "chronology": "strict",
                 "mrr_active": 500,
+                "plan_tier": "Basic",
                 "escalations_90d": 0,
                 "auto_renew_off": True,
             },

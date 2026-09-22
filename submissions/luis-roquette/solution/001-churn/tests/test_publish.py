@@ -5,6 +5,7 @@ import pytest
 
 from ravenstack_churn.publish import (
     ArtifactConsistencyError,
+    _markdown_table,
     compare_artifact_sets,
     publish_artifacts,
     validate_artifact_set,
@@ -24,6 +25,8 @@ def test_queue_and_report_use_same_finding_ids(analysis_result, tmp_path) -> Non
     )
     assert set(claim_checks.claim_id) == {"C-usage-growth", "C-satisfaction-ok"}
     assert all(claim_id in report for claim_id in claim_checks.claim_id.unique())
+    assert {"plan_tier", "mrr_band"}.issubset(queue.columns)
+    assert "Qualidade que limita a decisão" in report
 
 
 def test_manifest_rejects_modified_artifact(analysis_result, tmp_path) -> None:
@@ -40,7 +43,16 @@ def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_p
     )
     paths = publish_artifacts(result, tmp_path)
     assert pd.read_csv(paths["account_queue"]).empty
-    assert "Evidência insuficiente para priorizar uma causa" in paths["report"].read_text()
+    watchlist = pd.read_csv(paths["account_watchlist"])
+    assert not watchlist.empty
+    assert set(watchlist["status"]) == {"validation_only"}
+    report = paths["report"].read_text()
+    assert "Evidência insuficiente para priorizar uma causa" in report
+
+
+def test_markdown_table_escapes_cell_separators() -> None:
+    table = _markdown_table(pd.DataFrame([{"signals": "usage|errors"}]), ("signals",))
+    assert table[-1] == r"| usage\|errors |"
 
 
 def test_equivalent_runs_compare_equal(analysis_result, tmp_path) -> None:

@@ -53,7 +53,9 @@ def build_quality_report(tables: dict[str, pd.DataFrame]) -> dict[str, Any]:
         churn.loc[~churn["is_reactivation"].fillna(False), "account_id"].dropna()
     )
     account_terminal = accounts["account_id"].isin(terminal_accounts)
-    subscription_terminal = subscriptions["account_id"].isin(terminal_accounts)
+    subscription_account_flag = (
+        subscriptions.groupby("account_id")["churn_flag"].any().reindex(accounts["account_id"])
+    )
 
     contradictions = {
         "duplicate_usage_id_groups": int((usage.groupby("usage_id").size() > 1).sum()),
@@ -81,8 +83,10 @@ def build_quality_report(tables: dict[str, pd.DataFrame]) -> dict[str, Any]:
         "accounts_flag_vs_terminal_event": int(
             accounts["churn_flag"].fillna(False).ne(account_terminal).sum()
         ),
-        "subscriptions_flag_vs_terminal_event": int(
-            subscriptions["churn_flag"].fillna(False).ne(subscription_terminal).sum()
+        "subscription_accounts_flag_vs_terminal_event": int(
+            (
+                subscription_account_flag.fillna(False).to_numpy() != account_terminal.to_numpy()
+            ).sum()
         ),
     }
 

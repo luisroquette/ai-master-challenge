@@ -25,7 +25,8 @@ Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `obser
 - [Relatório executivo](solution/001-churn/artifacts/report.md): decisão e evidências verificáveis.
 - [Dashboard local e reprodução](solution/001-churn/README.md): três visões, filtros e exportação.
 - [Findings canônicos](solution/001-churn/artifacts/findings.csv): seis hipóteses inconclusivas com motivo explícito.
-- [Claims canônicos](solution/001-churn/artifacts/claim_checks.csv): uso sobe por tendência, satisfação permanece `concern`.
+- [Claims canônicos](solution/001-churn/artifacts/claim_checks.csv): uso sobe no agregado, cai na coorte de churn e satisfação permanece `concern`.
+- [Contas para validação](solution/001-churn/artifacts/account_watchlist.csv): sinais descritivos nomeados, sem autorização de intervenção.
 - [Qualidade dos dados](solution/001-churn/artifacts/quality_report.json): 19.142 usos pré-assinatura, 13.198 pré-cadastro e 1.077 tickets pré-cadastro.
 
 ### Recomendações

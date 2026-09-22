@@ -77,17 +77,14 @@ CONTROL_COLUMNS = (
 
 def build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame:
     labeled = panel.loc[
-        panel["churn_next_30d"].notna()
-        & panel["cutoff"].le(pd.Timestamp("2024-11-30"))
+        panel["churn_next_30d"].notna() & panel["cutoff"].le(pd.Timestamp("2024-11-30"))
     ].copy()
-    terminal = labeled.get("first_terminal_churn_date", pd.Series(pd.NaT, index=labeled.index))
-    labeled = labeled.loc[terminal.isna() | labeled["cutoff"].lt(terminal)]
-    return (
-        labeled.sort_values(["account_id", "cutoff"])
-        .groupby("account_id", as_index=False, sort=False)
-        .tail(1)
-        .reset_index(drop=True)
-    )
+    if "has_active_subscription" in labeled:
+        labeled = labeled.loc[labeled["has_active_subscription"].fillna(False)]
+    if labeled.empty:
+        return labeled.reset_index(drop=True)
+    common_cutoff = labeled["cutoff"].max()
+    return labeled.loc[labeled["cutoff"].eq(common_cutoff)].reset_index(drop=True)
 
 
 def _fit_association(snapshot: pd.DataFrame, feature: str) -> dict[str, Any]:
@@ -119,9 +116,7 @@ def _fit_association(snapshot: pd.DataFrame, feature: str) -> dict[str, Any]:
     try:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            result = sm.GLM(outcome, design, family=sm.families.Binomial()).fit(
-                cov_type="HC3"
-            )
+            result = sm.GLM(outcome, design, family=sm.families.Binomial()).fit(cov_type="HC3")
         if any(
             issubclass(item.category, (PerfectSeparationWarning, SingularMatrixWarning))
             for item in caught
@@ -171,8 +166,10 @@ def _reason_corroborates(
         "support": r"support|service|sla",
         "commercial": r"price|pricing|competitor|budget|commercial",
     }
-    reason_match = terminal["reason_code"].astype("string").str.contains(
-        patterns[driver_group], case=False, na=False, regex=True
+    reason_match = (
+        terminal["reason_code"]
+        .astype("string")
+        .str.contains(patterns[driver_group], case=False, na=False, regex=True)
     )
     overall = float(reason_match.mean())
     exposed = terminal["account_id"].isin(exposed_accounts)
@@ -209,6 +206,7 @@ def _segment_metrics(snapshot: pd.DataFrame) -> pd.DataFrame:
     if snapshot.empty:
         return pd.DataFrame()
     data = snapshot.copy()
+    overall_churn_rate = float(data["churn_next_30d"].astype(int).mean())
     data["mrr_band"] = pd.cut(
         data["mrr_active"],
         bins=[-np.inf, 500, 2_000, np.inf],
@@ -234,13 +232,21 @@ def _segment_metrics(snapshot: pd.DataFrame) -> pd.DataFrame:
                     "sample_size": len(group),
                     "churn_count": churn_count,
                     "churn_rate": float(churn.mean()),
-                    "mrr_lost": float(group.loc[churn.eq(1), "mrr_active"].sum()),
+                    "overall_churn_rate": overall_churn_rate,
+                    "churn_rate_delta": float(churn.mean() - overall_churn_rate),
+                    "relative_risk": (
+                        float(churn.mean() / overall_churn_rate) if overall_churn_rate else np.nan
+                    ),
+                    "mrr_lost": float(
+                        group.get("mrr_lost_next_30d", group["mrr_active"])
+                        .where(churn.eq(1), 0)
+                        .sum()
+                    ),
                     "mrr_exposed": float(group["mrr_active"].sum()),
                     "coverage": float(group["churn_next_30d"].notna().mean()),
                     "confidence": (
                         "eligible"
-                        if len(group) >= MIN_SEGMENT_ACCOUNTS
-                        and churn_count >= MIN_SEGMENT_CHURNS
+                        if len(group) >= MIN_SEGMENT_ACCOUNTS and churn_count >= MIN_SEGMENT_CHURNS
                         else "inconclusive"
                     ),
                 }
@@ -348,6 +354,8 @@ def _monthly_values(frame: pd.DataFrame, value_column: str) -> pd.Series:
 
 def build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame:
     labeled = strict_panel.loc[strict_panel["churn_next_30d"].notna()].copy()
+    if "has_active_subscription" in labeled:
+        labeled = labeled.loc[labeled["has_active_subscription"].fillna(False)]
     cutoffs = sorted(labeled["cutoff"].drop_duplicates())[-6:]
     labeled = labeled.loc[labeled["cutoff"].isin(cutoffs)]
     cohorts = {
@@ -365,8 +373,11 @@ def build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame:
         monthly_usage = _monthly_values(usage, "daily_usage")
         if len(monthly_usage) >= 2:
             slope = float(np.polyfit(np.arange(len(monthly_usage)), monthly_usage.values, 1)[0])
-            status = "up" if slope > 1e-9 else "down" if slope < -1e-9 else "flat"
             usage_start, usage_end = float(monthly_usage.iloc[0]), float(monthly_usage.iloc[-1])
+            endpoint_change = usage_end - usage_start
+            status = (
+                "up" if endpoint_change > 1e-9 else "down" if endpoint_change < -1e-9 else "flat"
+            )
         else:
             slope, usage_start, usage_end, status = np.nan, np.nan, np.nan, "insufficient"
         rows.append(
@@ -385,8 +396,7 @@ def build_claim_checks(strict_panel: pd.DataFrame) -> pd.DataFrame:
         )
 
         valid_satisfaction = cohort.loc[
-            cohort["mean_satisfaction_90d"].notna()
-            & cohort["satisfaction_responses_90d"].gt(0)
+            cohort["mean_satisfaction_90d"].notna() & cohort["satisfaction_responses_90d"].gt(0)
         ].copy()
         monthly_satisfaction = valid_satisfaction.groupby("cutoff", observed=True).apply(
             lambda group: np.average(

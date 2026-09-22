@@ -13,9 +13,7 @@ def first_terminal_churn(churn_events: pd.DataFrame) -> pd.Series:
     return terminal.groupby("account_id")["churn_date"].min().sort_index()
 
 
-def mrr_lost_at_churn(
-    subscriptions: pd.DataFrame, terminal_churn: pd.Series
-) -> pd.Series:
+def mrr_lost_at_churn(subscriptions: pd.DataFrame, terminal_churn: pd.Series) -> pd.Series:
     parsed = _coerce_table("subscriptions", subscriptions)
     lost = {}
     for account_id, churn_date in terminal_churn.items():
@@ -122,9 +120,7 @@ def _add_support_window(
     satisfaction_count = int(selected["satisfaction_score"].notna().sum())
     row[f"tickets_{window}d"] = ticket_count
     row[f"escalations_{window}d"] = int(selected["escalation_flag"].fillna(False).sum())
-    row[f"mean_first_response_{window}d"] = selected[
-        "first_response_time_minutes"
-    ].mean()
+    row[f"mean_first_response_{window}d"] = selected["first_response_time_minutes"].mean()
     row[f"mean_resolution_{window}d"] = selected["resolution_time_hours"].mean()
     row[f"mean_satisfaction_{window}d"] = selected["satisfaction_score"].mean()
     row[f"satisfaction_responses_{window}d"] = satisfaction_count
@@ -197,16 +193,20 @@ def build_account_panel(
     parsed = _coerce_tables(tables)
     accounts = parsed["accounts"].copy()
     subscriptions = parsed["subscriptions"].copy()
-    usage = parsed["feature_usage"].merge(
-        subscriptions[["subscription_id", "account_id", "start_date", "end_date"]],
-        on="subscription_id",
-        how="left",
-        validate="many_to_one",
-    ).merge(
-        accounts[["account_id", "signup_date"]],
-        on="account_id",
-        how="left",
-        validate="many_to_one",
+    usage = (
+        parsed["feature_usage"]
+        .merge(
+            subscriptions[["subscription_id", "account_id", "start_date", "end_date"]],
+            on="subscription_id",
+            how="left",
+            validate="many_to_one",
+        )
+        .merge(
+            accounts[["account_id", "signup_date"]],
+            on="account_id",
+            how="left",
+            validate="many_to_one",
+        )
     )
     tickets = parsed["support_tickets"].merge(
         accounts[["account_id", "signup_date"]],
@@ -218,15 +218,15 @@ def build_account_panel(
         usage = usage.loc[
             usage["usage_date"].ge(usage["signup_date"])
             & usage["usage_date"].ge(usage["start_date"])
+            & (usage["end_date"].isna() | usage["usage_date"].le(usage["end_date"]))
         ]
         tickets = tickets.loc[tickets["submitted_at"].ge(tickets["signup_date"])]
 
     terminal = first_terminal_churn(parsed["churn_events"])
+    lost_at_churn = mrr_lost_at_churn(subscriptions, terminal)
     usage_by_account = {key: value for key, value in usage.groupby("account_id")}
     tickets_by_account = {key: value for key, value in tickets.groupby("account_id")}
-    subscriptions_by_account = {
-        key: value for key, value in subscriptions.groupby("account_id")
-    }
+    subscriptions_by_account = {key: value for key, value in subscriptions.groupby("account_id")}
     rows: list[dict[str, object]] = []
 
     for raw_cutoff in pd.DatetimeIndex(cutoffs):
@@ -248,9 +248,7 @@ def build_account_panel(
                 )
             ]
             annual = active.loc[active["billing_frequency"].eq("annual")]
-            renewals = [
-                _next_anniversary(start, cutoff) for start in annual["start_date"].dropna()
-            ]
+            renewals = [_next_anniversary(start, cutoff) for start in annual["start_date"].dropna()]
             next_renewal = min(renewals) if renewals else pd.NaT
             terminal_date = terminal.get(account_id, pd.NaT)
             usage_events = usage_by_account.get(account_id, usage.iloc[0:0])
@@ -292,9 +290,7 @@ def build_account_panel(
                     cutoff,
                     window,
                 )
-                _add_support_window(
-                    row, ticket_events, account.signup_date, cutoff, window
-                )
+                _add_support_window(row, ticket_events, account.signup_date, cutoff, window)
 
             recent_subscriptions = _events_between(
                 account_subscriptions,
@@ -302,22 +298,22 @@ def build_account_panel(
                 cutoff - pd.Timedelta(days=90),
                 cutoff,
             )
-            row["downgrade_90d"] = bool(
-                recent_subscriptions["downgrade_flag"].fillna(False).any()
-            )
-            row["upgrade_90d"] = bool(
-                recent_subscriptions["upgrade_flag"].fillna(False).any()
-            )
+            row["downgrade_90d"] = bool(recent_subscriptions["downgrade_flag"].fillna(False).any())
+            row["upgrade_90d"] = bool(recent_subscriptions["upgrade_flag"].fillna(False).any())
             _add_trends(row, usage_events, ticket_events, cutoff)
 
             row["is_scoring_row"] = bool(cutoff == SCORING_CUTOFF)
             if row["is_scoring_row"]:
                 row["churn_next_30d"] = pd.NA
+                row["mrr_lost_next_30d"] = pd.NA
             else:
                 row["churn_next_30d"] = int(
                     pd.notna(terminal_date)
                     and terminal_date > cutoff
                     and terminal_date <= cutoff + pd.Timedelta(days=30)
+                )
+                row["mrr_lost_next_30d"] = (
+                    int(lost_at_churn.get(account_id, 0)) if row["churn_next_30d"] else 0
                 )
             rows.append(row)
 

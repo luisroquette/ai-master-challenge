@@ -1,6 +1,40 @@
 import pandas as pd
 
-from ravenstack_churn.diagnosis import build_claim_checks, evaluate_candidates, rank_findings
+from ravenstack_churn.diagnosis import (
+    build_claim_checks,
+    build_diagnostic_snapshot,
+    evaluate_candidates,
+    rank_findings,
+)
+
+
+def test_diagnostic_snapshot_uses_one_common_cutoff() -> None:
+    panel = pd.DataFrame(
+        [
+            {
+                "account_id": "A-churned",
+                "cutoff": pd.Timestamp("2024-10-31"),
+                "churn_next_30d": 1,
+                "has_active_subscription": True,
+            },
+            {
+                "account_id": "A-active",
+                "cutoff": pd.Timestamp("2024-10-31"),
+                "churn_next_30d": 0,
+                "has_active_subscription": True,
+            },
+            {
+                "account_id": "A-active",
+                "cutoff": pd.Timestamp("2024-11-30"),
+                "churn_next_30d": 0,
+                "has_active_subscription": True,
+            },
+        ]
+    )
+    snapshot = build_diagnostic_snapshot(panel)
+    assert snapshot.account_id.tolist() == ["A-active"]
+    assert snapshot.cutoff.nunique() == 1
+    assert snapshot.cutoff.iloc[0] == pd.Timestamp("2024-11-30")
 
 
 def test_unstable_candidate_is_not_ranked(candidate_frames) -> None:
@@ -16,6 +50,12 @@ def test_rank_uses_mrr_then_reach_then_actionability(accepted_findings) -> None:
         "F-support-escalation",
         "F-commercial-renewal",
     ]
+
+
+def test_segment_metrics_include_relative_risk(candidate_frames) -> None:
+    observed, strict, churn_events = candidate_frames
+    _, segments = evaluate_candidates(observed, strict, churn_events)
+    assert {"overall_churn_rate", "churn_rate_delta", "relative_risk"}.issubset(segments)
 
 
 def test_zero_variance_candidate_is_inconclusive(candidate_frames) -> None:
@@ -34,3 +74,20 @@ def test_claim_checks_expose_aggregate_contradictions(claim_panel) -> None:
     assert checks.loc[("C-usage-growth", "churn_next_30d"), "status"] == "down"
     assert checks.loc[("C-satisfaction-ok", "overall"), "status"] == "ok"
     assert checks.loc[("C-satisfaction-ok", "churn_next_30d"), "status"] == "concern"
+
+
+def test_usage_status_uses_endpoint_change_not_regression_slope(claim_panel) -> None:
+    churn = claim_panel["churn_next_30d"].eq(1)
+    monthly_daily_usage = dict(
+        zip(sorted(claim_panel.cutoff.unique()), [10, 1, 1, 1, 100, 9], strict=True)
+    )
+    claim_panel.loc[churn, "usage_count_30d"] = (
+        claim_panel.loc[churn, "cutoff"].map(monthly_daily_usage) * 30
+    )
+    row = (
+        build_claim_checks(claim_panel)
+        .set_index(["claim_id", "cohort"])
+        .loc[("C-usage-growth", "churn_next_30d")]
+    )
+    assert row["slope"] > 0
+    assert row["status"] == "down"

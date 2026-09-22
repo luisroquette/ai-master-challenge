@@ -15,6 +15,7 @@ def test_conflicting_usage_ids_are_preserved_and_flagged(mini_tables) -> None:
 def test_churn_label_disagreement_is_reported(mini_tables) -> None:
     report = build_quality_report(mini_tables)
     assert report["contradictions"]["accounts_flag_vs_terminal_event"] == 2
+    assert report["contradictions"]["subscription_accounts_flag_vs_terminal_event"] == 0
     assert report["label_policy"] == "first_non_reactivation_event"
 
 
@@ -31,3 +32,4 @@ def test_vendored_data_keeps_known_quality_counts() -> None:
     assert report["contradictions"]["usage_before_subscription"] == 19142
     assert report["contradictions"]["usage_before_signup"] == 13198
     assert report["contradictions"]["tickets_before_signup"] == 1077
+    assert report["contradictions"]["subscription_accounts_flag_vs_terminal_event"] == 211

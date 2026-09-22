@@ -47,15 +47,16 @@ CATEGORICAL_FEATURES = (
     "plan_tier",
     "billing_frequency",
 )
-NUMERIC_FEATURES = tuple(feature for feature in MODEL_FEATURES if feature not in CATEGORICAL_FEATURES)
+NUMERIC_FEATURES = tuple(
+    feature for feature in MODEL_FEATURES if feature not in CATEGORICAL_FEATURES
+)
 
 
 def stable_account_split(account_ids: pd.Series) -> pd.Series:
     buckets = account_ids.astype(str).map(
-        lambda account_id: int(
-            sha256(f"{RANDOM_SEED}:{account_id}".encode()).hexdigest()[:8], 16
+        lambda account_id: (
+            int(sha256(f"{RANDOM_SEED}:{account_id}".encode()).hexdigest()[:8], 16) % 100
         )
-        % 100
     )
     return buckets.map(lambda bucket: "train" if bucket < 80 else "test")
 
@@ -184,9 +185,7 @@ def _segment_evaluation(
                     "average_precision": float(
                         average_precision_score(group["outcome"], group["probability"])
                     ),
-                    "brier_score": float(
-                        brier_score_loss(group["outcome"], group["probability"])
-                    ),
+                    "brier_score": float(brier_score_loss(group["outcome"], group["probability"])),
                     "recall_at_20pct": recall,
                     "lift_at_20pct": lift,
                     "status": "ok",
@@ -206,12 +205,14 @@ def evaluate_model(panel: pd.DataFrame) -> tuple[dict[str, object], pd.DataFrame
     if missing:
         return _failure(f"missing_features:{','.join(missing)}")
 
+    if "has_active_subscription" in panel:
+        panel = panel.loc[panel["has_active_subscription"].fillna(False)].copy()
+
     split = stable_account_split(panel["account_id"])
     labeled = panel.loc[panel["churn_next_30d"].notna()].copy()
     labeled["account_split"] = split.loc[labeled.index]
     train = labeled.loc[
-        labeled["account_split"].eq("train")
-        & labeled["cutoff"].le(pd.Timestamp("2024-08-31"))
+        labeled["account_split"].eq("train") & labeled["cutoff"].le(pd.Timestamp("2024-08-31"))
     ]
     test = labeled.loc[
         labeled["account_split"].eq("test")
@@ -219,9 +220,12 @@ def evaluate_model(panel: pd.DataFrame) -> tuple[dict[str, object], pd.DataFrame
     ]
     if set(train["account_id"]) & set(test["account_id"]):
         return _failure("account_leakage")
-    if train.empty or test.empty or train["churn_next_30d"].nunique() < 2 or test[
-        "churn_next_30d"
-    ].nunique() < 2:
+    if (
+        train.empty
+        or test.empty
+        or train["churn_next_30d"].nunique() < 2
+        or test["churn_next_30d"].nunique() < 2
+    ):
         return _failure("single_class_split")
 
     train_outcome = train["churn_next_30d"].astype(int)
@@ -230,15 +234,11 @@ def evaluate_model(panel: pd.DataFrame) -> tuple[dict[str, object], pd.DataFrame
         warnings.simplefilter("always", ConvergenceWarning)
         candidate = _pipeline().fit(_model_matrix(train), train_outcome)
     converged = not any(issubclass(item.category, ConvergenceWarning) for item in caught)
-    baseline = DummyClassifier(strategy="prior").fit(
-        np.zeros((len(train), 1)), train_outcome
-    )
+    baseline = DummyClassifier(strategy="prior").fit(np.zeros((len(train), 1)), train_outcome)
     probability = candidate.predict_proba(_model_matrix(test))[:, 1]
     baseline_probability = baseline.predict_proba(np.zeros((len(test), 1)))[:, 1]
     average_precision = float(average_precision_score(test_outcome, probability))
-    baseline_average_precision = float(
-        average_precision_score(test_outcome, baseline_probability)
-    )
+    baseline_average_precision = float(average_precision_score(test_outcome, baseline_probability))
     recall, lift = _top_twenty_metrics(test_outcome, probability)
     segment_metrics, complete = _segment_evaluation(test, test_outcome, probability)
     evaluation, _ = apply_model_gate(
@@ -294,7 +294,7 @@ def evaluate_model(panel: pd.DataFrame) -> tuple[dict[str, object], pd.DataFrame
             ],
         }
     )
-    scores["risk_rank"] = scores["risk_probability"].rank(
-        method="first", ascending=False
-    ).astype(int)
+    scores["risk_rank"] = (
+        scores["risk_probability"].rank(method="first", ascending=False).astype(int)
+    )
     return evaluation, scores.sort_values("risk_rank").reset_index(drop=True)
