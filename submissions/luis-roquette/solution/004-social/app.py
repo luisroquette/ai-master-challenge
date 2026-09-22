@@ -250,16 +250,21 @@ else:
         }
         result = analyze(active_frame, scope, str(metadata["source_hash"]))
         st.session_state["active_result"] = result
+        analysis_state = result["analysis_state"]
+        has_observations = bool(analysis_state["has_observations"])
         metrics = result["metrics"]
         st.caption(
             f"Período selecionado: {result['scope']['target_start']} a {result['scope']['target_end']} · "
             f"referência {result['scope']['reference_date']} · método {METHOD_VERSION} · "
             f"cobertura {'parcial' if partial_period else 'completa'}"
         )
-        columns = st.columns(3)
-        columns[0].metric("Posts", int(metrics["posts"]))
-        columns[1].metric("Visualizações", int(metrics["views"]))
-        columns[2].metric("Interações", int(metrics["interactions"]))
+        if has_observations:
+            columns = st.columns(3)
+            columns[0].metric("Posts", int(metrics["posts"]))
+            columns[1].metric("Visualizações", int(metrics["views"]))
+            columns[2].metric("Interações", int(metrics["interactions"]))
+        else:
+            st.warning(str(analysis_state["message"]))
 
         for warning in result["quality"].get("warnings", []):
             st.warning(warning["message"])
@@ -283,9 +288,10 @@ else:
             st.caption("Controles: plataforma, formato, categoria, faixa, mês e patrocínio; rótulos de posts, não personas nem vencedores causais.")
             st.dataframe(pd.DataFrame([{key: item[key] for key in ("dimension", "status", "eligible_strata", "uncovered_count", "covered_posts", "coverage")} for item in result.get("audience", [])]), hide_index=True, width="stretch")
 
-        st.subheader("Prioridades para decisão")
-        priorities = result["recommendations"] or result["pending"]
-        all_recommendations = result.get("all_recommendations", result["recommendations"])
+        if has_observations:
+            st.subheader("Prioridades para decisão")
+        priorities = (result["recommendations"] or result["pending"]) if has_observations else []
+        all_recommendations = result.get("all_recommendations", result["recommendations"]) if has_observations else []
         for rank, item in enumerate(priorities[:3], start=1):
             title = item.get("action", item.get("reason", "Coletar evidência"))
             with st.container(border=True):
@@ -316,8 +322,9 @@ else:
                 st.caption(f"Evidência `{additional['evidence_id']}` · prioridade {float(additional.get('priority', 0)):.4f}")
                 _render_evidence(_find_evidence(result, str(additional["evidence_id"])) or {}, additional, result)
 
-        st.subheader("Ranking secundário")
-        platform_rows = result["dimensions"].get("platform", [])
+        if has_observations:
+            st.subheader("Ranking secundário")
+        platform_rows = result["dimensions"].get("platform", []) if has_observations else []
         if platform_rows:
             st.dataframe(
                 _table_numbers(pd.DataFrame(platform_rows)[
@@ -373,7 +380,7 @@ else:
                         st.session_state["decision_event_id"] = str(uuid.uuid4())
                         decisions = list_decisions(connection)
 
-        eligible_outcomes = [item for item in decisions if item["source_hash"] != metadata["source_hash"]]
+        eligible_outcomes = [item for item in decisions if item["source_hash"] != metadata["source_hash"]] if has_observations else []
         if eligible_outcomes:
             st.subheader("Observação posterior")
             st.caption("A observação usa o segmento e a estatística salvos na decisão; somente a janela vem da análise ativa. Outros filtros atuais não redefinem o baseline.")
@@ -487,7 +494,7 @@ else:
             st.write("Visualizações por dia — baseline / observada:", comparison["baseline_volume_per_day"], "/", comparison["observed_volume_per_day"])
             st.caption("Observação não causal: diferença descritiva; pendência não comprova resultado da ação.")
 
-if result is not None:
+if result is not None and result["analysis_state"]["has_observations"]:
     decision_rows = _decision_export(decisions)
     st.download_button("Baixar resumo executivo (HTML)", executive_summary(result, decision_rows).encode("utf-8"), file_name="resumo-executivo.html", mime="text/html")
     st.download_button("Baixar evidências e decisões (CSV)", export_evidence(result, decision_rows), file_name="evidencias-decisoes.csv", mime="text/csv")

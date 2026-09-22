@@ -369,6 +369,45 @@ class AppTests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertTrue(any("Filtro vazio" in item.value for item in app.warning))
 
+    def test_incompatible_filter_intersection_hides_performance_and_recovers(self) -> None:
+        instagram_tech = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        tiktok_beauty = [
+            {
+                **row,
+                "id": f"beauty-{row['id']}",
+                "content_id": f"beauty-{row['content_id']}",
+                "platform": "TikTok",
+                "content_category": "beauty",
+            }
+            for row in instagram_tech
+        ]
+        app = self.app()
+        app.file_uploader[0].set_value(("mixed.csv", csv_bytes(instagram_tech + tiktok_beauty), "text/csv")).run()
+        app.button(key="save_decision").click().run()
+
+        app.multiselect(key="platform_filter").set_value(["Instagram"]).run()
+        app.multiselect(key="filter_content_category").set_value(["beauty"]).run()
+
+        self.assertFalse(app.exception)
+        self.assertTrue(any(
+            "Nenhum registro corresponde aos filtros/período selecionados" in item.value
+            for item in app.warning
+        ))
+        self.assertEqual(len(app.metric), 0)
+        self.assertEqual(len(app.download_button), 0)
+        self.assertEqual(app.multiselect(key="platform_filter").value, ["Instagram"])
+        self.assertEqual(app.multiselect(key="filter_content_category").value, ["beauty"])
+        self.assertTrue(any("120 linhas" in item.value for item in app.caption))
+        self.assertEqual(len(self.stored()), 1)
+        self.assertTrue(any("accepted" in item.value for item in app.markdown))
+
+        app.multiselect(key="filter_content_category").set_value(["tech"]).run()
+
+        self.assertFalse(app.exception)
+        self.assertEqual({item.label: item.value for item in app.metric}["Posts"], "30")
+        self.assertEqual(len(app.download_button), 2)
+        self.assertEqual(len(self.stored()), 1)
+
     def test_accepted_and_rejected_ignore_stray_text_in_decisions_and_revisions(self) -> None:
         app = self.app()
         app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
