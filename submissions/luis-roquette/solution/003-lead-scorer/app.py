@@ -31,7 +31,7 @@ class TemporaryPin:
 
 
 def bundle_cache_key(snapshot, config, identity):
-    payload = {"data_config": fingerprint(snapshot, config), "source": identity}
+    payload = {"data_config": fingerprint(snapshot, config), "source": dict(identity)}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"),
         allow_nan=False).encode()).hexdigest()
 

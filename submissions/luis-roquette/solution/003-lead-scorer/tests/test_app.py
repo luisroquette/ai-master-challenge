@@ -17,6 +17,7 @@ import sys
 import tempfile
 import threading
 import time
+from types import MappingProxyType
 import unittest
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -361,7 +362,7 @@ class PortfolioContractTests(unittest.TestCase):
         from data import Snapshot
         one = Snapshot((("x.csv", b"one"),), "{}", "deps")
         two = Snapshot((("x.csv", b"two"),), "{}", "deps")
-        identity = {"revision": None, "source_digest": "source-a"}
+        identity = MappingProxyType({"revision": None, "source_digest": "source-a"})
         self.assertNotEqual(self.app.bundle_cache_key(one, s.DEFAULT_CONFIG, identity),
                             self.app.bundle_cache_key(two, s.DEFAULT_CONFIG, identity))
         self.assertNotEqual(self.app.bundle_cache_key(one, s.DEFAULT_CONFIG, identity),
