@@ -87,6 +87,32 @@ def test_ceo_answer_reconciles_usage_and_satisfaction_claims(analysis_result) ->
     assert claims["C-satisfaction-churn-next-30d"]["period_end"] == "2024-11-30"
 
 
+def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
+    result = replace(
+        analysis_result,
+        findings=analysis_result.findings.assign(confidence="inconclusive"),
+        mechanism_scorecard=analysis_result.mechanism_scorecard.assign(
+            evidence_level="plausible_hypothesis", status="inconclusive"
+        ),
+    )
+
+    answer = _build_ceo_answer(result)
+    executive_text = " ".join(
+        [
+            answer["headline"],
+            *[
+                f"{block['title']} {block['summary']}"
+                for block in answer["blocks"]
+            ],
+        ]
+    ).lower()
+
+    assert "mecanismo mais forte" not in executive_text
+    assert "plausible_hypothesis" not in executive_text
+    assert "auto_renew_off" not in executive_text
+    assert "causa ainda não demonstrada" in executive_text
+
+
 def test_rehashed_invalid_reference_is_rejected(analysis_result, tmp_path) -> None:
     paths = publish_artifacts(analysis_result, tmp_path)
     answer = json.loads(paths["ceo_answer"].read_text())

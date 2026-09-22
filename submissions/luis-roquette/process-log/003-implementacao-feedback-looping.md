@@ -927,3 +927,11 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Arquitetura aprovada para planejamento:** preservar `ceo_answer.json` como fonte única; completar impacto econômico; declarar ausência de concentração material; substituir “mecanismo mais forte” por “causa ainda não demonstrada”; oferecer três validações com owner, prazo, população, métrica e condições de avançar/parar; e traduzir evidência em confiança executiva no dashboard.
 
 **Artefatos de planejamento:** SPEC criada em `.specs/tasks/todo/raise-ceo-answer-to-9-5.feature.md`; plano TDD em `docs/superpowers/plans/2026-09-22-decision-grade-ceo-answer.md`. Nenhum código de produção foi alterado nesta rodada. Implementação aguarda revisão humana da SPEC e do plano, conforme SDD.
+
+### Goal 9,5 — Task 1: rubrica e contrato causal
+
+**Planejamento e RED:** Luis autorizou executar as cinco tasks e medir a evolução após cada incremento. A linha de base foi fixada em 7,0/10. O novo teste reproduziu a falha: no cenário inconclusivo, a resposta ainda dizia “Mecanismo mais forte” e expunha o estado técnico da hipótese.
+
+**Execução e GREEN:** corrigimos o ponto canônico em `publish.py`: somente um mecanismo que passe todos os gates pode ser selecionado. Estados inconclusivo, indisponível ou empatado agora se abstêm de eleger uma linha arbitrária. O teste remoto direcionado passou em 11,40 s.
+
+**Medição:** 7,0/10 após a Task 1. A nota não subiu porque a task fixa o contrato e remove um risco de hard cap, mas ainda não acrescenta impacto econômico, ausência de concentração material nem plano decisório completo.

@@ -691,11 +691,21 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         mechanism_status = "tied"
     else:
         mechanism_status = "inconclusive" if not scorecard.empty else "unavailable"
-    mechanism = (
-        supported.iloc[0]
-        if not supported.empty
-        else (scorecard.iloc[0] if not scorecard.empty else None)
-    )
+    mechanism = supported.iloc[0] if len(supported) == 1 else None
+    if mechanism_status in {"inconclusive", "unavailable"}:
+        blocks["strongest_mechanism"].update(
+            {
+                "title": "Causa ainda não demonstrada",
+                "summary": "Nenhuma hipótese passou todos os gates; não há causa identificada.",
+            }
+        )
+    elif mechanism_status == "tied":
+        blocks["strongest_mechanism"].update(
+            {
+                "title": "Mecanismos sustentados empatados",
+                "summary": "Há mais de um mecanismo sustentado; nenhum foi eleito isoladamente.",
+            }
+        )
     mechanism_ref = None
     if mechanism is not None:
         mechanism_ref = add_ref(

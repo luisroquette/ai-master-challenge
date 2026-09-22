@@ -39,7 +39,7 @@
 - Consumes: `ceo_answer.json` schema v1 e os seis critérios da SPEC.
 - Produces: função de teste `score_executive_answer_contract(answer) -> dict[str, float | list[str]]` somente em testes; a nota humana continua separada.
 
-- [ ] **Step 1: escrever o teste RED dos hard caps**
+- [x] **Step 1: escrever o teste RED dos hard caps**
 
 ```python
 def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
@@ -53,23 +53,23 @@ def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
     assert "causa ainda não demonstrada" in executive_text
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py::test_executive_answer_has_no_causal_overclaim -q`
 
 Expected: FAIL porque a resposta atual publica `auto_renew_off` como mecanismo mais forte.
 
-- [ ] **Step 3: documentar a rubrica sem automatizar julgamento subjetivo**
+- [x] **Step 3: documentar a rubrica sem automatizar julgamento subjetivo**
 
 Criar a tabela de pesos da SPEC, exemplos de nota 7,0 e 9,5 e os hard caps. Não hardcodar uma nota de aprovação no produto.
 
-- [ ] **Step 4: revisar a rubrica contra CK-1–CK-12 e HR-1–HR-3**
+- [x] **Step 4: revisar a rubrica contra CK-1–CK-12 e HR-1–HR-3**
 
 Run: `rg -n "Resposta direta|Precisão quantitativa|Reconciliação|Calibração causal|Utilidade decisória|Consistência" docs/executive-answer-rubric.md`
 
 Expected: seis dimensões presentes; soma dos pesos igual a 10,0.
 
-- [ ] **Step 5: checkpoint**
+- [x] **Step 5: checkpoint**
 
 ```bash
 git add docs/executive-answer-rubric.md tests/test_publish.py
