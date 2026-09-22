@@ -1166,3 +1166,15 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   `5d832e99...357e5b` registrado em metrics. Nenhuma captura ou evidência foi recriada.
 - **Próximo critério:** executar nova rodada completa de Redundância. Esta correção encerra
   R1 em `0/2`; somente duas rodadas limpas consecutivas fecham a etapa.
+
+## I67 — Redundância Necessária R2: CLEAN — 2026-09-22
+
+- **Base auditada:** SHA `ed67f5cadb5a5103b87c7cb03f2d6c41c2ea05bf`.
+- **Resultado:** `CLEAN`; a regressão dos três achados de R1 confirmou CK-20 coerente com a
+  decisão do owner, setup completo para clone limpo e separação correta entre screenshot
+  de Scorecard e CSV/hash de persistência. Nenhum novo erro, gap ou otimização necessária.
+- **Verificação:** 2 testes de documentação/evidência e `git diff --check` passaram. O
+  preflight terminal continua explicitamente `não executado/não verde`.
+- **Ponytail:** revisão não encontrou código, dependência ou abstração a remover; nenhum
+  corte foi feito porque os contratos existentes são necessários para os gates seguros.
+- **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
