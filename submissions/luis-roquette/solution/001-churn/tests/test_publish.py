@@ -75,6 +75,18 @@ def test_ceo_answer_and_report_share_claim_ids_and_values(analysis_result, tmp_p
             assert claim["statement"] in report
 
 
+def test_ceo_answer_reconciles_usage_and_satisfaction_claims(analysis_result) -> None:
+    answer = _build_ceo_answer(analysis_result)
+    claims = {claim["id"]: claim for block in answer["blocks"] for claim in block["claims"]}
+
+    assert "uso cresceu no agregado" in answer["headline"]
+    assert "caiu entre as contas que churnariam em 30 dias" in answer["headline"]
+    assert claims["C-usage-overall"]["period_start"] == "2024-06-30"
+    assert claims["C-usage-churn-next-30d"]["status"] == "down"
+    assert claims["C-satisfaction-overall"]["population"] == "support_ticket_respondents"
+    assert claims["C-satisfaction-churn-next-30d"]["period_end"] == "2024-11-30"
+
+
 def test_rehashed_invalid_reference_is_rejected(analysis_result, tmp_path) -> None:
     paths = publish_artifacts(analysis_result, tmp_path)
     answer = json.loads(paths["ceo_answer"].read_text())

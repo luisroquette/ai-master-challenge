@@ -484,8 +484,8 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
             "columns": list(columns),
             "calculation": row.get("calculation", "published_table"),
             "source_tables": str(row.get("source_refs", artifact)).split("|"),
-            "period_start": _iso_date(row.get("period_start")),
-            "period_end": _iso_date(row.get("period_end")),
+            "period_start": _iso_date(row.get("period_start", row.get("cutoff_start"))),
+            "period_end": _iso_date(row.get("period_end", row.get("cutoff_end"))),
             "population": str(row.get("population", "declared_population")),
             "unit": str(row.get("rate_unit", row.get("unit", "declared_unit"))),
         }
@@ -565,6 +565,84 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
             )
         )
         blocks["what_changed"]["summary"] = statement
+
+    usage = result.claim_checks.loc[result.claim_checks["claim_id"].eq("C-usage-growth")]
+    usage_overall = usage.loc[usage["cohort"].eq("overall")]
+    usage_churn = usage.loc[usage["cohort"].eq("churn_next_30d")]
+    if (
+        not usage_overall.empty
+        and not usage_churn.empty
+        and usage_overall.iloc[0][["start_value", "end_value"]].notna().all()
+        and usage_churn.iloc[0][["start_value", "end_value"]].notna().all()
+    ):
+        overall_row = usage_overall.iloc[0]
+        churn_row = usage_churn.iloc[0]
+        overall_ref = add_ref(
+            "claim:C-usage-growth:overall",
+            "claim_checks.csv",
+            overall_row,
+            ("claim_id", "cohort"),
+            ("start_value", "end_value", "coverage", "status"),
+        )
+        churn_ref = add_ref(
+            "claim:C-usage-growth:churn_next_30d",
+            "claim_checks.csv",
+            churn_row,
+            ("claim_id", "cohort"),
+            ("start_value", "end_value", "coverage", "status"),
+        )
+        trend_label = {
+            "up": "cresceu",
+            "down": "caiu",
+            "flat": "ficou estável",
+            "insufficient": "não pôde ser concluído",
+        }
+        overall_trend = trend_label.get(str(overall_row["status"]), "variou")
+        churn_trend = trend_label.get(str(churn_row["status"]), "variou")
+        connector = "mas" if overall_trend != churn_trend else "e também"
+        usage_statement = (
+            f"O uso {overall_trend} no agregado "
+            f"({overall_row['start_value']:.3f}→{overall_row['end_value']:.3f}), {connector} "
+            f"{churn_trend} entre as contas que churnariam em 30 dias "
+            f"({churn_row['start_value']:.3f}→{churn_row['end_value']:.3f})."
+        )
+        blocks["what_changed"]["claims"].extend(
+            [
+                _claim(
+                    "C-usage-overall",
+                    (
+                        "Uso diário por conta no agregado: "
+                        f"{overall_row['start_value']:.3f}→{overall_row['end_value']:.3f}."
+                    ),
+                    "confirmed_fact",
+                    str(overall_row["status"]),
+                    overall_row["end_value"] - overall_row["start_value"],
+                    "usage_events/account/day",
+                    "accounts_with_usage_coverage",
+                    overall_row.get("cutoff_start"),
+                    overall_row.get("cutoff_end"),
+                    [overall_ref],
+                    str(overall_row["limitation"]),
+                ),
+                _claim(
+                    "C-usage-churn-next-30d",
+                    (
+                        "Uso diário por conta entre futuros churners de 30 dias: "
+                        f"{churn_row['start_value']:.3f}→{churn_row['end_value']:.3f}."
+                    ),
+                    "confirmed_fact",
+                    str(churn_row["status"]),
+                    churn_row["end_value"] - churn_row["start_value"],
+                    "usage_events/account/day",
+                    "retrospective_churn_next_30d",
+                    churn_row.get("cutoff_start"),
+                    churn_row.get("cutoff_end"),
+                    [churn_ref],
+                    "Coorte retrospectiva; descreve seleção, não causa.",
+                ),
+            ]
+        )
+        blocks["what_changed"]["summary"] = f"{blocks['what_changed']['summary']} {usage_statement}"
 
     eligible = result.segment_metrics.loc[
         result.segment_metrics.get(
@@ -662,13 +740,18 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         )
         blocks["strongest_mechanism"]["summary"] = mechanism_statement
 
-    satisfaction = result.claim_checks.loc[
-        result.claim_checks["claim_id"].eq("C-satisfaction-ok")
-        & result.claim_checks["cohort"].eq("overall")
-    ]
+    satisfaction = result.claim_checks.loc[result.claim_checks["claim_id"].eq("C-satisfaction-ok")]
+    satisfaction_overall = satisfaction.loc[satisfaction["cohort"].eq("overall")]
+    satisfaction_churn = satisfaction.loc[satisfaction["cohort"].eq("churn_next_30d")]
     unknown_ref = None
-    if not satisfaction.empty:
-        satisfaction_row = satisfaction.iloc[0]
+    if (
+        not satisfaction_overall.empty
+        and not satisfaction_churn.empty
+        and satisfaction_overall.iloc[0][["start_value", "end_value"]].notna().all()
+        and satisfaction_churn.iloc[0][["start_value", "end_value"]].notna().all()
+    ):
+        satisfaction_row = satisfaction_overall.iloc[0]
+        satisfaction_churn_row = satisfaction_churn.iloc[0]
         unknown_ref = add_ref(
             "claim:C-satisfaction-ok:overall",
             "claim_checks.csv",
@@ -676,24 +759,70 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
             ("claim_id", "cohort"),
             ("start_value", "end_value", "coverage", "status"),
         )
-        unknown_statement = (
-            "Satisfação representa apenas tickets respondidos e não pode ser generalizada para "
-            "toda a base sem cobertura suficiente."
+        satisfaction_churn_ref = add_ref(
+            "claim:C-satisfaction-ok:churn_next_30d",
+            "claim_checks.csv",
+            satisfaction_churn_row,
+            ("claim_id", "cohort"),
+            ("start_value", "end_value", "coverage", "status"),
         )
-        blocks["unknowns"]["claims"].append(
-            _claim(
-                "C-satisfaction-coverage",
-                unknown_statement,
-                "confirmed_fact",
-                "limitation",
-                satisfaction_row.get("coverage"),
-                "covered_responses_share",
-                "support_ticket_respondents",
-                satisfaction_row.get("period_start", DEFAULT_CUTOFFS.min()),
-                satisfaction_row.get("period_end", DEFAULT_CUTOFFS.max()),
-                [unknown_ref],
-                unknown_statement,
-            )
+        satisfaction_overall_trend = (
+            "subiu"
+            if satisfaction_row["end_value"] > satisfaction_row["start_value"]
+            else "caiu"
+            if satisfaction_row["end_value"] < satisfaction_row["start_value"]
+            else "ficou estável"
+        )
+        satisfaction_churn_trend = (
+            "subiu"
+            if satisfaction_churn_row["end_value"] > satisfaction_churn_row["start_value"]
+            else "caiu"
+            if satisfaction_churn_row["end_value"] < satisfaction_churn_row["start_value"]
+            else "ficou estável"
+        )
+        unknown_statement = (
+            f"A satisfação geral dos respondentes {satisfaction_overall_trend} de "
+            f"{satisfaction_row['start_value']:.2f}→{satisfaction_row['end_value']:.2f}; entre "
+            f"futuros churners, {satisfaction_churn_trend} de "
+            f"{satisfaction_churn_row['start_value']:.2f}→{satisfaction_churn_row['end_value']:.2f}. "
+            "São apenas tickets respondidos; não representam toda a base."
+        )
+        blocks["unknowns"]["claims"].extend(
+            [
+                _claim(
+                    "C-satisfaction-overall",
+                    (
+                        "Satisfação geral entre tickets respondidos: "
+                        f"{satisfaction_row['start_value']:.2f}→{satisfaction_row['end_value']:.2f}."
+                    ),
+                    "confirmed_fact",
+                    str(satisfaction_row["status"]),
+                    satisfaction_row.get("end_value"),
+                    "satisfaction_points/response",
+                    "support_ticket_respondents",
+                    satisfaction_row.get("cutoff_start"),
+                    satisfaction_row.get("cutoff_end"),
+                    [unknown_ref],
+                    str(satisfaction_row["limitation"]),
+                ),
+                _claim(
+                    "C-satisfaction-churn-next-30d",
+                    (
+                        "Satisfação entre respondentes que churnariam em 30 dias: "
+                        f"{satisfaction_churn_row['start_value']:.2f}→"
+                        f"{satisfaction_churn_row['end_value']:.2f}."
+                    ),
+                    "confirmed_fact",
+                    str(satisfaction_churn_row["status"]),
+                    satisfaction_churn_row.get("end_value"),
+                    "satisfaction_points/response",
+                    "support_ticket_respondents_churn_next_30d",
+                    satisfaction_churn_row.get("cutoff_start"),
+                    satisfaction_churn_row.get("cutoff_end"),
+                    [satisfaction_churn_ref],
+                    "Coorte retrospectiva e restrita a tickets com resposta.",
+                ),
+            ]
         )
         blocks["unknowns"]["summary"] = unknown_statement
 
