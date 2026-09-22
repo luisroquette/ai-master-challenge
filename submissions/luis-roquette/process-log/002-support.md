@@ -1600,3 +1600,20 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   é necessária.
 - **Limite:** a prova é uma varredura por padrões conhecidos, não certificação por scanner
   especializado. Scanner dedicado passa a ser obrigatório se uma credencial real existir.
+
+## I86 — Fechamento do hardening indispensável — 2026-09-22
+
+- **Critério:** implementar agora somente controles que protegem uma superfície existente
+  no protótipo; controles dependentes de login, escrita, dados reais, banco remoto, e-mail,
+  senha, API paga ou domínio próprio permanecem gates condicionais.
+- **Implementado/verificado:** autorização fail-closed, bloqueio de leitura/export de
+  decisões, validação fechada contra adulteração e higiene de credenciais/histórico.
+- **Adiado até existir operação:** rate limit de login, auditoria central, banco durável,
+  backup/restore, RLS, criptografia gerenciada e validação de cookies autenticados.
+- **Não aplicável:** cadastro/CAPTCHA, envio de e-mail/aliases, chave de banco e senha
+  local. O frontend continua sem segredo.
+- **Não justificado agora:** Cloudflare/WAF, Sentry e alertas de custo; não existe domínio
+  próprio, tráfego operacional, API paga ou dado privado que compense complexidade e novo
+  compartilhamento de telemetria.
+- **Conclusão:** nenhum outro código de segurança é indispensável antes da avaliação. O
+  sistema permanece aceitável somente como demonstração pública, sanitizada e sem escrita.

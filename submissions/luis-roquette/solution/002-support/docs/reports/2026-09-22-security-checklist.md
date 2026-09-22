@@ -62,6 +62,21 @@ de persistência. O protótipo público
 deve continuar limitado a dados sanitizados de demonstração. Cada correção futura exige
 teste de regressão, evidência no diário e nova medição de risco residual.
 
+## Decisão de minimalidade para a avaliação
+
+Somente três frentes são indispensáveis no protótipo atual e foram tratadas:
+
+1. **Fronteira fail-closed:** visitante não grava, lê decisões nem exporta estado local.
+2. **Ausência de estado operacional:** sem escrita, backup não é apresentado como garantia;
+   armazenamento durável e restore bloqueiam a futura ativação do OIDC.
+3. **Higiene de credenciais:** nenhum segredo real foi encontrado no checkout ou no
+   histórico do Challenge 002; arquivos sensíveis estão ignorados.
+
+Os demais controles permanecem condicionais: serão implementados somente quando surgir a
+superfície correspondente. Isso inclui login ativo, cadastro, e-mail, dados reais, banco
+remoto, domínio próprio, API paga ou operação multiusuário. Para a avaliação pública e
+somente leitura, não há outro código de segurança indispensável.
+
 ## Tratamento 01 — autenticação e autorização
 
 - Estado: publicado em modo fail-closed; configuração do provedor deliberadamente
