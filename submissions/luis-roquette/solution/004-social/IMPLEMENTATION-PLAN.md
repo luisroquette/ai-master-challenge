@@ -1039,7 +1039,7 @@ git commit -m "feat(004): build thirty-day content strategy"
 - Produces: três cards ampliados, tabela “Drivers contextuais”, seção “Estratégia de 30 dias” e expander “Cenário financeiro manual”.
 - Preserves: filtros operacionais não alteram a síntese histórica; input financeiro não entra em SQLite nem no CSV de evidências.
 
-- [ ] **Step 1: Escrever AppTests vermelhos**
+- [x] **Step 1: Escrever AppTests vermelhos**
 
 Adicionar a `test_app.py` os helpers concretos abaixo. `driver_upload()` reutiliza `driver_rows`; `sponsorship_upload()` serializa `sponsorship_rows()` após remover apenas a coluna derivada que não pertence ao contrato de upload.
 
@@ -1089,25 +1089,25 @@ def test_operational_filters_do_not_recompute_full_history_answers(self):
     self.assertEqual(app.session_state["head_answers"], answers)
 ```
 
-- [ ] **Step 2: Confirmar o vermelho**
+- [x] **Step 2: Confirmar o vermelho**
 
 Run: `uv run --with-requirements requirements.txt python -m unittest tests.test_app.AppTests.test_dashboard_shows_multivariate_answers_and_four_week_strategy tests.test_app.AppTests.test_financial_scenario_is_manual_ephemeral_and_does_not_change_evidence tests.test_app.AppTests.test_operational_filters_do_not_recompute_full_history_answers`
 
 Expected: FAIL somente pela UI/inputs ausentes.
 
-- [ ] **Step 3: Renderizar o ranking e a estratégia com componentes existentes**
+- [x] **Step 3: Renderizar o ranking e a estratégia com componentes existentes**
 
 Reutilizar CSS/cards, `st.dataframe`, `st.expander` e `st.number_input`; não criar componente ou dependência. A tabela mostra contexto, delta mediano mensal, estabilidade, força, meses, posts e creators. O plano mostra uma linha por semana, ação, métrica e gate.
 
-- [ ] **Step 4: Implementar o cenário manual isolado**
+- [x] **Step 4: Implementar o cenário manual isolado**
 
 Dentro do expander, selecionar primeiro um estrato elegível pelo `evidence_id` e contexto legível; depois mostrar cinco `number_input` com as chaves usadas no teste (`scenario_sponsorship_cost`, `scenario_production_cost`, `scenario_value_per_conversion`, `scenario_organic_rate`, `scenario_sponsored_rate`) e ajuda explícita. O botão `calculate_sponsorship_scenario` chama `sponsorship_break_even`; assim, custo zero continua válido sem disparar cálculo antes da ação humana. Exibir resultado como “cenário” e passá-lo opcionalmente a `executive_summary`; nunca gravar em `record_decision`, `record_outcome`, cache analítico ou `evidence.csv`. Trocar a fonte, o estrato ou qualquer premissa invalida o cenário anterior na mesma sessão.
 
-- [ ] **Step 5: Validar desktop, 390×844 e acessibilidade básica**
+- [x] **Step 5: Validar desktop, 390×844 e acessibilidade básica**
 
 Confirmar primeira viewport com os três veredictos, cards em uma coluna no mobile, foco visível, nenhuma dependência de cor e tabelas utilizáveis por teclado. Capturar somente estados reais e substituir evidência visual apenas se o novo estado for comprovado.
 
-- [ ] **Step 6: Rodar regressões e commit**
+- [x] **Step 6: Rodar regressões e commit**
 
 ```bash
 uv run --with-requirements requirements.txt python -m unittest \

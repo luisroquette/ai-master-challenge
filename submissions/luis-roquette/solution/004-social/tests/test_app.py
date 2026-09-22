@@ -8,18 +8,19 @@ import io
 import sqlite3
 import tempfile
 import unittest
+from copy import deepcopy
 from contextlib import closing
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
 import streamlit as st
-from analysis import analyze, load_csv
+from analysis import analyze, export_evidence, load_csv
 
 from streamlit.testing.v1 import AppTest
 from streamlit.testing.v1.app_test import TMP_DIR
 
-from tests.helpers import csv_bytes, make_post
+from tests.helpers import csv_bytes, driver_rows, make_post, sponsorship_rows
 from tests.test_exports import historical_log, parse_export
 from storage import list_decisions, record_import
 
@@ -69,6 +70,16 @@ def later_upload(start: datetime | None = None) -> bytes:
     )
 
 
+def driver_upload() -> bytes:
+    return csv_bytes(driver_rows([1.0, 1.2, 0.8]))
+
+
+def sponsorship_upload() -> bytes:
+    rows = sponsorship_rows().drop(columns=["source_row_id"], errors="ignore")
+    rows["is_sponsored"] = rows["is_sponsored"].map({True: "TRUE", False: "FALSE"})
+    return csv_bytes(rows.to_dict(orient="records"))
+
+
 class AppTests(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
@@ -88,6 +99,40 @@ class AppTests(unittest.TestCase):
     def stored(self):
         with closing(sqlite3.connect(Path(self.directory.name) / "cockpit.sqlite3")) as connection:
             return list_decisions(connection)
+
+    def test_dashboard_shows_multivariate_answers_and_four_week_strategy(self):
+        app = self.app()
+        app.file_uploader[0].set_value(("drivers.csv", driver_upload(), "text/csv")).run()
+        text = "\n".join(item.value for item in app.markdown)
+        for expected in ("Força", "Cobertura", "Estabilidade", "Evidência", "O que mudaria a decisão", "Semana 1", "Semana 4"):
+            self.assertIn(expected, text)
+
+    def test_financial_scenario_is_manual_ephemeral_and_does_not_change_evidence(self):
+        app = self.app()
+        app.file_uploader[0].set_value(("sponsorship.csv", sponsorship_upload(), "text/csv")).run()
+        app.selectbox(key="period_mode").set_value("Todo o histórico").run()
+        before = deepcopy(app.session_state["active_result"])
+        selected = before["sponsorship"]["strata"][0]["evidence_id"]
+        app.selectbox(key="scenario_sponsorship_stratum").set_value(selected)
+        for key, value in {
+            "scenario_sponsorship_cost": 1_000.0,
+            "scenario_production_cost": 200.0,
+            "scenario_value_per_conversion": 100.0,
+            "scenario_organic_rate": 0.01,
+            "scenario_sponsored_rate": 0.013,
+        }.items():
+            app.number_input(key=key).set_value(value)
+        app.button(key="calculate_sponsorship_scenario").click().run()
+        self.assertIn("Cenário manual", "\n".join(item.value for item in app.markdown))
+        self.assertEqual(app.session_state["active_result"], before)
+        self.assertNotIn(b"value_per_conversion", export_evidence(before, []))
+
+    def test_operational_filters_do_not_recompute_full_history_answers(self):
+        app = self.app()
+        app.file_uploader[0].set_value(("drivers.csv", driver_upload(), "text/csv")).run()
+        answers = deepcopy(app.session_state["head_answers"])
+        app.multiselect(key="filter_content_type").set_value(["text"]).run()
+        self.assertEqual(app.session_state["head_answers"], answers)
 
     def test_baseline_above_int64_survives_reopen_and_download(self):
         rows = list(csv.DictReader(io.StringIO(valid_upload().decode())))
@@ -415,6 +460,8 @@ class AppTests(unittest.TestCase):
 
         def controlled_analysis(*args, **kwargs):
             result = analyze(*args, **kwargs)
+            if len(result["all_recommendations"]) < 4:
+                return result
             first, zero, additional = (result["all_recommendations"][index] for index in (0, 1, 3))
             first["priority"] = tiny_score
             first["priority_components"] = {"impact": 0.0, "strength": -tiny_component, "recency": tiny_component}

@@ -17,7 +17,10 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from analysis import METHOD_VERSION, align_scope_timestamp, analyze, decision_baseline, executive_answers, executive_summary, export_evidence, load_csv, observe_evidence
+from analysis import (METHOD_VERSION, align_scope_timestamp, analyze, content_strategy_30d,
+                      decision_baseline, executive_answers, executive_summary,
+                      export_evidence, load_csv, observe_evidence,
+                      sponsorship_break_even)
 from storage import connect, list_decisions, record_decision, record_import, record_outcome, utc_now
 
 
@@ -311,11 +314,85 @@ def _render_head_answers(answers: list[dict[str, str]]) -> None:
         <h4>{safe(item['question'])}</h4><strong>{safe(item['verdict'])}</strong>
         <p class="answer-kpi">{safe(item['kpi'])}</p><p>{safe(item['comparison'])}</p>
         <p>{safe(item['sample'])}</p><p class="answer-action"><b>Ação:</b> {safe(item['action'])}</p>
+        <p><b>Força:</b> {safe(item['strength'])}</p><p><b>Cobertura:</b> {safe(item['coverage'])}</p>
+        <p><b>Estabilidade:</b> {safe(item['stability'])}</p><p><b>Evidência:</b> {safe(item['evidence_id'])}</p>
+        <p><b>O que mudaria a decisão:</b> {safe(item['change_trigger'])}</p>
         </article>"""
         for item in answers
     )
     st.subheader("Três respostas para o Head de Marketing")
     st.markdown(f'<section class="head-answers">{cards}</section>', unsafe_allow_html=True)
+
+
+def _render_decision_program(result: dict[str, object]) -> None:
+    drivers = result.get("engagement_drivers", {}).get("contexts", [])
+    st.subheader("Drivers contextuais")
+    if drivers:
+        st.dataframe(
+            _table_numbers(pd.DataFrame([
+                {
+                    "contexto": " / ".join(str(item["context"][key]) for key in ("platform", "content_type", "content_category", "follower_band")),
+                    "delta_erv_pp": item["median_delta_erv_pp"],
+                    "estabilidade": item["stability"],
+                    "força": item["strength"],
+                    "meses": item["eligible_months"],
+                    "posts": item["posts"],
+                    "creators": item["creators"],
+                }
+                for item in drivers
+            ])),
+            hide_index=True,
+            width="stretch",
+        )
+    else:
+        st.caption("Nenhum contexto atingiu amostra mensal comparável; coletar antes de priorizar.")
+
+    st.subheader("Estratégia de 30 dias")
+    program = content_strategy_30d(result)
+    for week in program["weeks"]:
+        st.markdown(
+            f"**Semana {week['week']} · {week['window']}** — {week['action']}  \n"
+            f"Responsável: {week['owner']} · Métrica: {week['metric']} · Cadência: {week['cadence']} · Gate: {week['gate']}"
+        )
+    st.caption("Preservar o mix fora dos testes. Nenhuma publicação ou verba é executada automaticamente.")
+
+
+def _render_financial_scenario(result: dict[str, object], source_hash: str) -> dict[str, object] | None:
+    strata = result.get("sponsorship", {}).get("strata", [])
+    with st.expander("Cenário financeiro manual", expanded=False):
+        st.caption("Simulação efêmera: não altera análise, histórico, decisões ou CSV de evidências.")
+        if not strata:
+            st.caption("Nenhum estrato orgânico/patrocinado atingiu a amostra comparável mínima.")
+            return None
+        selected_id = st.selectbox(
+            "Estrato comparável",
+            [item["evidence_id"] for item in strata],
+            key="scenario_sponsorship_stratum",
+        )
+        selected = next(item for item in strata if item["evidence_id"] == selected_id)
+        st.caption("Contexto: " + " / ".join(str(value) for value in selected["context"].values()))
+        assumptions = {
+            "sponsorship_cost": st.number_input("Custo do patrocínio", min_value=0.0, help="Valor pago ao creator por post.", key="scenario_sponsorship_cost"),
+            "incremental_production_cost": st.number_input("Custo incremental de produção", min_value=0.0, help="Custo adicional do conteúdo patrocinado.", key="scenario_production_cost"),
+            "value_per_conversion": st.number_input("Valor por conversão", min_value=0.0, help="Valor econômico manual de uma conversão.", key="scenario_value_per_conversion"),
+            "organic_conversion_rate": st.number_input("Taxa orgânica", min_value=0.0, max_value=1.0, format="%.4f", help="Fração entre 0 e 1.", key="scenario_organic_rate"),
+            "sponsored_conversion_rate": st.number_input("Taxa patrocinada", min_value=0.0, max_value=1.0, format="%.4f", help="Fração entre 0 e 1.", key="scenario_sponsored_rate"),
+        }
+        signature = json.dumps({"source": source_hash, "evidence_id": selected_id, **assumptions}, sort_keys=True)
+        if st.session_state.get("sponsorship_scenario_signature") != signature:
+            st.session_state.pop("sponsorship_scenario", None)
+        if st.button("Calcular cenário", key="calculate_sponsorship_scenario"):
+            st.session_state["sponsorship_scenario"] = sponsorship_break_even(selected, assumptions)
+            st.session_state["sponsorship_scenario_signature"] = signature
+        scenario = st.session_state.get("sponsorship_scenario")
+        if scenario:
+            st.markdown(
+                "**Cenário manual**  \n"
+                f"Status: `{scenario['status']}` · custo máximo: `{scenario['max_sponsorship_cost']}` · "
+                f"uplift mínimo: `{scenario['required_uplift_pp']}` p.p."
+            )
+            st.caption("Não é ROI observado nem prova causal; depende integralmente das premissas informadas.")
+        return scenario
 
 
 def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dict[str, Any]) -> None:
@@ -420,6 +497,7 @@ decisions = list_decisions(connection)
 active_frame = st.session_state.get("active_frame")
 metadata = st.session_state.get("active_metadata")
 result = None
+financial_scenario = None
 
 if active_frame is None or metadata is None:
     st.info("Nenhuma fonte ativa. Envie um CSV válido para iniciar a análise; o histórico local continua disponível.")
@@ -444,9 +522,12 @@ else:
                 "method_version": METHOD_VERSION,
             }
             history_result = analyze(active_frame, history_scope, str(metadata["source_hash"]))
-            st.session_state["head_answers"] = executive_answers(history_result)
+            st.session_state["head_result"] = history_result
             st.session_state["head_answer_key"] = head_answer_key
+    history_result = st.session_state["head_result"]
+    st.session_state["head_answers"] = executive_answers(history_result)
     _render_head_answers(st.session_state["head_answers"])
+    _render_decision_program(history_result)
 
     filter_columns = {
         "platform": "Plataformas",
@@ -546,6 +627,8 @@ else:
             columns[2].metric("Interações", _display_integer(metrics["interactions"]))
         else:
             st.warning(str(analysis_state["message"]))
+
+        financial_scenario = _render_financial_scenario(result, str(metadata["source_hash"]))
 
         for warning in result["quality"].get("warnings", []):
             st.warning(warning["message"])
@@ -778,7 +861,7 @@ else:
 
 if result is not None and result["analysis_state"]["has_observations"]:
     decision_rows = _decision_export(decisions)
-    st.download_button("Baixar resumo executivo (HTML)", executive_summary(result, decision_rows).encode("utf-8"), file_name="resumo-executivo.html", mime="text/html")
+    st.download_button("Baixar resumo executivo (HTML)", executive_summary(result, decision_rows, financial_scenario).encode("utf-8"), file_name="resumo-executivo.html", mime="text/html")
     st.download_button("Baixar evidências e decisões (CSV)", export_evidence(result, decision_rows), file_name="evidencias-decisoes.csv", mime="text/csv")
 
 connection.close()
