@@ -1,3 +1,4 @@
+import json
 import tomllib
 from dataclasses import replace
 from pathlib import Path
@@ -79,3 +80,25 @@ def test_empty_queue_uses_bounded_validation_watchlist(
     assert len(app.slider) == 1
     assert app.slider[0].label == "Até a posição"
     assert len(app.warning) == 1
+
+
+def test_accepted_finding_drives_hero_status_and_cutoff(
+    analysis_result, tmp_path, monkeypatch
+) -> None:
+    findings = analysis_result.findings.copy()
+    findings["confidence"] = "inconclusive"
+    findings["priority_rank"] = pd.NA
+    findings.loc[findings.index[0], ["confidence", "priority_rank"]] = ["accepted", 1]
+    publish_artifacts(replace(analysis_result, findings=findings), tmp_path)
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["parameters"]["cutoffs"][-1] = "2024-10-31"
+    manifest_path.write_text(json.dumps(manifest))
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(tmp_path))
+
+    app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
+
+    assert not app.exception
+    hero = next(markdown.value for markdown in app.markdown if 'class="hero"' in markdown.value)
+    assert "Evidência priorizada" in hero
+    assert "31 out 2024" in hero

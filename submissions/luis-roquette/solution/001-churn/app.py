@@ -34,10 +34,12 @@ st.markdown(
         --ink: #17201f;
         --paper: #f2efe7;
         --paper-deep: #e8e3d8;
-        --signal: #d64a32;
+        --signal: #a63a2a;
         --sage: #557164;
-        --muted: #68736f;
+        --muted: #53615d;
         --line: rgba(23, 32, 31, .16);
+        --font-body: "Source Sans 3", "Source Sans", sans-serif;
+        --font-display: "Source Serif 4", "Source Serif", Georgia, serif;
     }
     html { color-scheme: light; }
     [data-testid="stAppViewContainer"] {
@@ -53,10 +55,14 @@ st.markdown(
         max-width: 1440px;
         padding: 2.25rem 3.5rem 5rem;
     }
-    :focus-visible { outline: 3px solid #f4a261 !important; outline-offset: 3px; }
-    h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
+    :focus-visible {
+        outline: 3px solid #fffaf0 !important;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 6px var(--ink) !important;
+    }
+    h1, h2, h3 { font-family: var(--font-display); color: var(--ink); }
     p, label, button, [data-testid="stCaptionContainer"] {
-        font-family: "Avenir Next", Avenir, sans-serif;
+        font-family: var(--font-body);
     }
     .hero {
         position: relative;
@@ -85,7 +91,7 @@ st.markdown(
         gap: 1rem;
         margin-bottom: 2rem;
         color: #cfd5cc;
-        font: 700 .72rem/1.2 "Avenir Next", Avenir, sans-serif;
+        font: 700 .72rem/1.2 var(--font-body);
         letter-spacing: .16em;
         text-transform: uppercase;
     }
@@ -114,7 +120,7 @@ st.markdown(
         max-width: 640px;
         margin: 1.25rem 0 0;
         color: #cfd5cc;
-        font: 400 1rem/1.55 "Avenir Next", Avenir, sans-serif;
+        font: 400 1rem/1.55 var(--font-body);
     }
     .hero-stamp {
         position: relative;
@@ -122,26 +128,26 @@ st.markdown(
         padding: 1.25rem;
         border: 1px solid rgba(247, 242, 232, .3);
         background: rgba(255, 255, 255, .04);
-        font: 600 .78rem/1.65 "Avenir Next", Avenir, sans-serif;
+        font: 600 .78rem/1.65 var(--font-body);
         letter-spacing: .08em;
         text-transform: uppercase;
     }
     .hero-stamp strong { display: block; color: #ef765f; font-size: 1.05rem; }
-    [data-baseweb="tab-list"] {
+    [data-testid="stTabs"] [role="tablist"] {
         gap: .35rem;
         padding: .35rem;
         border: 1px solid var(--line);
         background: rgba(232, 227, 216, .72);
     }
-    [data-baseweb="tab"] {
+    [data-testid="stTab"] {
         min-height: 2.8rem;
         padding: .65rem 1rem;
         color: var(--muted);
         font-weight: 700;
         letter-spacing: .01em;
     }
-    [aria-selected="true"][data-baseweb="tab"] { color: #fffaf0; background: var(--ink); }
-    [data-baseweb="tab-highlight"] { display: none; }
+    [data-testid="stTab"][aria-selected="true"] { color: #fffaf0; background: var(--ink); }
+    [data-testid="stTab"] .react-aria-SelectionIndicator { display: none; }
     .section-heading {
         display: grid;
         grid-template-columns: 3.5rem 1fr;
@@ -153,7 +159,7 @@ st.markdown(
     }
     .section-heading > span {
         color: var(--signal);
-        font: 800 .72rem/1 "Avenir Next", Avenir, sans-serif;
+        font: 800 .72rem/1 var(--font-body);
         letter-spacing: .14em;
     }
     .section-heading h2 { margin: -.25rem 0 .15rem; font-size: 2rem; font-weight: 500; }
@@ -169,7 +175,7 @@ st.markdown(
     [data-testid="stMetricLabel"] { color: var(--muted); font-weight: 700; }
     [data-testid="stMetricValue"] {
         color: var(--ink);
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: var(--font-display);
         font-size: 2.55rem;
         letter-spacing: -.04em;
     }
@@ -198,11 +204,11 @@ st.markdown(
         display: block;
         margin-bottom: .4rem;
         color: #ef765f;
-        font: 800 .68rem/1 "Avenir Next", Avenir, sans-serif;
+        font: 800 .68rem/1 var(--font-body);
         letter-spacing: .15em;
         text-transform: uppercase;
     }
-    .verdict strong { font: 500 1.35rem/1.25 Georgia, "Times New Roman", serif; }
+    .verdict strong { font: 500 1.35rem/1.25 var(--font-display); }
     .insight-card {
         min-height: 100%;
         padding: 1.35rem 1.5rem;
@@ -226,10 +232,14 @@ st.markdown(
     .stDownloadButton button:hover { color: #fffaf0; border-color: var(--signal); background: var(--signal); }
     @media (max-width: 800px) {
         .stMainBlockContainer { padding: 1rem 1rem 3rem; }
-        .hero { padding: 1.35rem; box-shadow: 6px 6px 0 var(--paper-deep); }
-        .hero-grid { grid-template-columns: 1fr; }
-        .hero h1 { font-size: 3.6rem; }
+        .hero { padding: 1rem; box-shadow: 6px 6px 0 var(--paper-deep); }
+        .hero-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .hero h1 { font-size: 2.9rem; }
+        .hero-copy { margin-top: .7rem; font-size: .9rem; }
+        .hero-stamp { padding: .8rem; line-height: 1.45; }
         .hero-meta { align-items: flex-start; flex-direction: column; }
+        .section-heading { grid-template-columns: 2rem 1fr; gap: .55rem; margin-top: 1.8rem; }
+        .section-heading h2 { font-size: 1.7rem; }
     }
     </style>
     """,
@@ -255,6 +265,20 @@ queue = read_csv("account_queue.csv")
 watchlist = read_csv("account_watchlist.csv")
 quality = json.loads((artifact_dir / "quality_report.json").read_text(encoding="utf-8"))
 accepted = findings.loc[findings["confidence"].eq("accepted")]
+cutoff_values = (
+    findings["diagnostic_cutoff"]
+    if "diagnostic_cutoff" in findings
+    else pd.Series(manifest.get("parameters", {}).get("cutoffs", []), dtype="object")
+)
+diagnostic_cutoff = pd.to_datetime(cutoff_values, errors="coerce").max()
+cutoff_label = (
+    f"{diagnostic_cutoff.day:02d} "
+    f"{['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][diagnostic_cutoff.month - 1]} "
+    f"{diagnostic_cutoff.year}"
+    if pd.notna(diagnostic_cutoff)
+    else "não disponível"
+)
+analysis_status = "Evidência priorizada" if not accepted.empty else "Evidência inconclusiva"
 
 st.markdown(
     f"""
@@ -270,8 +294,8 @@ st.markdown(
             </div>
             <div class="hero-stamp">
                 Status da análise
-                <strong>Evidência inconclusiva</strong>
-                Corte diagnóstico · 30 nov 2024<br>
+                <strong>{analysis_status}</strong>
+                Corte diagnóstico · {cutoff_label}<br>
                 Modelo publicado · {"sim" if manifest["publish_model"] else "não"}
             </div>
         </div>
@@ -289,8 +313,49 @@ def section_heading(number: str, title: str, description: str) -> None:
     )
 
 
+PERCENT_COLUMNS = {
+    "Cobertura",
+    "Cobertura da variável",
+    "Diferença para taxa geral",
+    "Taxa de churn",
+    "Taxa geral",
+}
+CURRENCY_COLUMNS = {"MRR perdido", "MRR exposto", "MRR exposto máximo"}
+DECIMAL_COLUMNS = {
+    "Início",
+    "Fim",
+    "Odds ratio ajustado",
+    "IC inferior",
+    "IC superior",
+    "Efeito selecionado",
+    "Diferença entre cronologias",
+}
+
+
+def format_display_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.reset_index(drop=True).copy()
+    for column in display.columns:
+        if column in PERCENT_COLUMNS:
+            display[column] = display[column].map(
+                lambda value: "n/d" if pd.isna(value) else f"{value:.1%}"
+            )
+        elif column in CURRENCY_COLUMNS:
+            display[column] = display[column].map(
+                lambda value: "n/d" if pd.isna(value) else f"US$ {value:,.0f}"
+            )
+        elif column == "Risco relativo":
+            display[column] = display[column].map(
+                lambda value: "n/d" if pd.isna(value) else f"{value:.2f}×"
+            )
+        elif column in DECIMAL_COLUMNS:
+            display[column] = display[column].map(
+                lambda value: "n/d" if pd.isna(value) else f"{value:.3f}"
+            )
+    return display.astype(object).where(pd.notna(display), "n/d")
+
+
 def render_table(frame: pd.DataFrame) -> None:
-    st.table(frame.reset_index(drop=True).style.hide(axis="index"))
+    st.table(format_display_frame(frame).style.hide(axis="index"))
 
 
 executive_tab, evidence_tab, queue_tab = st.tabs(
@@ -456,20 +521,24 @@ with evidence_tab:
         "Cada hipótese mantém cálculo, cronologia, fonte, contraevidência e limitação visíveis.",
     )
     finding_options = ["Todos", *findings["finding_id"].astype(str).tolist()]
-    evidence_finding = st.selectbox(
-        "Hipótese",
-        finding_options,
-        format_func=lambda value: FINDING_LABELS.get(value, value),
-        key="evidence_finding_filter",
-    )
     dimensions = ["Todas", *sorted(segments["dimension"].dropna().astype(str).unique())]
-    dimension = st.selectbox("Dimensão", dimensions, key="segment_dimension_filter")
-    chronology = st.selectbox(
-        "Cronologia",
-        ["strict", "observed"],
-        format_func=lambda value: {"strict": "Tratada", "observed": "Observada"}[value],
-        key="chronology_filter",
-    )
+    evidence_filter_columns = st.columns(3)
+    with evidence_filter_columns[0]:
+        evidence_finding = st.selectbox(
+            "Hipótese",
+            finding_options,
+            format_func=lambda value: FINDING_LABELS.get(value, value),
+            key="evidence_finding_filter",
+        )
+    with evidence_filter_columns[1]:
+        dimension = st.selectbox("Dimensão", dimensions, key="segment_dimension_filter")
+    with evidence_filter_columns[2]:
+        chronology = st.selectbox(
+            "Cronologia",
+            ["strict", "observed"],
+            format_func=lambda value: {"strict": "Tratada", "observed": "Observada"}[value],
+            key="chronology_filter",
+        )
     evidence = (
         findings
         if evidence_finding == "Todos"
@@ -510,25 +579,27 @@ with evidence_tab:
         {"finding_id": FINDING_LABELS, "confidence": ELIGIBILITY_LABELS}
     )
     st.dataframe(
-        evidence_display.rename(
-            columns={
-                "finding_id": "Hipótese",
-                "adjusted_odds_ratio": "Odds ratio ajustado",
-                "ci_low": "IC inferior",
-                "ci_high": "IC superior",
-                effect_column: "Efeito selecionado",
-                "sensitivity_delta": "Diferença entre cronologias",
-                "diagnostic_cutoff": "Cutoff diagnóstico",
-                "horizon_days": "Horizonte em dias",
-                "exposure_rule": "Regra de exposição",
-                "diagnostic_exposed_accounts": "Contas expostas no diagnóstico",
-                "diagnostic_exposed_churns": "Churns entre expostas",
-                "candidate_coverage": "Cobertura da variável",
-                "source_tables": "Tabelas-fonte",
-                "confidence": "Elegibilidade",
-                "counterevidence": "Contraevidência",
-                "limitation": "Limitação",
-            }
+        format_display_frame(
+            evidence_display.rename(
+                columns={
+                    "finding_id": "Hipótese",
+                    "adjusted_odds_ratio": "Odds ratio ajustado",
+                    "ci_low": "IC inferior",
+                    "ci_high": "IC superior",
+                    effect_column: "Efeito selecionado",
+                    "sensitivity_delta": "Diferença entre cronologias",
+                    "diagnostic_cutoff": "Cutoff diagnóstico",
+                    "horizon_days": "Horizonte em dias",
+                    "exposure_rule": "Regra de exposição",
+                    "diagnostic_exposed_accounts": "Contas expostas no diagnóstico",
+                    "diagnostic_exposed_churns": "Churns entre expostas",
+                    "candidate_coverage": "Cobertura da variável",
+                    "source_tables": "Tabelas-fonte",
+                    "confidence": "Elegibilidade",
+                    "counterevidence": "Contraevidência",
+                    "limitation": "Limitação",
+                }
+            )
         ),
         width="stretch",
         height=300,
@@ -545,21 +616,23 @@ with evidence_tab:
         ELIGIBILITY_LABELS
     )
     st.dataframe(
-        visible_segment_display.rename(
-            columns={
-                "dimension": "Dimensão",
-                "segment": "Segmento",
-                "sample_size": "Contas",
-                "churn_count": "Churns",
-                "churn_rate": "Taxa de churn",
-                "overall_churn_rate": "Taxa geral",
-                "churn_rate_delta": "Diferença para taxa geral",
-                "relative_risk": "Risco relativo",
-                "mrr_lost": "MRR perdido",
-                "mrr_exposed": "MRR exposto",
-                "coverage": "Cobertura",
-                "confidence": "Elegibilidade",
-            }
+        format_display_frame(
+            visible_segment_display.rename(
+                columns={
+                    "dimension": "Dimensão",
+                    "segment": "Segmento",
+                    "sample_size": "Contas",
+                    "churn_count": "Churns",
+                    "churn_rate": "Taxa de churn",
+                    "overall_churn_rate": "Taxa geral",
+                    "churn_rate_delta": "Diferença para taxa geral",
+                    "relative_risk": "Risco relativo",
+                    "mrr_lost": "MRR perdido",
+                    "mrr_exposed": "MRR exposto",
+                    "coverage": "Cobertura",
+                    "confidence": "Elegibilidade",
+                }
+            )
         ),
         width="stretch",
         height=420,
@@ -581,39 +654,44 @@ with queue_tab:
         )
         operational["finding_id"] = "validation-only"
         operational["priority"] = operational["validation_rank"]
+    queue_filter_columns = st.columns(4)
     finding_values = sorted(operational["finding_id"].dropna().astype(str).unique())
-    finding_filter = st.selectbox(
-        "Sinal",
-        ["Todos", *finding_values],
-        format_func=lambda value: {
-            **FINDING_LABELS,
-            "validation-only": "Validação descritiva",
-        }.get(value, value),
-        key="finding_filter",
-    )
-    if is_watchlist:
-        max_rank = int(operational["priority"].max())
-        rank_limit = st.slider("Até a posição", 1, max_rank, min(25, max_rank))
-        priority_filter = None
-    else:
-        priorities = sorted(operational["priority"].dropna().unique())
-        priority_filter = st.multiselect("Prioridade", priorities, default=priorities)
+    with queue_filter_columns[0]:
+        finding_filter = st.selectbox(
+            "Sinal",
+            ["Todos", *finding_values],
+            format_func=lambda value: {
+                **FINDING_LABELS,
+                "validation-only": "Validação descritiva",
+            }.get(value, value),
+            key="finding_filter",
+        )
+    with queue_filter_columns[1]:
+        if is_watchlist:
+            max_rank = int(operational["priority"].max())
+            rank_limit = st.slider("Até a posição", 1, max_rank, min(25, max_rank))
+            priority_filter = None
+        else:
+            priorities = sorted(operational["priority"].dropna().unique())
+            priority_filter = st.multiselect("Prioridade", priorities, default=priorities)
     plan_values = sorted(operational["plan_tier"].dropna().astype(str).unique())
-    plan_filter = st.multiselect(
-        "Plano",
-        plan_values,
-        default=plan_values,
-        format_func=lambda value: SEGMENT_LABELS.get(value, value),
-    )
+    with queue_filter_columns[2]:
+        plan_filter = st.multiselect(
+            "Plano",
+            plan_values,
+            default=plan_values,
+            format_func=lambda value: SEGMENT_LABELS.get(value, value),
+        )
     mrr_values = [
         value for value in ("low", "mid", "high") if value in set(operational["mrr_band"])
     ]
-    mrr_filter = st.multiselect(
-        "Faixa de MRR",
-        mrr_values,
-        default=mrr_values,
-        format_func=lambda value: MRR_BAND_LABELS.get(value, value),
-    )
+    with queue_filter_columns[3]:
+        mrr_filter = st.multiselect(
+            "Faixa de MRR",
+            mrr_values,
+            default=mrr_values,
+            format_func=lambda value: MRR_BAND_LABELS.get(value, value),
+        )
     filtered = operational.copy()
     if finding_filter != "Todos":
         filtered = filtered.loc[filtered["finding_id"].eq(finding_filter)]
@@ -653,7 +731,7 @@ with queue_tab:
             "priority": "Prioridade",
         }
     )
-    st.dataframe(display_filtered, width="stretch", hide_index=True)
+    st.dataframe(format_display_frame(display_filtered), width="stretch", hide_index=True)
     st.download_button(
         "Baixar fila filtrada (CSV)",
         data=filtered.to_csv(index=False).encode("utf-8"),

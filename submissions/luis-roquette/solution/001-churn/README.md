@@ -47,7 +47,7 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 ## Estrutura
 
 - `src/ravenstack_churn/`: contratos, painel temporal, diagnóstico, modelo e publicação.
-- `tests/`: 41 testes de dados, vazamento, gates, consistência, Markdown e dashboard.
+- `tests/`: testes de dados, vazamento, gates, consistência, Markdown e dashboard.
 - `artifacts/`: saídas canônicas protegidas por `run_manifest.json`.
 - `app.py`: Streamlit somente leitura; nunca recalcula a análise.
 - `.specs/` e `docs/superpowers/plans/`: SPEC e plano SDD executado.

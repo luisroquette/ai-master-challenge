@@ -541,3 +541,107 @@ As abas `Evidências` e `Fila operacional` receberam abertura e contexto própri
 - pipeline, artefatos, métricas e decisão analítica permaneceram inalterados.
 
 **Resultado:** redesign funcional concluído com foco integral em clareza executiva, densidade controlada e rastreabilidade visual.
+
+## Lapidação pós-redesign — auditoria limitada
+
+### Decisão autoral e regra de parada
+
+De posse do redesign funcional, Luis abriu uma nova etapa padrão de suas construções: lapidar exaustivamente o último planejamento e sua implementação antes de adicionar novas funcionalidades. A busca cobre gargalos, erros, bugs, melhorias e refinamentos técnicos, de layout, design, UI/UX, código e segurança.
+
+O objetivo é concluir **duas rodadas completas consecutivas sem novos apontamentos relevantes**. Um novo achado reinicia a sequência estável em `0/2`; achados já catalogados continuam pendentes, mas não são contados novamente nas rodadas seguintes. Para controlar o orçamento, Luis definiu o teto absoluto de **cinco rodadas completas**. Se o teto for atingido antes da estabilidade, o processo encerra com essa limitação declarada.
+
+Esta fase é deliberadamente diagnóstica: registra e prioriza as lapidações descobertas para implementação posterior. O dashboard não será alterado durante a auditoria, evitando misturar descoberta com correção e permitindo que cada decisão permaneça rastreável.
+
+Cada rodada reavalia cinco dimensões: comportamento técnico e runtime; layout, design e UI/UX; acessibilidade e responsividade; código e segurança; regressões, testes e documentação. Antes da primeira rodada, consultamos a documentação oficial atual do Streamlit sobre temas e fontes e as orientações do W3C sobre foco visível. A skill `frontend-design` orienta a crítica visual; o modo Ponytail impede dependências ou abstrações sem necessidade demonstrada.
+
+**Estado inicial:** `0/5` rodadas executadas; sequência estável `0/2`.
+
+### Rodada 1 de até 5 — fonte, estado e contraste
+
+**Resultado:** novos achados relevantes; sequência estável `0/2`.
+
+A leitura integral de `app.py` encontrou dois valores visuais desacoplados dos artefatos: o status “Evidência inconclusiva” e o cutoff “30 nov 2024” estão fixos no hero. Eles descrevem corretamente a execução atual, mas podem mentir após uma reprodução com outro resultado. A auditoria inicialmente registrou também um cartão “MRR exposto — máximo” duplicado; durante a implementação, verificamos que os intervalos `1–380` e `380–720` do comando de leitura imprimiram a mesma linha 380 duas vezes. O código continha apenas um cartão. O falso positivo foi corrigido no diário, preservando a origem do erro.
+
+O cálculo de contraste confirmou três lacunas de acessibilidade. O vermelho de sinal sobre o papel atinge `3,74:1` e é usado em textos pequenos; o texto secundário atinge `4,37:1`; o foco laranja sobre o papel atinge apenas `1,79:1`. O foco funciona sobre o fundo escuro (`8,07:1`), mas não de forma consistente em superfícies claras. A correção proposta é escurecer os tokens de texto e adotar indicador de foco em duas cores, robusto em fundos heterogêneos.
+
+A direção tipográfica também depende de `Avenir`, disponível no macOS, mas não garantida no Linux do deploy. O Streamlit oferece configuração nativa de fontes e famílias empacotadas; portanto, a solução mínima é declarar o tema em `.streamlit/config.toml`, sem adicionar biblioteca. O CSS força `color-scheme: light` e usa cores fixas; isso deve ser assumido e testado como tema claro próprio, ou migrado para variáveis semânticas do Streamlit — não deixado como comportamento implícito.
+
+Por fim, as tabelas executivas não têm formatação por tipo. Percentuais, dinheiro, razões e ausências aparecem como números com seis casas ou `nan`, prejudicando leitura e credibilidade. A melhoria é centralizar uma pequena configuração de apresentação já no helper `render_table`, sem alterar valores exportados.
+
+**Contagem:** `1/5` rodada completa; sequência estável `0/2`.
+
+### Rodada 2 de até 5 — navegador, mobile e interação
+
+**Resultado:** novos achados relevantes; sequência estável `0/2`.
+
+A inspeção no navegador confirmou a formatação numérica crua da rodada anterior e revelou que o CSS das abas não alcança mais o DOM da versão instalada do Streamlit. Os seletores esperam `data-baseweb="tab"`, enquanto o componente real expõe `data-testid="stTab"`; por isso, a navegação continua com a linha vermelha padrão e não com os botões escuros definidos no redesign. É uma dívida frágil de seletor interno, não uma falha funcional.
+
+No viewport de `390 × 844`, o layout não cria rolagem horizontal global e as três abas continuam acessíveis. Entretanto, o hero ocupa a maior parte da primeira tela também nas abas operacionais, atrasando evidências e filtros. O cabeçalho numerado mantém a grade desktop, deixando o número isolado e o título excessivamente recuado; os três filtros da matriz ficam empilhados mesmo quando há espaço desktop. A lapidação recomendada é reduzir o hero no mobile e nas vistas secundárias, adaptar a grade do cabeçalho no breakpoint e agrupar filtros em colunas responsivas.
+
+A navegação por teclado alcança abas e campos, mas confirmou o mesmo foco laranja de baixo contraste em superfícies claras já catalogado. O runtime não mostrou gargalo: a primeira execução do `AppTest` levou `1,25 s` e as repetições ficaram entre `0,03 s` e `0,04 s`; adicionar cache agora seria otimização especulativa.
+
+Por fim, o README da solução declara `41 testes`, enquanto a suíte atual contém e executa `42`. O número deve ser derivado ou removido para não voltar a ficar obsoleto.
+
+**Contagem:** `2/5` rodadas completas; sequência estável `0/2`.
+
+### Rodada 3 de até 5 — segurança, regressões e aderência
+
+**Resultado:** um novo achado relevante; sequência estável `0/2`.
+
+O cruzamento com o briefing e o Guia de Submissão confirmou que relatório, dashboard, instruções de execução e process log continuam cobrindo a entrega exigida. O manifesto valida os nove artefatos, registra checksums de entrada e saída, runtime, commit produtor e bloqueio do modelo. O SHA do manifesto pertence à reprodução analítica anterior ao redesign; isso é correto, pois a camada visual não altera os artefatos.
+
+As cinco ocorrências de `unsafe_allow_html=True` recebem somente estrutura estática, booleano do manifesto e números calculados; os textos vindos dos CSVs continuam nos componentes escapados do Streamlit. A chamada de Git usa lista de argumentos, sem shell. Não foi encontrada nova vulnerabilidade ou exposição de segredo.
+
+O novo achado está na cobertura de regressão: os seis testes do dashboard exercitam navegação, filtros, cronologia e watchlist, mas não executam o ramo em que há hipótese aceita. Foi nesse estado futuro não coberto que o hero fixo poderia contradizer os artefatos. A correção deve incluir uma única regressão com finding aceito, verificando status e cutoff derivados; não é necessário criar uma suíte visual paralela.
+
+**Contagem:** `3/5` rodadas completas; sequência estável `0/2`.
+
+### Rodada 4 de até 5 — reavaliação independente
+
+**Resultado:** nenhum novo achado relevante; sequência estável `1/2`.
+
+Repetimos a inspeção em largura mínima efetiva de `355 px`. O documento não apresentou overflow horizontal global, as três abas permaneceram alcançáveis e a fila manteve alerta, filtros, limite de 25 contas e download. Os pontos de densidade mobile, estilo das abas e foco já estavam catalogados; não surgiu nova classe de falha.
+
+Também rechecamos cada exigência do avaliador contra a interface e os artefatos: cinco tabelas cruzadas, números verificáveis, segmentos e contas identificáveis, recomendações condicionadas à evidência, distinção entre associação e causalidade, relatório executivo e process log. Nenhuma lacuna adicional foi encontrada.
+
+**Contagem:** `4/5` rodadas completas; sequência estável `1/2`.
+
+### Rodada 5 de 5 — confirmação e fechamento
+
+**Resultado:** nenhum novo achado relevante; sequência estável `2/2` e objetivo atingido.
+
+A última passagem repetiu análise estática, integridade do diff e gates executáveis. Ruff passou, os 18 arquivos Python permaneceram no formato canônico e os 42 testes passaram em `3,17 s`. Nenhuma nova falha técnica, visual, de segurança, documentação ou aderência apareceu além do backlog já catalogado.
+
+### Backlog consolidado para implementação
+
+1. **Correção e verdade canônica:** derivar status e cutoff do hero dos artefatos e cobrir o ramo de finding aceito com uma regressão única.
+2. **Acessibilidade e tema:** corrigir os contrastes de sinal e texto; usar foco de duas cores; declarar fonte e tema claro em `.streamlit/config.toml`, sem dependência nova.
+3. **Leitura executiva:** formatar percentuais, moeda, razões e ausências por coluna, mantendo os CSVs canônicos intactos.
+4. **UI responsiva:** substituir os seletores obsoletos das abas, compactar o hero e o cabeçalho numerado no mobile e organizar filtros em colunas responsivas.
+5. **Documentação:** remover a contagem fixa de testes do README ou atualizá-la junto da suíte.
+
+**Encerramento:** `5/5` rodadas completas; duas passagens consecutivas sem novos achados (`2/2`). A fase cumpriu o `/goal` dentro do limite definido por Luis. Nenhuma correção foi implementada nesta fase diagnóstica; o backlog acima é a entrada rastreável da próxima etapa de implementação.
+
+## Implementação do backlog de lapidação
+
+### Planejamento e revisão
+
+Luis autorizou a implementação integral do backlog. Antes de criar o tema, revisitamos a documentação oficial do Streamlit: o arquivo local correto é `.streamlit/config.toml`, e as famílias internas `sans-serif`, `serif` e `monospace` evitam download externo. A solução aprovada permanece sem dependências novas e concentra a mudança em `app.py`, configuração do tema, uma regressão e a documentação.
+
+O fluxo segue `Planejamento → Revisão → Execução → Teste`. A revisão escolheu recursos nativos: status e cutoff derivados de `findings.csv`; um helper único de apresentação; `st.columns` responsivas; tokens de contraste; fontes empacotadas; e seletores correspondentes ao DOM real da versão fixada do Streamlit.
+
+### Execução
+
+O hero passou a refletir a verdade canônica da execução, inclusive em um cenário futuro com finding aceito. Tabelas agora apresentam percentuais, moeda, razões, decimais e ausências em formato executivo sem modificar os CSVs exportados. Os filtros foram agrupados em colunas responsivas.
+
+O tema claro e as fontes foram formalizados no arquivo local do Streamlit. As cores de sinal e texto secundário foram escurecidas, e o foco ganhou duas camadas para permanecer visível em fundos claros e escuros. As abas passaram a usar os atributos reais da versão instalada; o hero e os cabeçalhos numerados foram compactados no mobile. A contagem fixa de testes foi removida do README.
+
+### Teste e feedback
+
+O primeiro teste revelou que as fixtures antigas de dashboard não continham `diagnostic_cutoff`. A dependência direta gerava `KeyError` antes de renderizar os controles. Corrigimos a causa no ponto comum: quando a coluna existe, o app a usa; quando não existe, recorre aos cutoffs do manifesto validado. A nova regressão altera o cutoff do manifesto e cria um finding aceito, comprovando que status e data não estão mais fixos.
+
+Depois da correção, os sete testes do dashboard passaram. A suíte completa passou com **43 testes**, Ruff e formatação permaneceram verdes, e `make check` reproduziu o pipeline em diretório temporário com `artifact_sets=equal`.
+
+A inspeção no navegador confirmou abas escuras com estado selecionado, três filtros alinhados no desktop, tabela executiva com três casas e percentuais legíveis, tema e fontes carregados, foco bicolor, ausência de overflow global no mobile e layout compacto em largura estreita. O dashboard final foi restaurado no viewport desktop em `http://localhost:8501`.
+
+**Resultado:** backlog implementado e validado. Artefatos analíticos e decisão executiva permaneceram inalterados.
