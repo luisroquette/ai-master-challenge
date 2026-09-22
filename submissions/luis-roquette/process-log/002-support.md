@@ -1191,3 +1191,26 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   exigiu ajuste; os subtasks permanecem no diretório estável previsto pela metodologia.
 - **Escopo preservado:** nenhum código ou evidence foi alterado. Uma nova rodada completa
   é necessária; somente duas rodadas limpas consecutivas encerram a Redundância.
+
+### Correção contemporânea de I68
+
+- A frase “Nenhum link interno exigiu ajuste” estava incorreta. A movimentação da task
+  revelou dez campos `Task File` nos subtasks e referências ativas na análise e no plano
+  que ainda apontavam para `tasks/draft`. R4 corrige esses ponteiros sem apagar o registro
+  original e distingue requisitos históricos da autoridade canônica atual.
+
+## I69 — Redundância Necessária R4: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `1 Medium / 1 Low`; streak reiniciado em
+  `0/2`.
+- **Medium:** os dez subtasks ainda apontavam para a task em `draft`; análise, plano e
+  auditoria de conformidade também mantinham referências ou bloqueadores pré-implementação
+  conflitantes sobre rubricas, preflight verde e PR.
+- **Low:** I68 afirmou incorretamente que nenhum link interno exigia ajuste. A correção
+  contemporânea acima preserva a história e explicita o erro.
+- **Correções:** os dez `Task File` agora apontam para `tasks/done`; análise e plano usam
+  a task concluída como referência canônica e rotulam claims antigos como históricos e
+  superseded; a auditoria preserva seu contexto, mas aponta o estado atual e o bypass do
+  owner. Nenhum Regular Check foi marcado.
+- **Escopo preservado:** nenhum código ou evidence foi alterado. A streak permanece em
+  `0/2`; uma nova rodada completa e limpa é necessária.

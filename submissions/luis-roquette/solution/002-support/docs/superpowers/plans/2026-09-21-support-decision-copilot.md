@@ -1,5 +1,13 @@
 # Support Decision Copilot Implementation Plan
 
+> **Estado histórico/superseded em 2026-09-22:** este foi o plano pré-implementação.
+> A task canônica concluída está em
+> `.specs/tasks/done/implement-support-decision-copilot.feature.md`. Exigências internas
+> posteriores de 60 rubricas, approve/edit real, preflight terminal verde e PR foram
+> superseded pela emenda canônica/DoD e pelo bypass explícito do owner. Elas permanecem
+> abaixo como registro da jornada, não como blockers atuais. Estado entregue e limitações:
+> READMEs, task done e process log I61–I69.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: complete `plan-task`, then use `implement-task` to execute this plan task-by-task after Luis approves it. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Deliver a local, reproducible Support Decision Copilot that diagnoses Dataset 1, demonstrates bounded automation across both datasets, and makes every automated or human-review decision auditable.
@@ -8,7 +16,7 @@
 
 **Tech Stack:** Python 3.12; Streamlit; pandas; scikit-learn; joblib; SQLite and `csv`/`json` from the standard library; pytest; Ruff. No paid API, remote model, JavaScript frontend, database service or deployment.
 
-**Spec:** `.specs/tasks/draft/implement-support-decision-copilot.feature.md`
+**Spec:** `.specs/tasks/done/implement-support-decision-copilot.feature.md`
 
 ## Global Constraints
 

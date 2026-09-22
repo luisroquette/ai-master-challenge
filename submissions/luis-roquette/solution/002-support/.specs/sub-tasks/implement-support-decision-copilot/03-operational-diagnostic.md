@@ -1,6 +1,6 @@
 # 03 — Diagnóstico operacional executável
 
-**Task File:** ../../tasks/draft/implement-support-decision-copilot.feature.md
+**Task File:** ../../tasks/done/implement-support-decision-copilot.feature.md
 **Phase:** 1
 **Model:** sonnet
 **Agent:** sdd:data-engineer

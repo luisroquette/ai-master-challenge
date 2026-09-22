@@ -2,13 +2,20 @@
 
 Date: 2026-09-21. Scope: codebase impact only; no implementation or task-section edits.
 
+> **Estado histórico/superseded em 2026-09-22:** este documento retrata a análise
+> pré-implementação. A autoridade atual é a task concluída em
+> `.specs/tasks/done/implement-support-decision-copilot.feature.md`. Claims conflitantes
+> sobre rubricas humanas obrigatórias, approve/edit real, preflight terminal verde ou PR
+> foram superseded pelas emendas canônicas I61/I62, pela decisão de bypass do owner
+> registrada em I64/I66 e pelo DoD 5/5. Consulte task, READMEs e diário atuais.
+
 ## Inspected state and authority
 
 - Workspace: `/Users/luisroquette/Projects/ai-master-challenge-worktrees/002-support`.
 - Branch: `submission/luis-roquette-002-support`; inspected HEAD: `05f83d1be27c1b93c58e3eadd7a7b2b8279e723f`. Tracked worktree was clean at inspection; concurrent planning agents may add their own files later.
 - Repository is documentation plus submission planning. There is no application code, dependency manifest, lockfile, test suite, Makefile, deployment configuration, or `.github/workflows` in the inspected tree. Existing public function definitions/callers: none. All signatures below come from the earlier implementation plan and remain proposed contracts, not verified implementations.
 - Sources: `challenges/process-002-support/README.md`, `CONTRIBUTING.md`, `submission-guide.md`, `templates/submission-template.md`; submission research, process log, draft task, prior implementation plan and coverage audit.
-- Canonical scope is the draft task at `.specs/tasks/draft/implement-support-decision-copilot.feature.md`. The earlier plan at `docs/superpowers/plans/2026-09-21-support-decision-copilot.md` supplies candidate file locations and contracts; it is not proof that any module or command works. Research explicitly leaves the Streamlit reproduction gate open.
+- Canonical scope is the completed task at `.specs/tasks/done/implement-support-decision-copilot.feature.md`. The earlier plan at `docs/superpowers/plans/2026-09-21-support-decision-copilot.md` supplies historical candidate file locations and contracts; it is not current proof that any module or command works. Execution evidence and limitations live in the task, READMEs and process log.
 
 Root `.gitignore` ignores `submissions/`. Existing submission documents are tracked through explicit additions; new descendants can be invisible to ordinary `git status` and `rg --files`. Inspection used `rg --files --hidden --no-ignore -g '!.git'` and `git ls-files`. Use explicit scoped additions when implementation is authorized; do not change root ignore rules or add the entire ignored tree. Local solution `.gitignore` currently contains only `.specs/scratchpad/`.
 

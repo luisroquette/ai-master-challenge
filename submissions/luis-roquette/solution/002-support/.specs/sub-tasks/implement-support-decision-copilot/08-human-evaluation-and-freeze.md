@@ -1,6 +1,6 @@
 # 08 — Revisão humana e avaliação final independente
 
-**Task File:** ../../tasks/draft/implement-support-decision-copilot.feature.md
+**Task File:** ../../tasks/done/implement-support-decision-copilot.feature.md
 **Phase:** 3
 **Model:** opus
 **Agent:** sdd:ml-engineer

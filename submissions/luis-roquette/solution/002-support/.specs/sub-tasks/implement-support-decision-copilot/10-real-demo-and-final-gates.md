@@ -1,6 +1,6 @@
 # 10 — Demonstração real, evidência persistida e fechamento
 
-**Task File:** ../../tasks/draft/implement-support-decision-copilot.feature.md
+**Task File:** ../../tasks/done/implement-support-decision-copilot.feature.md
 **Phase:** 3
 **Model:** sonnet
 **Agent:** sdd:test-engineer

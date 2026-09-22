@@ -1,6 +1,6 @@
 # 07 — Pipeline e aplicação integrados
 
-**Task File:** ../../tasks/draft/implement-support-decision-copilot.feature.md
+**Task File:** ../../tasks/done/implement-support-decision-copilot.feature.md
 **Phase:** 2
 **Model:** opus
 **Agent:** sdd:developer

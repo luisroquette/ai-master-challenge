@@ -8,7 +8,15 @@ SHA verificado: `4aed364d572fabe0f1fff1f0c6f32960b30fe575`
 
 Após correções, o plano cobre todos os requisitos publicados do Challenge 002, do guia de submissão, do template e do CONTRIBUTING. Não existe stack obrigatória no edital; a stack escolhida cobre integralmente análise, NLP clássico, calibração, recuperação, persistência, interface, testes e reprodução sem serviço externo pago.
 
-Isto é cobertura de plano, não prova de execução. A prontidão funcional somente poderá ser declarada depois de implementação, dados reais, rubricas humanas, preflight e demonstração persistida.
+Isto é cobertura de plano, não prova de execução. A frase histórica abaixo exigia implementação, dados reais, rubricas humanas, preflight e demonstração persistida; rubricas obrigatórias e preflight verde foram posteriormente superseded pela autoridade canônica e pelo bypass explícito do owner.
+
+### Estado atual — emenda canônica de 2026-09-22
+
+- Task concluída: `.specs/tasks/done/implement-support-decision-copilot.feature.md`, DoD 5/5.
+- CK-12 é validação futura opcional; zero elegíveis mantém drafts bloqueados sem invalidar o challenge.
+- O preflight terminal foi pulado por instrução do owner e permanece `não executado/não verde`.
+- PR não é requisito do briefing nem foi presumido; publicação permanece ação separada.
+- Evidência real atual: diagnóstico, dois datasets, protótipo, escalonamento persistido/exportado, screenshot de Scorecard, READMEs e diário.
 
 ## Matriz do avaliador
 
@@ -29,7 +37,7 @@ Isto é cobertura de plano, não prova de execução. A prontidão funcional som
 | README oficial na raiz da submissão | Task 9 cria `submissions/luis-roquette/README.md` pelo template | Coberto |
 | Instruções de setup | README técnico + `make doctor/setup/data/demo` | Coberto |
 | Alterar somente a própria pasta | Gate compara todo o diff contra `upstream/main` | Coberto |
-| PR com título oficial | Gate fixa `[Submission] Luis Roquette — Challenge 002` | Coberto |
+| PR com título oficial | Critério histórico do plano, superseded; PR não é requisito canônico nem foi presumido | Histórico |
 | Comunicação executiva e acionável | Root README responde às três perguntas no primeiro bloco | Coberto |
 | Limite recomendado de 4–6 horas | Orçamento de 320 minutos, com cortes opcionais definidos | Coberto |
 
@@ -45,7 +53,7 @@ Isto é cobertura de plano, não prova de execução. A prontidão funcional som
 | Interface | Streamlit >=1.64,<2 | Fila, scorecard, IT Lab, formulários e downloads | AppTest multipágina + health check |
 | Qualidade | pytest + Ruff | Regressão, integração, UI e lint | `make test && make lint` |
 | Reprodução | Make + curl + unzip | Download público, setup, pipeline e demo | `make demo` |
-| Orquestração | `codespace-manager` | Gates pesados fora do Mac | preflight do SHA exato |
+| Orquestração | `codespace-manager` | Gates pesados fora do Mac | histórico: preflight final pulado pelo owner, não verde |
 
 ## Riscos dos dados tratados
 
@@ -58,8 +66,8 @@ Isto é cobertura de plano, não prova de execução. A prontidão funcional som
 ## Dependências externas controladas
 
 - Kaggle: download público verificado; README oferece colocação manual dos dois CSVs como fallback.
-- Codespaces: criação e execução somente via `codespace-manager`; falha bloqueia o gate pesado, não é mascarada.
-- Rubrica de recuperação: duas amostras seeded de 30 casos; drafts ficam desativados até a calibração humana.
+- Codespaces: criação e execução somente via `codespace-manager`; o preflight terminal foi pulado por decisão explícita do owner e documentado como não executado/não verde.
+- Rubrica de recuperação: critério histórico superseded como blocker; continua evolução opcional, e drafts ficam desativados sem calibração humana.
 - LinkedIn: nunca inferir; obter de Luis antes do README final ou declarar `Não informado`.
 - SDD: `plan-task` completo e aprovação humana continuam gates antes de `implement-task`.
 
@@ -71,7 +79,7 @@ Isto é cobertura de plano, não prova de execução. A prontidão funcional som
 
 ## Critério de fechamento
 
-Não declarar a solução “100% pronta” apenas porque o plano cobre 100% do edital. A conclusão exige: código implementado, preflight verde, métricas reais, rubricas concluídas, screenshot real, export persistido, README oficial, diff limitado à pasta autorizada e PR no formato exigido.
+**Critério histórico superseded:** este relatório exigia código implementado, preflight verde, métricas reais, rubricas concluídas, screenshot, export, README, diff limitado e PR. O fechamento atual segue a task em `done`: métricas/evidências/escopo público foram comprovados; CK-12 ficou opcional e fail-closed; preflight terminal foi pulado pelo owner e não marcado verde; PR não foi presumido.
 
 ## Fechamento da auditoria
 

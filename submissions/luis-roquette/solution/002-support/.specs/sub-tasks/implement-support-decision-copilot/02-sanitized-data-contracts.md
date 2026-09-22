@@ -1,6 +1,6 @@
 # 02 — Dados sanitizados, splits e manifesto
 
-**Task File:** ../../tasks/draft/implement-support-decision-copilot.feature.md
+**Task File:** ../../tasks/done/implement-support-decision-copilot.feature.md
 **Phase:** 1
 **Model:** opus
 **Agent:** sdd:data-engineer
