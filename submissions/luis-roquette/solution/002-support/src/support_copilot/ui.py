@@ -322,8 +322,134 @@ def _bundle(bundle=None):
     return load_artifacts(bundle or Path(os.environ.get("SUPPORT_COPILOT_ARTIFACTS", "artifacts")))
 
 
+_LABELS = {
+    "ready": "Disponível", "missing": "Ausente", "corrupt": "Corrompido",
+    "incompatible": "Incompatível", "stale": "Desatualizado", "unavailable": "Indisponível",
+    "supported": "Com suporte", "insufficient_support": "Suporte insuficiente",
+    "insufficient_evidence": "Evidência insuficiente", "pending_review": "Revisão pendente",
+    "no_reliable_signal": "Sem sinal confiável", "disabled": "Desativado", "enabled": "Ativado",
+    "sealed": "Lacrado", "released_after_locks": "Aberto após congelamento",
+    "human_review": "Revisão humana", "auto_route": "Encaminhamento automático",
+    "Low": "Baixa", "Medium": "Média", "High": "Alta", "Critical": "Crítica", "Todas": "Todas",
+    "Billing inquiry": "Dúvida de cobrança", "Cancellation request": "Pedido de cancelamento",
+    "Product inquiry": "Dúvida sobre produto", "Refund request": "Pedido de reembolso",
+    "Technical issue": "Problema técnico", "Access": "Acesso",
+    "Administrative rights": "Permissões administrativas", "HR Support": "Suporte de RH",
+    "Hardware": "Equipamentos", "Internal Project": "Projeto interno",
+    "Miscellaneous": "Outros", "Purchase": "Compras", "Storage": "Armazenamento",
+    "Email": "E-mail", "Phone": "Telefone", "Chat": "Chat", "Social media": "Redes sociais",
+    "Ticket Channel": "Canal", "Ticket Priority": "Prioridade", "target": "Tipo",
+    "Ticket Channel+Ticket Priority+target": "Canal, prioridade e tipo",
+    "approve": "Aprovado", "edit_approve": "Editado e aprovado", "reject": "Rejeitado",
+    "escalate": "Escalonado", "ok": "Disponível", "unsupported": "Sem suporte",
+    "classification_unsupported": "Classificação sem suporte", "abstain": "Abstinência",
+    "draft": "Rascunho", "validated_threshold": "Limiar validado",
+    "validated_precedent": "Precedente validado", "below_threshold": "Abaixo do limiar",
+    "ambiguous_input": "Entrada ambígua", "critical_priority": "Prioridade crítica",
+    "privacy_failed": "Verificação de privacidade reprovada",
+    "artifact_invalid": "Artefato inválido",
+    "model_unavailable": "Modelo indisponível", "invalid_prediction": "Predição inválida",
+    "domain_mismatch": "Domínio incompatível", "unknown_priority": "Prioridade desconhecida",
+    "it_priority_not_observed": "Prioridade não observada no conjunto de TI",
+    "risk_detector_unavailable": "Detector de risco indisponível",
+    "empty_or_tokenless_input": "Entrada vazia ou sem palavras válidas",
+    "invalid_input": "Entrada inválida", "invalid_or_private_input": "Entrada inválida ou privada",
+    "ood_zero_vector": "Texto fora do vocabulário",
+    "ood_check_unavailable": "Vocabulário não verificado",
+    "ood_check_failed": "Verificação de vocabulário reprovada",
+    "model_version_mismatch": "Versão do modelo incompatível",
+    "automation_disabled": "Automação desativada", "pending_selection": "Seleção pendente",
+    "retrieval_unavailable": "Recuperação indisponível", "no_safe_sources": "Sem fontes seguras",
+    "no_similar_source": "Sem precedente semelhante",
+    "retrieval_policy_not_validated": "Política de recuperação não validada",
+    "below_retrieval_threshold": "Similaridade abaixo do limiar",
+    "artifact_hash_mismatch": "Integridade do arquivo divergente",
+    "dependency_unavailable": "Dependência indisponível",
+    "manifest_missing_or_incompatible": "Manifesto ausente ou incompatível",
+    "artifact_not_registered": "Recurso não registrado",
+    "code_configuration_or_lock_changed": "Código, configuração ou dependências alterados",
+    "test_sealed_review_pending": "Teste lacrado; revisão pendente",
+    "customer_structured_operational_all_rows": "Todos os registros operacionais estruturados",
+    "structured_operational": "Dados operacionais estruturados",
+    "spearman_rank_correlation": "Correlação de postos de Spearman",
+    "group_rating": "Avaliação por grupo", "observed_proxy": "Indicador observado",
+    "projected_scenario": "Cenário projetado", "scenario_projection": "Cenário projetado",
+    "valid": "Válidos", "negative": "Intervalo negativo",
+    "invalid": "Inválidos", "missing_timestamp": "Data ausente",
+    "not_closed": "Ainda não fechado", "invalid_timestamp": "Data inválida",
+    "no_eligible_threshold": "Nenhum limiar atende aos critérios de automação",
+    "model_prediction_failed": "Modelo não conseguiu classificar a entrada",
+    "no_structured_operational_rows": "Sem registros operacionais estruturados",
+    "artifact_dependency_cycle": "Dependências circulares",
+    "artifact_domain_dependency_mismatch": "Dependência de outro domínio",
+    "artifact_file_missing": "Arquivo ausente",
+    "artifact_logical_hash_mismatch": "Conteúdo lógico divergente",
+    "artifact_manifest_incompatible_or_stale": "Manifesto incompatível ou desatualizado",
+    "artifact_model_incompatible": "Modelo incompatível",
+    "artifact_path_outside_root": "Caminho fora do diretório permitido",
+    "artifact_queue_schema_incompatible": "Estrutura da fila incompatível",
+    "artifact_retriever_incompatible": "Índice de recuperação incompatível",
+    "artifact_runtime_incompatible": "Ambiente de execução incompatível",
+    "artifact_schema_incompatible": "Estrutura do artefato incompatível",
+    "artifact_schema_or_state_incompatible": "Estrutura ou estado incompatível",
+    "artifact_type_incompatible": "Tipo de artefato incompatível",
+    "artifact_unavailable": "Artefato indisponível",
+    "index_version_mismatch": "Versão do índice divergente",
+    "policy_version_mismatch": "Versão da política divergente",
+    "retrieval_review_changed": "Revisão de recuperação alterada",
+    "manifest_entries_incompatible": "Registros do manifesto incompatíveis",
+    "manifest_schema_incompatible": "Estrutura do manifesto incompatível",
+    "manifest_symlink": "Manifesto aponta para um link não permitido",
+}
+
+
+def _label(value):
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "Indisponível"
+    if str(value).startswith("category:"):
+        return "Categoria sensível: " + _label(str(value).split(":", 1)[1])
+    if str(value).startswith(("sensitive:", "text:")):
+        return "Expressão sensível detectada"
+    if str(value).startswith("dependency_unavailable:"):
+        return "Dependência indisponível: " + _resource_label(str(value).split(":", 1)[1])
+    return _LABELS.get(str(value), "Não reconhecido; consulte os detalhes técnicos")
+
+
+def _resource_label(key):
+    family = {"models": "Modelos", "policies": "Políticas", "data": "Dados",
+              "analytics": "Diagnóstico", "retrieval": "Recuperação", "queue": "Fila",
+              "review": "Revisão", "manifest": "Manifesto"}.get(key.split(".")[0], "Recurso")
+    domain = " — atendimento" if "customer" in key else " — TI" if ".it" in key else ""
+    return family + domain
+
+
+def _number(value, *, percent=False):
+    if value is None or pd.isna(value):
+        return "Indisponível"
+    return f"{value * 100 if percent else value:,.2f}".replace(",", "_").replace(
+        ".", ",").replace("_", ".") + ("%" if percent else "")
+
+
+def _table(values, labels, *, categories=(), percentages=(), numbers=()):
+    """Format a presentation copy; never mutate artifacts or export values."""
+    frame = pd.DataFrame(values).reindex(columns=labels).copy()
+    for column in labels:
+        if column in categories:
+            frame[column] = frame[column].map(_label)
+        elif column in percentages or column in numbers:
+            frame[column] = frame[column].map(
+                lambda value, percent=column in percentages: _number(value, percent=percent))
+        else:
+            frame[column] = frame[column].fillna("Indisponível")
+    st.dataframe(frame, hide_index=True, column_config={
+        key: st.column_config.TextColumn(label) for key, label in labels.items()})
+
+
 def _show_state(state):
-    st.warning(f"{state.status}: {state.path} — {state.reason}. Correção: {state.correction}.")
+    st.warning(f"{_label(state.status)}: {state.path} — {_label(state.reason)}. "
+               f"Correção: {state.correction}.")
+    with st.expander("Detalhes técnicos"):
+        st.json(asdict(state) | {"value": None})
 
 
 def assess_ticket(row, model, policy, retriever=None, retrieval_policy=None, *,
@@ -379,6 +505,18 @@ def persist_decision(path, event):
     return confirmed
 
 
+def _remember_ticket():
+    """Copy widget values before Streamlit removes widgets from an unselected ticket."""
+    selected = st.session_state.get("editing_ticket")
+    if selected is None:
+        return
+    saved = st.session_state["ticket_edits"][selected]
+    version = saved["version"]
+    for field in ("final", "reason"):
+        saved[field] = st.session_state.get(f"{field}-{version}", saved[field])
+    saved["dirty"] = (saved["final"], saved["reason"]) != saved["baseline"]
+
+
 def render_queue(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Fila diária")
@@ -404,48 +542,79 @@ def render_queue(bundle=None) -> None:
                           artifact_valid=bundle.get("policies.customer").status == "ready")
             for row in state.value]
     rows.sort(key=lambda row: (*[-v for v in row["priority_score"]], row["ticket_id"]))
-    priority = st.selectbox("Filtrar prioridade", ["Todas", "Critical", "High", "Medium", "Low"])
-    route_filter = st.selectbox("Filtrar decisão do gate", ["Todas", "human_review", "auto_route"])
+    priority = st.selectbox("Filtrar prioridade", ["Todas", "Critical", "High", "Medium", "Low"],
+                            format_func=_label, on_change=_remember_ticket)
+    route_filter = st.selectbox("Filtrar encaminhamento", ["Todas", "human_review", "auto_route"],
+                                format_func=_label, on_change=_remember_ticket)
     rows = [row for row in rows if (priority == "Todas" or row["priority"] == priority)
             and (route_filter == "Todas" or row["route"]["action"] == route_filter)]
     if not rows:
         st.info("Nenhum ticket corresponde aos filtros.")
         return
-    st.dataframe([{"Ticket": row["ticket_id"], "Prioridade": row["priority"],
+    _table([{"Ticket": row["ticket_id"], "Prioridade": row["priority"],
                    "Categoria": row["prediction"]["label"],
                    "Confiança": row["prediction"]["confidence"],
-                   "Gate": row["route"]["action"], "Ordem explicável": row["priority_score"]}
-                  for row in rows], hide_index=True)
-    selected = st.selectbox("Ticket", [row["ticket_id"] for row in rows])
+                   "Encaminhamento": row["route"]["action"]}
+           for row in rows], {key: key for key in (
+               "Ticket", "Prioridade", "Categoria", "Confiança", "Encaminhamento")},
+           categories=("Prioridade", "Categoria", "Encaminhamento"), percentages=("Confiança",))
+    selected = st.selectbox("Ticket", [row["ticket_id"] for row in rows],
+                            on_change=_remember_ticket)
     row = next(row for row in rows if row["ticket_id"] == selected)
     st.text(row["text"])
-    st.write({"categoria": row["prediction"]["label"], "confiança": row["prediction"]["confidence"],
-              "gate": row["route"]["action"], "motivos": row["route"]["reason_codes"],
-              "ordem: prioridade, riscos, incerteza": row["priority_score"]})
+    st.write(f"Categoria: {_label(row['prediction']['label'])}. "
+             f"Confiança: {_number(row['prediction']['confidence'], percent=True)}. "
+             f"Encaminhamento: {_label(row['route']['action'])}.")
+    st.write("Motivos: " + "; ".join(_label(code) for code in row["route"]["reason_codes"]))
+    st.caption("Ordem da fila: prioridade, quantidade de riscos e incerteza, nessa sequência.")
     retrieval = row["retrieval"] or {}
     sources = retrieval.get("sources", [])
     st.caption("Similaridade dos precedentes não é probabilidade de correção.")
-    st.dataframe(sources, hide_index=True)
+    _table(sources, {"ticket_id": "Ticket de origem", "similarity": "Similaridade",
+                     "resolution": "Resolução sanitizada"}, percentages=("similarity",))
     draft = retrieval.get("draft")
     if not draft:
-        st.info("Sem rascunho seguro: " + ", ".join(retrieval.get("reason_codes", [
-            "retrieval_unavailable"])))
+        st.info("Sem rascunho seguro: " + "; ".join(_label(code) for code in retrieval.get(
+            "reason_codes", ["retrieval_unavailable"])))
+    with st.expander("Detalhes técnicos"):
+        st.json(row)
     version = content_hash({"bundle": bundle.version, "ticket": selected,
                             "draft": draft, "policy": retrieval_policy.policy_version})
-    if st.session_state.get("ticket_version") != version:
-        st.session_state["ticket_version"] = version
-        st.session_state["submission_id"] = str(uuid4())
-        st.session_state.pop("audit_confirmed", None)
-    with st.form(f"decision-{version}"):
-        final = st.text_area("Resposta final", value=draft or "", key=f"final-{version}",
-                             disabled=not draft)
+    edits = st.session_state.setdefault("ticket_edits", {})
+    previous = st.session_state.get("editing_ticket")
+    _remember_ticket()
+    if previous and previous != selected and edits[previous]["dirty"]:
+        st.warning(f"Alterações não persistidas de {previous} preservadas nesta sessão. "
+                   "Selecione esse ticket novamente para continuar; nada foi gravado no banco.")
+    if selected not in edits:
+        edits[selected] = {"version": version, "final": draft or "", "reason": "",
+                           "baseline": (draft or "", ""), "dirty": False,
+                           "submission_id": str(uuid4()), "confirmed": None}
+    saved = edits[selected]
+    if saved["version"] != version:
+        saved.update(version=version, submission_id=str(uuid4()), confirmed=None,
+                     baseline=(draft or "", ""))
+        st.warning("Os artefatos deste ticket mudaram. "
+                   "Revise o conteúdo preservado antes de salvar.")
+    st.session_state["editing_ticket"] = selected
+    st.session_state["ticket_version"] = version
+    st.session_state["submission_id"] = saved["submission_id"]
+    st.session_state["audit_confirmed"] = saved["confirmed"]
+    for field in ("final", "reason"):
+        st.session_state.setdefault(f"{field}-{version}", saved[field])
+    # Outside a form: edits reach session_state on blur, before selection/navigation reruns.
+    with st.container():
+        final = st.text_area("Resposta final", key=f"final-{version}",
+                             disabled=not draft or bool(saved["confirmed"]),
+                             on_change=_remember_ticket)
         reason = st.text_area("Motivo (obrigatório para rejeitar ou escalonar)",
-                              key=f"reason-{version}")
-        confirmed = st.session_state.get("audit_confirmed")
-        approve = st.form_submit_button("Aprovar", disabled=not draft or bool(confirmed))
-        edit = st.form_submit_button("Editar e aprovar", disabled=not draft or bool(confirmed))
-        reject = st.form_submit_button("Rejeitar", disabled=bool(confirmed))
-        escalate = st.form_submit_button("Escalonar", disabled=bool(confirmed))
+                              key=f"reason-{version}", disabled=bool(saved["confirmed"]),
+                              on_change=_remember_ticket)
+        confirmed = saved["confirmed"]
+        approve = st.button("Aprovar", disabled=not draft or bool(confirmed))
+        edit = st.button("Editar e aprovar", disabled=not draft or bool(confirmed))
+        reject = st.button("Rejeitar", disabled=bool(confirmed))
+        escalate = st.button("Escalonar", disabled=bool(confirmed))
     action = next((name for name, clicked in (("approve", approve), ("edit_approve", edit),
                   ("reject", reject), ("escalate", escalate)) if clicked), None)
     if action:
@@ -470,6 +639,7 @@ def render_queue(bundle=None) -> None:
                      "formulário e UUID preservados para nova tentativa.")
         else:
             st.session_state["audit_confirmed"] = stored.id
+            saved.update(confirmed=stored.id, baseline=(final, reason), dirty=False)
     if st.session_state.get("audit_confirmed"):
         st.success(f"Decisão persistida e relida: audit_id={st.session_state['audit_confirmed']}")
 
@@ -477,7 +647,7 @@ def render_queue(bundle=None) -> None:
 def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     """Render observed history, measured development evidence and projections separately."""
     bundle = _bundle(root)
-    st.header("Diagnóstico operacional")
+    st.title("Diagnóstico operacional")
     try:
         for key in ("analytics.operational_summary", "analytics.satisfaction_model"):
             if bundle.get(key).status != "ready":
@@ -486,11 +656,11 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         summary_payload = bundle.get("analytics.operational_summary").value
         satisfaction = bundle.get("analytics.satisfaction_model").value
         summary = OperationalSummary(**summary_payload)
-    except (TypeError, ValueError) as error:
-        st.warning(str(error))
+    except (TypeError, ValueError):
+        st.warning("Diagnóstico incompatível; execute make reproduce.")
         return
     if summary.status == "insufficient_support":
-        st.warning(f"Diagnóstico sem suporte: {summary.reason}.")
+        st.warning(f"Diagnóstico sem suporte: {_label(summary.reason)}.")
 
     st.subheader("Histórico observado")
     st.caption(
@@ -506,15 +676,25 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     third.metric(
         "Mediana pós-resposta (h)",
         "Indisponível" if summary.median_post_response_hours is None
-        else f"{summary.median_post_response_hours:.2f}",
+        else _number(summary.median_post_response_hours),
     )
-    st.write({"exclusões mutuamente exclusivas": summary.interval_exclusions})
+    st.write("Exclusões mutuamente exclusivas: " + "; ".join(
+        f"{_label(key)}: {value}" for key, value in summary.interval_exclusions.items()))
     st.caption(
         "Excesso observado é proxy não negativo; não representa economia realizada. "
-        f"Escopo: {summary.analysis_scope}; fonte: {summary.source_lane}; "
-        f"linhas brutas={summary.source_rows}, sanitizadas={summary.sanitized_rows}, "
-        f"texto retido={summary.text_fields_retained}."
+        f"Escopo: {_label(summary.analysis_scope)}; fonte: {_label(summary.source_lane)}; "
+        f"linhas brutas: {_number(summary.source_rows)}, "
+        f"sanitizadas: {_number(summary.sanitized_rows)}; "
+        f"texto retido: {'sim' if summary.text_fields_retained else 'não'}."
     )
+    bottleneck_columns = {
+        "grouping": "Agrupamento", "Ticket Channel": "Canal", "Ticket Priority": "Prioridade",
+        "target": "Tipo", "n_total": "Total", "n_eligible": "Intervalos válidos",
+        "median_hours": "Mediana (h)", "q1_hours": "Primeiro quartil (h)",
+        "q3_hours": "Terceiro quartil (h)",
+    }
+    category_columns = ("grouping", "Ticket Channel", "Ticket Priority", "target")
+    hour_columns = ("median_hours", "q1_hours", "q3_hours")
     bottleneck_state = bundle.get("analytics.bottlenecks")
     if bottleneck_state.status == "ready":
         bottlenecks = pd.DataFrame(bottleneck_state.value)
@@ -523,19 +703,16 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
             & bottlenecks["rank_worst"].eq(1)
         ].sort_values("grouping")
         st.markdown("**Gargalo principal por canal, prioridade e tipo**")
-        st.dataframe(dimension_worst[[
-            "grouping", "Ticket Channel", "Ticket Priority", "target", "n_total",
-            "n_eligible", "median_hours", "q1_hours", "q3_hours",
-        ]])
+        _table(dimension_worst, bottleneck_columns, categories=category_columns,
+               numbers=hour_columns)
         worst = bottlenecks.loc[
             bottlenecks["grouping"].eq("Ticket Channel+Ticket Priority+target")
             & bottlenecks["n_eligible"].gt(0)
         ].sort_values(["rank_worst", "n_eligible"], ascending=[True, False]).head(5)
         st.markdown("**Piores combinações com intervalo válido**")
-        st.dataframe(worst[[
-            "Ticket Channel", "Ticket Priority", "target", "n_total", "n_eligible",
-            "median_hours", "q1_hours", "q3_hours",
-        ]])
+        _table(worst, {key: value for key, value in bottleneck_columns.items()
+                       if key != "grouping"},
+               categories=category_columns, numbers=hour_columns)
     waste_state = bundle.get("analytics.waste_opportunities")
     if waste_state.status == "ready":
         waste = pd.DataFrame(waste_state.value)
@@ -543,19 +720,20 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
             "rank_excess"
         ).head(5)
         st.markdown("**Maiores excessos sobre a mediana dos pares**")
-        st.dataframe(top_waste[[
-            "target", "Ticket Priority", "eligible_n", "peer_median_hours",
-            "observed_excess_hours", "share_of_supported_excess",
-        ]])
+        _table(top_waste, {"target": "Tipo", "Ticket Priority": "Prioridade",
+                          "eligible_n": "Casos elegíveis",
+                          "peer_median_hours": "Mediana dos pares (h)",
+                          "observed_excess_hours": "Excesso observado (h)",
+                          "share_of_supported_excess": "Participação no excesso"},
+               categories=category_columns, percentages=("share_of_supported_excess",),
+               numbers=("peer_median_hours", "observed_excess_hours"))
 
     st.subheader("Desempenho medido")
-    st.write({
-        "status": satisfaction.get("status"),
-        "avaliações válidas": satisfaction.get("valid_ratings"),
-        "avaliações ausentes": satisfaction.get("missing_ratings"),
-        "MAE baseline": satisfaction.get("baseline_mae"),
-        "MAE Ridge": satisfaction.get("ridge_mae"),
-    })
+    st.write(f"Estado: {_label(satisfaction.get('status'))}. "
+             f"Avaliações válidas: {_number(satisfaction.get('valid_ratings'))}; "
+             f"ausentes: {_number(satisfaction.get('missing_ratings'))}.")
+    st.write(f"Erro médio absoluto — referência: {_number(satisfaction.get('baseline_mae'))}; "
+             f"Ridge: {_number(satisfaction.get('ridge_mae'))}.")
     st.caption(
         "Validação cruzada histórica nos campos operacionais estruturados. Avaliações ausentes "
         "ou inválidas podem causar viés de seleção. Associação não demonstra causalidade."
@@ -568,11 +746,8 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         ]
         if not interval_association.empty:
             row = interval_association.iloc[0]
-            st.write({
-                "associação intervalo-satisfação": row["association_metric"],
-                "valor": row["association_value"],
-                "n pareado": int(row["n"]),
-            })
+            st.write(f"Associação intervalo-satisfação: {_label(row['association_metric'])}; "
+                     f"valor: {_number(row['association_value'])}; pares: {int(row['n'])}.")
     metrics = bundle.get("models.metrics")
     test_status = metrics.value.get("status") if (
         metrics.status == "ready" and isinstance(metrics.value, dict)) else None
@@ -629,28 +804,27 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
                 summary,
                 ScenarioAssumptions(volume, share, minutes, cost, name),
             )
-            st.write({
-                "horas anuais projetadas": round(projection.annual_hours, 2),
-                "custo anual projetado": (
-                    round(projection.annual_cost, 2) if cost > 0 else "não calculado"
-                ),
-                "natureza": projection.evidence_kind,
-            })
+            st.write(f"Horas anuais projetadas: {_number(projection.annual_hours)}. "
+                     f"Custo anual projetado: "
+                     f"{_number(projection.annual_cost) if cost > 0 else 'não calculado'}. "
+                     "Natureza: projeção, não economia realizada.")
 
-    for key in ("analytics.bottlenecks", "analytics.waste_opportunities",
-                "analytics.satisfaction_associations", "analytics.automation_opportunities"):
-        state = bundle.get(key)
-        with st.expander(key):
+    with st.expander("Detalhes técnicos"):
+        st.json({"summary": summary_payload, "satisfaction": satisfaction})
+        for key in ("analytics.bottlenecks", "analytics.waste_opportunities",
+                    "analytics.satisfaction_associations", "analytics.automation_opportunities"):
+            state = bundle.get(key)
+            st.caption(key)
             st.dataframe(state.value) if state.status == "ready" else _show_state(state)
-    metrics = bundle.get("models.metrics")
-    if metrics.status == "ready":
-        st.json(metrics.value)
+        metrics = bundle.get("models.metrics")
+        if metrics.status == "ready":
+            st.json(metrics.value)
 
 
 def render_it_lab(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Laboratório IT")
-    st.write({"taxonomia IT": list(IT_TAXONOMY)})
+    st.write("Categorias de TI: " + ", ".join(_label(label) for label in IT_TAXONOMY))
     st.caption("Prioridade e desfecho operacional não observados. Sem união de registros Customer.")
     state = bundle.get("models.it")
     if state.status != "ready":
@@ -665,28 +839,45 @@ def render_it_lab(bundle=None) -> None:
         if not row["signals"]["privacy_passed"]:
             st.error("Entrada recusada: remova dados pessoais e tente novamente.")
         else:
-            st.write({"texto sanitizado": row["text"], "predição": row["prediction"],
-                      "gate": row["route"]})
+            st.text(row["text"])
+            st.write(f"Categoria: {_label(row['prediction']['label'])}. "
+                     f"Confiança: {_number(row['prediction']['confidence'], percent=True)}. "
+                     f"Encaminhamento: {_label(row['route']['action'])}.")
+            st.write("Motivos: " + "; ".join(_label(code) for code in row["route"]["reason_codes"]))
+            with st.expander("Detalhes técnicos"):
+                st.json(row)
     metrics = bundle.get("models.metrics")
     if metrics.status == "ready":
-        st.json(metrics.value["domains"]["it"])
+        with st.expander("Detalhes técnicos"):
+            st.json(metrics.value["domains"]["it"])
 
 
 def render_evidence(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Evidências e decisões locais")
     st.caption("Regexes e vetor zero não detectam todo risco/PII/OOD. Revisão humana é necessária.")
-    st.json({key: bundle.manifest.get(key) for key in (
-        "code_revision", "configuration_sha256", "lock_sha256", "models", "retrieval")})
-    st.dataframe([{"recurso": key, "estado": state.status, "causa": state.reason,
+    with st.expander("Detalhes técnicos"):
+        st.json({key: bundle.manifest.get(key) for key in (
+            "code_revision", "configuration_sha256", "lock_sha256", "models", "retrieval")})
+    _table([{"recurso": _resource_label(key), "estado": state.status, "causa": state.reason,
                    "caminho": state.path, "correção": state.correction}
-                  for key, state in bundle.features.items()])
+            for key, state in bundle.features.items()],
+           {"recurso": "Recurso", "estado": "Estado", "causa": "Causa",
+            "caminho": "Arquivo", "correção": "Correção"}, categories=("estado", "causa"))
     path = _runtime() / "decisions.sqlite3"
     try:
         initialize_store(path)
         with closing(sqlite3.connect(path, isolation_level=None)) as connection:
             decisions = list_decisions(connection)
-        st.dataframe([asdict(row) for row in decisions], hide_index=True)
+        _table([asdict(row) for row in decisions], {
+            "id": "Registro", "ticket_id": "Ticket", "human_action": "Decisão humana",
+            "human_reason": "Motivo", "suggested_label": "Categoria sugerida",
+            "confidence": "Confiança", "gate_action": "Encaminhamento",
+            "final_text": "Resposta final"},
+            categories=("human_action", "suggested_label", "gate_action"),
+            percentages=("confidence",))
+        with st.expander("Detalhes técnicos"):
+            st.json([asdict(row) for row in decisions])
         if st.button("Persistir export CSV"):
             with closing(sqlite3.connect(path, isolation_level=None)) as connection:
                 export = export_decisions_csv(connection, _runtime() / "exports" /

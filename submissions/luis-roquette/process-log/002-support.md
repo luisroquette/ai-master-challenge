@@ -1179,6 +1179,14 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   corte foi feito porque os contratos existentes são necessários para os gates seguros.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
 
+## I74 — Lapidação R1: checkpoint de UI, NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação `0/2`. Este checkpoint corrige a UI, não encerra a rodada nem substitui nova inspeção visual. A captura atualizada continua pendente para o agente de evidence; nenhum screenshot foi produzido ou alterado aqui.
+- **Correções de interação:** resposta final, motivo, UUID e confirmação ficam associados ao ticket em `st.session_state`. Widgets fora do formulário permitem capturar a edição antes da troca; alterações não persistidas são preservadas e recebem aviso claro ao selecionar outro ticket. Retornar recupera o conteúdo; falha de gravação mantém tentativa/UUID; persistência confirmada limpa o dirty state e impede duplicação. A preservação é da sessão Streamlit, não uma alegação de persistência de rascunhos após sessão nova.
+- **Correções de apresentação:** estados, motivos, categorias e encaminhamentos apresentados em PT-BR; tabelas usam rótulos de coluna, percentuais e nulos legíveis, em cópias de apresentação. JSON e códigos brutos ficam em `Detalhes técnicos`. O scorecard usa título de página (`st.title`). Valores internos, políticas fail-closed, banco e export permanecem inalterados.
+- **Verificação:** 44 testes focados de workflow passaram em 5,98 s; Ruff e diff-check passaram. As regressões cobrem troca imediata/retorno, falha e sucesso de gravação, limpeza do dirty state, labels, separação dos detalhes técnicos, formatos e heading. A primeira execução local encontrou `setuptools` ausente; foi instalado somente `setuptools==84.0.0`, já fixado no lock, via uv na `.venv` existente, sem mudar o lock. O gate remoto terminal continua não executado neste checkpoint; não se infere sucesso remoto dos checks locais.
+- **Escopo e snapshot:** somente `ui.py`, `test_workflow.py` e este diário entram no commit; evidence, READMEs e task permanecem intactos. S07 não está presente no runtime local atual; é opcional para este checkpoint de lapidação e não foi reconstruído a partir do workflow mutável nem apresentado como evidência recém-verificada. O próximo passo é atualizar a captura pelo agente de evidence e realizar nova rodada; streak permanece `0/2`.
+
 ## I73 — Redundância Necessária R8: CLEAN — 2026-09-22
 
 - **Base auditada:** SHA `a687ec26b203b8785940d58aa57f0bbd16407bf4`.

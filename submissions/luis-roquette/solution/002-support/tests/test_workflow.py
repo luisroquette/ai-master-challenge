@@ -265,6 +265,7 @@ def test_four_actions_rerun_restart_export(prepared, tmp_path, monkeypatch, labe
     app.text_area[1].input("review requested")
     button(app, label).click().run()
     assert not app.exception and "audit_id=1" in app.success[0].value
+    assert not app.session_state["ticket_edits"]["customer:fixture-a"]["dirty"]
     app.run()
     assert app.session_state["submission_id"] == submission_id
     with closing(sqlite3.connect(tmp_path / "decisions.sqlite3", isolation_level=None)) as conn:
@@ -316,8 +317,10 @@ def test_ticket_change_and_failed_write_preserve_form(prepared, tmp_path, monkey
     app = app_for(bundle, tmp_path, monkeypatch)
     old_uuid = app.session_state["submission_id"]
     app.text_area[0].input("edited first ticket")
+    app.text_area[1].input("first reason")
     app.run()
     app.selectbox[2].select("customer:fixture-b").run()
+    assert "Alterações não persistidas de customer:fixture-a preservadas" in app.warning[0].value
     assert app.text_area[0].value == "reset the device"
     assert app.session_state["submission_id"] != old_uuid
     new_uuid = app.session_state["submission_id"]
@@ -328,6 +331,84 @@ def test_ticket_change_and_failed_write_preserve_form(prepared, tmp_path, monkey
     assert app.error and not app.success
     assert app.text_area[0].value == "edited second ticket"
     assert app.session_state["submission_id"] == new_uuid
+    app.selectbox[2].select("customer:fixture-a").run()
+    assert app.text_area[0].value == "edited first ticket"
+    assert app.text_area[1].value == "first reason"
+    assert app.session_state["submission_id"] == old_uuid
+    app.selectbox[2].select("customer:fixture-b").run()
+    assert app.text_area[0].value == "edited second ticket"
+    assert app.session_state["submission_id"] == new_uuid
+
+
+def test_ticket_draft_survives_immediate_switch_and_commit_clears_dirty(
+        prepared, tmp_path, monkeypatch):
+    app = app_for(fixture_bundle(prepared), tmp_path, monkeypatch)
+    app.text_area[0].input("pending answer")
+    app.text_area[1].input("pending reason")
+    app.selectbox[2].select("customer:fixture-b").run()
+    assert app.warning and not app.success
+    app.selectbox[2].select("customer:fixture-a").run()
+    assert app.text_area[0].value == "pending answer"
+    assert app.text_area[1].value == "pending reason"
+    button(app, "Editar e aprovar").click().run()
+    assert app.success
+    assert not app.session_state["ticket_edits"]["customer:fixture-a"]["dirty"]
+    app.selectbox[2].select("customer:fixture-b").run()
+    assert not app.warning
+    app.selectbox[2].select("customer:fixture-a").run()
+    assert button(app, "Editar e aprovar").disabled
+    assert app.text_area[0].value == "pending answer"
+    assert app.success
+
+
+def test_presentation_formats_copy_without_changing_internal_values(monkeypatch):
+    captured = []
+    monkeypatch.setattr(ui.st, "dataframe",
+                        lambda frame, **kwargs: captured.append((frame, kwargs)))
+    source = [{"priority": "Critical", "confidence": 0.875, "missing": None}]
+    ui._table(source, {"priority": "Prioridade", "confidence": "Confiança", "missing": "Ausente"},
+              categories=("priority",), percentages=("confidence",))
+    frame, options = captured[0]
+    assert frame.iloc[0].to_dict() == {
+        "priority": "Crítica", "confidence": "87,50%", "missing": "Indisponível"}
+    assert options["column_config"]["confidence"]["label"] == "Confiança"
+    assert source == [{"priority": "Critical", "confidence": 0.875, "missing": None}]
+    assert ui._label("category:Refund request") == "Categoria sensível: Pedido de reembolso"
+    assert ui._label("text:private_pattern") == "Expressão sensível detectada"
+
+
+def _primary_elements(node):
+    if node.type == "expander" and node.label == "Detalhes técnicos":
+        return
+    yield node
+    for child in getattr(node, "children", {}).values():
+        yield from _primary_elements(child)
+
+
+def test_pages_use_portuguese_labels_and_keep_raw_json_in_technical_details(
+        prepared, tmp_path, monkeypatch):
+    app = app_for(fixture_bundle(prepared, priority="Critical"), tmp_path, monkeypatch)
+    assert app.selectbox[0].options == ["Todas", "Crítica", "Alta", "Média", "Baixa"]
+    assert app.selectbox[1].options == ["Todas", "Revisão humana", "Encaminhamento automático"]
+    assert app.dataframe[0].value.iloc[0]["Prioridade"] == "Crítica"
+    assert app.dataframe[0].value.iloc[0]["Confiança"] == "100,00%"
+    for page in (None, "pages/scorecard.py", "pages/it_lab.py", "pages/evidence.py"):
+        if page:
+            app.switch_page(page).run()
+        assert not app.exception
+        if page == "pages/scorecard.py":
+            assert app.title[0].value == "Diagnóstico operacional" and not app.header
+        if page == "pages/it_lab.py":
+            app.text_area[0].input("hardware device")
+            button(app, "Classificar IT").click().run()
+            assert not app.exception
+        primary = list(_primary_elements(app.main))
+        assert not any(item.type == "json" for item in primary)
+        text = " ".join(str(item.value) for item in primary
+                        if item.type in {"markdown", "caption", "warning", "info", "title"})
+        for code in ("human_review", "critical_priority", "ambiguous_input", "no_reliable_signal",
+                     "Technical issue", "insufficient_support", "customer_structured_operational"):
+            assert code not in text
 
 
 def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, monkeypatch):
@@ -342,7 +423,7 @@ def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, m
     assert [x.value for x in scorecard.subheader] == [
         "Histórico observado", "Desempenho medido", "Cenários projetados"]
     captions = " ".join(item.value for item in scorecard.caption)
-    assert "fonte: structured_operational" in captions
+    assert "fonte: Dados operacionais estruturados" in captions
     assert "não observa custo nem moeda" in captions
     assert all(item.value == 0 for item in scorecard.number_input if (
         item.label == "Volume anual elegível"
@@ -487,7 +568,8 @@ def test_corrupt_customer_model_blocks_queue_with_actionable_relative_path(prepa
     assert not app.exception and not app.button
     warnings = "\n".join(warning.value for warning in app.warning)
     assert "models/customer.joblib" in warnings
-    assert "artifact_hash_mismatch" in warnings and "make reproduce" in warnings
+    assert "Integridade do arquivo divergente" in warnings and "make reproduce" in warnings
+    assert any("artifact_hash_mismatch" in item.value for item in app.json)
     assert str(tmp_path) not in warnings and "private-home" not in warnings
     app.switch_page("pages/evidence.py").run()
     assert not app.exception
