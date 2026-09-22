@@ -1468,3 +1468,21 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   `git diff --check` passaram. A tabela também foi conferida contra os JSONs congelados.
 - **Medição após a frente:** diagnóstico `9,5`, automação `9,2`, prova funcional `9,0`;
   média simples `9,2/10`. Crescimento: `+0,5`. O Goal ainda não foi atingido.
+
+## I79 — Goal ≥ 9,5 · Frente 4: impacto e contrato do piloto — 2026-09-22
+
+- **Implementação do impacto:** os três cenários agora partem do contexto explícito do
+  briefing, `~30.000 tickets/ano`, e mostram horas mensais e anuais. O custo continua
+  indisponível até o Diretor informar uma premissa monetária.
+- **Projeções, não economia realizada:** conservador `150 h/ano`; base `625 h/ano`;
+  otimista `1.600 h/ano`. Fração endereçável e minutos poupados permanecem editáveis.
+- **Contrato do piloto:** duas semanas, shadow, mínimo de `1.000` tickets estratificados,
+  baseline do tempo manual e comparação de cada sugestão com a decisão humana; nenhuma
+  alteração no helpdesk e nenhuma resposta automática.
+- **Go/no-go cumulativo:** macro-F1 `≥75%`, recall por classe `≥65%`, ECE `≤5%`, risco
+  seletivo `≤10%` com cobertura `≥20%`, zero escape sensível/crítico e redução `≥20%`
+  no tempo mediano de triagem. Falhou um critério: mantém revisão humana e repete o piloto.
+- **Validação:** `61` testes de analytics e workflow passaram em `8,21 s`; Ruff e
+  `git diff --check` passaram.
+- **Medição após a frente:** diagnóstico `9,5`, automação `9,5`, prova funcional `9,3`;
+  média simples `9,4/10`. Crescimento: `+0,2`. O Goal ainda não foi atingido.

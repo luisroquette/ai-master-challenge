@@ -601,8 +601,15 @@ def render_director_brief(bundle=None) -> None:
     _section_label("05 · Próximo experimento")
     st.markdown("**Piloto shadow de duas semanas, sem envio automático.**")
     st.write(
-        "Revisar uma amostra estratificada, medir concordância, risco, cobertura e tempo "
-        "de triagem; promover somente uma capacidade que cumpra todos os critérios go/no-go."
+        "Processar no mínimo 1.000 tickets, estratificados por canal, prioridade e tipo. "
+        "Registrar o tempo manual atual antes do piloto e comparar cada sugestão da IA "
+        "com a decisão humana, sem alterar o helpdesk nem responder ao cliente."
+    )
+    st.markdown(
+        "**Go/no-go — todos obrigatórios:** macro-F1 ≥ 75%; recall por classe ≥ 65%; "
+        "ECE ≤ 5%; risco seletivo ≤ 10% com cobertura ≥ 20%; zero escape de PII, ação "
+        "sensível ou ticket crítico. **Impacto:** reduzir em ≥ 20% o tempo mediano de "
+        "triagem. Se um critério falhar, manter revisão humana e repetir o piloto."
     )
     with st.expander("Rastreabilidade técnica"):
         st.json({
@@ -1399,13 +1406,14 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     _section_label("03 · Simulador de impacto")
     st.subheader("Cenários projetados")
     st.caption(
-        "Volume, fração, minutos e custo são premissas editáveis. O Dataset 1 não observa "
-        "custo nem moeda; o valor monetário fica indisponível até uma premissa ser informada."
+        "O volume inicial de 30.000 tickets/ano vem do contexto do briefing, não do Dataset 1. "
+        "O Dataset 1 não observa custo nem moeda. Fração, minutos e custo são premissas "
+        "editáveis; o valor monetário fica indisponível até uma premissa de custo ser informada."
     )
     defaults = {
-        "conservative": (0, 0.10, 3.0, 0.0),
-        "base": (0, 0.25, 5.0, 0.0),
-        "optimistic": (0, 0.40, 8.0, 0.0),
+        "conservative": (30_000, 0.10, 3.0, 0.0),
+        "base": (30_000, 0.25, 5.0, 0.0),
+        "optimistic": (30_000, 0.40, 8.0, 0.0),
     }
     labels = {"conservative": "Conservador", "base": "Base", "optimistic": "Otimista"}
     for name, values in defaults.items():
@@ -1429,7 +1437,8 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
                 summary,
                 ScenarioAssumptions(volume, share, minutes, cost, name),
             )
-            st.write(f"Horas anuais projetadas: {_number(projection.annual_hours)}. "
+            st.write(f"Horas mensais projetadas: {_number(projection.annual_hours / 12)}. "
+                     f"Horas anuais projetadas: {_number(projection.annual_hours)}. "
                      f"Custo anual projetado: "
                      f"{_number(projection.annual_cost) if cost > 0 else 'não calculado'}. "
                      "Natureza: projeção, não economia realizada.")

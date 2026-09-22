@@ -433,10 +433,14 @@ def test_default_director_brief_and_separate_pages(prepared, tmp_path, monkeypat
     captions = " ".join(item.value for item in scorecard.caption)
     assert "fonte: Dados operacionais estruturados" in captions
     assert "não observa custo nem moeda" in captions
-    assert all(item.value == 0 for item in scorecard.number_input if (
-        item.label == "Volume anual elegível"
-        or item.label == "Custo por hora (premissa; moeda não definida)"
-    ))
+    assert all(item.value == 30000 for item in scorecard.number_input
+               if item.label == "Volume anual elegível")
+    assert all(item.value == 0 for item in scorecard.number_input
+               if item.label == "Custo por hora (premissa; moeda não definida)")
+    scorecard_text = " ".join(str(getattr(item, "value", ""))
+                              for item in _primary_elements(scorecard.main))
+    for hours in ("150,00", "625,00", "1.600,00"):
+        assert hours in scorecard_text
     lab = app.switch_page("pages/it_lab.py").run()
     lab.text_area[0].input("hardware device")
     button(lab, "Classificar IT").click().run()
@@ -450,7 +454,8 @@ def test_director_brief_answers_three_questions_from_verified_artifacts(
     text = " ".join(str(item.value) for item in _primary_elements(app.main)
                     if item.type in {"markdown", "caption", "warning", "info", "title"})
     for answer in ("Onde perdemos tempo?", "O que automatizar?", "Funciona?",
-                   "Piloto shadow", "automação Customer bloqueada"):
+                   "Piloto shadow", "automação Customer bloqueada", "1.000 tickets",
+                   "macro-F1 ≥ 75%", "reduzir em ≥ 20%"):
         assert answer in text
     assert "0% Customer" in text
     evidence = ui.automation_evidence({"domains": {
