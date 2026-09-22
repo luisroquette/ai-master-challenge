@@ -14,6 +14,8 @@ A fonte autoritativa é [ceo_answer.json](artifacts/ceo_answer.json), reproduzid
 
 O resultado numérico vigente deve ser lido no `analysis_id` validado, não copiado deste README. Fatos permanecem publicados mesmo quando nenhum mecanismo passa os gates. Nesse caso, `selected_mechanism_id=null`, a fila acionável fica vazia e a watchlist serve somente para validação — nunca autoriza contato.
 
+A leitura executiva começa por **Resposta curta**, inclui churn e MRR perdido observado, confronta agregado com a coorte que churnará e separa tickets respondidos da base inteira. Quando nenhuma causa é sustentada, o sistema declara **Causa ainda não demonstrada**, evita falsa concentração por segmento e propõe três validações: integridade dos dados, uso prospectivo e satisfação representativa. Rótulos de confiança vêm do nível de evidência canônico; não são estimados pelo dashboard.
+
 ## Reproduzir
 
 Requer Python 3.12. Se `python3.12` não estiver disponível, `make setup` usa `uv` quando instalado.

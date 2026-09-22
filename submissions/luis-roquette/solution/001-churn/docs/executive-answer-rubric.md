@@ -35,5 +35,17 @@ Responde em até 45 segundos: quantifica mudança e impacto; explica Produto × 
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|
 | Linha de base | 1,4 | 1,2 | 1,8 | 1,0 | 0,8 | 0,8 | **7,0** | Não | Avaliação anterior ao novo plano. |
 | Task 1 — contrato | 1,4 | 1,2 | 1,8 | 1,0 | 0,8 | 0,8 | **7,0** | Não | Rubrica e regressão fixam o critério; output ainda não mudou. |
+| Task 2 — veredito completo | 1,8 | 1,9 | 1,8 | 1,5 | 0,7 | 0,9 | **8,6** | Não | MRR observado e ausência de concentração material entram no contrato. |
+| Task 3 — abstenção e ações | 1,9 | 1,9 | 1,9 | 1,5 | 1,4 | 0,9 | **9,5** | Não | Três validações substituem a falsa causa e a ação genérica. |
+| Task 4 — leitura executiva | 2,0 | 1,9 | 2,0 | 1,5 | 1,5 | 0,9 | **9,8** | Não | Confiança traduzida e leitura de 45 segundos; artefatos reais ainda pendentes. |
+| Task 5 — entrega validada | 2,0 | 1,9 | 2,0 | 1,5 | 1,5 | 1,0 | **9,9** | Não | Artefatos reais consistentes, gate integral verde e dashboard conferido em desktop e 390×844. |
 
-As próximas linhas só podem ser preenchidas depois do teste da respectiva implementação.
+## Evidência da nota final
+
+- **Resposta direta — 2,0:** a abertura começa por “Resposta curta”, quantifica a alta, declara que nenhum mecanismo passou os gates e termina com a decisão.
+- **Precisão — 1,9:** publica 12,4%, +7,0 pp e US$ 1.622.337 com períodos, população, denominador e limitações rastreáveis. O desconto de 0,1 preserva a distinção entre qualidade da resposta e certeza causal.
+- **CS × Produto — 2,0:** confronta uso agregado com futuros churners e limita satisfação aos respondentes, com coberturas de 63,3% e 65,9%.
+- **Causalidade e decisão — 3,0:** afirma “Causa ainda não demonstrada” e entrega três validações com owner, prazo, população, métrica e regras de avançar/parar.
+- **Auditoria — 1,0:** `analysis_id=886cfb2b…`; JSON, relatório e dashboard compartilham o mesmo conteúdo; nenhum hard cap foi acionado.
+
+**Nota final interna: 9,9/10.** Ela avalia a qualidade da resposta entregue, não garante avaliação externa nem causalidade de 95%.

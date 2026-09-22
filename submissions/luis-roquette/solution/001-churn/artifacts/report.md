@@ -1,39 +1,52 @@
 # Resposta executiva canônica
 
-A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304). Nenhum mecanismo passou todos os gates.
+Resposta curta: A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O MRR perdido observado no período recente foi US$ 1.622.337; é impacto associado aos churns, não receita automaticamente recuperável. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304). Nenhum mecanismo passou todos os gates. Decisão: validar dados, uso e satisfação antes de intervir.
 
 ## 1. O que mudou
 
-A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304).
+**Alta confiança**
+
+A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência. O MRR perdido observado no período recente foi US$ 1.622.337; é impacto associado aos churns, não receita automaticamente recuperável. O uso cresceu no agregado (0.336→0.493), mas caiu entre as contas que churnariam em 30 dias (0.349→0.304).
 
 - **C-churn-change:** A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.
+- **C-churn-impact:** O MRR perdido observado no período recente foi US$ 1.622.337; é impacto associado aos churns, não receita automaticamente recuperável.
 - **C-usage-overall:** Uso diário por conta no agregado: 0.336→0.493.
 - **C-usage-churn-next-30d:** Uso diário por conta entre futuros churners de 30 dias: 0.349→0.304.
 
 ## 2. Onde está concentrado
 
-country / US teve risco relativo descritivo de 1.08x.
+**Alta confiança**
+
+Não há concentração material demonstrada: o maior recorte elegível tem RR 1.08×, abaixo do limiar descritivo de 1,25×.
 
 - **C-top-segment:** country / US teve risco relativo descritivo de 1.08x.
 
-## 3. Mecanismo mais forte
+## 3. Causa ainda não demonstrada
 
-auto_renew_off está associado ao churn futuro de 30 dias. Estado: plausible_hypothesis.
+**Baixa confiança**
 
-- **M-strongest:** auto_renew_off está associado ao churn futuro de 30 dias. Estado: plausible_hypothesis.
+Nenhuma hipótese passou todos os gates; não há causa identificada.
+
 
 ## 4. O que ainda não sabemos
 
-A satisfação geral dos respondentes subiu de 3.96→4.02; entre futuros churners, caiu de 4.50→3.67. São apenas tickets respondidos; não representam toda a base.
+**Baixa confiança**
+
+A satisfação geral dos respondentes subiu de 3.96→4.02 (cobertura 63.3%); entre futuros churners, caiu de 4.50→3.67 (cobertura 65.9%). São apenas tickets respondidos; não representam toda a base. A auditoria sinalizou 34.240 ocorrências de regras de qualidade; uma mesma linha pode aparecer em mais de uma regra.
 
 - **C-satisfaction-overall:** Satisfação geral entre tickets respondidos: 3.96→4.02.
 - **C-satisfaction-churn-next-30d:** Satisfação entre respondentes que churnariam em 30 dias: 4.50→3.67.
+- **C-data-quality-anomalies:** A auditoria sinalizou 34.240 ocorrências de regras de qualidade; uma mesma linha pode aparecer em mais de uma regra.
 
 ## 5. Próximas ações
 
-Auditar cobertura e testar prospectivamente a hipótese mais plausível.
+**Baixa confiança**
 
-- **A-validate:** Auditar cobertura e testar prospectivamente a hipótese mais plausível.
+Validar dados, uso e satisfação antes de intervir em clientes.
+
+- **A-data-integrity:** Sanear eventos fora do ciclo de vida e medir novamente o churn.
+- **A-usage-prospective:** Acompanhar uso e churn prospectivamente por 30 dias.
+- **A-satisfaction-sample:** Medir satisfação numa amostra representativa, fora dos tickets.
 
 ---
 

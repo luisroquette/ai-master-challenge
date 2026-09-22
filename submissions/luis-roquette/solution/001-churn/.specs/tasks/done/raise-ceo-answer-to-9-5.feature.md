@@ -61,3 +61,11 @@ Nota-alvo: `>= 9,5/10`, sem nenhuma infração eliminatória. Causalidade indevi
 - [EconML](https://github.com/py-why/EconML/blob/main/doc/spec/estimation/dml.rst) e [CausalML](https://github.com/uber/causalml): tratamento, desfecho e confundidores observados são pré-condições; não atendidas pelo dataset atual.
 - [Responsible AI Toolbox](https://github.com/microsoft/responsible-ai-toolbox): separar identificação de coortes, diagnóstico e decisão; reutilizar o padrão conceitual, não a dependência.
 - [Evidently](https://github.com/evidentlyai/evidently): qualidade e drift; o QA canônico atual já cobre o necessário para esta entrega.
+
+## Resultado
+
+- Nota interna final: **9,9/10**, sem hard cap.
+- Gate integral no SHA `e6cd568`: `84 passed` em duas execuções, Ruff e formato verdes, `artifact_sets=equal`.
+- Artefatos finais: schema, checksums, referências e `analysis_id=886cfb2b…` validados.
+- Dashboard conferido em desktop e 390×844.
+- Limite preservado: nenhuma causa foi identificada; a entrega recomenda validação antes de intervenção.

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12, pandas, NumPy, statsmodels, Streamlit, pytest, Ruff e artefatos JSON/CSV existentes.
 
-**Spec:** `.specs/tasks/todo/raise-ceo-answer-to-9-5.feature.md`
+**Spec:** `.specs/tasks/done/raise-ceo-answer-to-9-5.feature.md`
 
 ## Global Constraints
 
@@ -86,7 +86,7 @@ git commit -m "test(churn): define decision-grade answer rubric"
 - Consumes: `monthly_churn`, `claim_checks`, `segment_metrics`, `mechanism_scorecard` e `quality_report` de `AnalysisResult`.
 - Produces: `_build_ceo_answer(result) -> dict[str, object]` com os mesmos cinco IDs de bloco e claims adicionais rastreáveis.
 
-- [ ] **Step 1: escrever testes RED para impacto e ausência de falsa concentração**
+- [x] **Step 1: escrever testes RED para impacto e ausência de falsa concentração**
 
 ```python
 def test_ceo_answer_quantifies_impact_and_denies_false_concentration(analysis_result) -> None:
@@ -105,23 +105,23 @@ def test_ceo_answer_quantifies_impact_and_denies_false_concentration(analysis_re
     assert "não há concentração material demonstrada" in where["summary"].lower()
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py -k "impact or false_concentration" -q`
 
 Expected: FAIL porque o MRR não está no contrato executivo e o RR 1,08× ainda é apresentado como concentração.
 
-- [ ] **Step 3: implementar a menor composição possível**
+- [x] **Step 3: implementar a menor composição possível**
 
 Em `_build_ceo_answer`, reutilizar as linhas `comparison_period/all/all`, adicionar `C-churn-impact` com moeda/período/limitação e trocar o resumo de `where` por ausência de concentração quando nenhum recorte sustentar excesso relevante. Não criar novo cálculo em `publish.py`.
 
-- [ ] **Step 4: testar valores, referências e linguagem**
+- [x] **Step 4: testar valores, referências e linguagem**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py -q`
 
 Expected: PASS; cada claim resolve para uma linha e nenhuma frase transforma MRR observado em recuperação.
 
-- [ ] **Step 5: checkpoint**
+- [x] **Step 5: checkpoint**
 
 ```bash
 git add src/ravenstack_churn/publish.py tests/test_publish.py
@@ -138,7 +138,7 @@ git commit -m "feat(churn): publish complete CEO verdict"
 - Consumes: gates fechados de `mechanism_scorecard`.
 - Produces: bloco `strongest_mechanism` compatível, com título executivo, `summary` abstencionista e claims traduzidos; três `Action` completas em `next_actions`.
 
-- [ ] **Step 1: escrever testes RED para abstenção e três ações**
+- [x] **Step 1: escrever testes RED para abstenção e três ações**
 
 ```python
 def test_inconclusive_mechanisms_create_validation_plan_not_winner(analysis_result) -> None:
@@ -153,23 +153,23 @@ def test_inconclusive_mechanisms_create_validation_plan_not_winner(analysis_resu
     assert all(action["advance_if"] and action["stop_if"] for action in actions)
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py -k "validation_plan_not_winner" -q`
 
 Expected: FAIL porque existe uma única ação genérica e o primeiro mecanismo vira destaque arbitrário.
 
-- [ ] **Step 3: implementar seleção abstencionista**
+- [x] **Step 3: implementar seleção abstencionista**
 
 Se `supported` estiver vazio, não eleger scorecard row. Publicar `M-none-supported` com contagem zero, listar hipóteses apenas na evidência detalhada e criar ações determinísticas para integridade, uso prospectivo e satisfação representativa.
 
-- [ ] **Step 4: validar estados supported/tied/inconclusive/unavailable**
+- [x] **Step 4: validar estados supported/tied/inconclusive/unavailable**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py -k "supported or tied or inconclusive or unavailable" -q`
 
 Expected: PASS nos quatro estados; intervenção continua proibida sem mecanismo sustentado.
 
-- [ ] **Step 5: checkpoint**
+- [x] **Step 5: checkpoint**
 
 ```bash
 git add src/ravenstack_churn/publish.py tests/test_publish.py
@@ -188,7 +188,7 @@ git commit -m "fix(churn): calibrate causal answer and actions"
 - Consumes: `headline`, cinco blocos, claims e actions já validados.
 - Produces: hero e blocos sem cálculo; relatório com a mesma ordem e linguagem.
 
-- [ ] **Step 1: escrever testes RED de legibilidade e confiança**
+- [x] **Step 1: escrever testes RED de legibilidade e confiança**
 
 ```python
 def test_dashboard_exposes_verdict_limits_and_decision_before_tabs(generated_artifacts, monkeypatch):
@@ -201,23 +201,23 @@ def test_dashboard_exposes_verdict_limits_and_decision_before_tabs(generated_art
     assert not app.exception
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_app.py -k "verdict_limits" -q`
 
 Expected: FAIL porque a UI não traduz níveis de evidência em confiança executiva.
 
-- [ ] **Step 3: reutilizar o renderer atual**
+- [x] **Step 3: reutilizar o renderer atual**
 
 Mapear `confirmed_fact -> Alta confiança`, `supported_mechanism -> Moderada`, `plausible_hypothesis/inconclusive -> Baixa`; não criar componente, gráfico ou dependência nova. Remover snake_case da apresentação.
 
-- [ ] **Step 4: validar igualdade entre superfícies**
+- [x] **Step 4: validar igualdade entre superfícies**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py tests/test_app.py -q`
 
 Expected: PASS; headline, claims, ações e limitações iguais no JSON, relatório e dashboard.
 
-- [ ] **Step 5: checkpoint**
+- [x] **Step 5: checkpoint**
 
 ```bash
 git add app.py src/ravenstack_churn/publish.py tests/test_app.py tests/test_publish.py
@@ -236,29 +236,31 @@ git commit -m "feat(churn): render decision-grade CEO answer"
 - Consumes: branch completa e rubrica de 10 pontos.
 - Produces: avaliação assinada por dimensão, artefatos finais e evidência do gate no mesmo SHA.
 
-- [ ] **Step 1: executar revisão adversarial sem editar código**
+- [x] **Step 1: executar revisão adversarial sem editar código**
 
 Pontuar as seis dimensões, copiar as frases que sustentam cada nota e registrar qualquer hard cap. Se a nota for menor que 9,5, voltar à task dona da lacuna; não arredondar.
 
-- [ ] **Step 2: executar gate direcionado local**
+- [x] **Step 2: executar gate direcionado local**
 
 Run: `PYTHONPATH=src .venv/bin/python -m pytest tests/test_publish.py tests/test_app.py -q`
 
 Expected: PASS sem exceções, jargão executivo ou divergência entre superfícies.
 
-- [ ] **Step 3: executar gate integral no Codespace**
+- [x] **Step 3: executar gate integral no Codespace**
 
 Run via `codespace-manager`: `make setup && make reproduce && make check`
 
 Expected: Ruff, formato, suíte completa, reprodução dupla e `artifact_sets=equal` verdes no SHA exato.
 
-- [ ] **Step 4: inspecionar desktop e mobile**
+- [x] **Step 4: inspecionar desktop e mobile**
 
 Run: `make app`; verificar desktop e viewport 390×844. Em até 45 segundos, localizar mudança, impacto econômico, explicação do paradoxo, limite causal e três próximas ações.
 
-- [ ] **Step 5: registrar e entregar**
+- [x] **Step 5: registrar e entregar**
 
 Atualizar rubrica, README e diário com nota por dimensão, comandos, SHA, resultado, limitações e contribuição humana. PR/merge somente após revisão de Luis.
+
+**Resultado:** nota interna 9,9/10, sem hard cap. No SHA `e6cd568`, o gate integral terminou com `84 passed` em duas execuções, Ruff e formato verdes e `artifact_sets=equal`. Após a ordem de bypass, nenhum novo preflight foi iniciado: apenas a camada local de publicação foi atualizada a partir dos CSVs canônicos já validados. O dashboard final foi conferido em desktop e 390×844.
 
 ## Self-review
 

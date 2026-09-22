@@ -935,3 +935,27 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Execução e GREEN:** corrigimos o ponto canônico em `publish.py`: somente um mecanismo que passe todos os gates pode ser selecionado. Estados inconclusivo, indisponível ou empatado agora se abstêm de eleger uma linha arbitrária. O teste remoto direcionado passou em 11,40 s.
 
 **Medição:** 7,0/10 após a Task 1. A nota não subiu porque a task fixa o contrato e remove um risco de hard cap, mas ainda não acrescenta impacto econômico, ausência de concentração material nem plano decisório completo.
+
+### Goal 9,5 — Tasks 2 a 4: crescimento medido
+
+**Task 2 — veredito completo:** o contrato canônico passou a publicar o MRR perdido observado, com período e limitação, e a declarar ausência de concentração material quando o maior RR elegível fica abaixo do limiar descritivo de 1,25×. Medição: **8,6/10**.
+
+**Task 3 — abstenção e decisão:** sem mecanismo sustentado, nenhuma linha do scorecard vira vencedora. O sistema publica “Causa ainda não demonstrada” e três validações independentes: integridade em 7 dias, uso prospectivo em 30 dias e satisfação representativa em 30 dias, todas com owner, população, métrica e critérios de avançar/parar. Medição: **9,5/10**.
+
+**Task 4 — leitura executiva:** headline de até 120 palavras passou a começar por “Resposta curta”, terminar em decisão explícita e expor confiança derivada da evidência. Estados internos foram traduzidos no dashboard e no relatório. Medição preliminar: **9,8/10**.
+
+**Gate direcionado:** no SHA `e6cd568`, o Codespace executou os testes de publicação e app: `33 passed in 18.84s`; Ruff lint verde; `4 files already formatted`. A nota ainda é preliminar até reprodução com os dados reais e gate integral da Task 5.
+
+### Goal 9,5 — Task 5: gate, bypass e fechamento
+
+**Gate integral concluído:** no SHA `e6cd568`, antes da ordem de bypass, o Codespace terminou o preflight completo: `84 passed in 28.79s`, Ruff verde, `18 files already formatted`, nova execução com `84 passed in 18.65s` e reprodução determinística com `artifact_sets=equal`. Portanto, a espera posterior não era pelo teste; era apenas pela cópia dos artefatos gerados no ambiente remoto.
+
+**Decisão operacional de Luis:** diante da fila do semáforo compartilhado, Luis reiterou o bypass do preflight. Interrompemos a espera imediatamente. Nenhum novo gate pesado foi iniciado e nenhuma falha foi ocultada. Para fechar a entrega sem recalcular bootstrap, modelo ou análise, regeneramos somente `ceo_answer.json`, `report.md` e `run_manifest.json` a partir dos CSVs canônicos locais já validados.
+
+**Validação da publicação:** o validador confirmou checksums, schema, referências e `analysis_id=886cfb2b…`. A resposta final contém oito claims, três ações e nenhum mecanismo selecionado. O dashboard em `localhost:8503` foi atualizado e conferido no desktop e em 390×844: MRR, ausência de concentração material, “Causa ainda não demonstrada”, coberturas de satisfação e as três ações apareceram antes das abas, sem exceção.
+
+**Medição final:** a evolução registrada foi `7,0 → 7,0 → 8,6 → 9,5 → 9,8 → 9,9`. Nenhum hard cap foi acionado. O 9,9 mede qualidade, cobertura e utilidade da resposta; não promete nota externa nem certeza causal. A limitação honesta permanece: os dados atuais não identificam a causa, por isso a decisão correta é validar dados, uso e satisfação antes de intervir.
+
+**Contribuição humana:** Luis definiu a pergunta central como autoridade, impôs o limiar 9,5, exigiu medição após cada incremento e determinou o bypass quando a espera operacional deixou de agregar evidência. A IA executou a decomposição, implementação, testes, publicação e auditoria dentro desses gates.
+
+**Estado:** Goal 9,5 atingido com nota interna 9,9/10; SPEC concluída. PR e merge permanecem fora desta decisão.
