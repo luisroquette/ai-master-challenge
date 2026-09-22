@@ -1359,3 +1359,13 @@ A última etapa antes da documentação geral será segurança. Por determinaç�
 - A varredura focal do estado atual e do histórico encontrou zero padrões de credenciais de alta confiança. `gitleaks` e `trufflehog` não estão instalados; essa limitação foi registrada sem instalar ferramentas adicionais.
 
 O relatório completo foi criado em `docs/security-checklist.md`. Nenhuma remediação, publicação, deploy ou comunicação externa ocorreu.
+
+## I21 — Segunda passada de certificação do checklist de segurança — 2026-09-22
+
+Luis solicitou uma nova passada antes do tratamento dos gaps. Os 19 controles foram reavaliados contra código, dependências, manifesto, arquivos rastreados, histórico Git e estado da branch.
+
+- Resultado inalterado: **3 FEITO, 2 NÃO FEITO e 14 NÃO APLICÁVEL**.
+- Nova varredura: zero chaves AWS, OpenAI ou GitHub, zero chaves privadas, zero atribuições de segredo de alta confiança e nenhum `.env`, `.pem` ou `.key` rastreado.
+- Validação focal: **12/12** testes verdes — dez de recuperação segura e dois da prioridade temporária.
+- A branch remota segue ausente, confirmando que o trabalho local ainda não possui backup externo verificado.
+- Nenhuma remediação foi executada. O parecer certifica a classificação dentro do protótipo atual; não reivindica pentest, SCA integral nem segurança de uma futura arquitetura com dados privados.

@@ -43,3 +43,15 @@ Ele **não deve receber dados reais de CRM nem ser tratado como sistema autentic
 2. **Backup externo:** executar somente depois da autorização expressa para remover o embargo e publicar a revisão validada.
 
 Nenhuma remediação foi implementada nesta etapa; este documento é apenas o diagnóstico solicitado.
+
+## Segunda passada de certificação
+
+Executada em 22 de setembro de 2026, sem alterar o escopo nem implementar remediações.
+
+- Os 19 controles foram reavaliados diretamente contra `app.py`, `data.py`, `scoring.py`, `requirements.txt`, manifesto, arquivos rastreados, histórico Git e estado da branch.
+- O resultado permaneceu **3 FEITO, 2 NÃO FEITO e 14 NÃO APLICÁVEL**; não surgiu novo endpoint, identidade, e-mail, API, banco, segredo, serviço pago ou deploy público.
+- A nova varredura do histórico encontrou zero padrões de alta confiança para chaves AWS, OpenAI e GitHub, chaves privadas ou segredos atribuídos. Nenhum `.env`, `.pem` ou `.key` está rastreado.
+- **12/12 testes focais** ficaram verdes: dez contratos de recuperação segura e dois contratos de prioridade temporária, cobrindo checksums, schema, ZIP traversal/symlink/duplicatas, rollback, retomada, concorrência, papel, carteira, atribuição e expiração.
+- A referência remota da branch continua ausente. Isso reconfirma o backup externo como **NÃO FEITO**, sem transformar a recuperação reproduzível do dataset em backup do trabalho local.
+
+**Parecer certificado dentro do escopo:** o checklist representa fielmente o estado atual do protótipo. Esta certificação não equivale a pentest, SCA completa de dependências ou homologação de uma arquitetura futura com dados privados.
