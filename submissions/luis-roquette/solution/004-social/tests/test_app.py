@@ -356,6 +356,46 @@ class AppTests(unittest.TestCase):
         app.button(key="save_decision").click().run()
         self.assertEqual(self.stored()[0]["recommendation_key"], selected["recommendation_key"])
 
+    def test_sponsorship_month_and_long_context_are_concise_without_identity_loss(self) -> None:
+        categories = tuple("categoria-" + "X" * 3999 + suffix for suffix in "ABCD")
+        rows = [
+            make_post(
+                id=f"{category[-1]}-{flag}-{index}",
+                content_id=f"content-{category[-1]}-{flag}-{index}",
+                creator_id=f"creator-{index % 5}",
+                is_sponsored=str(flag).upper(),
+                likes=8 if flag else 4,
+                shares=0,
+                comments_count=0,
+                content_category=category,
+            )
+            for category in categories
+            for flag in (False, True)
+            for index in range(30)
+        ]
+        app = self.app()
+        app.file_uploader[0].set_value(("long-context.csv", csv_bytes(rows), "text/csv")).run()
+
+        self.assertFalse(app.exception)
+        options = app.selectbox(key="decision_recommendation").options
+        additional_options = app.selectbox(key="additional_recommendation").options
+        captions = [item.value for item in app.caption if item.value.startswith("Contexto —")]
+        self.assertEqual((len(options), len(additional_options)), (4, 1))
+        self.assertEqual(len(set(options)), 4)
+        labels = (*captions, *options, *additional_options)
+        self.assertTrue(all("Mês: 2025-01" in value and "…" in value for value in labels))
+        self.assertTrue(all(len(value) < 320 for value in labels))
+        self.assertTrue(all(category not in value for category in categories for value in labels))
+
+        selected = app.session_state["active_result"]["all_recommendations"][1]
+        self.assertEqual(len(selected["context"]["content_category"]), 4010)
+        app.selectbox(key="decision_recommendation").set_value(selected).run()
+        app.button(key="save_decision").click().run()
+        stored = self.stored()[0]
+        self.assertEqual(stored["recommendation_key"], selected["recommendation_key"])
+        self.assertEqual(stored["baseline"]["evidence_snapshot"]["context"]["content_category"],
+                         selected["context"]["content_category"])
+
     def test_week_and_month_clip_before_timestamp_at_upper_date_boundary(self) -> None:
         rows = [
             make_post(

@@ -73,10 +73,14 @@ def _baseline(recommendation: dict[str, object]) -> dict[str, object]:
 def _recommendation_context(item: dict[str, object]) -> str:
     context = item.get("context", {})
     assert isinstance(context, dict)
+    def abbreviated(value: object, limit: int = 32) -> str:
+        text = str(value)
+        return text if len(text) <= limit else text[:limit - 1] + "…"
+
     labels = (("platform", "Plataforma"), ("content_type", "Formato"),
               ("content_category", "Categoria"), ("follower_band", "Faixa"),
-              ("month", "Mês"))
-    parts = [f"{label}: {context[key]}" for key, label in labels if context.get(key) is not None]
+              ("period_month", "Mês"))
+    parts = [f"{label}: {abbreviated(context[key])}" for key, label in labels if context.get(key) is not None]
     return " · ".join(parts) or "Contexto amplo"
 
 
