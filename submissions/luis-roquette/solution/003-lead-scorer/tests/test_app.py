@@ -21,6 +21,7 @@ from urllib.request import urlopen
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+RENDER_TIMEOUT_MS = 120_000
 sys.path.insert(0, str(ROOT))
 
 import scoring as s
@@ -88,7 +89,8 @@ def verify_live_revision(url, expected_revision, expected_source_digest, expecte
         try:
             page = browser.new_page()
             page.goto(url, wait_until="domcontentloaded", timeout=120_000)
-            page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+            page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for(
+                timeout=RENDER_TIMEOUT_MS)
             body = page.locator("body").inner_text()
             required = (f"revisão {expected_revision}", f"fingerprint {expected_fingerprint}",
                         f"fonte {expected_source_digest}")
@@ -460,6 +462,11 @@ class VerificationGateTests(unittest.TestCase):
         self.assertIn('sudo -n "$PYTHON" -m playwright install-deps chromium', script)
         self.assertNotIn("playwright install --with-deps", script)
 
+    def test_startup_gate_waits_for_real_cold_render_and_preserves_child_log(self):
+        script = (ROOT / "scripts/preflight.sh").read_text(encoding="utf-8")
+        self.assertIn('name="Prioridades comerciais explicáveis").wait_for(\n            timeout=120_000)', script)
+        self.assertIn('cat "$log" >&2', script)
+
     def test_TC46_clean_startup_owns_only_its_child_without_recursion(self):
         sentinel = subprocess.Popen((sys.executable, "-c", "import time; time.sleep(30)"))
         server = None
@@ -521,7 +528,8 @@ def _run_cli(argv):
             try:
                 page = browser.new_page()
                 page.goto(url, wait_until="domcontentloaded", timeout=120_000)
-                page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+                page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for(
+                    timeout=RENDER_TIMEOUT_MS)
                 for stage in ("Engaging", "Prospecting"):
                     page.get_by_role("tab", name=stage, exact=True).wait_for()
                 print("REAL STARTUP OK", " | ".join(page.locator("body").inner_text().splitlines()[:8]))

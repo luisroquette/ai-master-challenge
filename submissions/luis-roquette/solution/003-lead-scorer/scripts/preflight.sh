@@ -129,7 +129,7 @@ while time.monotonic() < deadline:
 else:
     raise SystemExit("Streamlit real não ficou pronto")
 PY
-  "$PYTHON" - "$port" <<'PY'
+  if ! "$PYTHON" - "$port" <<'PY'
 import sys
 from playwright.sync_api import sync_playwright
 url = f"http://127.0.0.1:{sys.argv[1]}"
@@ -138,9 +138,12 @@ with sync_playwright() as playwright:
     try:
         page = browser.new_page()
         page.goto(url, wait_until="domcontentloaded", timeout=120_000)
-        page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for()
+        # O app real calcula quatro rotas no cold start. Health prova que o
+        # servidor está pronto; a UI recebe seu próprio limite explícito.
+        page.get_by_role("heading", name="Prioridades comerciais explicáveis").wait_for(
+            timeout=120_000)
         for stage in ("Engaging", "Prospecting"):
-            page.get_by_role("tab", name=stage, exact=True).wait_for()
+            page.get_by_role("tab", name=stage, exact=True).wait_for(timeout=120_000)
         text = page.locator("body").inner_text()
         if "fingerprint " not in text or "fonte " not in text or "revisão " not in text:
             raise AssertionError("identidade completa não foi renderizada")
@@ -148,6 +151,11 @@ with sync_playwright() as playwright:
     finally:
         browser.close()
 PY
+  then
+    printf 'Falha ao renderizar o app real; log do processo filho:\n' >&2
+    cat "$log" >&2
+    return 1
+  fi
   kill "$CHILD_PID"
   wait "$CHILD_PID" || true
   CHILD_PID=""
