@@ -3,6 +3,12 @@ import csv
 import hashlib
 import io
 import json
+import contextlib
+import http.server
+import runpy
+import stat
+import threading
+import zipfile
 from pathlib import Path
 import tempfile
 import unittest
@@ -242,6 +248,238 @@ class DataTests(unittest.TestCase):
             (raw / "accounts.csv").write_bytes(b"corrupt")
             self.assertEqual(before, data.fingerprint(snapshot, {}))
             self.assertEqual(len(data.load_dataset(snapshot).opportunities), 4)
+
+
+@contextlib.contextmanager
+def recovery_source(snapshot, archive=False, extra=None):
+    """Real loopback transport; no successful external-network stub."""
+    payloads = dict(snapshot.files)
+    if archive:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as zipped:
+            for name, content in snapshot.files:
+                if extra and isinstance(extra[0], zipfile.ZipInfo) and extra[0].filename == name:
+                    continue
+                zipped.writestr(name, content)
+            if extra:
+                zipped.writestr(*extra)
+        payloads = {"fixture.zip": buffer.getvalue()}
+    requests = []
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            requests.append(self.path)
+            content = payloads.get(self.path.removeprefix("/"))
+            self.send_response(200 if content is not None else 404)
+            self.end_headers()
+            if content is not None:
+                self.wfile.write(content)
+
+        def log_message(self, *_):
+            pass
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    manifest = json.loads(snapshot.manifest_json)
+    for name, entry in manifest["files"].items():
+        entry["download_url"] = f"http://127.0.0.1:{server.server_port}/" + ("fixture.zip" if archive else name)
+        if archive:
+            entry["archive_member"] = name
+    try:
+        yield replace(snapshot, manifest_json=json.dumps(manifest)), requests
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+class RecoveryTests(unittest.TestCase):
+    def test_TC02_direct_and_archive_verified_promotion(self):
+        for archive in (False, True):
+            with self.subTest(archive=archive), recovery_source(fixture_snapshot(), archive) as (snapshot, requests):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    (raw / "accounts.csv").write_bytes(b"damaged original")
+                    original = data._directory_digests(raw)
+                    result = data.recover_dataset(manifest, raw)
+                    self.assertEqual(result["status"], "recovered")
+                    self.assertEqual(dict(data.read_snapshot(raw, manifest).files), dict(snapshot.files))
+                    self.assertEqual(data._directory_digests(Path(result["backup"])), original)
+                    self.assertEqual(len(requests), 1 if archive else 4)
+                    self.assertFalse((raw.parent / ".recovery.lock").exists())
+
+    def test_TC03_checksum_and_schema_fail_before_promotion(self):
+        for fault in ("checksum", "schema"):
+            with self.subTest(fault=fault), recovery_source(fixture_snapshot()) as (snapshot, _):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    original = data._directory_digests(raw)
+                    metadata = json.loads(manifest.read_text())
+                    if fault == "checksum":
+                        metadata["files"]["accounts.csv"]["sha256"] = "0" * 64
+                    else:
+                        metadata["files"]["accounts.csv"]["headers"] = ["wrong"]
+                    manifest.write_text(json.dumps(metadata))
+                    with self.assertRaises(data.RecoveryError):
+                        data.recover_dataset(manifest, raw)
+                    self.assertEqual(data._directory_digests(raw), original)
+                    self.assertFalse((raw.parent / ".recovery.lock").exists())
+
+    def test_TC03_promotion_and_final_validation_roll_back(self):
+        for fault in ("second_rename", "final_validation"):
+            with self.subTest(fault=fault), recovery_source(fixture_snapshot()) as (snapshot, _):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    (raw / "accounts.csv").write_bytes(b"original needing recovery")
+                    original = data._directory_digests(raw)
+                    rename, load = Path.rename, data.load_dataset
+                    calls = []
+                    def fail_rename(path, target):
+                        if path.name.endswith("-stage"):
+                            raise OSError("injected second rename failure")
+                        return rename(path, target)
+                    def fail_load(value):
+                        calls.append(value)
+                        if len(calls) == 2:
+                            raise ValueError("injected final validation failure")
+                        return load(value)
+                    with patch.object(Path, "rename", fail_rename if fault == "second_rename" else rename), \
+                            patch.object(data, "load_dataset", fail_load if fault == "final_validation" else load), \
+                            self.assertRaises(data.RecoveryError):
+                        data.recover_dataset(manifest, raw)
+                    self.assertEqual(data._directory_digests(raw), original)
+                    self.assertFalse((raw.parent / ".recovery.lock").exists())
+
+    def test_TC03_failed_rollback_preserves_original_and_resume(self):
+        with recovery_source(fixture_snapshot()) as (snapshot, _), tempfile.TemporaryDirectory() as directory:
+            raw, manifest = write_fixture(directory, snapshot)
+            (raw / "accounts.csv").write_bytes(b"original requiring repair")
+            original = data._directory_digests(raw)
+            rename = Path.rename
+            def fail(path, target):
+                if path.name.endswith(("-stage", "-backup")):
+                    raise OSError("injected promotion/rollback failure")
+                return rename(path, target)
+            with patch.object(Path, "rename", fail), self.assertRaisesRegex(data.RecoveryError, "--resume"):
+                data.recover_dataset(manifest, raw)
+            marker = raw.parent / ".recovery.lock"
+            record = json.loads((marker / "transaction.json").read_text())
+            self.assertEqual(data._directory_digests(raw.parent / record["backup"]), original)
+            self.assertFalse(raw.exists())
+            with self.assertRaises(data.DataValidationError):
+                data.read_snapshot(raw, manifest)
+            with self.assertRaises(data.RecoveryError):
+                data.recover_dataset(manifest, raw)
+            with contextlib.redirect_stdout(io.StringIO()) as stdout:
+                data.main(["recover", "--resume", "--manifest", str(manifest), "--raw-dir", str(raw)])
+            self.assertIn("original_restored", stdout.getvalue())
+            self.assertEqual(data._directory_digests(raw), original)
+            self.assertFalse(marker.exists())
+
+    def test_TC03_interruption_before_and_after_promotion_resumes_original(self):
+        for point in ("staging", "after_first_rename", "after_promotion"):
+            with self.subTest(point=point), recovery_source(fixture_snapshot()) as (snapshot, _):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    (raw / "accounts.csv").write_bytes(b"original before interrupt")
+                    original = data._directory_digests(raw)
+                    rename, download = Path.rename, data._download
+                    def interrupt_rename(path, target):
+                        result = rename(path, target)
+                        if ((point == "after_first_rename" and Path(target).name.endswith("-backup")) or
+                                (point == "after_promotion" and path.name.endswith("-stage"))):
+                            raise KeyboardInterrupt()
+                        return result
+                    def interrupt_download(url):
+                        raise KeyboardInterrupt()
+                    with patch.object(Path, "rename", interrupt_rename), \
+                            patch.object(data, "_download", interrupt_download if point == "staging" else download), \
+                            self.assertRaises(KeyboardInterrupt):
+                        data.recover_dataset(manifest, raw)
+                    self.assertTrue((raw.parent / ".recovery.lock").exists())
+                    result = data.recover_dataset(manifest, raw, resume=True)
+                    self.assertEqual(result["status"], "original_restored")
+                    self.assertEqual(data._directory_digests(raw), original)
+
+    def test_TC03_zip_rejects_extra_traversal_symlink_duplicate(self):
+        symbolic = zipfile.ZipInfo("accounts.csv")
+        symbolic.create_system = 3
+        symbolic.external_attr = (stat.S_IFLNK | 0o777) << 16
+        for extra in (("../escape.csv", b"bad"), ("metadata.csv", b"unlisted"),
+                      (symbolic, b"/tmp/outside")):
+            with self.subTest(member=str(extra[0])), recovery_source(fixture_snapshot(), True, extra) as (snapshot, _):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    original = data._directory_digests(raw)
+                    with self.assertRaises(data.RecoveryError):
+                        data.recover_dataset(manifest, raw)
+                    self.assertEqual(data._directory_digests(raw), original)
+
+    def test_TC03_sources_import_and_cli_are_explicit(self):
+        for url in ("http://example.com/file", "file:///etc/passwd", "ftp://example.com/file",
+                    "https://name:secret@example.com/file", "http://127.0.0.1.evil/file"):
+            with self.subTest(url=url), patch.object(data, "build_opener") as opener:
+                with self.assertRaises(data.RecoveryError):
+                    data._download(url)
+                opener.assert_not_called()
+        with self.assertRaises(data.RecoveryError):
+            data._SafeRedirect().redirect_request(None, None, 302, "", {}, "http://example.com/file")
+        with patch("urllib.request.OpenerDirector.open", side_effect=AssertionError("implicit network")):
+            runpy.run_path(str(data.ROOT / "data.py"), run_name="import_check")
+            data.load_dataset(fixture_snapshot())
+        with contextlib.redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as exit_code:
+            data.main(["recover", "--help"])
+        self.assertEqual(exit_code.exception.code, 0)
+        self.assertIn(".venv/bin/python data.py recover", output.getvalue())
+        self.assertIn("--resume", output.getvalue())
+
+    def test_TC03_resume_rejects_tampered_paths_digests_symlinks(self):
+        for fault in ("outside", "raw", "digest", "symlink", "oversize", "backup_corrupt"):
+            with self.subTest(fault=fault), recovery_source(fixture_snapshot()) as (snapshot, _):
+                with tempfile.TemporaryDirectory() as directory:
+                    raw, manifest = write_fixture(directory, snapshot)
+                    original = data._directory_digests(raw)
+                    rename = Path.rename
+                    def interrupt(path, target):
+                        result = rename(path, target)
+                        if Path(target).name.endswith("-backup"):
+                            raise KeyboardInterrupt()
+                        return result
+                    with patch.object(Path, "rename", interrupt), self.assertRaises(KeyboardInterrupt):
+                        data.recover_dataset(manifest, raw)
+                    marker = raw.parent / ".recovery.lock"
+                    record_path = marker / "transaction.json"
+                    record = json.loads(record_path.read_text())
+                    backup = raw.parent / record["backup"]
+                    if fault == "outside":
+                        record["backup"] = "../../outside"
+                    elif fault == "raw":
+                        record["raw"] = "elsewhere"
+                    elif fault == "digest":
+                        record["original"]["accounts.csv"] = "invalid"
+                    elif fault == "symlink":
+                        (raw.parent / record["displaced"]).symlink_to(backup, target_is_directory=True)
+                    elif fault == "backup_corrupt":
+                        (backup / "accounts.csv").write_bytes(b"bad backup")
+                    record_path.write_text(" " * 8193 if fault == "oversize" else json.dumps(record))
+                    with self.assertRaises(data.RecoveryError):
+                        data.recover_dataset(manifest, raw, resume=True)
+                    self.assertTrue(marker.exists())
+                    self.assertTrue(backup.exists())
+                    if fault != "backup_corrupt":
+                        self.assertEqual(data._directory_digests(backup), original)
+
+    def test_TC03_active_recovery_excludes_resume_and_readers(self):
+        with recovery_source(fixture_snapshot()) as (snapshot, _), tempfile.TemporaryDirectory() as directory:
+            raw, manifest = write_fixture(directory, snapshot)
+            download = data._download
+            def check_during_download(url):
+                with self.assertRaises(data.RecoveryError):
+                    data.recover_dataset(manifest, raw, resume=True)
+                with self.assertRaises(data.DataValidationError):
+                    data.read_snapshot(raw, manifest)
+                return download(url)
+            with patch.object(data, "_download", check_during_download):
+                data.recover_dataset(manifest, raw)
 
 
 if __name__ == "__main__":

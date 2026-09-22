@@ -20,8 +20,7 @@
       "source_url": "https://www.kaggle.com/datasets/agungpambudi/crm-sales-predictive-analytics",
       "license": "CC0-1.0",
       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1",
-      "archive_member": "accounts.csv"
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1&filename=accounts.csv"
     },
     "products.csv": {
       "headers": [
@@ -34,8 +33,7 @@
       "source_url": "https://www.kaggle.com/datasets/agungpambudi/crm-sales-predictive-analytics",
       "license": "CC0-1.0",
       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1",
-      "archive_member": "products.csv"
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1&filename=products.csv"
     },
     "sales_teams.csv": {
       "headers": [
@@ -48,8 +46,7 @@
       "source_url": "https://www.kaggle.com/datasets/agungpambudi/crm-sales-predictive-analytics",
       "license": "CC0-1.0",
       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1",
-      "archive_member": "sales_teams.csv"
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1&filename=sales_teams.csv"
     },
     "sales_pipeline.csv": {
       "headers": [
@@ -67,8 +64,7 @@
       "source_url": "https://www.kaggle.com/datasets/agungpambudi/crm-sales-predictive-analytics",
       "license": "CC0-1.0",
       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1",
-      "archive_member": "sales_pipeline.csv"
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/agungpambudi/crm-sales-predictive-analytics?datasetVersionNumber=1&filename=sales_pipeline.csv"
     }
   }
 }

@@ -2,10 +2,20 @@
 from __future__ import annotations
 
 import csv
+import argparse
+import fcntl
 import hashlib
 import io
 import json
 import math
+import os
+import re
+import shutil
+import stat
+import uuid
+import zipfile
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, build_opener
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date
 from pathlib import Path
@@ -76,15 +86,7 @@ def _canonical(value):
                       ensure_ascii=False, allow_nan=False)
 
 
-def read_snapshot(raw_dir, manifest_path, verify_checksums=True):
-    raw_dir, manifest_path = Path(raw_dir), Path(manifest_path)
-    marker = raw_dir.parent / ".recovery.lock"
-    def check_marker():
-        if marker.exists():
-            _block("recovery_in_progress", str(marker), None,
-                   "Recuperação em andamento ou interrompida",
-                   "Conclua a recuperação explícita antes de abrir o aplicativo")
-    check_marker()
+def _read_manifest(manifest_path):
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         entries = manifest["files"]
@@ -102,6 +104,24 @@ def read_snapshot(raw_dir, manifest_path, verify_checksums=True):
     except (OSError, ValueError, KeyError, TypeError) as exc:
         _block("manifest_invalid", str(manifest_path), None,
                f"Manifesto ausente ou inválido ({exc})", "Restaure o manifesto versionado")
+    return manifest
+
+
+def read_snapshot(raw_dir, manifest_path, verify_checksums=True):
+    return _read_snapshot(raw_dir, manifest_path, verify_checksums)
+
+
+def _read_snapshot(raw_dir, manifest_path, verify_checksums=True, *, recovery=False):
+    raw_dir, manifest_path = Path(raw_dir), Path(manifest_path)
+    marker = raw_dir.parent / ".recovery.lock"
+    def check_marker():
+        if not recovery and (marker.exists() or marker.is_symlink()):
+            _block("recovery_in_progress", str(marker), None,
+                   "Recuperação em andamento ou interrompida",
+                   "Execute data.py recover --resume com o mesmo manifesto e diretório raw")
+    check_marker()
+    manifest = _read_manifest(manifest_path)
+    entries = manifest["files"]
     buffers = []
     for name in sorted(SCHEMA):
         try:
@@ -266,3 +286,226 @@ def load_dataset(snapshot):
     counts["financial_eligible"] = int(frame["financial_eligible"].sum())
     return Dataset(frame, tables["accounts.csv"], tables["products.csv"], tables["sales_teams.csv"],
                    tuple(diagnostics), counts, fingerprint(snapshot, {}))
+
+
+class RecoveryError(ValueError):
+    """An explicit operation failed; no implicit retry or checksum update."""
+
+
+def _check_source(url):
+    parsed = urlsplit(url)
+    # Literal loopback HTTP is reserved for local integration fixtures.
+    if (parsed.username or parsed.password or not parsed.hostname or
+            (parsed.scheme != "https" and not
+             (parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "::1")))):
+        raise RecoveryError("Fonte deve usar HTTPS; HTTP é restrito ao loopback de testes")
+
+
+class _SafeRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        _check_source(newurl)
+        return super().redirect_request(request, fp, code, msg, headers, newurl)
+
+
+def _download(url):
+    _check_source(url)
+    with build_opener(_SafeRedirect()).open(url, timeout=30) as response:
+        _check_source(response.geturl())
+        content = response.read(20 * 1024 * 1024 + 1)
+    if len(content) > 20 * 1024 * 1024:
+        raise RecoveryError("Download excede o limite de 20 MiB")
+    return content
+
+
+def _stage_files(stage, manifest):
+    entries = manifest["files"]
+    downloads = {}
+    for name, entry in entries.items():
+        url = entry["download_url"]
+        if url not in downloads:
+            downloads[url] = _download(url)
+        content = downloads[url]
+        member = entry.get("archive_member")
+        if member is not None:
+            if member != name:
+                raise RecoveryError("Membro ZIP deve ser o nome exato do CSV")
+            allowed = {n for n, item in entries.items()
+                       if item["download_url"] == url and item.get("archive_member") == n}
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                members = archive.infolist()
+                if len(members) != len(allowed) or {item.filename for item in members} != allowed:
+                    raise RecoveryError("ZIP contém membros ausentes, duplicados ou não autorizados")
+                for item in members:
+                    mode = item.external_attr >> 16
+                    if (item.is_dir() or stat.S_ISLNK(mode) or
+                            stat.S_IFMT(mode) not in (0, stat.S_IFREG) or
+                            item.file_size > 10 * 1024 * 1024 or item.flag_bits & 1):
+                        raise RecoveryError("ZIP contém membro inseguro ou acima de 10 MiB")
+                content = archive.read(member)
+        if hashlib.sha256(content).hexdigest() != entry["sha256"]:
+            raise RecoveryError(f"SHA-256 divergente: {name}; original preservado")
+        (stage / name).write_bytes(content)
+
+
+def _directory_digests(directory):
+    if directory.is_symlink() or not directory.is_dir():
+        raise RecoveryError(f"Diretório original indisponível ou simbólico: {directory}")
+    result = {}
+    for path in directory.iterdir():
+        if path.name not in SCHEMA or path.is_symlink() or not path.is_file():
+            raise RecoveryError(f"Conteúdo não autorizado no snapshot: {path.name}")
+        result[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
+def _transaction_paths(parent, record):
+    expected_keys = {"version", "id", "raw", "stage", "backup", "displaced", "original"}
+    if (not isinstance(record, dict) or set(record) != expected_keys or
+            record["version"] != 1 or not isinstance(record["id"], str) or
+            not re.fullmatch(r"[0-9a-f]{32}", record["id"]) or record["raw"] != "raw"):
+        raise RecoveryError("Registro de transação inválido; nenhum caminho foi alterado")
+    digests = record["original"]
+    if (not isinstance(digests, dict) or not set(digests) <= set(SCHEMA) or
+            any(not isinstance(v, str) or not re.fullmatch(r"[0-9a-f]{64}", v)
+                for v in digests.values())):
+        raise RecoveryError("Digests originais inválidos no registro")
+    paths = {"raw": parent / "raw"}
+    for role in ("stage", "backup", "displaced"):
+        if record[role] != f".recovery-{record['id']}-{role}":
+            raise RecoveryError("Caminho de transação fora do escopo permitido")
+        paths[role] = parent / record[role]
+    if any(p.is_symlink() or (p.exists() and not p.is_dir()) for p in paths.values()):
+        raise RecoveryError("Caminho de transação simbólico ou não é diretório")
+    return paths
+
+
+def _restore_original(paths, original):
+    raw, backup, displaced = (paths[k] for k in ("raw", "backup", "displaced"))
+    if backup.exists():
+        if _directory_digests(backup) != original:
+            raise RecoveryError("Backup original diverge dos digests; preservado para inspeção")
+        if raw.exists():
+            if displaced.exists():
+                raise RecoveryError("Destino de rollback ocupado; nenhum original foi removido")
+            raw.rename(displaced)
+        backup.rename(raw)
+    if _directory_digests(raw) != original:
+        raise RecoveryError("Restauração não reproduziu todos os bytes originais")
+
+
+def _clear_transaction(marker, paths):
+    # Call only after the original or replacement has been verified.
+    # Keep successful backups: a crash during cleanup must not destroy the original.
+    for role in ("stage", "displaced"):
+        path = paths[role]
+        if path.exists():
+            _directory_digests(path)
+            shutil.rmtree(path)
+    completed = marker.parent / (paths["backup"].name.removesuffix("-backup") + "-completed")
+    if completed.exists() or completed.is_symlink():
+        raise RecoveryError("Destino do registro concluído já existe")
+    # One rename clears the read guard without a record-less interruption window.
+    marker.rename(completed)
+
+
+def recover_dataset(manifest_path, raw_dir, *, resume=False):
+    """Explicit verified replacement; interrupted transactions restore originals first."""
+    raw, manifest_path = Path(raw_dir).absolute(), Path(manifest_path).absolute()
+    parent = raw.parent.resolve(strict=True)
+    if (raw.name != "raw" or raw.is_symlink() or manifest_path.is_symlink() or
+            manifest_path.parent.resolve(strict=True) != parent):
+        raise RecoveryError("Use raw e manifesto regulares no mesmo diretório data")
+    raw, manifest_path = parent / "raw", parent / manifest_path.name
+    marker = parent / ".recovery.lock"
+    hint = (f"Execute: .venv/bin/python data.py recover --resume --manifest "
+            f"{str(manifest_path)!r} --raw-dir {str(raw)!r}")
+    if marker.is_symlink():
+        raise RecoveryError("Marcador simbólico rejeitado; nenhum arquivo alterado")
+    if resume:
+        if not marker.is_dir():
+            raise RecoveryError("Não há recuperação interrompida para retomar")
+    else:
+        try:
+            marker.mkdir(mode=0o700)
+        except FileExistsError as exc:
+            raise RecoveryError(f"Recuperação já registrada. {hint}") from exc
+    owner = marker / "owner"
+    record_path = marker / "transaction.json"
+    if owner.is_symlink() or record_path.is_symlink():
+        raise RecoveryError("Arquivo de controle simbólico rejeitado")
+    with owner.open("a+b") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RecoveryError("Outra recuperação ainda está executando") from exc
+        if resume:
+            try:
+                if record_path.stat().st_size > 8192:
+                    raise RecoveryError("Registro de transação excede 8 KiB")
+                record = json.loads(record_path.read_text(encoding="utf-8"))
+                paths = _transaction_paths(parent, record)
+                _restore_original(paths, record["original"])
+                _clear_transaction(marker, paths)
+                return {"status": "original_restored", "original": record["original"]}
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                raise RecoveryError(f"Retomada não concluída; marcador/backup preservados: {exc}. {hint}") from exc
+        record = None
+        try:
+            manifest = _read_manifest(manifest_path)
+            identity = uuid.uuid4().hex
+            record = {"version": 1, "id": identity, "raw": "raw",
+                      **{role: f".recovery-{identity}-{role}"
+                         for role in ("stage", "backup", "displaced")},
+                      "original": _directory_digests(raw)}
+            paths = _transaction_paths(parent, record)
+            if any(paths[role].exists() for role in ("stage", "backup", "displaced")):
+                raise RecoveryError("Destino exclusivo já existe")
+            with record_path.open("x", encoding="utf-8") as transaction:
+                transaction.write(_canonical(record))
+                transaction.flush()
+                os.fsync(transaction.fileno())
+            paths["stage"].mkdir()
+            _stage_files(paths["stage"], manifest)
+            load_dataset(_read_snapshot(paths["stage"], manifest_path, recovery=True))
+            if _directory_digests(raw) != record["original"]:
+                raise RecoveryError("Original mudou durante o download; substituição recusada")
+            # Two guarded renames, not one atomic transaction.
+            raw.rename(paths["backup"])
+            paths["stage"].rename(raw)
+            result = load_dataset(_read_snapshot(raw, manifest_path, recovery=True))
+            _clear_transaction(marker, paths)
+            return {"status": "recovered", "fingerprint": result.data_fingerprint,
+                    "backup": str(paths["backup"])}
+        except Exception as exc:
+            try:
+                if record is not None and record_path.exists():
+                    paths = _transaction_paths(parent, record)
+                    _restore_original(paths, record["original"])
+                    _clear_transaction(marker, paths)
+                else:
+                    owner.unlink()
+                    marker.rmdir()
+            except Exception as rollback:
+                raise RecoveryError(f"Recuperação falhou ({exc}); rollback pendente ({rollback}). "
+                                    f"Backup e marcador preservados. {hint}") from exc
+            raise RecoveryError(f"Recuperação recusada; bytes originais preservados: {exc}") from exc
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Recuperação explícita dos quatro CSVs verificados")
+    commands = parser.add_subparsers(dest="command", required=True)
+    recover = commands.add_parser("recover", help="verifica todos os dados antes de substituir raw",
+                                  epilog=".venv/bin/python data.py recover --manifest data/manifest.json --raw-dir data/raw")
+    recover.add_argument("--manifest", type=Path, required=True)
+    recover.add_argument("--raw-dir", type=Path, required=True)
+    recover.add_argument("--resume", action="store_true", help="restaura primeiro o original de uma transação interrompida")
+    args = parser.parse_args(argv)
+    try:
+        result = recover_dataset(args.manifest, args.raw_dir, resume=args.resume)
+    except (RecoveryError, OSError) as exc:
+        parser.exit(1, f"{exc}\n")
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
