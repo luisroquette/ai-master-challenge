@@ -432,3 +432,25 @@ A releitura começou pelo repositório remoto. `upstream/main` não alterou o br
 O manifesto foi regenerado a partir do código já commitado em `6b111e2`, após 37 testes verdes. Agora `source_git_sha` identifica o commit produtor dos artefatos; o commit seguinte apenas versiona esse manifesto. Essa diferença é inevitável sem criar uma autorreferência circular, mas deixa a proveniência verificável e não permite que o manifesto alegue ter sido produzido por código anterior.
 
 **Sequência estável:** `0/2`. Como houve achado, a próxima auditoria volta novamente ao briefing e não herda crédito desta passada.
+
+### Nova passada — primeiro evento terminal também na corroboração
+
+**Resultado:** novo apontamento; sequência reiniciada em `0/2`.
+
+O contrato declarava o primeiro churn não reativação como rótulo temporal primário, mas a corroboração por `reason_code` ainda contava todos os eventos não reativação. Os dados contêm 539 desses eventos para 339 contas; 149 contas têm mais de um evento terminal. Assim, um motivo posterior podia reforçar artificialmente uma hipótese que não estava presente no primeiro churn.
+
+Corrigimos a função compartilhada para ordenar os eventos e manter somente o primeiro por conta antes de medir prevalência. Um teste de regressão cria eventos posteriores de produto e prova que eles não conseguem fabricar corroboração. A política do rótulo primário agora vale no painel, no outcome e na evidência textual.
+
+A mesma rodada mostrou que fila e watchlist prometiam contas ativas, mas o publicador não aplicava esse filtro explicitamente. O dataset atual escondia o gap porque as 161 contas no cutoff de scoring estavam ativas. Centralizamos a seleção do snapshot de scoring e adicionamos uma regressão que impede uma conta inativa exposta de entrar em qualquer uma das duas listas.
+
+Na documentação de origem, `data/README.md` dizia que o Kaggle não expunha licença legível por máquina, enquanto o briefing e a submissão diziam MIT. A consulta atual ao endpoint oficial do Kaggle retornou `licenseName=MIT`, `ownerName=Riv` e descrição de dados simulados. Alinhamos a documentação, preservando também o crédito River @ Rivalytics fornecido pelo desafio.
+
+O gate do manifesto validava os arquivos enumerados, mas não exigia o conjunto completo. Um manifesto adulterado que omitisse uma entrada poderia passar. Fixamos o contrato nos nove nomes canônicos e adicionamos uma regressão para ausência ou arquivo desconhecido; checksums continuam validando o conteúdo de cada item.
+
+Ao reavaliar vazamento temporal, encontramos 107 exposições conta-cutoff em que o ticket já havia sido aberto, mas só seria encerrado depois do cutoff. O painel contava corretamente o ticket pela data de submissão, porém antecipava resolução, satisfação e escalada; first response também não tinha gate de disponibilidade. Passamos a inferir o horário da primeira resposta e a liberar resolução, satisfação e escalada somente após `closed_at`. Uma regressão comprova que o ticket é contado sem revelar outcomes futuros.
+
+Com a correção temporal, o modelo passou os gates de ganho de average precision e lift, mas continuou bloqueado por Brier pior que o baseline e não convergência; nenhum score foi publicado. O relatório também continha “97 contas” hardcoded na ação de uma semana. A quantidade agora é lida do finding canônico e coberta por teste, preservando consistência em novas execuções.
+
+Por fim, a resposta sobre segmentos ainda dependia de interpretação da tabela. O relatório agora declara, a partir dos dados, qual segmento elegível tem o maior risco relativo e explica que valores superiores podem permanecer inconclusivos por amostra ou número de churns.
+
+**Sequência estável:** `0/2`.

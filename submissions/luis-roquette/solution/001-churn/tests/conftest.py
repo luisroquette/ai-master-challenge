@@ -305,6 +305,7 @@ def analysis_result(accepted_findings, claim_panel):
                 "account_id": "A-1",
                 "cutoff": pd.Timestamp("2024-12-31"),
                 "chronology": "strict",
+                "has_active_subscription": True,
                 "mrr_active": 1_000,
                 "plan_tier": "Pro",
                 "escalations_90d": 2,
@@ -314,6 +315,7 @@ def analysis_result(accepted_findings, claim_panel):
                 "account_id": "A-2",
                 "cutoff": pd.Timestamp("2024-12-31"),
                 "chronology": "strict",
+                "has_active_subscription": True,
                 "mrr_active": 500,
                 "plan_tier": "Basic",
                 "escalations_90d": 0,
@@ -327,7 +329,15 @@ def analysis_result(accepted_findings, claim_panel):
         claim_checks=build_claim_checks(claim_panel),
         findings=findings,
         segment_metrics=pd.DataFrame(
-            [{"dimension": "industry", "segment": "FinTech", "churn_rate": 0.2}]
+            [
+                {
+                    "dimension": "industry",
+                    "segment": "FinTech",
+                    "churn_rate": 0.2,
+                    "relative_risk": 1.2,
+                    "confidence": "eligible",
+                }
+            ]
         ),
         model_evaluation={"publish_model": False, "failure_reasons": ["fixture"]},
         model_scores=None,

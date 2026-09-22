@@ -158,7 +158,12 @@ def _reason_corroborates(
     exposed_accounts: set[str],
     churn_events: pd.DataFrame,
 ) -> bool:
-    terminal = churn_events.loc[~churn_events["is_reactivation"].fillna(False)].copy()
+    terminal = (
+        churn_events.loc[~churn_events["is_reactivation"].fillna(False)]
+        .sort_values(["churn_date", "account_id"])
+        .drop_duplicates("account_id", keep="first")
+        .copy()
+    )
     if len(terminal) < MIN_SEGMENT_CHURNS:
         return False
     patterns = {

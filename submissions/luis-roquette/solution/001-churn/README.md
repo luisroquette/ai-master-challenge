@@ -12,7 +12,7 @@ Ainda assim, há fatos úteis:
 - satisfação é `concern`, não “ok”: média e cobertura de respostas não passam juntas pelo gate;
 - 19.142 usos antecedem o início da assinatura, 13.198 antecedem o cadastro e 1.077 tickets antecedem o cadastro;
 - desligamento de renovação automática expõe no máximo US$ 2.096.221 de MRR em 97 contas, mas não passou o gate entre tabelas;
-- o modelo opcional foi recusado por ganho de average precision, Brier e não convergência; nenhum score foi publicado.
+- o modelo opcional passou ganho de average precision e lift, mas foi recusado por Brier e não convergência; nenhum score foi publicado.
 
 Leia primeiro o [relatório executivo](artifacts/report.md). A [fila CSV](artifacts/account_queue.csv) é vazia por desenho, não por falha do pipeline; a [watchlist](artifacts/account_watchlist.csv) não autoriza contato ou intervenção.
 
@@ -47,7 +47,7 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 ## Estrutura
 
 - `src/ravenstack_churn/`: contratos, painel temporal, diagnóstico, modelo e publicação.
-- `tests/`: 37 testes de dados, vazamento, gates, consistência, Markdown e dashboard.
+- `tests/`: 41 testes de dados, vazamento, gates, consistência, Markdown e dashboard.
 - `artifacts/`: saídas canônicas protegidas por `run_manifest.json`.
 - `app.py`: Streamlit somente leitura; nunca recalcula a análise.
 - `.specs/` e `docs/superpowers/plans/`: SPEC e plano SDD executado.

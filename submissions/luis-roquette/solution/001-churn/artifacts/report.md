@@ -4,14 +4,14 @@
 
 Evidência insuficiente para priorizar uma causa
 
-**Leitura em uma frase:** uso Aumentou no agregado e Caiu na coorte que churnará em 30 dias; satisfação exige atenção, mas nenhuma hipótese causal passou todos os gates.
+**Leitura em uma frase:** uso aumentou no agregado e caiu na coorte que churnará em 30 dias; satisfação exige atenção, mas nenhuma hipótese causal passou todos os gates.
 
 ## O que não bate
 
 | métrica | coorte | início | fim | tendência | leitura | cobertura |
 | --- | --- | --- | --- | --- | --- | --- |
 | Uso da plataforma (C-usage-growth) | Todas as contas | 0.336 | 0.493 | 0.039 | Aumentou | 0.884 |
-| Satisfação dos clientes (C-satisfaction-ok) | Todas as contas | 3.940 | 4.021 | n/d | Exige atenção | 0.640 |
+| Satisfação dos clientes (C-satisfaction-ok) | Todas as contas | 3.959 | 4.021 | n/d | Exige atenção | 0.633 |
 | Uso da plataforma (C-usage-growth) | Churn em até 30 dias | 0.349 | 0.304 | 0.002 | Caiu | 0.729 |
 | Satisfação dos clientes (C-satisfaction-ok) | Churn em até 30 dias | 4.500 | 3.667 | n/d | Exige atenção | 0.659 |
 
@@ -40,22 +40,24 @@ Evidência insuficiente para priorizar uma causa
 
 ## Segmentos descritivos
 
+Entre os segmentos elegíveis, País / US tem o maior risco relativo (1.08x); valores maiores abaixo permanecem inconclusivos por amostra ou número de churns.
+
 | dimensão | segmento | contas | taxa de churn | taxa geral | risco relativo | MRR perdido | elegibilidade |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | País | US | 106 | 0.160 | 0.149 | 1.075 | 223111.000 | Elegível |
-| Trial | False | 146 | 0.151 | 0.149 | 1.010 | 374777.000 | Elegível |
-| Faixa de MRR | high | 170 | 0.141 | 0.149 | 0.946 | 459183.000 | Elegível |
-| Cobrança | mixed | 171 | 0.140 | 0.149 | 0.941 | 449951.000 | Elegível |
-| Plano | mixed | 168 | 0.137 | 0.149 | 0.918 | 435486.000 | Elegível |
+| Trial | Não | 146 | 0.151 | 0.149 | 1.010 | 374777.000 | Elegível |
+| Faixa de MRR | Alto | 170 | 0.141 | 0.149 | 0.946 | 459183.000 | Elegível |
+| Cobrança | Misto | 171 | 0.140 | 0.149 | 0.941 | 449951.000 | Elegível |
+| Plano | Misto | 168 | 0.137 | 0.149 | 0.918 | 435486.000 | Elegível |
 | Plano | Basic | 4 | 0.500 | 0.149 | 3.352 | 6685.000 | Inconclusivo |
-| Cobrança | annual | 5 | 0.400 | 0.149 | 2.681 | 15917.000 | Inconclusivo |
-| Faixa de MRR | mid | 10 | 0.300 | 0.149 | 2.011 | 7863.000 | Inconclusivo |
+| Cobrança | Anual | 5 | 0.400 | 0.149 | 2.681 | 15917.000 | Inconclusivo |
+| Faixa de MRR | Médio | 10 | 0.300 | 0.149 | 2.011 | 7863.000 | Inconclusivo |
 | País | AU | 15 | 0.267 | 0.149 | 1.788 | 131919.000 | Inconclusivo |
 | Plano | Enterprise | 8 | 0.250 | 0.149 | 1.676 | 24875.000 | Inconclusivo |
-| Origem | event | 38 | 0.211 | 0.149 | 1.411 | 142010.000 | Inconclusivo |
-| Cobrança | monthly | 5 | 0.200 | 0.149 | 1.341 | 1178.000 | Inconclusivo |
+| Origem | Eventos | 38 | 0.211 | 0.149 | 1.411 | 142010.000 | Inconclusivo |
+| Cobrança | Mensal | 5 | 0.200 | 0.149 | 1.341 | 1178.000 | Inconclusivo |
 | Indústria | Cybersecurity | 37 | 0.189 | 0.149 | 1.268 | 103707.000 | Inconclusivo |
-| Origem | partner | 27 | 0.185 | 0.149 | 1.241 | 39525.000 | Inconclusivo |
+| Origem | Parceiros | 27 | 0.185 | 0.149 | 1.241 | 39525.000 | Inconclusivo |
 | Indústria | DevTools | 36 | 0.167 | 0.149 | 1.117 | 86210.000 | Inconclusivo |
 
 ## Contas para validação

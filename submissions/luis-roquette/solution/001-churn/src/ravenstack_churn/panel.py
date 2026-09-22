@@ -117,12 +117,17 @@ def _add_support_window(
 
     selected = _events_between(events, "submitted_at", start, cutoff)
     ticket_count = len(selected)
-    satisfaction_count = int(selected["satisfaction_score"].notna().sum())
+    first_response_at = selected["submitted_at"] + pd.to_timedelta(
+        selected["first_response_time_minutes"].astype("Float64"), unit="m"
+    )
+    responded = selected.loc[first_response_at.le(cutoff)]
+    closed = selected.loc[selected["closed_at"].notna() & selected["closed_at"].le(cutoff)]
+    satisfaction_count = int(closed["satisfaction_score"].notna().sum())
     row[f"tickets_{window}d"] = ticket_count
-    row[f"escalations_{window}d"] = int(selected["escalation_flag"].fillna(False).sum())
-    row[f"mean_first_response_{window}d"] = selected["first_response_time_minutes"].mean()
-    row[f"mean_resolution_{window}d"] = selected["resolution_time_hours"].mean()
-    row[f"mean_satisfaction_{window}d"] = selected["satisfaction_score"].mean()
+    row[f"escalations_{window}d"] = int(closed["escalation_flag"].fillna(False).sum())
+    row[f"mean_first_response_{window}d"] = responded["first_response_time_minutes"].mean()
+    row[f"mean_resolution_{window}d"] = closed["resolution_time_hours"].mean()
+    row[f"mean_satisfaction_{window}d"] = closed["satisfaction_score"].mean()
     row[f"satisfaction_responses_{window}d"] = satisfaction_count
     row[f"satisfaction_field_coverage_{window}d"] = (
         satisfaction_count / ticket_count if ticket_count else np.nan

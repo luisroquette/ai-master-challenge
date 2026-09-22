@@ -72,6 +72,19 @@ DIMENSION_LABELS = {
 }
 ELIGIBILITY_LABELS = {"eligible": "Elegível", "inconclusive": "Inconclusivo"}
 MRR_BAND_LABELS = {"low": "Baixo", "mid": "Médio", "high": "Alto"}
+SEGMENT_LABELS = {
+    **MRR_BAND_LABELS,
+    "mixed": "Misto",
+    "annual": "Anual",
+    "monthly": "Mensal",
+    "True": "Sim",
+    "False": "Não",
+    "ads": "Anúncios",
+    "event": "Eventos",
+    "organic": "Orgânico",
+    "other": "Outros",
+    "partner": "Parceiros",
+}
 
 
 class ArtifactConsistencyError(ValueError):
@@ -103,6 +116,17 @@ QUEUE_COLUMNS = (
     "owner",
     "status",
 )
+EXPECTED_ARTIFACT_FILENAMES = {
+    "account_panel.csv",
+    "account_queue.csv",
+    "account_watchlist.csv",
+    "claim_checks.csv",
+    "findings.csv",
+    "model_evaluation.json",
+    "quality_report.json",
+    "report.md",
+    "segment_metrics.csv",
+}
 
 
 def _mrr_band(value: float) -> str:
@@ -145,11 +169,18 @@ def _exposed(values: pd.Series, operator: str, threshold: object) -> pd.Series:
     }[operator].fillna(False)
 
 
+def _scoring_accounts(panel: pd.DataFrame) -> pd.DataFrame:
+    scoring = panel.loc[
+        panel["cutoff"].eq(SCORING_CUTOFF) & panel["chronology"].eq("strict")
+    ].copy()
+    if "has_active_subscription" in scoring:
+        scoring = scoring.loc[scoring["has_active_subscription"].fillna(False)]
+    return scoring
+
+
 def _build_queue(result: AnalysisResult) -> pd.DataFrame:
     accepted = _accepted_findings(result.findings)
-    scoring = result.panel.loc[
-        result.panel["cutoff"].eq(SCORING_CUTOFF) & result.panel["chronology"].eq("strict")
-    ].copy()
+    scoring = _scoring_accounts(result.panel)
     rows: list[dict[str, object]] = []
     for finding in accepted.itertuples(index=False):
         feature, _, _, operator, threshold = CANDIDATES[finding.finding_id]
@@ -195,9 +226,7 @@ def _build_queue(result: AnalysisResult) -> pd.DataFrame:
 
 
 def _build_watchlist(result: AnalysisResult) -> pd.DataFrame:
-    scoring = result.panel.loc[
-        result.panel["cutoff"].eq(SCORING_CUTOFF) & result.panel["chronology"].eq("strict")
-    ].copy()
+    scoring = _scoring_accounts(result.panel)
     signal_map: dict[str, list[str]] = {str(account_id): [] for account_id in scoring.account_id}
     for finding_id, (feature, _, _, operator, threshold) in CANDIDATES.items():
         if feature not in scoring:
@@ -266,8 +295,11 @@ def _markdown_table(frame: pd.DataFrame, columns: tuple[str, ...]) -> list[str]:
 
 def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame) -> str:
     accepted = _accepted_findings(result.findings)
+    renewal_accounts = int(
+        result.findings.set_index("finding_id").loc["F-commercial-renewal", "affected_accounts"]
+    )
     decision = (
-        f"Priorizar {accepted.iloc[0]['finding_id']}."
+        f"Priorizar {FINDING_LABELS.get(accepted.iloc[0]['finding_id'], accepted.iloc[0]['finding_id'])}."
         if not accepted.empty
         else "Evidência insuficiente para priorizar uma causa"
     )
@@ -281,7 +313,8 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
         [
             (
                 "**Leitura em uma frase:** uso "
-                f"{usage_overall} no agregado e {usage_churn} na coorte que churnará em 30 dias; "
+                f"{usage_overall.lower()} no agregado e {usage_churn.lower()} na coorte que "
+                "churnará em 30 dias; "
                 f"satisfação {satisfaction.lower()}, mas nenhuma hipótese causal passou todos os gates."
             ),
             "",
@@ -360,6 +393,7 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
     ordered_segments = ordered_segments.sort_values(segment_order, ascending=False)
     ordered_segments["confidence"] = segment_confidence
     ordered_segments["dimension"] = ordered_segments["dimension"].replace(DIMENSION_LABELS)
+    ordered_segments["segment"] = ordered_segments["segment"].replace(SEGMENT_LABELS)
     ordered_segments["confidence"] = ordered_segments["confidence"].replace(ELIGIBILITY_LABELS)
     ordered_segments = ordered_segments.rename(
         columns={
@@ -387,6 +421,16 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
         )
         if column in ordered_segments
     )
+    eligible_segments = ordered_segments.loc[ordered_segments["elegibilidade"].eq("Elegível")]
+    if not eligible_segments.empty:
+        top_segment = eligible_segments.sort_values("risco relativo", ascending=False).iloc[0]
+        lines.append(
+            "Entre os segmentos elegíveis, "
+            f"{top_segment['dimensão']} / {top_segment['segmento']} tem o maior risco relativo "
+            f"({top_segment['risco relativo']:.2f}x); valores maiores abaixo permanecem "
+            "inconclusivos por amostra ou número de churns."
+        )
+        lines.append("")
     lines.extend(_markdown_table(ordered_segments.head(15), segment_columns))
 
     lines.extend(["", "## Contas para validação" if queue.empty else "## Contas prioritárias", ""])
@@ -435,8 +479,8 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
             [
                 (
                     "- **1 semana:** colocar eventos fora do ciclo de vida em quarentena analítica, "
-                    "auditar uma amostra das 97 contas com renovação automática desligada e corrigir "
-                    "os vínculos de data."
+                    f"auditar uma amostra das {renewal_accounts} contas com renovação automática "
+                    "desligada e corrigir os vínculos de data."
                 ),
                 (
                     "- **30–90 dias:** instrumentar o ciclo de vida com chaves e relógios confiáveis, "
@@ -557,7 +601,10 @@ def validate_artifact_set(output_dir: Path) -> dict[str, object]:
     if not manifest_path.is_file():
         raise ArtifactConsistencyError("run_manifest.json missing")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    for filename, expected in manifest.get("artifact_checksums", {}).items():
+    checksums = manifest.get("artifact_checksums", {})
+    if set(checksums) != EXPECTED_ARTIFACT_FILENAMES:
+        raise ArtifactConsistencyError("artifact manifest is incomplete or has unknown files")
+    for filename, expected in checksums.items():
         path = output_dir / filename
         if not path.is_file():
             raise ArtifactConsistencyError(f"{filename} missing")

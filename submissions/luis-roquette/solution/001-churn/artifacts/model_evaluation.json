@@ -1,31 +1,30 @@
 {
-  "average_precision": 0.23320450262102252,
-  "average_precision_gain": 0.04873848320354679,
+  "average_precision": 0.23629621570955556,
+  "average_precision_gain": 0.05183019629207983,
   "baseline_average_precision": 0.18446601941747573,
   "baseline_brier_score": 0.163179671537775,
-  "brier_score": 0.26563576558917945,
+  "brier_score": 0.2663193597919455,
   "failure_reasons": [
-    "average_precision_gain",
     "brier_score",
     "non_converged"
   ],
-  "lift_at_20pct": 1.2907268170426065,
+  "lift_at_20pct": 1.5488721804511276,
   "publish_model": false,
-  "recall_at_20pct": 0.2631578947368421,
+  "recall_at_20pct": 0.3157894736842105,
   "segment_metrics": [
     {
-      "average_precision": 0.19896173168822148,
-      "brier_score": 0.26526532577605066,
+      "average_precision": 0.20473627378338424,
+      "brier_score": 0.265956123894295,
       "dimension": "plan_tier",
-      "lift_at_20pct": 0.96,
-      "recall_at_20pct": 0.2,
+      "lift_at_20pct": 1.28,
+      "recall_at_20pct": 0.26666666666666666,
       "sample_size": 96,
       "segment": "mixed",
       "status": "ok"
     },
     {
-      "average_precision": 0.15470628492187405,
-      "brier_score": 0.269413775009311,
+      "average_precision": 0.15813453778388253,
+      "brier_score": 0.27042453003712685,
       "dimension": "billing_frequency",
       "lift_at_20pct": 0.7449392712550608,
       "recall_at_20pct": 0.15384615384615385,
@@ -34,11 +33,11 @@
       "status": "ok"
     },
     {
-      "average_precision": 0.2200596046499408,
-      "brier_score": 0.2642260505468979,
+      "average_precision": 0.22307723944278568,
+      "brier_score": 0.2652067993173077,
       "dimension": "mrr_band",
-      "lift_at_20pct": 1.0714285714285714,
-      "recall_at_20pct": 0.21428571428571427,
+      "lift_at_20pct": 1.4285714285714284,
+      "recall_at_20pct": 0.2857142857142857,
       "sample_size": 90,
       "segment": "high",
       "status": "ok"

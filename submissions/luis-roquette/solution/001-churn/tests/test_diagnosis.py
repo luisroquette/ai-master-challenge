@@ -1,11 +1,34 @@
 import pandas as pd
 
 from ravenstack_churn.diagnosis import (
+    _reason_corroborates,
     build_claim_checks,
     build_diagnostic_snapshot,
     evaluate_candidates,
     rank_findings,
 )
+
+
+def test_reason_corroboration_uses_only_first_terminal_event() -> None:
+    first = pd.DataFrame(
+        {
+            "account_id": [f"A-{index}" for index in range(10)],
+            "churn_date": pd.to_datetime(["2024-01-01"] * 10),
+            "reason_code": ["other"] * 10,
+            "is_reactivation": [False] * 10,
+        }
+    )
+    later = pd.DataFrame(
+        {
+            "account_id": [f"A-{index}" for index in range(5)],
+            "churn_date": pd.to_datetime(["2024-02-01"] * 5),
+            "reason_code": ["product_issue"] * 5,
+            "is_reactivation": [False] * 5,
+        }
+    )
+    assert not _reason_corroborates(
+        "product", {f"A-{index}" for index in range(5)}, pd.concat([first, later])
+    )
 
 
 def test_diagnostic_snapshot_uses_one_common_cutoff() -> None:

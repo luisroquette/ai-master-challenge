@@ -2,12 +2,11 @@
 
 The five CSV files in `raw/` are immutable inputs from the public Kaggle dataset
 [SaaS Subscription and Churn Analytics Dataset](https://www.kaggle.com/datasets/rivalytics/saas-subscription-and-churn-analytics-dataset),
-created by River @ Rivalytics and retrieved on 2026-09-21.
+published by Rivalytics and retrieved on 2026-09-21.
 
-The dataset is synthetic and contains no real customer PII. The Kaggle page does not publish a
-machine-readable reuse license; the files are vendored only to make this challenge submission
-reproducible, with source attribution preserved. Reuse outside this submission should be checked
-against the dataset owner's current terms.
+The dataset is synthetic and contains no real customer PII. Kaggle's dataset metadata reports the
+license as MIT and the owner as `Riv`; the challenge credits River @ Rivalytics. The files are
+vendored to make this challenge submission reproducible, with source attribution preserved.
 
 ## Reproduction
 

@@ -20,6 +20,7 @@ from ravenstack_churn.publish import (
     FINDING_LABELS,
     MRR_BAND_LABELS,
     QUALITY_LABELS,
+    SEGMENT_LABELS,
     STATUS_LABELS,
     ArtifactConsistencyError,
     validate_artifact_set,
@@ -130,7 +131,7 @@ with executive_tab:
     else:
         top = accepted.sort_values("priority_rank").iloc[0]
         first, second, third = st.columns(3)
-        first.metric("Causa candidata", top["finding_id"])
+        first.metric("Causa candidata", FINDING_LABELS.get(top["finding_id"], top["finding_id"]))
         second.metric("MRR exposto — máximo", f"US$ {top['mrr_exposed_max']:,.0f}")
         third.metric("Contas alcançadas", int(top["affected_accounts"]))
         st.write(f"**Confiança:** {top['confidence']} — associação, não causalidade.")
@@ -161,6 +162,7 @@ with executive_tab:
     if "confidence" not in segment_display:
         segment_display["confidence"] = "inconclusive"
     segment_display["dimension"] = segment_display["dimension"].replace(DIMENSION_LABELS)
+    segment_display["segment"] = segment_display["segment"].replace(SEGMENT_LABELS)
     segment_display["confidence"] = segment_display["confidence"].replace(ELIGIBILITY_LABELS)
     executive_segment_columns = [
         "dimension",
@@ -263,6 +265,7 @@ with evidence_tab:
     visible_segment_display["dimension"] = visible_segment_display["dimension"].replace(
         DIMENSION_LABELS
     )
+    visible_segment_display["segment"] = visible_segment_display["segment"].replace(SEGMENT_LABELS)
     visible_segment_display["confidence"] = visible_segment_display["confidence"].replace(
         ELIGIBILITY_LABELS
     )
@@ -335,6 +338,7 @@ with queue_tab:
         lambda value: ", ".join(FINDING_LABELS.get(item, item) for item in str(value).split("|"))
     )
     display_filtered["mrr_band"] = display_filtered["mrr_band"].replace(MRR_BAND_LABELS)
+    display_filtered["plan_tier"] = display_filtered["plan_tier"].replace(SEGMENT_LABELS)
     display_filtered["status"] = display_filtered["status"].replace(
         {"validation_only": "Somente validação"}
     )

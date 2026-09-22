@@ -22,6 +22,21 @@ def test_panel_excludes_events_after_cutoff(mini_tables) -> None:
     assert row["churn_next_30d"] == 1
 
 
+def test_support_outcomes_remain_hidden_until_they_occur(mini_tables) -> None:
+    ticket = mini_tables["support_tickets"]["ticket_id"].eq("T-recent")
+    mini_tables["support_tickets"].loc[ticket, "closed_at"] = "2024-06-02"
+    mini_tables["support_tickets"].loc[ticket, "first_response_time_minutes"] = 20_000
+    mini_tables["support_tickets"].loc[ticket, "escalation_flag"] = True
+    panel = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")
+    row = panel.loc[panel.account_id.eq("A-1")].iloc[0]
+    assert row["tickets_30d"] == 1
+    assert row["escalations_30d"] == 0
+    assert pd.isna(row["mean_first_response_30d"])
+    assert pd.isna(row["mean_resolution_30d"])
+    assert pd.isna(row["mean_satisfaction_30d"])
+    assert row["satisfaction_responses_30d"] == 0
+
+
 def test_strict_panel_excludes_pre_lifecycle_events(mini_tables) -> None:
     observed = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "observed")
     strict = build_account_panel(mini_tables, pd.DatetimeIndex(["2024-05-31"]), "strict")

@@ -1,3 +1,4 @@
+import json
 from dataclasses import replace
 
 import pandas as pd
@@ -27,12 +28,23 @@ def test_queue_and_report_use_same_finding_ids(analysis_result, tmp_path) -> Non
     assert all(claim_id in report for claim_id in claim_checks.claim_id.unique())
     assert {"plan_tier", "mrr_band"}.issubset(queue.columns)
     assert "Qualidade que limita a decisão" in report
+    assert "Entre os segmentos elegíveis" in report
 
 
 def test_manifest_rejects_modified_artifact(analysis_result, tmp_path) -> None:
     publish_artifacts(analysis_result, tmp_path)
     (tmp_path / "findings.csv").write_text("changed")
     with pytest.raises(ArtifactConsistencyError, match="findings.csv checksum mismatch"):
+        validate_artifact_set(tmp_path)
+
+
+def test_manifest_rejects_missing_artifact_entry(analysis_result, tmp_path) -> None:
+    publish_artifacts(analysis_result, tmp_path)
+    manifest_path = tmp_path / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["artifact_checksums"].pop("report.md")
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ArtifactConsistencyError, match="manifest is incomplete"):
         validate_artifact_set(tmp_path)
 
 
@@ -48,6 +60,20 @@ def test_no_accepted_finding_publishes_honest_empty_queue(analysis_result, tmp_p
     assert set(watchlist["status"]) == {"validation_only"}
     report = paths["report"].read_text()
     assert "Evidência insuficiente para priorizar uma causa" in report
+    assert "uso aumentou no agregado e caiu na coorte" in report
+    renewal_accounts = int(
+        result.findings.set_index("finding_id").loc["F-commercial-renewal", "affected_accounts"]
+    )
+    assert f"amostra das {renewal_accounts} contas" in report
+
+
+def test_inactive_accounts_never_enter_queue_or_watchlist(analysis_result, tmp_path) -> None:
+    panel = analysis_result.panel.assign(
+        has_active_subscription=lambda frame: frame["account_id"].ne("A-2")
+    )
+    paths = publish_artifacts(replace(analysis_result, panel=panel), tmp_path)
+    assert "A-2" not in set(pd.read_csv(paths["account_queue"])["account_id"])
+    assert "A-2" not in set(pd.read_csv(paths["account_watchlist"])["account_id"])
 
 
 def test_markdown_table_escapes_cell_separators() -> None:
