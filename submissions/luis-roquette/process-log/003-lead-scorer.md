@@ -1202,3 +1202,13 @@ Luis autorizou explicitamente a instalação isolada das dependências e a abert
 - A causa raiz foi corrigida em `bundle_cache_key` pela conversão explícita para `dict`, com regressão focal para `MappingProxyType`; commit local `c4b5781`, teste focal **1/1**, `py_compile` e `git diff --check` verdes.
 - O aplicativo original, sem wrapper, foi reiniciado em `http://127.0.0.1:50398`, limitado a `127.0.0.1`. A interface renderizada mostrou os perfis, vendedor Anna Snelling, abas Engaging/Prospecting, tabela de prioridades, evidências e paginação de **25 de 57** oportunidades Engaging.
 - A aba local foi preservada para validação de Luis. Nada foi enviado ao GitHub, Streamlit Cloud ou avaliadores; o passo `05`, o deploy público e o `TC47` permanecem incompletos.
+
+## I15 — Rodada profunda de frontend, UI e UX — 2026-09-22
+
+Luis determinou uma rodada profunda de melhoria do frontend, com foco principal em **UI e UX**, antes da validação final. A execução usará obrigatoriamente a skill `frontend-design`.
+
+- A rodada partirá do sistema funcional já validado localmente e preservará integralmente regras de negócio, explicabilidade, rastreabilidade e acessibilidade.
+- Antes de alterar código, será definida uma direção visual clara e coerente com o produto de priorização comercial, evitando estética genérica ou decorativa sem função.
+- A lapidação cobrirá hierarquia da informação, tipografia, cores, densidade, espaçamento, estados, navegação, responsividade, microinterações e clareza das decisões apresentadas.
+- Cada mudança seguirá `Planejamento → Revisão → Execução → Teste`; uma melhoria só permanecerá se produzir ganho observável sem degradar uso, desempenho ou compreensão.
+- O resultado será novamente validado no preview local e documentado com decisões, antes/depois, evidências, correções e limitações. O embargo externo continua integralmente vigente.
