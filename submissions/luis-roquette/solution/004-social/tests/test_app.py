@@ -261,6 +261,62 @@ class AppTests(unittest.TestCase):
         self.assertEqual(contexts[0], contexts[1])
         self.assertEqual(contexts[0]["platform"], "Instagram")
 
+    def test_fourth_eligible_context_has_labeled_drilldown_and_can_be_decided(self) -> None:
+        base = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        rows = [
+            {
+                **row,
+                "id": f"{category}-{row['id']}",
+                "content_id": f"{category}-{row['content_id']}",
+                "content_category": category,
+            }
+            for category in ("one", "two", "three", "four")
+            for row in base
+        ]
+        app = self.app()
+        app.file_uploader[0].set_value(("four-contexts.csv", csv_bytes(rows), "text/csv")).run()
+
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.session_state["active_result"]["recommendations"]), 3)
+        self.assertEqual(len(app.session_state["active_result"]["all_recommendations"]), 4)
+        additional = app.selectbox(key="additional_recommendation")
+        self.assertEqual(additional.label, "Ação adicional para detalhar")
+        self.assertEqual(len(additional.options), 1)
+        self.assertTrue(any(item.label == "Outras ações elegíveis (1)" for item in app.expander))
+        decision = app.selectbox(key="decision_recommendation")
+        self.assertEqual(len(decision.options), 4)
+        fourth = app.session_state["active_result"]["all_recommendations"][3]
+        decision.set_value(fourth).run()
+        app.button(key="save_decision").click().run()
+        self.assertTrue(any("Decisão registrada" in item.value for item in app.success))
+        self.assertEqual(self.stored()[0]["recommendation_key"], fourth["recommendation_key"])
+
+    def test_week_and_month_clip_before_timestamp_at_upper_date_boundary(self) -> None:
+        rows = [
+            make_post(
+                id=f"{sponsored}-{index}",
+                content_id=f"{sponsored}-{index}",
+                creator_id=f"creator-{index % 5}",
+                is_sponsored=sponsored,
+                post_date="2262-04-09T12:00:00",
+            )
+            for sponsored in ("TRUE", "FALSE")
+            for index in range(30)
+        ]
+        app = self.app()
+        app.file_uploader[0].set_value(("upper-date.csv", csv_bytes(rows), "text/csv")).run()
+        for mode, requested_end in (
+            ("Semana ISO", "2262-04-13T00:00:00"),
+            ("Mês calendário", "2262-04-30T00:00:00"),
+        ):
+            with self.subTest(mode=mode):
+                app.selectbox(key="period_mode").set_value(mode).run()
+                self.assertFalse(app.exception)
+                scope = app.session_state["active_result"]["scope"]
+                self.assertEqual(scope["requested_end"], requested_end)
+                self.assertEqual(scope["target_end"], "2262-04-09T00:00:00")
+                self.assertTrue(scope["partial_period"])
+
     def test_post_priority_discloses_fallback_and_benchmark_references(self) -> None:
         rows = [make_post(id=f"before-{i}", content_id=f"before-{i}", creator_id=f"creator-{i % 5}", post_date="2024-11-01T12:00:00", audience_location="US", likes=[2, 4, 6, 8, 10, 12][i % 6], shares=0, comments_count=0) for i in range(30)]
         rows.append(make_post(id="target", content_id="target", creator_id="new-creator", likes=30, shares=0, comments_count=0))

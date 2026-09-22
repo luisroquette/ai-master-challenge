@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from numbers import Integral
 from typing import Any
@@ -191,31 +191,39 @@ else:
             key="period_mode",
         )
         reference = max(active_frame["post_date"])
-        dataset_start = min(active_frame["post_date"]).normalize()
-        dataset_end = reference.normalize()
+        dataset_start_date = min(active_frame["post_date"]).date()
+        dataset_end_date = reference.date()
         if period_mode == "Semana ISO":
-            requested_start = reference.normalize() - timedelta(days=reference.weekday())
-            requested_end = requested_start + timedelta(days=6)
+            requested_start_date = dataset_end_date - timedelta(days=dataset_end_date.weekday())
+            requested_end_date = requested_start_date + timedelta(days=6)
         elif period_mode == "Mês calendário":
-            requested_start = reference.normalize().replace(day=1)
-            requested_end = requested_start + pd.offsets.MonthEnd(1)
+            requested_start_date = dataset_end_date.replace(day=1)
+            next_month = date(requested_start_date.year + (requested_start_date.month == 12), requested_start_date.month % 12 + 1, 1)
+            requested_end_date = next_month - timedelta(days=1)
         elif period_mode == "Todo o histórico":
-            requested_start, requested_end = dataset_start, dataset_end
+            requested_start_date, requested_end_date = dataset_start_date, dataset_end_date
         elif period_mode == "Intervalo personalizado":
             selected_dates = st.date_input(
                 "Intervalo explícito",
-                value=(max(dataset_start, dataset_end - timedelta(days=6)).date(), dataset_end.date()),
-                min_value=dataset_start.date(),
-                max_value=dataset_end.date(),
+                value=(max(dataset_start_date, dataset_end_date - timedelta(days=6)), dataset_end_date),
+                min_value=dataset_start_date,
+                max_value=dataset_end_date,
             )
             if len(selected_dates) == 2:
-                requested_start, requested_end = (align_scope_timestamp(value, active_frame["post_date"]) for value in selected_dates)
+                requested_start_date, requested_end_date = selected_dates
             else:
-                requested_start = requested_end = dataset_end
+                requested_start_date = requested_end_date = dataset_end_date
         else:
-            requested_start, requested_end = dataset_end - timedelta(days=6), dataset_end
-        target_start, target_end = max(requested_start, dataset_start), min(requested_end, dataset_end)
-        partial_period = target_start > requested_start or target_end < requested_end
+            requested_start_date, requested_end_date = dataset_end_date - timedelta(days=6), dataset_end_date
+        target_start_date = max(requested_start_date, dataset_start_date)
+        target_end_date = min(requested_end_date, dataset_end_date)
+        target_start, target_end = (
+            align_scope_timestamp(value.isoformat(), active_frame["post_date"])
+            for value in (target_start_date, target_end_date)
+        )
+        requested_start = datetime.combine(requested_start_date, datetime.min.time(), tzinfo=reference.tzinfo)
+        requested_end = datetime.combine(requested_end_date, datetime.min.time(), tzinfo=reference.tzinfo)
+        partial_period = target_start_date > requested_start_date or target_end_date < requested_end_date
         for index, (column, label) in enumerate(filter_columns.items()):
             options = sorted(active_frame[column].dropna().unique().tolist())
             filters[column] = st.multiselect(
@@ -235,6 +243,10 @@ else:
             "target_start": target_start.isoformat(),
             "target_end": target_end.isoformat(),
             "reference_date": reference.isoformat(),
+            "period_mode": period_mode,
+            "requested_start": requested_start.isoformat(),
+            "requested_end": requested_end.isoformat(),
+            "partial_period": partial_period,
         }
         result = analyze(active_frame, scope, str(metadata["source_hash"]))
         st.session_state["active_result"] = result
@@ -273,6 +285,7 @@ else:
 
         st.subheader("Prioridades para decisão")
         priorities = result["recommendations"] or result["pending"]
+        all_recommendations = result.get("all_recommendations", result["recommendations"])
         for rank, item in enumerate(priorities[:3], start=1):
             title = item.get("action", item.get("reason", "Coletar evidência"))
             with st.container(border=True):
@@ -286,6 +299,23 @@ else:
                 with st.expander("Registros de origem e contexto"):
                     _render_evidence(evidence, item, result)
 
+        additional_recommendations = all_recommendations[3:]
+        if additional_recommendations:
+            with st.expander(f"Outras ações elegíveis ({len(additional_recommendations)})"):
+                st.caption("As três prioridades acima permanecem executivas; selecione outra ação para consultar a mesma evidência e decidir sem alterar filtros ou scores.")
+                additional = st.selectbox(
+                    "Ação adicional para detalhar",
+                    additional_recommendations,
+                    format_func=lambda item: f"{item['evidence_id']} — {item['action']}",
+                    key="additional_recommendation",
+                )
+                components = additional.get("priority_components", {"impact": 0.0, "strength": 0.0, "recency": 0.0})
+                component_columns = st.columns(3)
+                for column, (label, key) in zip(component_columns, (("Impacto", "impact"), ("Força", "strength"), ("Atualidade", "recency")), strict=True):
+                    column.number_input(label, value=float(components.get(key, 0.0)), disabled=True, key=f"additional-{label}-{additional['evidence_id']}")
+                st.caption(f"Evidência `{additional['evidence_id']}` · prioridade {float(additional.get('priority', 0)):.4f}")
+                _render_evidence(_find_evidence(result, str(additional["evidence_id"])) or {}, additional, result)
+
         st.subheader("Ranking secundário")
         platform_rows = result["dimensions"].get("platform", [])
         if platform_rows:
@@ -297,10 +327,10 @@ else:
                 width="stretch",
             )
 
-        if result["recommendations"]:
+        if all_recommendations:
             selected = st.selectbox(
                 "Recomendação para decidir",
-                result["recommendations"],
+                all_recommendations,
                 format_func=lambda item: f"{item['evidence_id']} — {item['action']}",
                 key="decision_recommendation",
             )
