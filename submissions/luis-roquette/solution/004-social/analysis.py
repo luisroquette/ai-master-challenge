@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from copy import deepcopy
 import argparse
 import hashlib
 import html
@@ -710,6 +711,53 @@ def _apply_filters(rows: pd.DataFrame, filters: dict[str, object]) -> pd.DataFra
     return selected
 
 
+def _observation_summary(rows: pd.DataFrame, statistic: str) -> dict[str, object]:
+    """One safe aggregation boundary for durable baseline and follow-up data."""
+    defined = rows.dropna(subset=["erv"])
+    summary = _summary(rows)
+    median = ((defined.groupby("creator_id")["erv"].median().median()
+               if statistic == "median_creator_erv" else defined["erv"].median()) if len(defined) else None)
+    return {**summary, "metric": "erv", "unit": "percent", "statistic": statistic,
+            "median": float(median) if len(defined) else None,
+            "creators": int(defined["creator_id"].nunique()),
+            "source_row_ids": sorted(rows["source_row_id"].astype(str))}
+
+
+def decision_baseline(snapshot: dict[str, object]) -> dict[str, object]:
+    """Preserve the exact engine evidence plus its explicit follow-up basis."""
+    return {**deepcopy(snapshot["context_aggregate"]),
+            "evidence_id": snapshot["evidence_id"], "evidence_snapshot": deepcopy(snapshot),
+            "contract": deepcopy(snapshot["observation_contract"])}
+
+
+def observe_evidence(df: pd.DataFrame, baseline: dict[str, object],
+                     window: dict[str, object], source_hash: str) -> dict[str, object]:
+    """Reapply saved controls/statistic, replacing only the observation window.
+
+    Month is a baseline provenance coordinate, not a permanent segment filter:
+    the new explicit window replaces it. All audience and sponsorship controls
+    remain fixed. Legacy baselines without a contract cannot be reconstructed.
+    """
+    frame = derive_metrics(df)
+    start, end, _ = _scope_dates(frame, window)
+    contract = baseline.get("contract")
+    rows = frame.loc[(frame["post_date"] >= start) & (frame["post_date"] < end)]
+    if contract:
+        rows = _context_rows(_apply_filters(rows, contract["filters"]), contract["context"])
+        if contract.get("defined_rates_only"):
+            rows = rows.dropna(subset=["erv"])
+    else:
+        rows = rows.iloc[0:0]
+    statistic = contract["statistic"] if contract else "unavailable_legacy_contract"
+    return {**_observation_summary(rows, statistic), "contract": deepcopy(contract),
+            "source_hash": source_hash,
+            "period_start": start.date().isoformat(),
+            "period_end": (end - timedelta(days=1)).date().isoformat(),
+            "coverage_days": int((end - start).days),
+            "scope": {**deepcopy(baseline.get("evidence_snapshot", {}).get("scope", {})),
+                      "target_start": start.isoformat(), "target_end_exclusive": end.isoformat()}}
+
+
 def _editorial(
     frame: pd.DataFrame,
     start: pd.Timestamp,
@@ -1097,6 +1145,48 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         recommendations.append(item)
         if len(recommendations) == 3:
             break
+
+    evidence_by_id = {item["evidence_id"]: item for item in [*alerts, *editorial, *sponsorship["strata"]]}
+    for recommendation in recommendations:
+        snapshot = deepcopy(recommendation["evidence_snapshot"])
+        family = snapshot["family"]
+        evidence = evidence_by_id[snapshot["evidence_id"]]
+        context = dict(snapshot["context"])
+        if family in ("editorial", "sponsorship"):
+            context["is_sponsored"] = family == "sponsorship"
+        rows = _context_rows(targets, context)
+        if family == "sponsorship":
+            rows = rows.dropna(subset=["erv"])
+        statistic = "median_creator_erv" if family == "sponsorship" else "median_post_erv"
+        observation_context = {key: value for key, value in context.items() if key != "period_month"}
+        contract = {"family": family, "filters": scope_identity["filters"], "context": observation_context,
+                    "statistic": statistic, "unit": "percent", "metric": "erv",
+                    "defined_rates_only": family == "sponsorship",
+                    "period_policy": "replace_baseline_window_preserve_segment_controls"}
+        baseline_start, baseline_end = start, end_exclusive
+        if context.get("period_month"):
+            month_start = align_scope_timestamp(context["period_month"] + "-01", frame["post_date"])
+            baseline_start = max(start, month_start)
+            baseline_end = min(end_exclusive, month_start + pd.offsets.MonthBegin(1))
+        aggregate = {**_observation_summary(rows, statistic),
+                     "period_start": baseline_start.date().isoformat(),
+                     "period_end": (baseline_end - timedelta(days=1)).date().isoformat(),
+                     "coverage_days": int((baseline_end - baseline_start).days)}
+        if family == "post":
+            references = {"target": [evidence["source_row_id"]], "comparator": evidence["benchmark"]["source_row_ids"],
+                          "context_aggregate": aggregate["source_row_ids"]}
+        elif family == "editorial":
+            references = {"target": evidence["current_source_row_ids"], "comparator": evidence["previous_source_row_ids"]}
+        else:
+            comparator = _context_rows(targets, {**context, "is_sponsored": False}).dropna(subset=["erv"])
+            references = {"target": aggregate["source_row_ids"], "comparator": sorted(comparator["source_row_id"].astype(str))}
+        snapshot.update({"source_hash": source_hash, "strength": evidence["strength"],
+                         "strength_label": evidence.get("strength_label", _strength_label(evidence["strength"])),
+                         "delta_erv_pp": evidence["delta_erv_pp"], "references": references,
+                         "observation_contract": contract, "context_aggregate": aggregate})
+        # Convert NumPy scalar context labels to native JSON values without
+        # stringifying booleans, which would change subsequent filter semantics.
+        recommendation["evidence_snapshot"] = json.loads(json.dumps(snapshot, default=lambda value: value.item()))
 
     pending = [] if recommendations else [{
         "evidence_id": _stable_id(

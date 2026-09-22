@@ -8,9 +8,16 @@ import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
+from collections.abc import Callable
+
+from analysis import METHOD_VERSION
 
 
 SCHEMA_VERSION = 1
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def connect(path: Path) -> sqlite3.Connection:
@@ -167,7 +174,7 @@ def record_decision(conn: sqlite3.Connection, event: dict[str, object]) -> str:
     return decision_id
 
 
-def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -> tuple[str, str, dict[str, object]]:
+def _outcome_assessment(decision: dict[str, object], event: dict[str, object], now: datetime) -> tuple[str, str, dict[str, object]]:
     baseline = decision["baseline"]
     observed = event["observed"]
     assert isinstance(baseline, dict) and isinstance(observed, dict)
@@ -181,17 +188,16 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
     }
     baseline_days = int(baseline.get("coverage_days", 0) or 0)
     observed_days = int(observed.get("coverage_days", 0) or 0)
-    if baseline_days:
-        comparison["baseline_volume_per_day"] = float(baseline.get("views", 0)) / baseline_days
-    if observed_days:
-        comparison["observed_volume_per_day"] = float(observed.get("views", 0)) / observed_days
-    if baseline.get("median") is not None and observed.get("median") is not None:
-        comparison["median_delta"] = float(observed["median"]) - float(baseline["median"])
-
     if str(event["source_hash"]) == str(decision["source_hash"]):
         return "pending", "same_source", comparison
-    if str(event["method_version"]) != str(decision["method_version"]):
+    if str(event["method_version"]) != str(decision["method_version"]) or str(decision["method_version"]) != METHOD_VERSION:
         return "pending", "method_mismatch", comparison
+    if not baseline.get("contract"):
+        return "pending", "baseline_contract_unavailable", comparison
+    if baseline["contract"] != observed.get("contract"):
+        return "pending", "evidence_contract_mismatch", comparison
+    if any(baseline.get(key) != observed.get(key) for key in ("statistic", "unit")):
+        return "pending", "statistic_or_unit_mismatch", comparison
     decision_scope = decision["scope"]
     event_scope = event.get("scope", decision_scope)
     assert isinstance(decision_scope, dict) and isinstance(event_scope, dict)
@@ -207,6 +213,12 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
         return "pending", "incompatible_scope", comparison
     if observed.get("metric") != baseline.get("metric"):
         return "pending", "metric_mismatch", comparison
+    if baseline_days:
+        comparison["baseline_volume_per_day"] = float(baseline.get("views", 0)) / baseline_days
+    if observed_days:
+        comparison["observed_volume_per_day"] = float(observed.get("views", 0)) / observed_days
+    if baseline.get("median") is not None and observed.get("median") is not None:
+        comparison["median_delta"] = float(observed["median"]) - float(baseline["median"])
     if date.fromisoformat(str(observed["period_start"])) <= date.fromisoformat(str(baseline["period_end"])):
         return "pending", "overlapping_window", comparison
     if int(baseline.get("n_rate", 0)) < 30 or int(baseline.get("creators", 0)) < 5 or int(observed.get("n_rate", 0)) < 30 or int(observed.get("creators", 0)) < 5:
@@ -216,6 +228,13 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
 
     execution_status = str(event["execution_status"])
     execution_date = event.get("execution_date")
+    recorded = datetime.fromisoformat(str(event["recorded_at"]))
+    recorded_date = recorded.astimezone(timezone.utc).date() if recorded.tzinfo else recorded.date()
+    as_of = min(now.astimezone(timezone.utc).date(), recorded_date)
+    if execution_date and date.fromisoformat(str(execution_date)) > as_of:
+        return "pending", "execution_in_future", comparison
+    if date.fromisoformat(str(observed["period_end"])) > as_of:
+        return "pending", "observation_in_future", comparison
     decided_at = datetime.fromisoformat(str(decision["decided_at"]))
     decision_date = decided_at.astimezone(timezone.utc).date() if decided_at.tzinfo else decided_at.date()
     observed_start = date.fromisoformat(str(observed["period_start"]))
@@ -234,7 +253,8 @@ def _outcome_assessment(decision: dict[str, object], event: dict[str, object]) -
     return "observed", "comparable_execution_unknown", comparison
 
 
-def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
+def record_outcome(conn: sqlite3.Connection, event: dict[str, object], *,
+                   clock: Callable[[], datetime] | None = None, simulation: bool = False) -> str:
     existing = conn.execute(
         "SELECT outcome_id FROM outcomes WHERE event_id = ?", (str(event["event_id"]),)
     ).fetchone()
@@ -255,7 +275,7 @@ def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
         "method_version": row[4],
         "decided_at": row[5],
     }
-    status, reason, comparison = _outcome_assessment(decision, event)
+    status, reason, comparison = _outcome_assessment(decision, event, (clock or utc_now)())
     outcome_id = str(uuid.uuid4())
     with conn:
         conn.execute(
@@ -274,7 +294,7 @@ def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
                 str(event["recorded_at"]),
                 str(event["execution_status"]),
                 str(event["execution_date"]) if event.get("execution_date") else None,
-                _json({**event["observed"], "scope": event.get("scope", decision["scope"])}),
+                _json({**event["observed"], "scope": event.get("scope", decision["scope"]), "simulation": simulation}),
                 _json(comparison),
                 status,
                 reason,

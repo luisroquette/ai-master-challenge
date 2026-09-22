@@ -4,6 +4,9 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from datetime import datetime, timezone
+
+from analysis import METHOD_VERSION
 
 from storage import initialize, list_decisions, record_decision, record_import, record_outcome
 
@@ -19,7 +22,7 @@ def import_event(source_hash: str = "source-a") -> dict[str, object]:
         "period_end": "2025-01-31T00:00:00",
         "platforms": ["Instagram"],
         "imported_at": "2026-09-21T20:00:00+00:00",
-        "method_version": "1.0.0",
+        "method_version": METHOD_VERSION,
     }
 
 
@@ -35,6 +38,8 @@ def expected_baseline() -> dict[str, object]:
         "creators": 5,
         "coverage_days": 7,
         "source_row_ids": ["source-a:1"],
+        "statistic": "median_post_erv", "unit": "percent",
+        "contract": {"metric": "erv", "unit": "percent", "statistic": "median_post_erv", "context": {"platform": "Instagram"}},
     }
 
 
@@ -52,7 +57,7 @@ def decision_event(**overrides: object) -> dict[str, object]:
         "execution_window": "próximos 7 dias",
         "scope": {"platform": "Instagram", "content_type": "video"},
         "baseline": expected_baseline(),
-        "method_version": "1.0.0",
+        "method_version": METHOD_VERSION,
     }
     event.update(overrides)
     return event
@@ -86,8 +91,10 @@ def outcome_event(**overrides: object) -> dict[str, object]:
             "n_rate": 30,
             "creators": 5,
             "coverage_days": 7,
+            "statistic": "median_post_erv", "unit": "percent",
+            "contract": expected_baseline()["contract"],
         },
-        "method_version": "1.0.0",
+        "method_version": METHOD_VERSION,
     }
     event.update(overrides)
     return event
@@ -179,7 +186,7 @@ class StorageTests(unittest.TestCase):
             ("same-source", {"source_hash": "source-a"}, "same_source"),
             ("overlap", {"observed": {**outcome_event()["observed"], "period_start": "2025-01-07"}}, "overlapping_window"),
             ("scope", {"scope": {"platform": "TikTok"}}, "incompatible_scope"),
-            ("method", {"method_version": "2.0.0"}, "method_mismatch"),
+            ("method", {"method_version": "1.0.0"}, "method_mismatch"),
             ("sample", {"observed": {**outcome_event()["observed"], "n_rate": 29}}, "insufficient_sample"),
             ("execution", {"execution_date": None}, "execution_date_unknown"),
             ("coverage", {"observed": {**outcome_event()["observed"], "period_end": "2025-02-06", "coverage_days": 30}}, "coverage_mismatch"),
@@ -223,6 +230,32 @@ class StorageTests(unittest.TestCase):
                 record_outcome(self.conn, outcome_event(event_id=f"chronology-outcome-{index}", decision_id=decision_id, execution_status=execution_status, execution_date=execution_date))
                 outcome = next(item for item in list_decisions(self.conn) if item["decision_id"] == decision_id)["outcomes"][0]
                 self.assertEqual((outcome["status"], outcome["reason"]), ("pending", reason))
+
+    def test_future_dates_and_forged_recording_clock_remain_pending(self):
+        decision_id = record_decision(self.conn, decision_event())
+        record_import(self.conn, import_event("source-b"))
+        now = datetime(2025, 1, 10, tzinfo=timezone.utc)
+        for index, (execution, expected) in enumerate((("2025-01-11", "execution_in_future"), ("2025-01-07", "observation_in_future"))):
+            record_outcome(self.conn, outcome_event(event_id=f"future-{index}", decision_id=decision_id, execution_date=execution), clock=lambda: now)
+            outcome = next(item for item in list_decisions(self.conn)[0]["outcomes"] if item["event_id"] == f"future-{index}")
+            self.assertEqual((outcome["status"], outcome["reason"]), ("pending", expected))
+            self.assertFalse(outcome["observed"]["simulation"])
+        record_outcome(self.conn, outcome_event(event_id="before-window-ended", decision_id=decision_id,
+                       recorded_at="2025-01-10T18:00:00+00:00"),
+                       clock=lambda: datetime(2025, 1, 22, tzinfo=timezone.utc))
+        outcome = next(item for item in list_decisions(self.conn)[0]["outcomes"] if item["event_id"] == "before-window-ended")
+        self.assertEqual(outcome["reason"], "observation_in_future")
+
+    def test_legacy_method_and_changed_statistic_or_context_cannot_compare(self):
+        record_import(self.conn, import_event("source-b"))
+        old_id = record_decision(self.conn, decision_event(method_version="1.0.0"))
+        record_outcome(self.conn, outcome_event(decision_id=old_id, method_version="1.0.0"))
+        self.assertEqual(list_decisions(self.conn)[0]["outcomes"][0]["reason"], "method_mismatch")
+        current = record_decision(self.conn, decision_event(event_id="current"))
+        for index, (change, reason) in enumerate((({"contract": {"context": {"platform": "TikTok"}}}, "evidence_contract_mismatch"), ({"statistic": "median_creator_erv"}, "statistic_or_unit_mismatch"), ({"unit": "ratio"}, "statistic_or_unit_mismatch"))):
+            record_outcome(self.conn, outcome_event(event_id=f"contract-{index}", decision_id=current, observed={**outcome_event()["observed"], **change}))
+            stored = next(item for item in list_decisions(self.conn) if item["decision_id"] == current)
+            self.assertEqual(next(item for item in stored["outcomes"] if item["event_id"] == f"contract-{index}")["reason"], reason)
 
 
 if __name__ == "__main__":

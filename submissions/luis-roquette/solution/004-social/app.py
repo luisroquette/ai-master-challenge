@@ -7,13 +7,24 @@ import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from numbers import Integral
 from typing import Any
 
 import pandas as pd
 import streamlit as st
 
-from analysis import METHOD_VERSION, analyze, derive_metrics, executive_summary, export_evidence, load_csv
-from storage import connect, list_decisions, record_decision, record_import, record_outcome
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, decision_baseline, executive_summary, export_evidence, load_csv, observe_evidence
+from storage import connect, list_decisions, record_decision, record_import, record_outcome, utc_now
+
+
+def app_now() -> datetime:
+    simulated = os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW")
+    if simulated:
+        value = datetime.fromisoformat(simulated)
+        if value.tzinfo is None:
+            raise ValueError("SOCIAL_COCKPIT_SIMULATION_NOW exige timezone explícito.")
+        return value
+    return utc_now()
 
 
 def database_path() -> Path:
@@ -31,7 +42,7 @@ def _source_metadata(name: str, raw: bytes, frame: pd.DataFrame) -> dict[str, ob
         "period_start": min(frame["post_date"]).isoformat(),
         "period_end": max(frame["post_date"]).isoformat(),
         "platforms": sorted(frame["platform"].unique().tolist()),
-        "imported_at": datetime.now(timezone.utc).isoformat(),
+        "imported_at": app_now().isoformat(),
         "method_version": METHOD_VERSION,
     }
 
@@ -52,29 +63,18 @@ def _find_evidence(value: object, evidence_id: str) -> dict[str, object] | None:
     return None
 
 
-def _baseline(frame: pd.DataFrame, result: dict[str, object], recommendation: dict[str, object]) -> dict[str, object]:
-    scope = result["scope"]
-    start = pd.Timestamp(scope["target_start"]).normalize()
-    end = pd.Timestamp(scope["target_end"]).normalize()
-    rows = derive_metrics(frame)
-    rows = rows.loc[(rows["post_date"] >= start) & (rows["post_date"] < end + timedelta(days=1))]
-    for key, value in recommendation.get("context", {}).items():
-        if key in rows.columns:
-            rows = rows.loc[rows[key] == value]
-    rates = rows["erv"].dropna()
-    return {
-        "evidence_id": recommendation["evidence_id"],
-        "period_start": start.date().isoformat(),
-        "period_end": end.date().isoformat(),
-        "metric": "erv",
-        "median": float(rates.median()) if len(rates) else None,
-        "views": int(rows["views"].sum()),
-        "interactions": int(rows["interactions"].sum()),
-        "n_rate": int(len(rates)),
-        "creators": int(rows["creator_id"].nunique()),
-        "coverage_days": int((end - start).days) + 1,
-        "source_row_ids": sorted(rows["source_row_id"].astype(str)),
-    }
+def _baseline(recommendation: dict[str, object]) -> dict[str, object]:
+    return {**decision_baseline(recommendation["evidence_snapshot"]),
+            "simulation": bool(os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW"))}
+
+
+def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
+    """Arrow tables cannot carry arbitrary Python ints; keep their text exact."""
+    for column in frame.columns:
+        if any(isinstance(value, Integral) and abs(int(value)) > 2**63 - 1 for value in frame[column]):
+            frame = frame.copy()
+            frame[column] = frame[column].astype(str)
+    return frame
 
 
 def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dict[str, Any]) -> None:
@@ -108,7 +108,7 @@ def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dic
     st.write("Força da evidência (C):", evidence.get("strength", 0.0), evidence.get("strength_label", ""))
     st.write("Volumes usados no score / denominadores P95:")
     st.json({"volumes": item.get("priority_values", {}), "P95": item.get("normalization", {})})
-    refs = sorted(set(evidence.get("source_row_ids", []) + benchmark.get("source_row_ids", []) + ([evidence["source_row_id"]] if "source_row_id" in evidence else [])))
+    refs = sorted(set(evidence.get("source_row_ids", []) + evidence.get("previous_source_row_ids", []) + evidence.get("current_source_row_ids", []) + benchmark.get("source_row_ids", []) + ([evidence["source_row_id"]] if "source_row_id" in evidence else [])))
     st.write("Referências de origem:")
     if refs:
         st.dataframe(pd.DataFrame({"source_row_id": refs, "source_line": [result["row_references"].get(value) for value in refs]}), hide_index=True, width="stretch")
@@ -130,6 +130,13 @@ def _decision_export(items: list[dict[str, object]]) -> list[dict[str, object]]:
 st.set_page_config(page_title="Cockpit de Social Media", layout="wide")
 st.title("Cockpit de Social Media")
 st.caption("Decisão local, auditável e humana. Nenhuma publicação ou investimento é executado.")
+simulation = bool(os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW"))
+if simulation:
+    try:
+        st.warning(f"SIMULAÇÃO / REPLAY RETROSPECTIVO — relógio controlado: {app_now().isoformat()}. Dados sintéticos não são resultados de produção.")
+    except ValueError as exc:
+        st.error(str(exc))
+        st.stop()
 
 try:
     connection = connect(database_path())
@@ -202,7 +209,7 @@ else:
                 max_value=dataset_end.date(),
             )
             if len(selected_dates) == 2:
-                requested_start, requested_end = map(pd.Timestamp, selected_dates)
+                requested_start, requested_end = (align_scope_timestamp(value, active_frame["post_date"]) for value in selected_dates)
             else:
                 requested_start = requested_end = dataset_end
         else:
@@ -242,6 +249,28 @@ else:
         columns[1].metric("Visualizações", int(metrics["views"]))
         columns[2].metric("Interações", int(metrics["interactions"]))
 
+        for warning in result["quality"].get("warnings", []):
+            st.warning(warning["message"])
+        with st.expander("Qualidade, suficiência e cobertura"):
+            quality = result["quality"]
+            st.write("Colunas opcionais ausentes:", quality["optional_columns_missing"])
+            st.write("Níveis de benchmark tentados:", quality["benchmark_levels_attempted"])
+            st.caption("Cada comparador precisa de 30 taxas definidas e 5 creators elegíveis. Views=0 não fornece taxa.")
+            diagnostics = quality.get("benchmark_diagnostics", [])
+            st.write("Contextos sem benchmark suficiente:", len(diagnostics))
+            for diagnostic in diagnostics[:20]:
+                st.json(diagnostic)
+            if len(diagnostics) > 20:
+                st.caption("Mostrando 20 contextos; todos os motivos estão no CSV de evidências.")
+            sponsorship = result["sponsorship"]
+            st.write("Patrocínio — estratos elegíveis / sem contraparte suficiente:", sponsorship["eligible_strata"], "/", sponsorship["uncovered_count"])
+            st.write("Cobertura patrocinada:", sponsorship["coverage"])
+            if sponsorship["uncovered_strata"]:
+                st.dataframe(pd.DataFrame(sponsorship["uncovered_strata"]), hide_index=True, width="stretch")
+            st.write("Audiência condicionada — cobertura e insuficiência:")
+            st.caption("Controles: plataforma, formato, categoria, faixa, mês e patrocínio; rótulos de posts, não personas nem vencedores causais.")
+            st.dataframe(pd.DataFrame([{key: item[key] for key in ("dimension", "status", "eligible_strata", "uncovered_count", "covered_posts", "coverage")} for item in result.get("audience", [])]), hide_index=True, width="stretch")
+
         st.subheader("Prioridades para decisão")
         priorities = result["recommendations"] or result["pending"]
         for rank, item in enumerate(priorities[:3], start=1):
@@ -261,9 +290,9 @@ else:
         platform_rows = result["dimensions"].get("platform", [])
         if platform_rows:
             st.dataframe(
-                pd.DataFrame(platform_rows)[
+                _table_numbers(pd.DataFrame(platform_rows)[
                     ["value", "posts", "creators", "views", "interactions", "median_erv"]
-                ].rename(columns={"value": "plataforma", "median_erv": "mediana_erv"}),
+                ].rename(columns={"value": "plataforma", "median_erv": "mediana_erv"})),
                 hide_index=True,
                 width="stretch",
             )
@@ -294,14 +323,14 @@ else:
                         "recommendation_key": selected["recommendation_key"],
                         "revision_of": None,
                         "source_hash": metadata["source_hash"],
-                        "decided_at": datetime.now(timezone.utc).isoformat(),
+                        "decided_at": app_now().isoformat(),
                         "status": status,
                         "original_text": selected["action"],
                         "edited_text": edited_text.strip() if status == "edited" else "",
                         "owner": selected.get("owner", "Gestor de Social Media"),
                         "execution_window": selected.get("execution_window", "próximos 7 dias"),
                         "scope": result["scope"],
-                        "baseline": _baseline(active_frame, result, selected),
+                        "baseline": _baseline(selected),
                         "method_version": METHOD_VERSION,
                     }
                     try:
@@ -317,6 +346,7 @@ else:
         eligible_outcomes = [item for item in decisions if item["source_hash"] != metadata["source_hash"]]
         if eligible_outcomes:
             st.subheader("Observação posterior")
+            st.caption("A observação usa o segmento e a estatística salvos na decisão; somente a janela vem da análise ativa. Outros filtros atuais não redefinem o baseline.")
             outcome_decision = st.selectbox(
                 "Decisão de referência",
                 eligible_outcomes,
@@ -334,32 +364,20 @@ else:
                 outcome_submitted = st.form_submit_button("Registrar observação", key="save_outcome")
             if outcome_submitted:
                 event_id = st.session_state.setdefault("outcome_event_id", str(uuid.uuid4()))
-                observed_metrics = result["metrics"]
-                observed_start = pd.Timestamp(result["scope"]["target_start"]).normalize()
-                observed_end = pd.Timestamp(result["scope"]["target_end"]).normalize()
+                observed = observe_evidence(active_frame, outcome_decision["baseline"], result["scope"], str(metadata["source_hash"]))
                 event = {
                     "event_id": event_id,
                     "decision_id": outcome_decision["decision_id"],
                     "source_hash": metadata["source_hash"],
-                    "recorded_at": datetime.now(timezone.utc).isoformat(),
+                    "recorded_at": app_now().isoformat(),
                     "execution_status": execution_status,
                     "execution_date": execution_date.isoformat() if execution_date else None,
-                    "scope": result["scope"],
-                    "observed": {
-                        "period_start": observed_start.date().isoformat(),
-                        "period_end": observed_end.date().isoformat(),
-                        "metric": "erv",
-                        "median": observed_metrics.get("median_erv"),
-                        "views": observed_metrics.get("views", 0),
-                        "interactions": observed_metrics.get("interactions", 0),
-                        "n_rate": observed_metrics.get("n_rate", 0),
-                        "creators": observed_metrics.get("creators", 0),
-                        "coverage_days": int((observed_end - observed_start).days) + 1,
-                    },
+                    "scope": observed["scope"] or outcome_decision["scope"],
+                    "observed": observed,
                     "method_version": METHOD_VERSION,
                 }
                 try:
-                    outcome_id = record_outcome(connection, event)
+                    outcome_id = record_outcome(connection, event, clock=app_now, simulation=simulation)
                     refreshed = list_decisions(connection)
                     confirmed = next(
                         outcome
@@ -388,7 +406,7 @@ else:
             if revision_status == "edited" and not revision_text.strip():
                 st.error("Informe o texto da revisão antes de registrar.")
             else:
-                event = {**original, "event_id": st.session_state.setdefault("revision_event_id", str(uuid.uuid4())), "revision_of": original["decision_id"], "decided_at": datetime.now(timezone.utc).isoformat(), "status": revision_status, "edited_text": revision_text.strip() if revision_status == "edited" else ""}
+                event = {**original, "event_id": st.session_state.setdefault("revision_event_id", str(uuid.uuid4())), "revision_of": original["decision_id"], "decided_at": app_now().isoformat(), "status": revision_status, "edited_text": revision_text.strip() if revision_status == "edited" else ""}
                 try:
                     revision_id = record_decision(connection, event)
                     decisions = list_decisions(connection)
@@ -405,12 +423,33 @@ else:
         st.caption(f"{item['decided_at']} · fonte `{str(item['source_hash'])[:12]}…` · decisão `{item['decision_id']}`")
         if item["revision_of"]:
             st.caption(f"Revisão da decisão `{item['revision_of']}`; baseline original preservado.")
-        if item["source_hash"] != active_hash:
-            st.caption("Reenvie o CSV com este hash para abrir o detalhamento histórico.")
+        with st.expander(f"Evidência histórica salva — {item['decision_id']}"):
+            baseline = item["baseline"]
+            snapshot = baseline.get("evidence_snapshot")
+            st.write("Escopo original da decisão (independente dos filtros ativos):")
+            st.json(item["scope"])
+            st.write("Snapshot persistido — alvo, comparador e definição estatística:")
+            st.json(snapshot or baseline)
+            if baseline.get("simulation"):
+                st.warning("SIMULAÇÃO / REPLAY RETROSPECTIVO — decisão em fixture; não é resultado de produção.")
+            if item["method_version"] != METHOD_VERSION:
+                st.warning("Método histórico incompatível com novas comparações; snapshot preservado, outcome ficará pendente.")
+            if snapshot and item["source_hash"] == active_hash:
+                references = [{"papel": role, "source_row_id": source_id} for role, ids in snapshot["references"].items() for source_id in ids]
+                reference_frame = pd.DataFrame(references)
+                resolved = reference_frame.merge(active_frame[["source_row_id", "source_line", "post_date", "platform", "content_category"]], on="source_row_id", how="left", validate="many_to_one")
+                st.write("Referências verificadas no CSV histórico — escopo salvo:", len(resolved))
+                st.dataframe(resolved, hide_index=True, width="stretch")
+            elif item["source_hash"] != active_hash:
+                st.caption("Snapshot disponível acima. Reenvie o CSV com este hash para verificar as referências históricas, mesmo fora da fila atual.")
+            elif not snapshot:
+                st.caption("Registro legado sem snapshot completo; baseline original preservado sem inventar comparador.")
         if not item["outcomes"]:
             st.caption("Resultado pendente: nenhuma observação posterior comparável registrada.")
         for outcome in item["outcomes"]:
             observed, comparison = outcome["observed"], outcome["comparison"]
+            if observed.get("simulation"):
+                st.warning("SIMULAÇÃO / REPLAY RETROSPECTIVO — observação de fixture, não resultado de produção.")
             st.markdown(f"**Observação {outcome['status']}** · motivo: `{outcome['reason']}`")
             st.caption(f"Execução declarada: {outcome['execution_status']} · data: {outcome['execution_date'] or 'não informada'} · registro: {outcome['recorded_at']}")
             st.write(f"Janela observada: {observed['period_start']} a {observed['period_end']} · cobertura: {observed['coverage_days']} dias")

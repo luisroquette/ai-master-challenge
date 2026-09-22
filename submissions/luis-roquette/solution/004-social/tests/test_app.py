@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import atexit
 import json
+import csv
+import io
 import sqlite3
 import tempfile
 import unittest
@@ -18,6 +20,7 @@ from streamlit.testing.v1.app_test import TMP_DIR
 
 from tests.helpers import csv_bytes, make_post
 from tests.test_exports import historical_log, parse_export
+from storage import list_decisions
 
 
 APP = Path(__file__).parents[1] / "app.py"
@@ -80,6 +83,92 @@ class AppTests(unittest.TestCase):
 
     def app(self) -> AppTest:
         return AppTest.from_file(str(APP), default_timeout=20).run()
+
+    def stored(self):
+        with closing(sqlite3.connect(Path(self.directory.name) / "cockpit.sqlite3")) as connection:
+            return list_decisions(connection)
+
+    def test_baseline_above_int64_survives_reopen_and_download(self):
+        rows = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        for row in rows[30:32]:
+            row["views"] = 2**63 - 1
+        app = self.app()
+        app.file_uploader[0].set_value(("overflow.csv", csv_bytes(rows), "text/csv")).run()
+        snapshot = app.session_state["active_result"]["recommendations"][0]["evidence_snapshot"]
+        app.button(key="save_decision").click().run()
+        self.assertFalse(app.exception)
+        expected = 2 * (2**63 - 1) + 28 * 100
+        baseline = self.stored()[0]["baseline"]
+        self.assertEqual(baseline["views"], expected)
+        self.assertEqual(baseline["evidence_snapshot"], snapshot)
+        with patch("streamlit.download_button", wraps=st.download_button) as download:
+            reopened = self.app()
+            reopened.file_uploader[0].set_value(("overflow.csv", csv_bytes(rows), "text/csv")).run()
+            self.assertFalse(reopened.exception)
+            payload = next(call.args[1] for call in reversed(download.call_args_list) if call.args[0] == "Baixar evidências e decisões (CSV)")
+        decision = next(row for row in parse_export(payload) if row["record_type"] == "decision")
+        self.assertEqual(json.loads(decision["baseline"])["views"], expected)
+
+    @patch("storage.utc_now")
+    def test_segment_outcome_and_historical_snapshot_ignore_new_active_filters(self, clock):
+        clock.return_value = datetime(2025, 1, 14, 18, tzinfo=timezone.utc)
+        tech = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        beauty = [{**row, "id": "beauty-" + row["id"], "content_id": "beauty-" + row["content_id"], "content_category": "beauty"} for row in tech]
+        raw = csv_bytes(tech + beauty)
+        app = self.app()
+        app.file_uploader[0].set_value(("mixed.csv", raw, "text/csv")).run()
+        selected = next(item for item in app.session_state["active_result"]["recommendations"] if item["context"]["content_category"] == "tech")
+        app.selectbox(key="decision_recommendation").set_value(selected).run()
+        app.button(key="save_decision").click().run()
+        saved = self.stored()[0]
+        reopened = self.app()
+        history = next(item for item in reopened.expander if item.label.startswith("Evidência histórica salva"))
+        self.assertEqual(json.loads(history.json[1].value), saved["baseline"]["evidence_snapshot"])
+        reopened.file_uploader[0].set_value(("mixed.csv", raw, "text/csv")).run()
+        reopened.multiselect(key="filter_content_category").set_value(["beauty"]).run()
+        self.assertFalse(reopened.exception)
+        self.assertTrue(all(item["context"]["content_category"] == "beauty" for item in reopened.session_state["active_result"]["recommendations"]))
+        history = next(item for item in reopened.expander if item.label.startswith("Evidência histórica salva"))
+        self.assertEqual(json.loads(history.json[1].value), saved["baseline"]["evidence_snapshot"])
+        refs = history.dataframe[0].value
+        self.assertEqual((len(refs), set(refs["papel"]), set(refs["content_category"])), (60, {"target", "comparator"}, {"tech"}))
+        self.assertFalse(refs["source_line"].isna().any())
+        clock.return_value = datetime(2025, 1, 22, 18, tzinfo=timezone.utc)
+        later = list(csv.DictReader(io.StringIO(later_upload().decode())))
+        later += [{**row, "id": "beauty-" + row["id"], "content_id": "beauty-" + row["content_id"], "content_category": "beauty", "likes": 99} for row in later]
+        reopened.file_uploader[0].set_value(("later-mixed.csv", csv_bytes(later), "text/csv")).run()
+        reopened.button(key="save_outcome").click().run()
+        self.assertFalse(reopened.exception)
+        outcome = self.stored()[0]["outcomes"][0]
+        self.assertEqual((outcome["status"], outcome["observed"]["median"], outcome["comparison"]["median_delta"]), ("observed", 9.0, 1.0))
+        self.assertEqual(outcome["observed"]["n_rate"], 30)
+
+    def test_production_future_observation_is_pending_and_simulation_is_labeled(self):
+        app = self.app()
+        app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
+        app.button(key="save_decision").click().run()
+        future = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None)
+        app.file_uploader[0].set_value(("synthetic-future.csv", later_upload(future), "text/csv")).run()
+        app.button(key="save_outcome").click().run()
+        self.assertTrue(any("pending — observation_in_future" in item.value for item in app.success))
+        with patch.dict(os.environ, {"SOCIAL_COCKPIT_SIMULATION_NOW": "2025-01-22T18:00:00+00:00"}):
+            replay = self.app()
+            self.assertTrue(any("SIMULAÇÃO / REPLAY RETROSPECTIVO" in item.value for item in replay.warning))
+
+    def test_timezone_custom_dates_and_quality_diagnostics_are_visible(self):
+        rows = list(csv.DictReader(io.StringIO(valid_upload().decode())))
+        for row in rows:
+            row["post_date"] += "+02:00"
+            row["engagement_rate"] = "99"
+        app = self.app()
+        app.file_uploader[0].set_value(("offset.csv", csv_bytes(rows), "text/csv")).run()
+        app.selectbox(key="period_mode").set_value("Intervalo personalizado").run()
+        self.assertFalse(app.exception)
+        self.assertTrue(any("engagement_rate foi ignorada" in item.value for item in app.warning))
+        self.assertTrue(app.session_state["active_result"]["scope"]["target_start"].endswith("+02:00"))
+        text = " ".join(item.value for item in (*app.markdown, *app.caption))
+        for expected in ("Níveis de benchmark tentados", "Contextos sem benchmark suficiente", "estratos elegíveis / sem contraparte", "Audiência condicionada", "30 taxas definidas e 5 creators"):
+            self.assertIn(expected, text)
 
     def test_download_after_reopen_uses_complete_historical_rows(self):
         original, revision, outcome_id = historical_log(Path(self.directory.name) / "cockpit.sqlite3")
@@ -167,7 +256,8 @@ class AppTests(unittest.TestCase):
         ):
             self.assertIn(expected, text)
         self.assertLess(text.index("Taxa-alvo"), text.index("Referências de origem"))
-        contexts = [json.loads(item.value) for item in app.json]
+        drilldown = next(item for item in app.expander if item.label == "Registros de origem e contexto")
+        contexts = [json.loads(item.value) for item in drilldown.json]
         self.assertEqual(contexts[0], contexts[1])
         self.assertEqual(contexts[0]["platform"], "Instagram")
 
@@ -180,11 +270,12 @@ class AppTests(unittest.TestCase):
         text = "\n".join(item.value for item in app.markdown)
         for expected in ("Taxa-alvo ERv (%): `30.0`", "Benchmark — mediana ERv (%): `7.0`", "Benchmark — quartis Q1 / Q3 ERv (%): `4.0` / `10.0`", "Delta ERv (p.p.): `23.0`", "Amostra do benchmark — posts elegíveis / creators: `30` / `5`", "core+age+gender/365d"):
             self.assertIn(expected, text)
-        contexts = [json.loads(item.value) for item in app.json]
+        drilldown = next(item for item in app.expander if item.label == "Registros de origem e contexto")
+        contexts = [json.loads(item.value) for item in drilldown.json]
         self.assertEqual(contexts[0]["audience_location"], "BR")
         self.assertNotIn("audience_location", contexts[1])
         self.assertIn("audience_location", contexts[2])
-        self.assertEqual(len(app.dataframe[0].value), 31)
+        self.assertEqual(len(drilldown.dataframe[0].value), 31)
 
     def test_sponsorship_priority_labels_creator_medians_and_post_quartiles(self) -> None:
         rows = [make_post(id=f"{sponsored}-{i}", content_id=f"{sponsored}-{i}", creator_id=f"creator-{i % 5}", is_sponsored=sponsored, likes=8 if sponsored == "TRUE" else 4, shares=0, comments_count=0) for sponsored in ("TRUE", "FALSE") for i in range(30)]
@@ -264,12 +355,14 @@ class AppTests(unittest.TestCase):
             rows = connection.execute("SELECT status, edited_text FROM decisions ORDER BY decided_at").fetchall()
         self.assertEqual(rows, [("edited", "Ação editada inicial."), ("edited", "Ação revisada depois.")])
 
-    def test_no_and_unknown_execution_remain_distinct_after_reopen(self) -> None:
+    @patch("storage.utc_now")
+    def test_no_and_unknown_execution_remain_distinct_after_reopen(self, clock) -> None:
+        clock.return_value = datetime(2025, 1, 14, 18, tzinfo=timezone.utc)
         app = self.app()
         app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
         app.button(key="save_decision").click().run()
-        synthetic_start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(tzinfo=None)
-        app.file_uploader[0].set_value(("synthetic-future.csv", later_upload(synthetic_start), "text/csv")).run()
+        clock.return_value = datetime(2025, 1, 22, 18, tzinfo=timezone.utc)
+        app.file_uploader[0].set_value(("synthetic-retrospective.csv", later_upload(), "text/csv")).run()
         for status, reason in (("no", "comparable_action_not_executed"), ("unknown", "comparable_execution_unknown")):
             app.selectbox(key="execution_status").set_value(status)
             app.button(key="save_outcome").click().run()
@@ -306,13 +399,16 @@ class AppTests(unittest.TestCase):
             self.assertIn(expected, text)
         self.assertIn("428.57142857142856", text)
 
-    def test_valid_observation_survives_reopen(self) -> None:
+    @patch("storage.utc_now")
+    def test_valid_observation_survives_reopen(self, clock) -> None:
+        clock.return_value = datetime(2025, 1, 14, 18, tzinfo=timezone.utc)
         app = self.app()
         app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
         app.button(key="save_decision").click().run()
-        now = datetime.now(timezone.utc)
-        synthetic_start = (now + timedelta(days=1)).replace(tzinfo=None)
-        app.file_uploader[0].set_value(("synthetic-future.csv", later_upload(synthetic_start), "text/csv")).run()
+        now = clock.return_value
+        synthetic_start = datetime(2025, 1, 15, 12)
+        clock.return_value = datetime(2025, 1, 22, 18, tzinfo=timezone.utc)
+        app.file_uploader[0].set_value(("synthetic-retrospective.csv", later_upload(synthetic_start), "text/csv")).run()
         app.selectbox(key="execution_status").set_value("yes")
         app.date_input(key="execution_date").set_value(now.date())
         app.button(key="save_outcome").click().run()

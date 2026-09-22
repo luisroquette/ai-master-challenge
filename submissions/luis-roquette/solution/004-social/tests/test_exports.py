@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 from contextlib import closing
 
-from analysis import executive_summary, export_evidence, analysis_report, analyze, load_csv
+from analysis import METHOD_VERSION, executive_summary, export_evidence, analysis_report, analyze, load_csv
 from tests.helpers import csv_bytes, make_post, default_scope, sponsorship_frequency_rows
 from storage import connect, list_decisions, record_decision, record_import, record_outcome
 from tests.test_storage import decision_event, import_event, outcome_event
@@ -105,14 +105,14 @@ class ExportTests(unittest.TestCase):
             self.assertEqual(revision["execution_window"], "próximos 7 dias")
             for decision in decisions.values():
                 self.assertEqual(decision["source_hash"], "source-a")
-                self.assertEqual(decision["method_version"], "1.0.0")
+                self.assertEqual(decision["method_version"], METHOD_VERSION)
                 self.assertEqual(json.loads(decision["scope"])["target_start"], "2025-01-01")
                 self.assertEqual(json.loads(decision["baseline"])["source_row_ids"], ["source-a:1"])
                 self.assertEqual(decision["recommendation_key"], "recommendation-1")
             outcome = next(row for row in rows if row["record_type"] == "outcome")
             expected = {
                 "outcome_id": outcome_id, "decision_id": revision_id, "revision_of": original_id,
-                "source_hash": "source-b", "decision_source_hash": "source-a", "method_version": "1.0.0",
+                "source_hash": "source-b", "decision_source_hash": "source-a", "method_version": METHOD_VERSION,
                 "recorded_at": "2026-09-21T20:10:00+00:00", "execution_status": "yes", "execution_date": "2025-01-07",
                 "period_start": "2025-01-08", "period_end": "2025-01-14", "status": "observed",
                 "reason": "comparable_after_declared_execution", "metric_name": "erv", "metric_value": "5.0",
