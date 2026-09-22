@@ -1,0 +1,204 @@
+from __future__ import annotations
+
+import sqlite3
+import tempfile
+import unittest
+from pathlib import Path
+
+from storage import initialize, list_decisions, record_decision, record_import, record_outcome
+
+
+def import_event(source_hash: str = "source-a") -> dict[str, object]:
+    return {
+        "source_hash": source_hash,
+        "file_name": "social.csv",
+        "byte_count": 1234,
+        "row_count": 60,
+        "columns": ["id", "platform"],
+        "period_start": "2025-01-01T00:00:00",
+        "period_end": "2025-01-31T00:00:00",
+        "platforms": ["Instagram"],
+        "imported_at": "2026-09-21T20:00:00+00:00",
+        "method_version": "1.0.0",
+    }
+
+
+def expected_baseline() -> dict[str, object]:
+    return {
+        "period_start": "2025-01-01",
+        "period_end": "2025-01-07",
+        "metric": "erv",
+        "median": 4.0,
+        "views": 700,
+        "interactions": 28,
+        "n_rate": 30,
+        "creators": 5,
+        "coverage_days": 7,
+        "source_row_ids": ["source-a:1"],
+    }
+
+
+def decision_event(**overrides: object) -> dict[str, object]:
+    event: dict[str, object] = {
+        "event_id": "event-decision-1",
+        "recommendation_key": "recommendation-1",
+        "revision_of": None,
+        "source_hash": "source-a",
+        "decided_at": "2026-09-21T20:05:00+00:00",
+        "status": "accepted",
+        "original_text": "Testar dois vídeos no contexto.",
+        "edited_text": "",
+        "owner": "Gestor de Social Media",
+        "execution_window": "próximos 7 dias",
+        "scope": {"platform": "Instagram", "content_type": "video"},
+        "baseline": expected_baseline(),
+        "method_version": "1.0.0",
+    }
+    event.update(overrides)
+    return event
+
+
+def revision_event(original_id: str) -> dict[str, object]:
+    return decision_event(
+        event_id="event-decision-2",
+        revision_of=original_id,
+        status="edited",
+        edited_text="Testar somente um vídeo.",
+        baseline={**expected_baseline(), "median": 99.0},
+    )
+
+
+def outcome_event(**overrides: object) -> dict[str, object]:
+    event: dict[str, object] = {
+        "event_id": "event-outcome-1",
+        "decision_id": "decision-placeholder",
+        "source_hash": "source-b",
+        "recorded_at": "2026-09-21T20:10:00+00:00",
+        "execution_status": "yes",
+        "execution_date": "2025-01-07",
+        "observed": {
+            "period_start": "2025-01-08",
+            "period_end": "2025-01-14",
+            "metric": "erv",
+            "median": 5.0,
+            "views": 840,
+            "interactions": 42,
+            "n_rate": 30,
+            "creators": 5,
+            "coverage_days": 7,
+        },
+        "method_version": "1.0.0",
+    }
+    event.update(overrides)
+    return event
+
+
+class StorageTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.conn = sqlite3.connect(":memory:")
+        initialize(self.conn)
+        record_import(self.conn, import_event())
+
+    def tearDown(self) -> None:
+        self.conn.close()
+
+    def test_initialize_enables_foreign_keys_and_creates_versioned_schema(self) -> None:
+        self.assertEqual(self.conn.execute("PRAGMA foreign_keys").fetchone()[0], 1)
+        self.assertEqual(self.conn.execute("SELECT version FROM schema_version").fetchone()[0], 1)
+
+    def test_same_import_hash_and_event_id_are_idempotent(self) -> None:
+        self.assertEqual(record_import(self.conn, import_event()), record_import(self.conn, import_event()))
+        first = record_decision(self.conn, decision_event())
+        self.assertEqual(first, record_decision(self.conn, decision_event()))
+        self.assertEqual(self.conn.execute("SELECT count(*) FROM decisions").fetchone()[0], 1)
+
+    def test_new_human_event_is_distinct_and_survives_reopen(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cockpit.sqlite3"
+            first = sqlite3.connect(path)
+            initialize(first)
+            record_import(first, import_event())
+            one = record_decision(first, decision_event())
+            two = record_decision(first, decision_event(event_id="event-decision-new", status="rejected"))
+            first.close()
+            reopened = sqlite3.connect(path)
+            initialize(reopened)
+            self.assertEqual({item["decision_id"] for item in list_decisions(reopened)}, {one, two})
+            reopened.close()
+
+    def test_decision_revision_preserves_original_baseline(self) -> None:
+        original = record_decision(self.conn, decision_event())
+        revised = record_decision(self.conn, revision_event(original))
+        self.assertNotEqual(original, revised)
+        stored = next(item for item in list_decisions(self.conn) if item["decision_id"] == original)
+        revised_stored = next(item for item in list_decisions(self.conn) if item["decision_id"] == revised)
+        self.assertEqual(stored["baseline"], expected_baseline())
+        self.assertEqual(revised_stored["baseline"], expected_baseline())
+
+    def test_failed_write_rolls_back_without_false_success(self) -> None:
+        with self.assertRaises(sqlite3.IntegrityError):
+            record_decision(self.conn, decision_event(source_hash="missing"))
+        self.assertEqual(self.conn.execute("SELECT count(*) FROM decisions").fetchone()[0], 0)
+
+    def test_database_contains_no_raw_csv_or_source_text_fields(self) -> None:
+        columns = {
+            row[1]
+            for table in ("imports", "decisions", "outcomes")
+            for row in self.conn.execute(f"PRAGMA table_info({table})")
+        }
+        self.assertTrue({"csv_bytes", "content_description", "comments_text", "content_url"}.isdisjoint(columns))
+
+    def test_valid_comparable_outcome_is_observed(self) -> None:
+        decision_id = record_decision(self.conn, decision_event())
+        record_import(self.conn, import_event("source-b"))
+        outcome_id = record_outcome(self.conn, outcome_event(decision_id=decision_id))
+        outcome = list_decisions(self.conn)[0]["outcomes"][0]
+        self.assertEqual(outcome["outcome_id"], outcome_id)
+        self.assertEqual(outcome["status"], "observed")
+        self.assertEqual(outcome["reason"], "comparable_after_declared_execution")
+        self.assertEqual(outcome["comparison"]["median_delta"], 1.0)
+
+    def test_outcome_guards_remain_pending(self) -> None:
+        decision_id = record_decision(self.conn, decision_event())
+        record_import(self.conn, import_event("source-b"))
+        cases = (
+            ("same-source", {"source_hash": "source-a"}, "same_source"),
+            ("overlap", {"observed": {**outcome_event()["observed"], "period_start": "2025-01-07"}}, "overlapping_window"),
+            ("scope", {"scope": {"platform": "TikTok"}}, "incompatible_scope"),
+            ("method", {"method_version": "2.0.0"}, "method_mismatch"),
+            ("sample", {"observed": {**outcome_event()["observed"], "n_rate": 29}}, "insufficient_sample"),
+            ("execution", {"execution_date": None}, "execution_date_unknown"),
+            ("coverage", {"observed": {**outcome_event()["observed"], "period_end": "2025-02-06", "coverage_days": 30}}, "coverage_mismatch"),
+        )
+        for index, (label, changes, expected) in enumerate(cases):
+            with self.subTest(label=label):
+                event = outcome_event(event_id=f"outcome-{index}", decision_id=decision_id, **changes)
+                if changes.get("source_hash") == "source-a":
+                    pass
+                record_outcome(self.conn, event)
+                outcome = next(
+                    item
+                    for item in list_decisions(self.conn)[0]["outcomes"]
+                    if item["event_id"] == f"outcome-{index}"
+                )
+                self.assertEqual(outcome["status"], "pending")
+                self.assertEqual(outcome["reason"], expected)
+
+    def test_unknown_execution_is_observation_not_action_result(self) -> None:
+        decision_id = record_decision(self.conn, decision_event())
+        record_import(self.conn, import_event("source-b"))
+        record_outcome(
+            self.conn,
+            outcome_event(
+                decision_id=decision_id,
+                execution_status="unknown",
+                execution_date=None,
+            ),
+        )
+        outcome = list_decisions(self.conn)[0]["outcomes"][0]
+        self.assertEqual(outcome["status"], "observed")
+        self.assertEqual(outcome["reason"], "comparable_execution_unknown")
+
+
+if __name__ == "__main__":
+    unittest.main()
