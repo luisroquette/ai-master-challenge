@@ -705,7 +705,7 @@ def build_scoring_bundle(dataset, config=DEFAULT_CONFIG, identity=None):
 
 def source_identity(root=None):
     """Identify source bytes without assuming Git metadata exists in Cloud."""
-    root = Path(root or __file__).resolve().parent
+    root = Path(root).resolve() if root is not None else Path(__file__).resolve().parent
     file_hashes = {}
     for name in ("app.py", "data.py", "scoring.py", "requirements.txt"):
         path = root / name

@@ -3,6 +3,7 @@ import argparse
 import contextlib
 from dataclasses import replace
 from datetime import datetime, timezone
+import hashlib
 import http.server
 import ipaddress
 import json
@@ -373,6 +374,9 @@ class PortfolioContractTests(unittest.TestCase):
         from data import Snapshot
         snapshot = Snapshot((("x.csv", b"one"),), "{}", "deps")
         identity = dict(s.source_identity(ROOT))
+        expected_hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+                           for name in ("app.py", "data.py", "scoring.py", "requirements.txt")}
+        self.assertEqual(identity["source_digest"], s.digest(expected_hashes))
         self.assertEqual(dict(self.app.source_identity(ROOT)), identity)
         self.app._cached_bundle.clear()
         with patch.object(self.app, "load_dataset", return_value=object()), \
