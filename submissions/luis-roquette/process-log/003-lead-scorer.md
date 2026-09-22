@@ -1192,3 +1192,13 @@ Luis determinou que nada seja enviado aos avaliadores antes de validar o output 
 - Nenhum app, deploy, URL pública, `TC47` ou screenshot foi produzido.
 
 **Regra operacional:** nenhuma nova publicação, push remoto, PR, merge, deploy ou comunicação aos avaliadores ocorrerá sem autorização expressa posterior de Luis.
+
+## I14 — Preview local autorizado e correção de runtime — 2026-09-22
+
+Luis autorizou explicitamente a instalação isolada das dependências e a abertura do sistema apenas no ambiente local, sem remover o embargo externo.
+
+- O preview usa Python `3.11.15`, `uv 0.10.10` e 44 dependências fixadas em `/tmp/lead-scorer-preview.iSbpqF/venv`; `pip check` ficou verde.
+- A primeira renderização real revelou `TypeError` em `app.py:35`: `json.dumps` não serializava o `MappingProxyType` retornado pela identidade imutável da fonte.
+- A causa raiz foi corrigida em `bundle_cache_key` pela conversão explícita para `dict`, com regressão focal para `MappingProxyType`; commit local `c4b5781`, teste focal **1/1**, `py_compile` e `git diff --check` verdes.
+- O aplicativo original, sem wrapper, foi reiniciado em `http://127.0.0.1:50398`, limitado a `127.0.0.1`. A interface renderizada mostrou os perfis, vendedor Anna Snelling, abas Engaging/Prospecting, tabela de prioridades, evidências e paginação de **25 de 57** oportunidades Engaging.
+- A aba local foi preservada para validação de Luis. Nada foi enviado ao GitHub, Streamlit Cloud ou avaliadores; o passo `05`, o deploy público e o `TC47` permanecem incompletos.
