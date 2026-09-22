@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from support_copilot.ui import apply_design_system, render_queue
+from support_copilot.ui import apply_design_system, render_director_brief
 
 
 def main() -> None:
@@ -14,7 +14,13 @@ def main() -> None:
     )
     apply_design_system()
     navigation = st.navigation([
-        st.Page(render_queue, title="Fila diária", icon=":material/inbox:", default=True),
+        st.Page(
+            render_director_brief,
+            title="Resposta ao Diretor",
+            icon=":material/strategy:",
+            default=True,
+        ),
+        st.Page("pages/queue.py", title="Fila diária", icon=":material/inbox:"),
         st.Page("pages/scorecard.py", title="Scorecard", icon=":material/monitoring:"),
         st.Page("pages/it_lab.py", title="Laboratório IT", icon=":material/science:"),
         st.Page("pages/evidence.py", title="Evidências", icon=":material/fact_check:"),

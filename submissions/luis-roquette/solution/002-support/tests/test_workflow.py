@@ -245,6 +245,14 @@ def app_for(bundle, runtime, monkeypatch):
     monkeypatch.setenv("SUPPORT_COPILOT_RUNTIME", str(runtime))
     monkeypatch.setattr(ui, "load_artifacts", lambda _: bundle)
     monkeypatch.setattr(socket, "create_connection", lambda *args, **kwargs: pytest.fail("network"))
+    app = AppTest.from_file(str(ROOT / "app.py")).run()
+    return app.switch_page("pages/queue.py").run()
+
+
+def director_app_for(bundle, runtime, monkeypatch):
+    monkeypatch.setenv("SUPPORT_COPILOT_RUNTIME", str(runtime))
+    monkeypatch.setattr(ui, "load_artifacts", lambda _: bundle)
+    monkeypatch.setattr(socket, "create_connection", lambda *args, **kwargs: pytest.fail("network"))
     return AppTest.from_file(str(ROOT / "app.py")).run()
 
 
@@ -411,11 +419,11 @@ def test_pages_use_portuguese_labels_and_keep_raw_json_in_technical_details(
             assert code not in text
 
 
-def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, monkeypatch):
+def test_default_director_brief_and_separate_pages(prepared, tmp_path, monkeypatch):
     monkeypatch.setenv("SUPPORT_COPILOT_ARTIFACTS", str(tmp_path))
     monkeypatch.setenv("SUPPORT_COPILOT_RUNTIME", str(tmp_path / "runtime"))
     app = AppTest.from_file(str(ROOT / "app.py")).run()
-    assert not app.exception and app.title[0].value == "Fila diária"
+    assert not app.exception and app.title[0].value == "Resposta ao Diretor"
     assert "make reproduce" in app.warning[0].value
     monkeypatch.setenv("SUPPORT_COPILOT_ARTIFACTS", str(prepared[0]))
     scorecard = app.switch_page("pages/scorecard.py").run()
@@ -433,6 +441,20 @@ def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, m
     lab.text_area[0].input("hardware device")
     button(lab, "Classificar IT").click().run()
     assert not lab.exception
+
+
+def test_director_brief_answers_three_questions_from_verified_artifacts(
+        prepared, tmp_path, monkeypatch):
+    app = director_app_for(ui.load_artifacts(prepared[0]), tmp_path / "runtime", monkeypatch)
+    assert not app.exception and app.title[0].value == "Resposta ao Diretor"
+    text = " ".join(str(item.value) for item in _primary_elements(app.main)
+                    if item.type in {"markdown", "caption", "warning", "info", "title"})
+    for answer in ("Onde perdemos tempo?", "O que automatizar?", "Funciona?",
+                   "Piloto shadow", "automação Customer bloqueada"):
+        assert answer in text
+    assert "0% Customer" in text
+    queue = app.switch_page("pages/queue.py").run()
+    assert not queue.exception and queue.title[0].value == "Fila diária"
 
 
 @pytest.mark.parametrize("test_status,retrieval_status,expected", [

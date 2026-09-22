@@ -276,6 +276,60 @@ def apply_design_system() -> None:
         }
         .ops-callout strong { color: var(--ink); }
 
+        .ops-answer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 0 0 1.5rem;
+        }
+        .ops-answer {
+            min-height: 250px;
+            padding: 1.35rem 1.4rem;
+            background: rgba(255,253,247,.9);
+            border: 1px solid var(--line);
+            border-radius: 1rem;
+            box-shadow: 0 10px 32px rgba(23,32,27,.05);
+        }
+        .ops-answer__index {
+            color: var(--info);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: .7rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+        .ops-answer h2 {
+            margin: .75rem 0 .7rem !important;
+            font-size: 1.65rem;
+        }
+        .ops-answer__number {
+            margin: .2rem 0 .7rem;
+            color: var(--ink);
+            font-family: Iowan Old Style, Georgia, serif;
+            font-size: 2.45rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .ops-answer p { margin: 0; color: var(--muted); line-height: 1.55; }
+        .ops-answer--signal { border-top: 4px solid var(--signal); }
+        .ops-answer--alert { border-top: 4px solid var(--alert); }
+
+        .ops-proof-chain {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .7rem;
+            margin: .8rem 0 1.2rem;
+        }
+        .ops-proof {
+            padding: .9rem 1rem;
+            background: #e9eee9;
+            border-radius: .75rem;
+            color: #34423a;
+            font-size: .83rem;
+            font-weight: 700;
+        }
+        .ops-proof::before { content: "✓"; margin-right: .45rem; color: var(--info); }
+
         [data-testid="stMetric"] {
             min-height: 120px;
             padding: 1.1rem 1.25rem;
@@ -355,6 +409,7 @@ def apply_design_system() -> None:
             .ops-hero { min-height: 200px; padding: 1.7rem 1.35rem; }
             .ops-hero::after { width: 200px; height: 200px; right: -95px; top: -105px; }
             .ops-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .ops-answer-grid, .ops-proof-chain { grid-template-columns: 1fr; }
         }
         </style>
         """,
@@ -386,6 +441,128 @@ def _stat_strip(items: list[tuple[str, str, str]]) -> None:
         for value, label, tone in items
     )
     st.markdown(f'<div class="ops-stats">{cards}</div>', unsafe_allow_html=True)
+
+
+def _value_dict(bundle: ArtifactBundle, key: str) -> dict:
+    state = bundle.get(key)
+    return state.value if state.status == "ready" and isinstance(state.value, dict) else {}
+
+
+def render_director_brief(bundle=None) -> None:
+    """Answer the sponsor's three questions before exposing implementation detail."""
+    bundle = _bundle(bundle)
+    st.title("Resposta ao Diretor")
+    _page_intro(
+        "Decisão executiva · evidência antes de automação",
+        "Onde agir, o que automatizar e o que já funciona",
+        "A operação tem uma oportunidade mensurável, mas os dados sustentam automação "
+        "seletiva — não comunicação externa autônoma.",
+    )
+    summary = _value_dict(bundle, "analytics.operational_summary")
+    metrics = _value_dict(bundle, "models.metrics")
+    domains = metrics.get("domains", {}) if isinstance(metrics.get("domains"), dict) else {}
+    customer = domains.get("customer", {}) if isinstance(domains.get("customer"), dict) else {}
+    it = domains.get("it", {}) if isinstance(domains.get("it"), dict) else {}
+    source_rows = int(summary.get("analysis_rows") or summary.get("development_rows") or 0)
+    valid_intervals = int(summary.get("valid_intervals") or 0)
+    observed_excess = summary.get("observed_excess_hours")
+    customer_curve = customer.get("risk_coverage", [])
+    customer_safe = max(
+        (float(row.get("coverage") or 0) for row in customer_curve
+         if row.get("selective_risk") is not None
+         and float(row["selective_risk"]) <= 0.10),
+        default=0.0,
+    )
+    it_f1 = it.get("macro_f1")
+
+    _stat_strip([
+        (_number(observed_excess) + " h" if observed_excess is not None else "—",
+         "Excesso histórico observado", "ops-stat--alert"),
+        (f"{valid_intervals}/{source_rows}" if source_rows else "—",
+         "Intervalos utilizáveis", ""),
+        (_number(customer_safe, percent=True), "Customer seguro hoje", "ops-stat--alert"),
+        (_number(it_f1, percent=True) if it_f1 is not None else "—",
+         "Macro-F1 IT no teste", "ops-stat--signal"),
+    ])
+
+    _section_label("01 · As três respostas")
+    answers = (
+        (
+            "01 · Onde perdemos tempo?", "4.047,83 h", "ops-answer--alert",
+            "Excesso histórico acima das medianas de 20 grupos. Refund request + High "
+            "lidera com 274,17 h; é oportunidade observada, não economia realizada.",
+        ),
+        (
+            "02 · O que automatizar?", "0% Customer", "ops-answer--alert",
+            "Hoje, nenhum ticket Customer cruza um limiar com risco seletivo aceitável. "
+            "Automatize primeiro triagem assistida; mantenha decisão e comunicação humanas.",
+        ),
+        (
+            "03 · Funciona?", "83,51% F1 IT", "ops-answer--signal",
+            "O domínio IT foi testado em 5.301 casos. A aplicação também demonstra fila, "
+            "gate de risco, decisão auditável e export sem enviar mensagens externas.",
+        ),
+    )
+    cards = "".join(
+        '<article class="ops-answer ' + tone + '">'
+        f'<div class="ops-answer__index">{escape(label)}</div>'
+        f'<div class="ops-answer__number">{escape(number)}</div>'
+        f'<p>{escape(body)}</p></article>'
+        for label, number, tone, body in answers
+    )
+    st.markdown(f'<div class="ops-answer-grid">{cards}</div>', unsafe_allow_html=True)
+
+    _section_label("02 · Recomendação executiva")
+    st.markdown(
+        '<div class="ops-callout"><strong>Decisão agora:</strong> operar como copiloto, '
+        'atacar Refund request + High e executar um piloto shadow antes de liberar qualquer '
+        'roteamento Customer. O resultado correto hoje é automação Customer bloqueada.</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Precisão Customer medida: macro-F1 "
+        f"{_number(customer.get('macro_f1'))}; calibração ECE "
+        f"{_number(customer.get('ece'))}. A confiança baixa impede cobertura segura."
+    )
+
+    _section_label("03 · Prova operacional")
+    proof = (
+        ("analytics.operational_summary", "Diagnóstico reproduzível"),
+        ("models.metrics", "Teste final congelado"),
+        ("queue.customer", "Fila e gate em execução"),
+        ("retrieval.metrics", "Limite de respostas auditado"),
+    )
+    ready = [label for key, label in proof if bundle.get(key).status == "ready"]
+    st.markdown(
+        '<div class="ops-proof-chain">'
+        + "".join(f'<div class="ops-proof">{escape(label)}</div>' for label in ready)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    if len(ready) != len(proof):
+        st.warning("Parte da cadeia de evidências está indisponível; execute make reproduce.")
+    st.caption(
+        "A prova mostra decisão assistida e auditável. Não prova economia realizada, "
+        "integração com helpdesk nem efeito causal sobre satisfação."
+    )
+
+    _section_label("04 · Próximo experimento")
+    st.markdown("**Piloto shadow de duas semanas, sem envio automático.**")
+    st.write(
+        "Revisar uma amostra estratificada, medir concordância, risco, cobertura e tempo "
+        "de triagem; promover somente uma capacidade que cumpra todos os critérios go/no-go."
+    )
+    with st.expander("Rastreabilidade técnica"):
+        st.json({
+            "evidence_kind": {
+                "time_loss": "historical_observed",
+                "model_quality": "frozen_test_measured",
+                "impact": "projected_only",
+            },
+            "customer": customer,
+            "it": it,
+            "operational_summary": summary,
+        })
 
 
 def logical_payload(value):

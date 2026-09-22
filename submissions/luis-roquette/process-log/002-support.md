@@ -1424,3 +1424,16 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Limite desta etapa:** somente planejamento e documentação foram alterados. Nenhum
   código, threshold, métrica ou evidência foi modificado para elevar artificialmente a
   avaliação.
+
+## I76 — Goal ≥ 9,5 · Frente 1: resposta executiva única — 2026-09-22
+
+- **Implementação:** “Resposta ao Diretor” tornou-se a rota inicial. A tela reúne, antes
+  dos detalhes técnicos, onde há perda de tempo, o que automatizar e qual prova já roda.
+  Fila diária passou a ser aprofundamento separado, sem perda funcional.
+- **Decisão explícita:** a tela afirma `0% Customer seguro hoje`; não usa a qualidade do
+  modelo IT para autorizar automação Customer e recomenda piloto shadow sem envio externo.
+- **Evidência apresentada:** `4.047,83 h` de excesso observado, cobertura temporal,
+  macro-F1 IT no teste congelado e cadeia de diagnóstico, teste, fila e recuperação.
+- **Validação:** 45 testes de workflow passaram em `7,43 s`; Ruff e `py_compile` passaram.
+- **Medição após a frente:** diagnóstico `9,0`, automação `7,7`, prova funcional `8,8`;
+  média simples `8,5/10`. Crescimento: `+0,5`. O Goal ainda não foi atingido.
