@@ -35,3 +35,4 @@ O notebook-fonte não integra o percurso externo. Os cinco projetos antigos do A
 - O MP4 decodifica integralmente; seis quadros distribuídos e o encerramento foram inspecionados.
 - O Arcade abriu em uma segunda sessão do Chrome e percorreu as sete etapas até o encerramento.
 - Duas passadas finais consecutivas terminaram sem correção relevante; HR-01 humano permanece pendente.
+- O primeiro preflight remoto confirmou dependências íntegras e **146/146 testes** em 68,762 segundos; como o shell não devolveu status terminal inequívoco após a suíte, o gate completo será repetido no SHA documental final antes do PR.

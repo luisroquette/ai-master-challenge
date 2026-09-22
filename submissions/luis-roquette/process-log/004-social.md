@@ -994,3 +994,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Passada 1 (`clean=true`):** links relativos, hashes dos cinco binários, duração e decodificação do vídeo, integridade do DOCX, ausência de link privado do NotebookLM e resposta pública do Arcade passaram sem correção.
 - **Passada 2 (`clean=true`):** estrutura exigida pelo template, três perguntas do Head, presença dos dez artefatos finais, entrypoints, ausência de vazamento do notebook privado, HTTP 200 do Arcade e `git diff --check` passaram sem correção.
 - **Goal:** duas passadas finais consecutivas sem erro, gap ou otimização relevante: `2/2`. A entrega multimodal está pronta para o preflight pesado e o PR; HR-01 continua sendo o único gate humano declarado.
+
+## I77 — Preflight remoto da entrega — 2026-09-22
+
+- **Ambiente:** o gate pesado foi executado no Codespace limpo `codex-preflight-4v9q95gxxx5fj6v5`, exclusivamente pelo `codespace-manager`, sobre o commit publicado `d055bf9987f3cbcd2206a9d3fc321e36c5cb211f`.
+- **Correção do executor:** a primeira chamada continha um SHA digitado incorretamente na asserção do próprio comando. O produto não foi executado nessa tentativa; o SHA foi conferido no Git e a chamada foi corrigida.
+- **Evidência confirmada:** `pip check` retornou `No broken requirements found`; a descoberta integral executou **146 testes em 68,762 segundos**, todos aprovados (`OK`).
+- **Integridade do relato:** o shell remoto não devolveu um status terminal inequívoco depois da suíte. Portanto, esta passagem não é declarada como preflight completo; `compileall`, `git diff --check`, árvore limpa e saída zero serão novamente exigidos no SHA documental final antes do PR.
