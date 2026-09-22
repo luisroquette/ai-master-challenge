@@ -487,6 +487,7 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Atualização após I28:** o refresh de S4 validou 58/58 testes em 9,243 s, CLI canônica em 16,69 s, resumo em uma página A4 e artefatos analíticos idênticos. A prova visual passou a mostrar o histórico corrigido após reinício, com revisão vinculada, outcome `pending / execution_before_decision` e outcome `observed / comparable_after_declared_execution`: PNG 1502×817, SHA-256 `130408568727ed1aac8e21e2283f7c9f39a8caac017e13a43f80a69de8bbcf9c`.
 - **Atualização após I31:** o refresh de S4 aprovou 62/62 testes em 17,407 s (18,27 s totais), com warnings como erro, `pip check`, `compileall` e `git diff --check` verdes. A CLI canônica completou em 23,08 s, pico residente de 558.514.176 bytes e zero swap; CSV/Markdown reproduzidos foram idênticos aos publicados, e o HTML permaneceu em uma página A4. A prova visual agora registra o histórico reaberto sem CSV e distingue `observed / comparable_action_not_executed` de `observed / comparable_execution_unknown`, ambos não causais: PNG 1502×817, SHA-256 `362da9813327e6a701ee7ffb3bbb9f37a6c61afd52f833113e33acc3058c2ee1`.
 - **Atualização da Redundância Passada 1:** I32–I37 corrigiram controle temporal por mês, overflow, parser, taxa indefinida, interoperabilidade do CSV, frequência mensal, proveniência histórica, documentos canônicos e cobertura visual. A contagem vigente é 74 testes; os hashes publicados são `9eebfa0d…` (CSV) e `a8ab9b96…` (Markdown). A nova prova `cockpit-priorities-proof.png` complementa, sem substituir, a captura focal de outcomes.
+- **Atualização da Redundância Passada 2:** I38–I40 elevaram o método a `2.0.0`, fecharam parser/bordas/filtros, publicaram alvo e comparador, responderam audiência condicionada e preservaram snapshot/contrato de observação. O gate vigente é **102/102**; hashes atuais: CSV `017588dfa23f…`, Markdown `c65b42f631c…`, HTML `a90d85f64b20…`. As provas focais de I41 substituem as imagens antigas; HR-01 continua pendente.
 - **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
 
 ### Matriz de aceitação final
@@ -500,14 +501,14 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 | CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
 | CK-06 | pass | prioridade recomposta e ordem estável em `test_acceptance.py` |
 | CK-07 | pass | esforço, público, frequência mensal por semanas completas, patrocínio, creators, interrupção e quick wins; I34–I35 |
-| CK-08 | pass | estados de decisão/revisão preservam o texto correto, idempotência e reinício em `test_storage.py`/`test_app.py`; I28 e I31 |
-| CK-09 | pass | guards temporais, execução humana e outcomes persistidos distinguem ação não executada de execução desconhecida; I28 e I31 |
-| CK-10 | pass | HTML A4, CSV reconciliado/interoperável, histórico com proveniência própria e downloads no navegador; I33, I36–I37 |
-| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I37 |
+| CK-08 | pass | decisão/revisão preservam texto, snapshot alvo/comparador, IDs por papel, idempotência e reinício; `test_storage.py`, `test_app.py`, I38–I41 |
+| CK-09 | pass | contrato observado reaplica segmento/estatística; relógio real bloqueia futuro, replay é SIMULAÇÃO e método antigo é incompatível; I40–I41 |
+| CK-10 | pass | HTML normal/adversarial em uma A4; CSV reconstruído; histórico e cinco provas focais fiéis; I39–I41 |
+| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I41 |
 | HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
 | HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
-| HR-03 | pass | I01–I37 preservam pesquisa, 24 ondas, decisões, erros e correções |
-| HR-04 | pass | setup, duas provas visuais, remoção do diário 001 e auditoria Git restrita à submissão; I37 |
+| HR-03 | pass | I01–I41 preservam pesquisa, 24 ondas, decisões, falhas, correções e limites |
+| HR-04 | pass | setup, cinco provas focais, remoção do diário 001 e auditoria Git restrita à submissão; I37 e I41 |
 
 ### Rubricas finais
 
@@ -662,3 +663,12 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Download e persistência:** dois downloads reais, antes/depois de outro reinício, produziram **39 registros/95.680 bytes idênticos**, SHA-256 `2b20a1c923ede11742adef242b7dc8b56002bdcd922c3f94191c287aad3ce7fb`. Arquivos locais `Downloads/evidencias-decisoes (4).csv` e `(5).csv`; o parser padrão confirmou snapshot Tech, mediana observada 9, delta 1, simulação da observação retrospectiva e pendência da futura. Inspeção visual mostrou os dois estados e o aviso de simulação, sem substituir a prova por sucesso de clique.
 - **Artefatos publicados:** CLI real com `--evidence`, `--summary`, `--report` em `/tmp/ai-master-004-r2-s3.4wG9nP` reproduziu CSV/Markdown byte a byte e o mesmo hash HTML `a90d85f64b20e0d2c556cba2bcfda09378e16f07c4507f25927ad0a5f29f7fb1`. Não há mudança na fila nem regeneração necessária dos artefatos estáticos de I39.
 - **Handoff S4 e limites:** atualizar SPEC/matriz para snapshot/contrato, guardas de futuro, método incompatível e histórico independente da fila; atualizar screenshots de qualidade/contexto e substituir a antiga prova não rotulada de futuro como observado. Fixtures continuam somente em `/tmp`, não no Git; testes não substituem HR-01. Eventos legados sem snapshot permanecem legíveis, sem comparador inventado. A revisão independente seguinte decide a contagem de passadas limpas. Sem push, PR, deploy ou API paga.
+
+## I41 — Redundância Necessária, passada 2: reconciliar contrato e prova final — 2026-09-22
+
+- **Arquiteto → revisão:** o handoff ainda dizia 74 testes, apontava para I37 e usava uma captura antiga em que uma janela futura aparecia como `observed`. A obra funcional estava correta após I38–I40, mas contrato e prova pública não acompanhavam a construção.
+- **Correção documental:** SPEC, plano e READMEs passaram a declarar `METHOD_VERSION = "2.0.0"`, 102 testes, hashes de I39, snapshot alvo/comparador e guardas do relógio. O histórico `1.0.0` permanece legível, porém incompatível para nova comparação automática (`pending / method_mismatch`). A matriz I27 foi ligada a I38–I41 sem reescrever decisões anteriores.
+- **Prova focal, sem composto:** o Chrome recebeu novamente o CSV canônico de 23,3 MB e mostrou fonte `693a2df6e609…`, 52.214 linhas, período, método 2.0.0, qualidade, insuficiência de audiência, primeira prioridade, taxa-alvo, benchmark, quartis e amostras. Cinco capturas CUA exatas foram persistidas separadamente: fonte/qualidade `c2444f7c70a8…`; audiência/prioridade `0d5a4616a9ba…`; contexto `9109a48feeb2…`; snapshot histórico `e9264a8264ea…`; outcomes `1d634f6c7174…`. Todas têm 2550×877 px.
+- **História e cronologia:** após reinício e sem CSV ativo, a decisão aceita e seu escopo salvo continuam visíveis. A prova de outcomes mostra lado a lado o replay observado com o aviso **SIMULAÇÃO / REPLAY RETROSPECTIVO** e a janela 01–07/10/2026 como `pending / observation_in_future`; nenhuma evidência futura é apresentada como produção observada.
+- **Autoria preservada:** a Passada 2 segue a regra de Luis: o arquiteto confronta o contrato, o engenheiro corrige, o feedback exige nova prova e o diário registra inclusive o erro visual removido. A conclusão técnica depende dos gates limpos abaixo; HR-01 continua reservado ao Gestor de Social Media humano.
+- **Gate limpo S4:** venv novo `/tmp/ai-master-004-s4-refresh.zJWJLH`, Python 3.14.2, `pip check` sem dependências quebradas. Suíte com `PYTHONWARNINGS=error`: **102/102 em 11,717 s** (20,40 s total), pico RSS 235.798.528 bytes e zero swap. Duas CLIs reais: 18,88 s e 19,51 s; CSV/Markdown/HTML idênticos byte a byte entre si e aos artefatos publicados aplicáveis. Verificador independente: 6.700 registros, 679.596 vínculos, 52.214 IDs, maior campo 4.500 e limite padrão 131.072. PDFs normal e adversarial: uma página A4, 594,96 × 841,92 pt; o texto extraído preservou título, prioridades, limites, revisão e omissão explícita da outra fonte.

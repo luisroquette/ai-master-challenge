@@ -4,7 +4,8 @@
 
 - Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original.
 - A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento e fragmenta campos extensos em linhas `history_field`.
-- Gate vigente: **74/74 testes** com warnings como erro. Artefatos publicados: `evidence.csv` SHA-256 `9eebfa0d5fce550f257b06fe0bcdac1b818b5e2a18ccc5afe8a9dcc940f36de7` e `analysis.md` SHA-256 `a8ab9b96c1fedaa1851bca4f2e4bbf2cae5829afcc1e8398073d55c66adbf611`.
+- Gate vigente após I40: **102/102 testes** com warnings como erro. `METHOD_VERSION = "2.0.0"`; `1.0.0` é legível, porém incompatível para nova comparação automática. Artefatos publicados: `evidence.csv` SHA-256 `017588dfa23f032684066c049f2f5aac4a380e5615de029b80e57a29311b3f1e`, `analysis.md` SHA-256 `c65b42f631c3532433683b2cf2cbdcea1be74147cfc86cc38146b13f52859fe6` e HTML reproduzido SHA-256 `a90d85f64b20e0d2c556cba2bcfda09378e16f07c4507f25927ad0a5f29f7fb1`.
+- I38–I40 fecharam parser único, bordas temporais, evidência alvo/comparador, audiência condicionada, snapshot durável, reaplicação do segmento e guardas de relógio. Replay retrospectivo é sempre rotulado **SIMULAÇÃO**; futuro permanece `pending / observation_in_future`.
 - A implementação local foi autorizada e executada após a revisão humana registrada no diário. **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -202,7 +203,7 @@ Expected: import failure for `analysis`; no test may pass accidentally.
 
 - [x] **Step 5: Implement strict parsing and diagnostics**
 
-In `analysis.py`, define `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `METRIC_COLUMNS` and `METHOD_VERSION = "1.0.0"`. `load_csv` must:
+In `analysis.py`, define `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `METRIC_COLUMNS` and `METHOD_VERSION = "2.0.0"`. `load_csv` must (o texto abaixo registra a intenção inicial; I38 substituiu `pandas.read_csv` por interpretação única e estrita com `csv.reader`):
 
 ```python
 source_hash = hashlib.sha256(raw).hexdigest()
@@ -601,7 +602,7 @@ git commit -m "feat(004): add local social decision cockpit"
 **Files:**
 - Create: `submissions/luis-roquette/README.md`
 - Create: `submissions/luis-roquette/solution/004-social/README.md`
-- Create: `submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png`
+- Create: `submissions/luis-roquette/process-log/evidence/004/cockpit-*-proof.png` (provas focais separadas)
 - Modify: `submissions/luis-roquette/solution/004-social/analysis.md`
 - Modify: `submissions/luis-roquette/solution/004-social/evidence.csv`
 - Modify: `submissions/luis-roquette/process-log/004-social.md`
@@ -655,7 +656,7 @@ Also record the submission metadata required by the repository: target branch `s
 - [x] **Step 8: Commit the verified handoff**
 
 ```bash
-git add -f submissions/luis-roquette/README.md submissions/luis-roquette/solution/004-social/README.md submissions/luis-roquette/solution/004-social/analysis.md submissions/luis-roquette/solution/004-social/evidence.csv submissions/luis-roquette/process-log/004-social.md submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png
+git add -f submissions/luis-roquette/README.md submissions/luis-roquette/solution/004-social/README.md submissions/luis-roquette/solution/004-social/analysis.md submissions/luis-roquette/solution/004-social/evidence.csv submissions/luis-roquette/process-log/004-social.md submissions/luis-roquette/process-log/evidence/004/cockpit-*-proof.png
 git commit -m "docs(004): prove cockpit acceptance"
 ```
 

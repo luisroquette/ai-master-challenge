@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após as correções documentadas até I37, o gate em ambiente virtual novo aprovou 74/74 testes em 15,216 s (15,80 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 20,46 s, com pico residente de 553.402.368 bytes e zero swap; CSV e Markdown foram idênticos byte a byte aos publicados, com SHA-256 `9eebfa0d…` e `a8ab9b96…`. O resumo impresso permaneceu em uma página A4.
+Após as correções documentadas em I38–I40, o gate acumulado aprovou **102/102 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `017588dfa23f032684066c049f2f5aac4a380e5615de029b80e57a29311b3f1e`, `analysis.md` `c65b42f631c3532433683b2cf2cbdcea1be74147cfc86cc38146b13f52859fe6` e HTML `a90d85f64b20e0d2c556cba2bcfda09378e16f07c4507f25927ad0a5f29f7fb1`. O resumo normal e a fixture adversarial permaneceram em uma página A4.
 
 ## Executar o cockpit
 
@@ -60,7 +60,7 @@ O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda 
 
 Cada decisão guarda o snapshot exato do motor: alvo, comparador, quartis/fallback, força, contexto e referências. Patrocínio mantém separados os braços e usa mediana das medianas por creator; editorial usa apenas o grupo orgânico definido; alertas preservam post/benchmark e um agregado contextual separado para acompanhamento. A observação posterior reaplica esse contrato à nova fonte; só a janela temporal muda, não categoria, audiência, patrocínio ou estatística. Creators sem taxa definida não satisfazem a amostra mínima.
 
-O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. Eventos `1.0.0` continuam legíveis, mas novas comparações ficam `pending / method_mismatch` no método `2.0.0`.
+O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.0.0"` é o contrato ativo. Eventos `1.0.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`.
 
 Datas de execução ou fim da observação futuras ficam pendentes (`execution_in_future` / `observation_in_future`); o timestamp enviado não pode adiantar o relógio real. Testes injetam relógio controlado após o fim observado. Para uma demonstração sintética/retrospectiva explícita, use banco separado e defina `SOCIAL_COCKPIT_SIMULATION_NOW=2025-01-22T18:00:00+00:00` ao iniciar o comando Streamlit acima. O app exibe **SIMULAÇÃO / REPLAY RETROSPECTIVO**, e eventos persistem essa marca. Remova a variável ao retornar à produção; simulação não autoriza datas futuras em relação ao relógio controlado.
 
@@ -78,8 +78,11 @@ Campos históricos acima de 32.768 caracteres ficam vazios na linha principal e 
 - [Evidências reproduzíveis](./evidence.csv)
 - [SPEC](./SPEC.md)
 - [Diário do processo](../../process-log/004-social.md)
-- [Prova de prioridades, contexto e downloads](../../process-log/evidence/004/cockpit-priorities-proof.png)
-- [Prova do histórico e outcomes após reinício](../../process-log/evidence/004/cockpit-proof.png)
+- [Fonte canônica, método e qualidade](../../process-log/evidence/004/cockpit-source-quality-proof.png)
+- [Audiência condicionada e prioridade](../../process-log/evidence/004/cockpit-audience-priority-proof.png)
+- [Alvo, benchmark, quartis e amostra](../../process-log/evidence/004/cockpit-priority-context-proof.png)
+- [Snapshot histórico e contrato de reenvio pelo mesmo hash](../../process-log/evidence/004/cockpit-history-snapshot-proof.png)
+- [SIMULAÇÃO retrospectiva e futuro pendente](../../process-log/evidence/004/cockpit-outcomes-proof.png)
 
 ## Limitações
 

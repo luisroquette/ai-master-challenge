@@ -32,9 +32,15 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 - Maior associação patrocinada observada: YouTube / video / lifestyle / 500.000+ / abril de 2024, +0,160707 p.p. de ERv; menor: Bilibili / video / lifestyle / 500.000+ / setembro de 2023, −0,136225 p.p. Nenhuma é efeito causal ou ROI.
 - O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, bloqueia cronologia inválida, registra aceitar/rejeitar/editar e preserva revisões/outcomes após reinício. O CSV conserva proveniência e semântica de cada evento histórico; campos extensos usam linhas reconstruíveis `history_field`.
 
-![Cockpit com fonte real, prioridade, contexto e downloads](./process-log/evidence/004/cockpit-priorities-proof.png)
+![Fonte canônica, período, método 2.0.0 e diagnóstico de qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
 
-![Histórico do cockpit após reinício, com outcomes distintos para ação não executada e execução não informada](./process-log/evidence/004/cockpit-proof.png)
+![Cobertura condicionada de audiência e primeira prioridade](./process-log/evidence/004/cockpit-audience-priority-proof.png)
+
+![Prioridade com taxa-alvo, benchmark, quartis e amostra](./process-log/evidence/004/cockpit-priority-context-proof.png)
+
+![Snapshot histórico após reinício, sem CSV ativo, com reenvio exigido pelo mesmo hash](./process-log/evidence/004/cockpit-history-snapshot-proof.png)
+
+![Replay observado rotulado SIMULAÇÃO e futuro pendente por observation_in_future](./process-log/evidence/004/cockpit-outcomes-proof.png)
 
 ### Recomendações
 
@@ -63,7 +69,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 | Codex | Pesquisa, ondas socráticas, SDD, implementação, regressões, documentação e auditoria final |
 | Claude Code | Skill SDD e estruturação inicial dos artefatos de especificação |
 | Chrome automatizado | Validação do upload real, decisões, reinício, erros, downloads e prova visual |
-| Python/Pandas/unittest | Motor determinístico, reconciliação e 74 testes locais |
+| Python/Pandas/unittest | Motor determinístico, reconciliação e 102 testes locais |
 
 ### Workflow
 
@@ -85,8 +91,11 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ## Evidências
 
-- [x] [Prova de prioridades, contexto e downloads](./process-log/evidence/004/cockpit-priorities-proof.png)
-- [x] [Prova do histórico e outcomes após reinício](./process-log/evidence/004/cockpit-proof.png)
+- [x] [Fonte, método e qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
+- [x] [Audiência condicionada e prioridade](./process-log/evidence/004/cockpit-audience-priority-proof.png)
+- [x] [Alvo, benchmark e amostra](./process-log/evidence/004/cockpit-priority-context-proof.png)
+- [x] [Snapshot histórico e contrato de reenvio pelo mesmo hash](./process-log/evidence/004/cockpit-history-snapshot-proof.png)
+- [x] [SIMULAÇÃO retrospectiva e futuro pendente](./process-log/evidence/004/cockpit-outcomes-proof.png)
 - [x] [Diário completo, incluindo as 24 ondas e correções](./process-log/004-social.md)
 - [x] [Pesquisa anterior ao framework](./research/004-social.md)
 - [x] [Análise executiva](./solution/004-social/analysis.md)
