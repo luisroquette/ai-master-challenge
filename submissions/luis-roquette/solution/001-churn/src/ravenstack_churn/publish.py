@@ -455,9 +455,7 @@ def _claim(
         "id": claim_id,
         "statement": statement,
         "evidence_level": evidence_level,
-        "confidence_label": EVIDENCE_CONFIDENCE_LABELS.get(
-            str(evidence_level), "Baixa confiança"
-        ),
+        "confidence_label": EVIDENCE_CONFIDENCE_LABELS.get(str(evidence_level), "Baixa confiança"),
         "status": status,
         "value": value,
         "unit": unit,
@@ -914,9 +912,7 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
                 "Contagem de ocorrências por regra, não de linhas distintas.",
             )
         )
-        blocks["unknowns"]["summary"] = (
-            f"{blocks['unknowns']['summary']} {anomaly_statement}"
-        )
+        blocks["unknowns"]["summary"] = f"{blocks['unknowns']['summary']} {anomaly_statement}"
 
     finding = (
         result.findings.loc[result.findings["finding_id"].eq(selected_mechanism_id)].iloc[0]

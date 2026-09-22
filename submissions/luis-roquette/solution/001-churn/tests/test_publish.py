@@ -103,10 +103,7 @@ def test_executive_answer_has_no_causal_overclaim(analysis_result) -> None:
     executive_text = " ".join(
         [
             answer["headline"],
-            *[
-                f"{block['title']} {block['summary']}"
-                for block in answer["blocks"]
-            ],
+            *[f"{block['title']} {block['summary']}" for block in answer["blocks"]],
         ]
     ).lower()
 
@@ -125,11 +122,7 @@ def test_ceo_answer_quantifies_impact_and_denies_false_concentration(
     )
 
     answer = _build_ceo_answer(result)
-    claims = {
-        claim["id"]: claim
-        for block in answer["blocks"]
-        for claim in block["claims"]
-    }
+    claims = {claim["id"]: claim for block in answer["blocks"] for claim in block["claims"]}
     recent = (
         analysis_result.monthly_churn.loc[
             analysis_result.monthly_churn["period_kind"].eq("comparison_period")
@@ -160,12 +153,8 @@ def test_inconclusive_mechanisms_create_validation_plan_not_winner(
     )
 
     answer = _build_ceo_answer(result)
-    mechanism = next(
-        block for block in answer["blocks"] if block["id"] == "strongest_mechanism"
-    )
-    actions = next(
-        block for block in answer["blocks"] if block["id"] == "next_actions"
-    )["actions"]
+    mechanism = next(block for block in answer["blocks"] if block["id"] == "strongest_mechanism")
+    actions = next(block for block in answer["blocks"] if block["id"] == "next_actions")["actions"]
 
     assert mechanism["title"] == "Causa ainda não demonstrada"
     assert mechanism["claims"] == []
