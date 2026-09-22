@@ -20,6 +20,168 @@ from analysis import METHOD_VERSION, align_scope_timestamp, analyze, decision_ba
 from storage import connect, list_decisions, record_decision, record_import, record_outcome, utc_now
 
 
+def _render_design_system() -> None:
+    st.markdown(
+        """
+        <style>
+        :root {
+          --ink: #17201e;
+          --ink-soft: #53605c;
+          --paper: #f3efe5;
+          --paper-raised: #fffdf7;
+          --line: #c8c2b3;
+          --signal: #ef674f;
+          --signal-dark: #b63828;
+          --proof: #26705f;
+        }
+
+        .stApp {
+          color: var(--ink);
+          background:
+            linear-gradient(rgba(23, 32, 30, .035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(23, 32, 30, .035) 1px, transparent 1px),
+            radial-gradient(circle at 86% 4%, rgba(239, 103, 79, .11), transparent 24rem),
+            var(--paper);
+          background-size: 28px 28px, 28px 28px, auto, auto;
+        }
+
+        [data-testid="stHeader"] { background: transparent; }
+        [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none; }
+        [data-testid="stAppViewContainer"] > .main { background: transparent; }
+        .block-container { max-width: 1440px; padding-top: 2.25rem; padding-bottom: 5rem; }
+
+        h1, h2, h3 {
+          color: var(--ink);
+          font-family: "Iowan Old Style", "Baskerville", "Palatino Linotype", serif;
+          letter-spacing: -.035em;
+        }
+        h1 { font-size: clamp(2.8rem, 6vw, 5.8rem) !important; line-height: .92 !important; max-width: 900px; }
+        h3 { margin-top: 2.5rem !important; font-size: 2rem !important; }
+        p, label, button, input, textarea { font-family: "Avenir Next", "Segoe UI", sans-serif; }
+
+        .cockpit-kicker {
+          display: flex;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.2rem;
+          padding-bottom: .8rem;
+          border-bottom: 1px solid var(--ink);
+          color: var(--ink);
+          font: 700 .72rem/1.2 "Avenir Next", sans-serif;
+          letter-spacing: .16em;
+          text-transform: uppercase;
+        }
+        .cockpit-kicker__signal::before {
+          content: "";
+          display: inline-block;
+          width: .65rem;
+          height: .65rem;
+          margin-right: .55rem;
+          border-radius: 50%;
+          background: var(--signal);
+          box-shadow: 0 0 0 4px rgba(239, 103, 79, .14);
+        }
+
+        .workflow-rail {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          margin: 1.75rem 0 2.4rem;
+          border: 1px solid var(--line);
+          background: rgba(255, 253, 247, .7);
+        }
+        .workflow-rail span {
+          padding: .8rem 1rem;
+          color: var(--ink-soft);
+          font: 700 .72rem/1.2 "Avenir Next", sans-serif;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+        }
+        .workflow-rail span + span { border-left: 1px solid var(--line); }
+        .workflow-rail b { color: var(--signal-dark); margin-right: .45rem; }
+
+        [data-testid="stMetric"] {
+          min-height: 8rem;
+          padding: 1.15rem 1.25rem;
+          border: 1px solid var(--line);
+          border-top: 4px solid var(--ink);
+          background: var(--paper-raised);
+          box-shadow: 8px 8px 0 rgba(23, 32, 30, .06);
+        }
+        [data-testid="stMetricValue"] {
+          color: var(--ink);
+          font-family: "Iowan Old Style", "Baskerville", serif;
+          font-size: clamp(2rem, 3.5vw, 3.25rem);
+          letter-spacing: -.04em;
+        }
+        [data-testid="stMetricLabel"] { color: var(--ink-soft); letter-spacing: .04em; }
+
+        [data-testid="stFileUploaderDropzone"] {
+          border: 1px dashed var(--ink-soft);
+          border-radius: 0;
+          background: rgba(255, 253, 247, .7);
+        }
+        [data-testid="stFileUploaderDropzone"]:hover { border-color: var(--signal); background: var(--paper-raised); }
+
+        [data-testid="stExpander"] {
+          overflow: hidden;
+          border: 1px solid var(--line);
+          border-radius: 0;
+          background: rgba(255, 253, 247, .58);
+        }
+        [data-testid="stExpander"] summary:hover { color: var(--signal-dark); }
+        [data-testid="stVerticalBlockBorderWrapper"] {
+          border-color: var(--line) !important;
+          border-radius: 0 !important;
+          background: rgba(255, 253, 247, .78);
+        }
+        [data-testid="stForm"] { border: 1px solid var(--ink) !important; border-radius: 0; background: var(--paper-raised); }
+
+        .stButton > button, .stDownloadButton > button {
+          border: 1px solid var(--ink);
+          border-radius: 0;
+          background: var(--ink);
+          color: var(--paper-raised);
+          font-weight: 700;
+          letter-spacing: .025em;
+          transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+        }
+        .stButton > button:hover, .stDownloadButton > button:hover {
+          border-color: var(--signal-dark);
+          background: var(--signal);
+          color: var(--ink);
+          box-shadow: 4px 4px 0 var(--ink);
+          transform: translate(-2px, -2px);
+        }
+        button:focus-visible, input:focus-visible, textarea:focus-visible, [role="combobox"]:focus-visible {
+          outline: 3px solid var(--signal) !important;
+          outline-offset: 3px;
+        }
+
+        [data-testid="stDataFrame"] { border: 1px solid var(--ink); background: var(--paper-raised); }
+        [data-testid="stAlert"] { border-radius: 0; border-left-width: 5px; }
+        code { color: var(--proof); background: rgba(38, 112, 95, .08); border-radius: 2px; }
+        hr { border-color: var(--line); }
+
+        @media (max-width: 720px) {
+          .block-container { padding: 1.25rem 1rem 3rem; }
+          .cockpit-kicker { display: block; }
+          .cockpit-kicker span { display: block; margin-bottom: .5rem; }
+          .workflow-rail { grid-template-columns: 1fr; }
+          .workflow-rail span + span { border-left: 0; border-top: 1px solid var(--line); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+        }
+        </style>
+        <div class="cockpit-kicker">
+          <span class="cockpit-kicker__signal">Signal Desk / Social Intelligence</span>
+          <span>Challenge 004 · decisão reproduzível</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def app_now() -> datetime:
     simulated = os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW")
     if simulated:
@@ -162,8 +324,19 @@ def _decision_export(items: list[dict[str, object]]) -> list[dict[str, object]]:
 
 
 st.set_page_config(page_title="Cockpit de Social Media", layout="wide")
+_render_design_system()
 st.title("Cockpit de Social Media")
 st.caption("Decisão local, auditável e humana. Nenhuma publicação ou investimento é executado.")
+st.markdown(
+    """
+    <div class="workflow-rail" aria-label="Fluxo do cockpit">
+      <span><b>01</b> Importar</span>
+      <span><b>02</b> Interpretar</span>
+      <span><b>03</b> Decidir</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 simulation = bool(os.environ.get("SOCIAL_COCKPIT_SIMULATION_NOW"))
 if simulation:
     try:
