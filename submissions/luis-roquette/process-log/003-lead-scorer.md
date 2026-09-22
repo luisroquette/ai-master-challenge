@@ -1150,3 +1150,9 @@ O `TC47` não foi reivindicado. Nenhum push foi realizado.
 ### Exceção autorizada para a repetição local — 2026-09-22
 
 Luis autorizou explicitamente o bypass **apenas** da repetição pesada local no Mac, resolvendo o conflito entre a SPEC e a proibição do `AGENTS.md`. O preflight canônico do Codespace permanece obrigatório e verde, com **74/74 testes** e `REAL_RENDERED_JOURNEY`. A autorização não dispensa teste, CI, segurança nem gate remoto. A Fase 2 ainda não está marcada como revisada.
+
+### Esclarecimento do owner sobre o preflight pós-fix — 2026-09-22
+
+Após questionar a demora, Luis esclareceu que o bypass solicitado também abrangia o preflight integral ainda pendente depois do retrabalho da revisão. A decisão evita nova espera no semáforo compartilhado: o full pós-fix não será repetido.
+
+A evidência válida do SHA `9228ffd` é o gate focal **6/6**. O último full **74/74** e `REAL_RENDERED_JOURNEY` pertencem ao SHA anterior; portanto, não se declara preflight full pós-fix verde. A Fase 2 permanece sem marcação de revisada até nova avaliação do revisor.
