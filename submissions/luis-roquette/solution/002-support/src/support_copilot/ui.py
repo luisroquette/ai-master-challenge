@@ -10,6 +10,7 @@ import platform
 import sqlite3
 from contextlib import closing
 from dataclasses import asdict, dataclass
+from html import escape
 from pathlib import Path
 from uuid import uuid4
 
@@ -65,6 +66,321 @@ class ArtifactBundle:
     def get(self, key: str) -> FeatureState:
         return self.features.get(key, FeatureState(
             "missing", None, "manifest.json", "artifact_not_registered"))
+
+
+def apply_design_system() -> None:
+    """Install the product's single visual language without changing its behavior."""
+    st.markdown(
+        """
+        <style>
+        :root {
+            --paper: #f3f0e7;
+            --paper-strong: #fffdf7;
+            --ink: #18201c;
+            --muted: #66716a;
+            --line: #d6d8cc;
+            --night: #101814;
+            --night-soft: #1a2720;
+            --signal: #d8ff46;
+            --signal-ink: #172000;
+            --alert: #ee6847;
+            --info: #4f7562;
+            --shadow: 0 18px 50px rgba(23, 32, 27, .08);
+        }
+
+        html, body, [class*="css"] {
+            font-family: "Avenir Next", "Segoe UI", sans-serif;
+            color: var(--ink);
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at 85% 8%, rgba(216,255,70,.15), transparent 25rem),
+                linear-gradient(rgba(24,32,28,.025) 1px, transparent 1px),
+                var(--paper);
+            background-size: auto, 100% 32px, auto;
+        }
+
+        [data-testid="stAppViewContainer"] > .main {
+            background: transparent;
+        }
+
+        .block-container {
+            max-width: 1500px;
+            padding: 3.2rem 3.4rem 5rem;
+        }
+
+        [data-testid="stSidebar"] {
+            background:
+                radial-gradient(circle at 15% 0%, rgba(216,255,70,.13), transparent 18rem),
+                var(--night);
+            border-right: 1px solid rgba(255,255,255,.08);
+        }
+
+        [data-testid="stSidebar"] * { color: #edf2eb; }
+        [data-testid="stSidebarNav"] { padding-top: 1.8rem; }
+        [data-testid="stSidebarNav"] li { margin: .35rem .7rem; }
+        [data-testid="stSidebarNav"] a {
+            min-height: 2.9rem;
+            border-radius: .8rem;
+            padding-inline: .9rem;
+            transition: background .18s ease, transform .18s ease;
+        }
+        [data-testid="stSidebarNav"] a:hover {
+            background: rgba(255,255,255,.08);
+            transform: translateX(3px);
+        }
+        [data-testid="stSidebarNav"] a[aria-current="page"] {
+            background: var(--signal);
+        }
+        [data-testid="stSidebarNav"] a[aria-current="page"] * {
+            color: var(--signal-ink) !important;
+            font-weight: 700;
+        }
+
+        h1, h2, h3 {
+            font-family: Iowan Old Style, Palatino Linotype, Georgia, serif;
+            color: var(--ink);
+            letter-spacing: -.035em;
+        }
+        h1 { font-size: clamp(2.7rem, 5vw, 5.2rem) !important; line-height: .96 !important; }
+        h2 { margin-top: 2.3rem !important; }
+        h3 { margin-top: 1.4rem !important; }
+        [data-testid="stHeadingWithActionElements"] > h1 {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        .ops-hero {
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+            margin: -.4rem 0 2rem;
+            padding: 2.35rem 2.6rem 2.2rem;
+            color: #f7f7ef;
+            background: var(--night);
+            border: 1px solid rgba(255,255,255,.09);
+            border-radius: 1.3rem;
+            box-shadow: var(--shadow);
+        }
+        .ops-hero::after {
+            content: "";
+            position: absolute;
+            width: 330px;
+            height: 330px;
+            right: -85px;
+            top: -175px;
+            border: 55px solid var(--signal);
+            border-radius: 50%;
+            opacity: .92;
+        }
+        .ops-hero__eyebrow {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            margin-bottom: 1.3rem;
+            color: var(--signal);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+        }
+        .ops-hero__eyebrow::before {
+            content: "";
+            width: 2.2rem;
+            height: 2px;
+            background: currentColor;
+        }
+        .ops-hero h1 {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 0 .9rem !important;
+            color: #fffdf7 !important;
+        }
+        .ops-hero p {
+            position: relative;
+            z-index: 1;
+            max-width: 760px;
+            margin: 0;
+            color: #bcc8bf;
+            font-size: 1.03rem;
+            line-height: 1.6;
+        }
+
+        .ops-section-label {
+            margin: 2.2rem 0 .8rem;
+            color: var(--info);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: .71rem;
+            font-weight: 800;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+        }
+
+        .ops-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .85rem;
+            margin: 0 0 1.7rem;
+        }
+        .ops-stat {
+            min-height: 112px;
+            padding: 1.15rem 1.25rem;
+            background: rgba(255,253,247,.88);
+            border: 1px solid var(--line);
+            border-radius: 1rem;
+            box-shadow: 0 8px 28px rgba(23,32,27,.045);
+        }
+        .ops-stat__value {
+            color: var(--ink);
+            font-family: Iowan Old Style, Georgia, serif;
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .ops-stat__label {
+            margin-top: .65rem;
+            color: var(--muted);
+            font-size: .73rem;
+            font-weight: 750;
+            letter-spacing: .075em;
+            text-transform: uppercase;
+        }
+        .ops-stat--signal { background: var(--signal); border-color: #c4e938; }
+        .ops-stat--alert { border-top: 4px solid var(--alert); }
+
+        .ops-callout {
+            margin: .8rem 0 1.2rem;
+            padding: 1rem 1.15rem;
+            background: #e9eee9;
+            border-left: 4px solid var(--info);
+            border-radius: 0 .75rem .75rem 0;
+            color: #34423a;
+            line-height: 1.55;
+        }
+        .ops-callout strong { color: var(--ink); }
+
+        [data-testid="stMetric"] {
+            min-height: 120px;
+            padding: 1.1rem 1.25rem;
+            background: rgba(255,253,247,.9);
+            border: 1px solid var(--line);
+            border-radius: 1rem;
+            box-shadow: 0 8px 28px rgba(23,32,27,.045);
+        }
+        [data-testid="stMetricValue"] {
+            font-family: Iowan Old Style, Georgia, serif;
+            color: var(--ink);
+        }
+
+        [data-testid="stDataFrame"], [data-testid="stForm"],
+        [data-testid="stExpander"], [data-testid="stVerticalBlockBorderWrapper"] {
+            overflow: hidden;
+            background: rgba(255,253,247,.78);
+            border-color: var(--line) !important;
+            border-radius: 1rem !important;
+        }
+        [data-testid="stDataFrame"] { box-shadow: 0 10px 35px rgba(23,32,27,.05); }
+
+        [data-baseweb="select"] > div, textarea, input {
+            background: var(--paper-strong) !important;
+            border-color: #c5cbbf !important;
+            border-radius: .72rem !important;
+        }
+        textarea:focus, input:focus, [data-baseweb="select"] > div:focus-within {
+            box-shadow: 0 0 0 3px rgba(79,117,98,.2) !important;
+            border-color: var(--info) !important;
+        }
+
+        .stButton > button, .stDownloadButton > button {
+            min-height: 2.7rem;
+            padding-inline: 1.15rem;
+            color: #f7f7ef;
+            background: var(--night);
+            border: 1px solid var(--night);
+            border-radius: .72rem;
+            font-weight: 750;
+            transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+        }
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            color: var(--signal-ink);
+            background: var(--signal);
+            border-color: var(--signal);
+            transform: translateY(-2px);
+            box-shadow: 0 9px 20px rgba(23,32,27,.14);
+        }
+        .stButton > button:focus-visible, .stDownloadButton > button:focus-visible {
+            outline: 3px solid var(--alert);
+            outline-offset: 2px;
+        }
+        .stButton > button:disabled {
+            color: #89918c;
+            background: #e3e5df;
+            border-color: #d3d7cf;
+        }
+
+        [data-testid="stAlert"] {
+            border-radius: .85rem;
+            border: 1px solid rgba(24,32,28,.1);
+        }
+
+        @keyframes ops-rise {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ops-hero, .ops-stats, [data-testid="stDataFrame"] {
+            animation: ops-rise .42s ease both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+        @media (max-width: 800px) {
+            .block-container { padding: 1.4rem 1rem 3rem; }
+            .ops-hero { min-height: 200px; padding: 1.7rem 1.35rem; }
+            .ops-hero::after { width: 200px; height: 200px; right: -95px; top: -105px; }
+            .ops-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _page_intro(eyebrow: str, title: str, description: str) -> None:
+    st.markdown(
+        f"""
+        <section class="ops-hero">
+          <div class="ops-hero__eyebrow">{escape(eyebrow)}</div>
+          <h1>{escape(title)}</h1>
+          <p>{escape(description)}</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _section_label(text: str) -> None:
+    st.markdown(f'<div class="ops-section-label">{escape(text)}</div>', unsafe_allow_html=True)
+
+
+def _stat_strip(items: list[tuple[str, str, str]]) -> None:
+    cards = "".join(
+        f'<div class="ops-stat {escape(tone)}"><div class="ops-stat__value">'
+        f'{escape(value)}</div><div class="ops-stat__label">{escape(label)}</div></div>'
+        for value, label, tone in items
+    )
+    st.markdown(f'<div class="ops-stats">{cards}</div>', unsafe_allow_html=True)
 
 
 def logical_payload(value):
@@ -520,7 +836,12 @@ def _remember_ticket():
 def render_queue(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Fila diária")
-    st.caption("Decisões locais; nenhuma mensagem é enviada ou ticket externo fechado.")
+    _page_intro(
+        "Operação assistida · humano no controle",
+        "Fila diária",
+        "Priorize riscos, entenda cada recomendação e registre decisões sem enviar "
+        "mensagens ou fechar tickets externos.",
+    )
     model_state = bundle.get("models.customer")
     if model_state.status != "ready":
         _show_state(model_state)
@@ -542,15 +863,32 @@ def render_queue(bundle=None) -> None:
                           artifact_valid=bundle.get("policies.customer").status == "ready")
             for row in state.value]
     rows.sort(key=lambda row: (*[-v for v in row["priority_score"]], row["ticket_id"]))
-    priority = st.selectbox("Filtrar prioridade", ["Todas", "Critical", "High", "Medium", "Low"],
-                            format_func=_label, on_change=_remember_ticket)
-    route_filter = st.selectbox("Filtrar encaminhamento", ["Todas", "human_review", "auto_route"],
-                                format_func=_label, on_change=_remember_ticket)
+    _stat_strip([
+        (str(len(rows)), "Tickets avaliados", ""),
+        (str(sum(row["route"]["action"] == "human_review" for row in rows)),
+         "Revisão humana", "ops-stat--alert"),
+        (str(sum(row["route"]["action"] == "auto_route" for row in rows)),
+         "Encaminhamento automático", "ops-stat--signal"),
+        (str(sum(row["priority"] == "Critical" for row in rows)), "Prioridade crítica", ""),
+    ])
+    _section_label("01 · Recorte operacional")
+    filter_priority, filter_route = st.columns(2)
+    with filter_priority:
+        priority = st.selectbox(
+            "Filtrar prioridade", ["Todas", "Critical", "High", "Medium", "Low"],
+            format_func=_label, on_change=_remember_ticket,
+        )
+    with filter_route:
+        route_filter = st.selectbox(
+            "Filtrar encaminhamento", ["Todas", "human_review", "auto_route"],
+            format_func=_label, on_change=_remember_ticket,
+        )
     rows = [row for row in rows if (priority == "Todas" or row["priority"] == priority)
             and (route_filter == "Todas" or row["route"]["action"] == route_filter)]
     if not rows:
         st.info("Nenhum ticket corresponde aos filtros.")
         return
+    _section_label("02 · Fila priorizada")
     _table([{"Ticket": row["ticket_id"], "Prioridade": row["priority"],
                    "Categoria": row["prediction"]["label"],
                    "Confiança": row["prediction"]["confidence"],
@@ -558,17 +896,27 @@ def render_queue(bundle=None) -> None:
            for row in rows], {key: key for key in (
                "Ticket", "Prioridade", "Categoria", "Confiança", "Encaminhamento")},
            categories=("Prioridade", "Categoria", "Encaminhamento"), percentages=("Confiança",))
+    _section_label("03 · Ticket em foco")
     selected = st.selectbox("Ticket", [row["ticket_id"] for row in rows],
                             on_change=_remember_ticket)
     row = next(row for row in rows if row["ticket_id"] == selected)
-    st.text(row["text"])
-    st.write(f"Categoria: {_label(row['prediction']['label'])}. "
-             f"Confiança: {_number(row['prediction']['confidence'], percent=True)}. "
-             f"Encaminhamento: {_label(row['route']['action'])}.")
-    st.write("Motivos: " + "; ".join(_label(code) for code in row["route"]["reason_codes"]))
+    st.markdown(
+        f'<div class="ops-callout"><strong>{escape(selected)}</strong><br>'
+        f'{escape(row["text"])}</div>', unsafe_allow_html=True,
+    )
+    decision_summary, decision_reasons = st.columns([1, 1.35])
+    with decision_summary:
+        st.markdown("**Leitura do modelo**")
+        st.write(f"Categoria: {_label(row['prediction']['label'])}")
+        st.write(f"Confiança: {_number(row['prediction']['confidence'], percent=True)}")
+        st.write(f"Encaminhamento: {_label(row['route']['action'])}")
+    with decision_reasons:
+        st.markdown("**Por que este encaminhamento?**")
+        st.write(" · ".join(_label(code) for code in row["route"]["reason_codes"]))
     st.caption("Ordem da fila: prioridade, quantidade de riscos e incerteza, nessa sequência.")
     retrieval = row["retrieval"] or {}
     sources = retrieval.get("sources", [])
+    _section_label("04 · Precedentes e decisão")
     st.caption("Similaridade dos precedentes não é probabilidade de correção.")
     _table(sources, {"ticket_id": "Ticket de origem", "similarity": "Similaridade",
                      "resolution": "Resolução sanitizada"}, percentages=("similarity",))
@@ -611,10 +959,17 @@ def render_queue(bundle=None) -> None:
                               key=f"reason-{version}", disabled=bool(saved["confirmed"]),
                               on_change=_remember_ticket)
         confirmed = saved["confirmed"]
-        approve = st.button("Aprovar", disabled=not draft or bool(confirmed))
-        edit = st.button("Editar e aprovar", disabled=not draft or bool(confirmed))
-        reject = st.button("Rejeitar", disabled=bool(confirmed))
-        escalate = st.button("Escalonar", disabled=bool(confirmed))
+        approve_col, edit_col, reject_col, escalate_col = st.columns(4)
+        with approve_col:
+            approve = st.button("Aprovar", disabled=not draft or bool(confirmed),
+                                use_container_width=True)
+        with edit_col:
+            edit = st.button("Editar e aprovar", disabled=not draft or bool(confirmed),
+                             use_container_width=True)
+        with reject_col:
+            reject = st.button("Rejeitar", disabled=bool(confirmed), use_container_width=True)
+        with escalate_col:
+            escalate = st.button("Escalonar", disabled=bool(confirmed), use_container_width=True)
     action = next((name for name, clicked in (("approve", approve), ("edit_approve", edit),
                   ("reject", reject), ("escalate", escalate)) if clicked), None)
     if action:
@@ -648,6 +1003,12 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     """Render observed history, measured development evidence and projections separately."""
     bundle = _bundle(root)
     st.title("Diagnóstico operacional")
+    _page_intro(
+        "Leitura executiva · fatos antes de projeções",
+        "Diagnóstico operacional",
+        "Localize gargalos reais, separe evidência medida de hipótese e modele cenários "
+        "sem transformar correlação em promessa.",
+    )
     try:
         for key in ("analytics.operational_summary", "analytics.satisfaction_model"):
             if bundle.get(key).status != "ready":
@@ -662,6 +1023,7 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     if summary.status == "insufficient_support":
         st.warning(f"Diagnóstico sem suporte: {_label(summary.reason)}.")
 
+    _section_label("01 · Base factual")
     st.subheader("Histórico observado")
     st.caption(
         "Intervalo pós-primeira-resposta: resolução menos primeira resposta. "
@@ -728,6 +1090,7 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
                categories=category_columns, percentages=("share_of_supported_excess",),
                numbers=("peer_median_hours", "observed_excess_hours"))
 
+    _section_label("02 · Qualidade do sinal")
     st.subheader("Desempenho medido")
     st.write(f"Estado: {_label(satisfaction.get('status'))}. "
              f"Avaliações válidas: {_number(satisfaction.get('valid_ratings'))}; "
@@ -772,6 +1135,7 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         if retrieval.value.get("status") in messages:
             st.caption(messages[retrieval.value["status"]])
 
+    _section_label("03 · Simulador de impacto")
     st.subheader("Cenários projetados")
     st.caption(
         "Volume, fração, minutos e custo são premissas editáveis. O Dataset 1 não observa "
@@ -824,7 +1188,19 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
 def render_it_lab(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Laboratório IT")
-    st.write("Categorias de TI: " + ", ".join(_label(label) for label in IT_TAXONOMY))
+    _page_intro(
+        "Sandbox seguro · domínio independente",
+        "Laboratório IT",
+        "Teste a classificação de chamados internos sem misturar registros, taxonomias ou "
+        "métricas do atendimento ao cliente.",
+    )
+    _stat_strip([
+        (str(len(IT_TAXONOMY)), "Categorias disponíveis", "ops-stat--signal"),
+        ("0", "Dados pessoais permitidos", "ops-stat--alert"),
+        ("IT", "Domínio isolado", ""),
+        ("HITL", "Gate operacional", ""),
+    ])
+    _section_label("01 · Nova classificação")
     st.caption("Prioridade e desfecho operacional não observados. Sem união de registros Customer.")
     state = bundle.get("models.it")
     if state.status != "ready":
@@ -839,11 +1215,19 @@ def render_it_lab(bundle=None) -> None:
         if not row["signals"]["privacy_passed"]:
             st.error("Entrada recusada: remova dados pessoais e tente novamente.")
         else:
-            st.text(row["text"])
-            st.write(f"Categoria: {_label(row['prediction']['label'])}. "
-                     f"Confiança: {_number(row['prediction']['confidence'], percent=True)}. "
-                     f"Encaminhamento: {_label(row['route']['action'])}.")
-            st.write("Motivos: " + "; ".join(_label(code) for code in row["route"]["reason_codes"]))
+            _section_label("02 · Resultado")
+            st.markdown(
+                f'<div class="ops-callout"><strong>{escape(_label(row["prediction"]["label"]))}'
+                f'</strong> · {_number(row["prediction"]["confidence"], percent=True)}<br>'
+                f'{escape(row["text"])}</div>', unsafe_allow_html=True,
+            )
+            result_route, result_reasons = st.columns([1, 1.4])
+            with result_route:
+                st.markdown("**Encaminhamento**")
+                st.write(_label(row["route"]["action"]))
+            with result_reasons:
+                st.markdown("**Critérios aplicados**")
+                st.write(" · ".join(_label(code) for code in row["route"]["reason_codes"]))
             with st.expander("Detalhes técnicos"):
                 st.json(row)
     metrics = bundle.get("models.metrics")
@@ -855,7 +1239,22 @@ def render_it_lab(bundle=None) -> None:
 def render_evidence(bundle=None) -> None:
     bundle = _bundle(bundle)
     st.title("Evidências e decisões locais")
+    _page_intro(
+        "Rastreabilidade · estado verificável",
+        "Evidências e decisões locais",
+        "Inspecione integridade, disponibilidade e decisões humanas persistidas sem esconder "
+        "limitações do detector de risco.",
+    )
+    ready = sum(state.status == "ready" for state in bundle.features.values())
+    unavailable = len(bundle.features) - ready
+    _stat_strip([
+        (str(ready), "Recursos disponíveis", "ops-stat--signal"),
+        (str(unavailable), "Recursos com atenção", "ops-stat--alert" if unavailable else ""),
+        (bundle.version[:8], "Versão do bundle", ""),
+        ("Local", "Persistência", ""),
+    ])
     st.caption("Regexes e vetor zero não detectam todo risco/PII/OOD. Revisão humana é necessária.")
+    _section_label("01 · Integridade dos artefatos")
     with st.expander("Detalhes técnicos"):
         st.json({key: bundle.manifest.get(key) for key in (
             "code_revision", "configuration_sha256", "lock_sha256", "models", "retrieval")})
@@ -869,6 +1268,7 @@ def render_evidence(bundle=None) -> None:
         initialize_store(path)
         with closing(sqlite3.connect(path, isolation_level=None)) as connection:
             decisions = list_decisions(connection)
+        _section_label("02 · Trilha de decisões")
         _table([asdict(row) for row in decisions], {
             "id": "Registro", "ticket_id": "Ticket", "human_action": "Decisão humana",
             "human_reason": "Motivo", "suggested_label": "Categoria sugerida",
