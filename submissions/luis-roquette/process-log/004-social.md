@@ -486,6 +486,7 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Navegador real:** upload do CSV de 23,3 MB mostrou hash `693a2df6e609…`, 52.214 linhas, cinco plataformas e, na janela recente, 468 posts, 4.724.954 views e 940.289 interações. A tela exibiu as três prioridades, impacto, força, atualidade, drill-down e downloads. A captura exata da aba validada foi persistida em `process-log/evidence/004/cockpit-proof.png` (1502×776; SHA-256 `a1945b57366d7fccef79675532240a04cbf5c6c489b50b879404da16e928f1d6`). A validação anterior de decisão, erro atômico e reinício permanece em I26.
 - **Atualização após I28:** o refresh de S4 validou 58/58 testes em 9,243 s, CLI canônica em 16,69 s, resumo em uma página A4 e artefatos analíticos idênticos. A prova visual passou a mostrar o histórico corrigido após reinício, com revisão vinculada, outcome `pending / execution_before_decision` e outcome `observed / comparable_after_declared_execution`: PNG 1502×817, SHA-256 `130408568727ed1aac8e21e2283f7c9f39a8caac017e13a43f80a69de8bbcf9c`.
 - **Atualização após I31:** o refresh de S4 aprovou 62/62 testes em 17,407 s (18,27 s totais), com warnings como erro, `pip check`, `compileall` e `git diff --check` verdes. A CLI canônica completou em 23,08 s, pico residente de 558.514.176 bytes e zero swap; CSV/Markdown reproduzidos foram idênticos aos publicados, e o HTML permaneceu em uma página A4. A prova visual agora registra o histórico reaberto sem CSV e distingue `observed / comparable_action_not_executed` de `observed / comparable_execution_unknown`, ambos não causais: PNG 1502×817, SHA-256 `362da9813327e6a701ee7ffb3bbb9f37a6c61afd52f833113e33acc3058c2ee1`.
+- **Atualização da Redundância Passada 1:** I32–I37 corrigiram controle temporal por mês, overflow, parser, taxa indefinida, interoperabilidade do CSV, frequência mensal, proveniência histórica, documentos canônicos e cobertura visual. A contagem vigente é 74 testes; os hashes publicados são `9eebfa0d…` (CSV) e `a8ab9b96…` (Markdown). A nova prova `cockpit-priorities-proof.png` complementa, sem substituir, a captura focal de outcomes.
 - **Handoff honesto:** automação não é um Gestor de Social Media. HR-01 continua pendente até um operador humano executar upload → explicação → decisão em até cinco minutos. O pacote está tecnicamente reproduzível, mas a Definition of Done integral permanece aberta por esse único gate humano.
 
 ### Matriz de aceitação final
@@ -495,18 +496,18 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 | CK-01 | pass | `test_analysis.py`; fonte real reconciliada em I27 |
 | CK-02 | pass | fórmula/zeros/faixas em testes e `analysis.md` |
 | CK-03 | pass | fallback, IQR, creators e abstinência em `test_analysis.py` |
-| CK-04 | pass | estratos controlados e contraparte em testes/relatório |
+| CK-04 | pass | estratos controlados também por mês-calendário, contraparte contemporânea e cobertura explícita; I32–I35 |
 | CK-05 | pass | dimensões, audiência, tempo e falhas em relatório/UI |
 | CK-06 | pass | prioridade recomposta e ordem estável em `test_acceptance.py` |
-| CK-07 | pass | esforço, público, frequência, patrocínio, creators, interrupção e quick wins em `analysis.md` |
+| CK-07 | pass | esforço, público, frequência mensal por semanas completas, patrocínio, creators, interrupção e quick wins; I34–I35 |
 | CK-08 | pass | estados de decisão/revisão preservam o texto correto, idempotência e reinício em `test_storage.py`/`test_app.py`; I28 e I31 |
 | CK-09 | pass | guards temporais, execução humana e outcomes persistidos distinguem ação não executada de execução desconhecida; I28 e I31 |
-| CK-10 | pass | HTML A4 de uma página, CSV reconciliado e downloads no navegador |
-| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I31 |
+| CK-10 | pass | HTML A4, CSV reconciliado/interoperável, histórico com proveniência própria e downloads no navegador; I33, I36–I37 |
+| CK-11 | pass | app local/teclado, sem conta, API ou ação automática; I26–I37 |
 | HR-01 | **pending** | exige Gestor de Social Media humano cronometrado |
 | HR-02 | pass | `analysis.md` legível sem dashboard e ligado a `evidence.csv` |
-| HR-03 | pass | I01–I31 preservam pesquisa, 24 ondas, decisões, erros e correções |
-| HR-04 | pass | setup, screenshot e auditoria Git final restritos à submissão |
+| HR-03 | pass | I01–I37 preservam pesquisa, 24 ondas, decisões, erros e correções |
+| HR-04 | pass | setup, duas provas visuais, remoção do diário 001 e auditoria Git restrita à submissão; I37 |
 
 ### Rubricas finais
 
@@ -614,3 +615,13 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Gate completo:** `PYTHONWARNINGS=error /tmp/ai-master-004-s4.u57Rt2/.venv/bin/python -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` passou **74/74 em 16,687 s**; `compileall -q` e `git diff --check` passaram. Nenhum cálculo ou ranking foi alterado.
 - **Navegador → evidência:** faltava Playwright no venv; sem instalar dependências, o Chrome via CUA abriu a aplicação isolada em `127.0.0.1:8520`. Fixture sintética em SQLite tinha decisão A, revisão de A e observação B; o upload de 60 linhas tornou ativa C (`7ce745583f37…`). O botão real baixou 27 registros/31.647 bytes, com origens, vínculo, motivo, execução e delta corretos. Após encerrar e reiniciar o processo, o histórico apareceu antes do upload; reenviar C e baixar novamente produziu bytes idênticos. SHA-256 `0bb07b810637f3279cc96b261fc819fe1b69a3bf76c7bd69e74d724ca5cb5af5`; arquivos de prova locais `Downloads/evidencias-decisoes (1).csv` e `(2).csv`, fora do Git.
 - **Handoff S4:** README descreve o contrato histórico e sua reconstrução. `evidence.csv`/`analysis.md` publicados não contêm decisões e não precisam de regeneração: hashes de I35 permanecem iguais; comparação do exportador sem histórico com `714e79c` confirmou bytes idênticos. Atualizar a descrição do contrato na SPEC para incluir `history_field`; screenshots não mudam visualmente por R1-03, mas a prova textual deve citar o novo download e o limite dos outcomes legados. R1-03 corrigido; a próxima revisão independente decide se a passada está limpa. Sem push, PR, deploy ou API paga.
+
+## I37 — Redundância Necessária, passada 1: reconciliar contrato, pacote e prova visual — 2026-09-22 09:13 BRT
+
+- **Arquiteto → legado confrontado:** a revisão encontrou documentos canônicos ainda presos ao estado pré-implementação, um diário de pré-início pertencente ao Challenge 001 e uma captura final focada apenas em outcomes. O problema não estava na execução corrente, mas na coerência do pacote que o avaliador recebe.
+- **Contrato sem apagar a história:** SPEC e plano receberam adendos datados com o estado implementado. O status original foi preservado como registro histórico; Tasks 1–5 e checks independentes da Task 6 foram marcados concluídos, enquanto o cenário humano de cinco minutos permaneceu aberto. Os READMEs passaram a refletir comparação mensal de patrocínio, frequência no mesmo mês/contexto, `history_field`, proveniência por evento, 74 testes e hashes correntes.
+- **Proveniência do pacote:** `process-log/000-pre-inicio.md` descrevia exclusivamente o Challenge 001/churn. Foi removido desta submissão por `git rm`, operação recuperável, sem atribuir retroativamente aquele trabalho ao Challenge 004. Este diário continua sendo a fonte autoritativa da jornada social.
+- **Evidência visual:** preservada a captura focal de histórico/outcomes. Uma segunda prova usou o CSV canônico de 23,3 MB no Chrome local: fonte `693a2df6e609…`, 52.214 linhas, período recente com 468 posts, 4.724.954 views e 940.289 interações, primeira prioridade e drill-down abertos, além dos botões reais de HTML/CSV. O artefato é um composto vertical mecânico de dois frames CUA exatos, sem recriar conteúdo: `cockpit-priorities-proof.png`, 2550×1836, SHA-256 `42ea2fb7e6ef13d6c64126467665dddf14bca47933e89da005cf2d588bc7d653`.
+- **Limite legado R1-03:** outcomes criados antes da persistência de escopo não recebem contexto inventado; no export, seu escopo permanece vazio. Novos outcomes conservam a própria proveniência e escopo. Esta limitação explícita preserva auditabilidade sem migração destrutiva.
+- **Gate limpo e reprodução:** venv novo em `/tmp`, Python 3.14.2, Pandas 2.3.3, Streamlit 1.64.0 e SQLite 3.50.4; `pip check` sem dependências quebradas. A suíte com warnings como erro passou **74/74 em 15,216 s** (15,80 s totais), pico residente de 212.942.848 bytes e zero swap; `compileall` e `git diff --check` passaram. A CLI canônica concluiu em 20,46 s, pico residente de 553.402.368 bytes e zero swap; uma segunda execução produziu os três arquivos idênticos byte a byte. CSV/Markdown coincidiram com os publicados, hashes `9eebfa0d…` e `a8ab9b96…`; HTML `f0860999…` imprimiu em uma página A4 (594,96 × 841,92 pt). O `csv.reader` padrão leu 1.166 linhas físicas sem elevar seu limite.
+- **Gates externos:** HR-01 continua pendente até um Gestor de Social Media executar o roteiro em até cinco minutos. A branch local `submission/luis-roquette-004-social` não coincide com a branch obrigatória `submission/luis-roquette`; a integração é gate exclusivo de publicação e não autoriza rename, push ou PR neste ciclo.

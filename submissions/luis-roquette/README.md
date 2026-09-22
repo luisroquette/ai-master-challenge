@@ -28,9 +28,11 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 
 - Escopo: 52.214 posts, 5.000 creators, 527.376.193 views e 104.966.242 interações, de 29/05/2023 a 28/05/2025.
 - Mediana ERv geral: 19,8992%; ERv ponderado: 19,9035%. As diferenças agregadas entre plataformas, formatos e categorias são pequenas e não justificam redistribuição isolada.
-- Patrocínio: 137 estratos elegíveis, 162 insuficientes e cobertura de 93,7909% dos posts, controlando plataforma, formato, categoria, faixa de creator e período.
-- Maior associação patrocinada observada: YouTube / mixed / beauty / 500.000+, +0,212889 p.p. de ERv; menor: TikTok / video / lifestyle / 10.000–49.999, −0,262464 p.p. Nenhuma é efeito causal ou ROI.
-- O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, registra aceitar/rejeitar/editar, vincula revisões e preserva outcomes após reinício; cronologia inválida permanece pendente.
+- Patrocínio: 12 estratos mensais elegíveis, 5.216 sem contraparte/amostra suficiente e cobertura de 1,55897% dos posts, controlando plataforma, formato, categoria, faixa de creator e mês-calendário.
+- Maior associação patrocinada observada: YouTube / video / lifestyle / 500.000+ / abril de 2024, +0,160707 p.p. de ERv; menor: Bilibili / video / lifestyle / 500.000+ / setembro de 2023, −0,136225 p.p. Nenhuma é efeito causal ou ROI.
+- O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem, bloqueia cronologia inválida, registra aceitar/rejeitar/editar e preserva revisões/outcomes após reinício. O CSV conserva proveniência e semântica de cada evento histórico; campos extensos usam linhas reconstruíveis `history_field`.
+
+![Cockpit com fonte real, prioridade, contexto e downloads](./process-log/evidence/004/cockpit-priorities-proof.png)
 
 ![Histórico do cockpit após reinício, com outcomes distintos para ação não executada e execução não informada](./process-log/evidence/004/cockpit-proof.png)
 
@@ -38,7 +40,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 
 1. **Segunda-feira:** revisar a fila determinística e testar o primeiro contexto sob controle; não interpretar a prioridade histórica minúscula como oportunidade atual.
 2. **Patrocínio:** exigir custos reais, contraparte orgânica e ao menos 30 taxas/5 creators por braço; força abaixo de 0,40 pede coleta/teste, não escala.
-3. **Conteúdo:** usar a cadência observada de 1 post/creator/semana como hipótese testável nos três contextos priorizados, com revisão após sete dias.
+3. **Conteúdo:** testar a cadência observada no mesmo contexto mensal, usando somente semanas ISO completas dentro do mês; nos três contextos priorizados, a hipótese atual é 1 post/creator/semana, com revisão após sete dias.
 4. **Creators e audiência:** preservar faixa e rótulos do contexto; não criar persona ou threshold universal de seguidores.
 5. **Parar/revisar:** não renovar ou interromper por média global/sinal isolado; agir apenas com sinais concordantes, evidência forte e decisão humana registrada.
 
@@ -61,7 +63,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 | Codex | Pesquisa, ondas socráticas, SDD, implementação, regressões, documentação e auditoria final |
 | Claude Code | Skill SDD e estruturação inicial dos artefatos de especificação |
 | Chrome automatizado | Validação do upload real, decisões, reinício, erros, downloads e prova visual |
-| Python/Pandas/unittest | Motor determinístico, reconciliação e 62 testes locais |
+| Python/Pandas/unittest | Motor determinístico, reconciliação e 74 testes locais |
 
 ### Workflow
 
@@ -83,7 +85,8 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ## Evidências
 
-- [x] [Screenshot final do cockpit](./process-log/evidence/004/cockpit-proof.png)
+- [x] [Prova de prioridades, contexto e downloads](./process-log/evidence/004/cockpit-priorities-proof.png)
+- [x] [Prova do histórico e outcomes após reinício](./process-log/evidence/004/cockpit-proof.png)
 - [x] [Diário completo, incluindo as 24 ondas e correções](./process-log/004-social.md)
 - [x] [Pesquisa anterior ao framework](./research/004-social.md)
 - [x] [Análise executiva](./solution/004-social/analysis.md)
@@ -94,4 +97,4 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ---
 
-_Submissão preparada localmente em: 21/09/2026_
+_Submissão preparada localmente em: 22/09/2026_

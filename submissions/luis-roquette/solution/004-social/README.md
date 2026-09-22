@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após as correções documentadas até I31, o gate limpo aprovou 62/62 testes em 17,407 s (18,27 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 23,08 s, com pico residente de 558.514.176 bytes e zero swap; CSV e Markdown foram idênticos byte a byte aos artefatos publicados. O resumo impresso permaneceu em uma página A4.
+Após as correções documentadas até I37, o gate em ambiente virtual novo aprovou 74/74 testes em 15,216 s (15,80 s totais), com warnings tratados como erros. A CLI processou as 52.214 linhas em 20,46 s, com pico residente de 553.402.368 bytes e zero swap; CSV e Markdown foram idênticos byte a byte aos publicados, com SHA-256 `9eebfa0d…` e `a8ab9b96…`. O resumo impresso permaneceu em uma página A4.
 
 ## Executar o cockpit
 
@@ -70,11 +70,12 @@ Campos históricos acima de 32.768 caracteres ficam vazios na linha principal e 
 - [Evidências reproduzíveis](./evidence.csv)
 - [SPEC](./SPEC.md)
 - [Diário do processo](../../process-log/004-social.md)
-- [Screenshot do cockpit](../../process-log/evidence/004/cockpit-proof.png)
+- [Prova de prioridades, contexto e downloads](../../process-log/evidence/004/cockpit-priorities-proof.png)
+- [Prova do histórico e outcomes após reinício](../../process-log/evidence/004/cockpit-proof.png)
 
 ## Limitações
 
 - ERv usa views, não alcance único; audiência é rótulo agregado do post, não engajamento individual.
 - Patrocínio é associação observacional. Sem investimento, receita ou conversão, não há ROI financeiro nem causalidade.
-- A frequência é hipótese de teste derivada de semanas observadas, não frequência ótima.
+- A frequência é hipótese de teste derivada de semanas ISO completas dentro do mesmo mês/contexto, não frequência ótima.
 - Atualização é importação manual; não há APIs externas, publicação, contratação ou investimento automático.

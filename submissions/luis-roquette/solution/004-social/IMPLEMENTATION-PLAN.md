@@ -1,5 +1,12 @@
 # Social Media Decision Cockpit Implementation Plan
 
+## Adendo de status da implementação — 22/09/2026
+
+- Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original.
+- A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento e fragmenta campos extensos em linhas `history_field`.
+- Gate vigente: **74/74 testes** com warnings como erro. Artefatos publicados: `evidence.csv` SHA-256 `9eebfa0d5fce550f257b06fe0bcdac1b818b5e2a18ccc5afe8a9dcc940f36de7` e `analysis.md` SHA-256 `a8ab9b96c1fedaa1851bca4f2e4bbf2cae5829afcc1e8398073d55c66adbf611`.
+- A implementação local foi autorizada e executada após a revisão humana registrada no diário. **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a local Streamlit cockpit that turns the Challenge 004 CSV into reproducible analysis, explainable recommendations, durable human decisions and auditable exports.
@@ -19,7 +26,7 @@
 - Bind Streamlit to `127.0.0.1`; use no account, cloud service, external API, LLM call, automatic publication or investment action.
 - Persist metadata, baselines, decisions and outcomes only; never persist raw CSV rows, descriptions, comments, URLs or secrets.
 - An invalid import fails atomically with `{row, column, problem, expected}` diagnostics and leaves the previous valid analysis active.
-- Human SPEC approval is an external prerequisite. This plan does not authorize implementation, push, PR or deployment.
+- Gate histórico satisfeito: a revisão humana da SPEC foi registrada antes da implementação. O plano nunca autorizou, e ainda não autoriza, push, PR ou deployment.
 
 ## Review Focus
 
@@ -98,7 +105,7 @@ Pre-plan verification on 21/09/2026 used the reproduced isolated environment:
 - Consumes: raw CSV `bytes` from an upload or CLI path.
 - Produces: `load_csv(raw: bytes) -> tuple[pd.DataFrame | None, list[dict[str, object]]]`, `derive_metrics(df: pd.DataFrame) -> pd.DataFrame`, `follower_band(followers: int) -> str`.
 
-- [ ] **Step 1: Pin the reproduced direct dependencies**
+- [x] **Step 1: Pin the reproduced direct dependencies**
 
 Create `requirements.txt` exactly as:
 
@@ -107,11 +114,11 @@ streamlit==1.64.0
 pandas==2.3.3
 ```
 
-- [ ] **Step 2: Write fixture builders with canonical columns**
+- [x] **Step 2: Write fixture builders with canonical columns**
 
 Create `tests/helpers.py` with `make_post(**overrides) -> dict[str, object]` and `csv_bytes(rows: list[dict[str, object]]) -> bytes`. `make_post` supplies all 16 required fields from the SPEC, uses ISO dates and defaults to one valid organic Instagram video row. `csv_bytes` uses `csv.DictWriter` and UTF-8.
 
-- [ ] **Step 3: Write failing boundary tests**
+- [x] **Step 3: Write failing boundary tests**
 
 Create a `unittest.TestCase` class so stdlib discovery collects every test:
 
@@ -183,7 +190,7 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual(actual, ["0–9,999", "0–9,999", "10,000–49,999", "10,000–49,999", "50,000–99,999", "50,000–99,999", "100,000–499,999", "100,000–499,999", "500,000+"])
 ```
 
-- [ ] **Step 4: Run the boundary tests and confirm red state**
+- [x] **Step 4: Run the boundary tests and confirm red state**
 
 Run:
 
@@ -193,7 +200,7 @@ python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/te
 
 Expected: import failure for `analysis`; no test may pass accidentally.
 
-- [ ] **Step 5: Implement strict parsing and diagnostics**
+- [x] **Step 5: Implement strict parsing and diagnostics**
 
 In `analysis.py`, define `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `METRIC_COLUMNS` and `METHOD_VERSION = "1.0.0"`. `load_csv` must:
 
@@ -204,11 +211,11 @@ df = pd.read_csv(io.BytesIO(raw), encoding="utf-8-sig")
 
 Then enforce unique headers, all required fields, integer/nonnegative metrics, `TRUE/FALSE` sponsorship, valid dates, unique `id` and unique `(platform, content_id)`. Return `(None, diagnostics)` if any row fails; otherwise return a normalized frame containing `source_hash` and `source_row_id`.
 
-- [ ] **Step 6: Implement formulas and creator bands**
+- [x] **Step 6: Implement formulas and creator bands**
 
 `derive_metrics` copies the frame, sets `interactions`, `erv`, `erf` and never mutates the caller. Use these exact bands: `0–9,999`, `10,000–49,999`, `50,000–99,999`, `100,000–499,999`, `500,000+`.
 
-- [ ] **Step 7: Run Task 1 tests and full discovery**
+- [x] **Step 7: Run Task 1 tests and full discovery**
 
 Run:
 
@@ -219,7 +226,7 @@ git diff --check
 
 Expected: all Task 1 tests pass; no whitespace errors.
 
-- [ ] **Step 8: Record evidence and commit**
+- [x] **Step 8: Record evidence and commit**
 
 Append the commands, results, elapsed time and any corrected assumption to the diary. Then:
 
@@ -244,7 +251,7 @@ git commit -m "feat(004): validate social dataset metrics"
 - Consumes: the validated, type-normalized DataFrame returned by `load_csv` and `scope: dict[str, object]`; `analyze` calls `derive_metrics` exactly once internally.
 - Produces: `analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dict[str, object]` with keys `source`, `scope`, `quality`, `metrics`, `cohorts`, `alerts`, `sponsorship`, `recommendations`, `row_references`.
 
-- [ ] **Step 1: Add deterministic cohort builders**
+- [x] **Step 1: Add deterministic cohort builders**
 
 Extend `tests/helpers.py` with these exact helpers:
 
@@ -269,7 +276,7 @@ same_creator_source_ids(result: dict[str, object]) -> list[str]
 
 Creator IDs, dates and metric values must be deterministic; never use random data. Define `ESSENTIAL_KEYS = ("platform", "content_type", "content_category", "follower_band", "is_sponsored")` in `test_analysis.py`.
 
-- [ ] **Step 2: Write failing benchmark and sponsorship tests**
+- [x] **Step 2: Write failing benchmark and sponsorship tests**
 
 Add `ContextEvidenceTests(unittest.TestCase)` with these executable assertions; helper arguments make every cohort deterministic:
 
@@ -313,11 +320,11 @@ def test_constant_iqr_reports_observation_without_strong_outlier(self):
     self.assertNotEqual(alert["strength_label"], "strong")
 ```
 
-- [ ] **Step 3: Run the new tests and confirm red state**
+- [x] **Step 3: Run the new tests and confirm red state**
 
 Run `python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_analysis.py' -v`. Expected: failure because `analyze` and cohort logic do not exist.
 
-- [ ] **Step 4: Implement benchmark ladders and evidence strength**
+- [x] **Step 4: Implement benchmark ladders and evidence strength**
 
 Implement the five fallback levels from the SPEC. Post alerts use post-level Q1/Q3/IQR after excluding the target and its creator. Use:
 
@@ -327,11 +334,11 @@ strength = min(n_rate / 100, 1) * min(n_creators / 20, 1) * (1 - max_creator_pos
 
 Return every attempted level, effective level, removed audience controls and abstention reason.
 
-- [ ] **Step 5: Implement sponsorship strata**
+- [x] **Step 5: Implement sponsorship strata**
 
 Group by platform, content type, category, follower band and selected period. Require 30 defined-rate posts and five creators per arm. Compute creator medians inside each arm, report overlap and coverage, and never discard an unmatched stratum silently.
 
-- [ ] **Step 6: Write failing priority and action tests**
+- [x] **Step 6: Write failing priority and action tests**
 
 Add these methods to the same `TestCase`:
 
@@ -358,11 +365,11 @@ def test_recommendations_cover_topics_without_fabrication(self):
     self.assertTrue(all(item["evidence_id"] for item in result["recommendations"]))
 ```
 
-- [ ] **Step 7: Implement priority and the action table**
+- [x] **Step 7: Implement priority and the action table**
 
 Use platform-level P95 normalization, `impact = (N(views)+N(interactions)+N(followers))/3`, `recency = 2 ** (-age_days/7)` and `priority = 100 * impact * strength * recency`. Apply the SPEC's deterministic sign/eligibility-to-action mapping, deduplicate by context and return at most three context-distinct priorities.
 
-- [ ] **Step 8: Run Task 2 tests and commit**
+- [x] **Step 8: Run Task 2 tests and commit**
 
 Run full discovery and `git diff --check`; record actual results in the diary. Then:
 
@@ -388,7 +395,7 @@ git commit -m "feat(004): derive contextual social evidence"
 - Consumes: final `AnalysisResult` dictionary and `list[dict[str, object]]` decisions.
 - Produces: `export_evidence(result, decisions) -> bytes`, `executive_summary(result, decisions) -> str`, and CLI exit codes `0` success / `2` invalid input.
 
-- [ ] **Step 1: Write failing export and CLI tests**
+- [x] **Step 1: Write failing export and CLI tests**
 
 At the top of `test_exports.py`, define deterministic test-only helpers `result_with_texts(texts)`, `parse_export(payload)`, `sample_result()`, `sample_decisions()` and `run_cli(path) -> tuple[int, bytes]`. `run_cli` uses `tempfile.TemporaryDirectory` and invokes `[sys.executable, str(APP_ROOT / "analysis.py"), str(path), "--evidence", str(output_csv), "--summary", str(output_html)]` through `subprocess.run(..., capture_output=True, check=False)`, returning `(returncode, output_csv.read_bytes())`. `valid_csv_path()` and `invalid_csv_path()` write fixtures inside the test's temporary directory. Then create `ExportTests(unittest.TestCase)`:
 
@@ -420,15 +427,15 @@ def test_cli_is_deterministic_and_invalid_csv_returns_exit_two(self):
     self.assertEqual(invalid_code, 2)
 ```
 
-- [ ] **Step 2: Run export tests and confirm red state**
+- [x] **Step 2: Run export tests and confirm red state**
 
 Run `python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_exports.py' -v`. Expected: missing export functions.
 
-- [ ] **Step 3: Implement one shared export projection**
+- [x] **Step 3: Implement one shared export projection**
 
 Create one internal `iter_export_rows(result, decisions)` generator. Both CSV and HTML read from the same result; neither recalculates analytics. HTML must use `html.escape`, inline print CSS and no JavaScript. CSV uses `record_type` values `summary`, `evidence`, `source_ref`, `decision`, `outcome`.
 
-- [ ] **Step 4: Implement the CLI contract**
+- [x] **Step 4: Implement the CLI contract**
 
 Add `main(argv: list[str] | None = None) -> int` supporting:
 
@@ -438,15 +445,15 @@ python3 submissions/luis-roquette/solution/004-social/analysis.py INPUT.csv --ev
 
 Write through temporary files and `Path.replace` so a failed run cannot leave a half-written official export.
 
-- [ ] **Step 5: Run the real dataset and reconcile three numbers**
+- [x] **Step 5: Run the real dataset and reconcile three numbers**
 
 Execute the CLI against the downloaded Kaggle CSV outside the repository. Independently recompute one ERv aggregate, one eligible sponsorship comparison or documented insufficiency, and the top priority. Record source hash, method version, runtime and peak memory.
 
-- [ ] **Step 6: Write the standalone analysis and strategy**
+- [x] **Step 6: Write the standalone analysis and strategy**
 
 Create `analysis.md` with priorities first, then platform/content/creator/audience/time findings, sponsorship, what underperforms, effort allocation, audience, frequency hypothesis, creator criteria, stop/review actions, quick wins and limitations. Every numerical claim cites an `evidence_id`; unavailable evidence yields a collection/test action.
 
-- [ ] **Step 7: Regenerate official evidence and commit**
+- [x] **Step 7: Regenerate official evidence and commit**
 
 Run export tests, full discovery and `git diff --check`. Regenerate `evidence.csv` from the final command, update the diary and commit:
 
@@ -470,7 +477,7 @@ git commit -m "feat(004): publish reproducible social analysis"
 - Consumes: an open `sqlite3.Connection` and JSON-serializable event dictionaries.
 - Produces: `initialize(conn)`, `record_import(conn, metadata) -> str`, `record_decision(conn, event) -> str`, `record_outcome(conn, event) -> str`, `list_decisions(conn) -> list[dict[str, object]]`.
 
-- [ ] **Step 1: Write failing schema and transaction tests**
+- [x] **Step 1: Write failing schema and transaction tests**
 
 In `test_storage.py`, define `import_event()`, `decision_event(**overrides)`, `revision_event(original_id)` and `expected_baseline()` as deterministic dictionary factories. Create `StorageTests(unittest.TestCase)` with `setUp` opening `sqlite3.connect(":memory:")`, calling `initialize`, then inserting the canonical import before decision tests:
 
@@ -502,23 +509,23 @@ def test_database_contains_no_raw_csv_or_source_text_fields(self):
     self.assertTrue({"csv_bytes", "content_description", "comments_text", "content_url"}.isdisjoint(columns))
 ```
 
-- [ ] **Step 2: Run storage tests and confirm red state**
+- [x] **Step 2: Run storage tests and confirm red state**
 
 Use an in-memory database and a temporary on-disk database. Expected: missing `storage` module.
 
-- [ ] **Step 3: Implement the minimal three-table schema**
+- [x] **Step 3: Implement the minimal three-table schema**
 
 Create `imports`, `decisions` and `outcomes` exactly as described in the SPEC. Enable foreign keys on every connection, use parameterized SQL and wrap each event in `with conn:`. Return the existing ID for repeated `source_hash` or `event_id`.
 
-- [ ] **Step 4: Write failing temporal-comparability tests**
+- [x] **Step 4: Write failing temporal-comparability tests**
 
 Add cases for identical hash, overlapping dates, incompatible scope, method mismatch, insufficient samples, unknown execution date, equal 7-day windows and a 7-day versus 30-day comparison.
 
-- [ ] **Step 5: Implement outcome guards**
+- [x] **Step 5: Implement outcome guards**
 
 Only equal-duration/equal-coverage windows may compare raw volumes. For unequal windows, store rates/medians and per-day normalized volumes, label coverage mismatch and prohibit a `better/worse` status based only on raw volume. Acceptance remains distinct from execution.
 
-- [ ] **Step 6: Run storage/full tests and commit**
+- [x] **Step 6: Run storage/full tests and commit**
 
 Run storage tests, full discovery and `git diff --check`; update the diary. Then:
 
@@ -542,31 +549,31 @@ git commit -m "feat(004): persist human social decisions"
 - Consumes: `load_csv`, `analyze`, export functions and storage functions from Tasks 1–4.
 - Produces: `database_path() -> Path` plus one Streamlit page with upload, filters, priority overview, evidence drill-down, decision form, history and downloads. `database_path` reads `SOCIAL_COCKPIT_DB_PATH` only when explicitly set; otherwise it returns `~/.local/share/ai-master-challenge-004/cockpit.sqlite3`.
 
-- [ ] **Step 1: Write a failing import/smoke test**
+- [x] **Step 1: Write a failing import/smoke test**
 
 Use `streamlit.testing.v1.AppTest`. In `setUp`, create a `TemporaryDirectory`, set `SOCIAL_COCKPIT_DB_PATH` to a file inside it and restore the environment in `tearDown`. Assert the initial render contains the product title, CSV uploader, source-state explanation and no exception.
 
-- [ ] **Step 2: Run the smoke test and confirm red state**
+- [x] **Step 2: Run the smoke test and confirm red state**
 
 Run `python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_app.py' -v`. Expected: missing `app.py`.
 
-- [ ] **Step 3: Implement the no-data and valid-upload states**
+- [x] **Step 3: Implement the no-data and valid-upload states**
 
 Compose native Streamlit components only. Cache the active valid result in `st.session_state`; a rejected upload writes diagnostics but does not replace it. Show hash abbreviation, dataset reference date, selected period, coverage and limitation labels before charts.
 
-- [ ] **Step 4: Write failing interaction-state tests**
+- [x] **Step 4: Write failing interaction-state tests**
 
 Add tests for invalid upload preserving the active analysis, empty filters, visible priority components, source-row drill-down and a decision form that emits one stable event UUID per submission.
 
-- [ ] **Step 5: Implement overview, drill-down and decisions**
+- [x] **Step 5: Implement overview, drill-down and decisions**
 
 Render at most three priorities, secondary rankings and tabular alternatives to every chart. Use one explicit `st.form` for decision writes. Show success only after `record_decision` returns and a read confirms the record. Preserve focusable labels and never rely on color alone.
 
-- [ ] **Step 6: Write and implement history/outcome/download tests**
+- [x] **Step 6: Write and implement history/outcome/download tests**
 
 Test history without a CSV, hash-required historical drill-down, pending outcome labels, weekly/monthly partial-window labels and matching download bytes. Then implement those UI states without a second calculation path.
 
-- [ ] **Step 7: Run app tests and a real browser flow**
+- [x] **Step 7: Run app tests and a real browser flow**
 
 Run:
 
@@ -576,7 +583,7 @@ python3 -m streamlit run submissions/luis-roquette/solution/004-social/app.py --
 
 Verify upload, keyboard traversal, invalid-file recovery, filters, drill-down, accepted/edited/rejected decisions, rerun, restart, history and both downloads. Capture evidence only after the complete flow passes.
 
-- [ ] **Step 8: Run full tests and commit**
+- [x] **Step 8: Run full tests and commit**
 
 Update the diary with browser actions and effects. Run full discovery plus `git diff --check`, then:
 
@@ -603,31 +610,31 @@ git commit -m "feat(004): add local social decision cockpit"
 - Consumes: the complete local application and every CK/HR from the SPEC.
 - Produces: reproducible setup, final evidence, CK/HR matrix and explicit remaining human gate.
 
-- [ ] **Step 1: Write the technical README from commands already proven**
+- [x] **Step 1: Write the technical README from commands already proven**
 
 Document Python version, venv creation, pinned install, Kaggle source/license, test command, CLI command, app command, database location, five-minute demo and limitations. Do not describe an unexecuted command as passing.
 
-- [ ] **Step 2: Write the submission README from the official template**
+- [x] **Step 2: Write the submission README from the official template**
 
 Create `submissions/luis-roquette/README.md` with Luis Roquette, Challenge 004, executive summary, approach, actual findings, prioritized recommendations and limitations. Add the required process-log sections: tools and purposes, workflow, AI errors/corrections, human contribution, iterations and evidence links. Link the technical README, `analysis.md`, dashboard screenshot, research, diary and Git history. If LinkedIn is not confirmed by the user, write `Não informado` instead of inventing a URL.
 
-- [ ] **Step 3: Reproduce from a clean temporary environment**
+- [x] **Step 3: Reproduce from a clean temporary environment**
 
 Create a fresh venv outside the repository, install `requirements.txt`, run full test discovery, CLI against the real CSV and the Streamlit health/UI flow. Record exact commands, exit codes, runtime and peak memory.
 
-- [ ] **Step 4: Verify exports as artifacts**
+- [x] **Step 4: Verify exports as artifacts**
 
 Open the HTML, print/save it to A4 and confirm one page with essential limitations. Download the CSV through the UI, parse it, reconcile selected evidence IDs and confirm dangerous formula text is neutralized.
 
-- [ ] **Step 5: Run the human five-minute scenario**
+- [ ] **Step 5: Run the human five-minute scenario — pendente (HR-01)**
 
 With installation and CSV ready, time: upload → identify deviation → explain benchmark/context → register action. Record duration and observer. If no human performs it, mark HR-01 pending and do not declare Definition of Done.
 
-- [ ] **Step 6: Fill the final CK/HR and rubric matrix**
+- [x] **Step 6: Fill the final CK/HR and rubric matrix**
 
 For CK-01–11 and HR-01–04, record `pass/pending/fail`, command or visual evidence and file/line reference. Score R-01–R-05 with excerpts from the actual deliverable. A score never overrides a failed hard criterion.
 
-- [ ] **Step 7: Run final repository gates**
+- [x] **Step 7: Run final repository gates**
 
 Run:
 
@@ -645,7 +652,7 @@ Expected: tests green; every intended commit path begins with `submissions/luis-
 
 Also record the submission metadata required by the repository: target branch `submission/luis-roquette`, one PR only, and PR title `[Submission] Luis Roquette — Challenge 004`. The current planning branch may differ; rename or create the target branch only when PR publication is explicitly authorized.
 
-- [ ] **Step 8: Commit the verified handoff**
+- [x] **Step 8: Commit the verified handoff**
 
 ```bash
 git add -f submissions/luis-roquette/README.md submissions/luis-roquette/solution/004-social/README.md submissions/luis-roquette/solution/004-social/analysis.md submissions/luis-roquette/solution/004-social/evidence.csv submissions/luis-roquette/process-log/004-social.md submissions/luis-roquette/process-log/evidence/004/cockpit-proof.png

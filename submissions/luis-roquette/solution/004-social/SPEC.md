@@ -4,7 +4,14 @@ title: Implementar cockpit decisório de social media
 
 # SPEC — Cockpit decisório de social media
 
-**Status:** pronta para revisão humana; implementação ainda não autorizada.
+## Adendo de status da implementação — 22/09/2026
+
+- A revisão humana da SPEC foi registrada, a implementação local foi autorizada e as fases S1–S4 foram executadas. O texto abaixo permanece como contrato e registro pré-implementação; verbos no futuro descrevem a intenção original, não o estado atual.
+- Estado verificado: comparação de patrocínio por plataforma, formato, categoria, faixa de creator e **mês-calendário**; hipótese de frequência restrita às semanas ISO completas dentro do mesmo mês/contexto; decisões/outcomes exportados com proveniência própria e campos extensos reconstruíveis por linhas `history_field`.
+- Gate vigente: **74/74 testes** com warnings como erro. Artefatos canônicos: `evidence.csv` SHA-256 `9eebfa0d5fce550f257b06fe0bcdac1b818b5e2a18ccc5afe8a9dcc940f36de7`; `analysis.md` SHA-256 `a8ab9b96c1fedaa1851bca4f2e4bbf2cae5829afcc1e8398073d55c66adbf611`.
+- CK-01–11 e HR-02–04 possuem evidência independente. **HR-01 permanece pendente** até um Gestor de Social Media concluir o roteiro cronometrado em até cinco minutos. Isso mantém a Definition of Done integral aberta. Push, PR, merge e deploy não foram autorizados.
+
+**Status original em 21/09/2026:** pronta para revisão humana; implementação ainda não autorizada.
 
 ## Initial User Prompt
 
@@ -74,17 +81,17 @@ As evidências exigidas para cada ID estão nos casos correspondentes da Test St
 
 ### Regular Checks
 
-Estado confirmado nesta fase: o repositório contém documentação do desafio, mas ainda não há aplicação, suite Python ou workflow de CI do produto. Não declarar testes inexistentes como executados. Os comandos abaixo partem da raiz do worktree.
+Estado original desta seção: antes da implementação, o repositório continha apenas a documentação do desafio. O adendo acima registra o estado executado; os comandos abaixo continuam sendo o contrato de verificação a partir da raiz do worktree.
 
 | Momento | Comando | Critério |
 |---|---|---|
 | A cada alteração textual | `git diff --check` | Saída sem erros de whitespace; não substitui revisão dos requisitos. |
 | Revisão dos artefatos atuais | `git diff --stat; git status --short` | Todos os arquivos novos/alterados são identificados; `.specs/`, `.claude/` e `skills-lock.json` permanecem locais. |
 | Antes de preparar PR | `git diff --name-only main...HEAD` | Conferir todos os caminhos: somente `submissions/luis-roquette/`; comparar também alterações ainda não commitadas. |
-| Gate runtime a criar na implementação | `test -d submissions/luis-roquette/solution/004-social/tests && python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` | A ausência da pasta falha; a suite futura cobre os CK indicados abaixo. Executar com o Python do ambiente documentado. |
-| Demonstração a criar na implementação | `python3 -m streamlit run submissions/luis-roquette/solution/004-social/app.py --server.address 127.0.0.1 --browser.gatherUsageStats false` | Upload real, interação, reabertura e downloads verificados; ausência da aplicação é bloqueio, não sucesso. |
+| Gate runtime implementado | `test -d submissions/luis-roquette/solution/004-social/tests && python3 -m unittest discover -s submissions/luis-roquette/solution/004-social/tests -t submissions/luis-roquette/solution/004-social -p 'test_*.py' -v` | A ausência da pasta falha; a suíte cobre os CK indicados abaixo. Executar com o Python do ambiente documentado. |
+| Demonstração implementada | `python3 -m streamlit run submissions/luis-roquette/solution/004-social/app.py --server.address 127.0.0.1 --browser.gatherUsageStats false` | Upload real, interação, reabertura e downloads verificados; ausência da aplicação é bloqueio, não sucesso. |
 
-Os dois últimos comandos são contratos de entrega, ainda não disponíveis nesta etapa de SPEC. Instalação, versões e localização dos arquivos deverão corresponder ao README final. Antes de push/PR, reavaliar os workflows reais e executar todos os gates aplicáveis ao diff; documentação não equivale a uma aprovação de runtime.
+Os dois últimos comandos eram contratos de entrega e agora têm execução comprovada no diário e no README técnico. Instalação, versões e localização dos arquivos correspondem ao pacote final. Antes de push/PR, reavaliar os workflows reais e executar todos os gates aplicáveis ao diff; documentação não equivale a autorização de publicação.
 
 ### Rubric
 
@@ -373,7 +380,7 @@ Todos os caminhos da tabela partem de `submissions/luis-roquette/`; são contrat
 
 Não alterar README compartilhado, índice compartilhado, briefing, `.gitignore` ou CI da raiz. `.specs/`, `.claude/`, lock de skills, ambientes Python, CSV bruto e banco local não entram na submissão. A implementação deve medir tempo/memória com as 52.214 linhas e o caminho analítico real; o spike de quatro linhas não comprova capacidade. Não adicionar cache, DuckDB ou serviço até uma medição demonstrar necessidade.
 
-Riscos aceitos e explícitos: grupos cruzados podem resultar em poucas recomendações; fallback anual pode misturar sazonalidade (mostrar os dois períodos e a cobertura); dados de audiência não observam pessoas individualmente; views não medem alcance único; snapshot sem zeros limita a análise de survivorship; diferenças de patrocínio continuam sujeitas a confundimento; scores/limites são heurísticos e versionados. A resposta a evidência fraca é abstenção/teste/coleta, não relaxamento silencioso dos controles. Priorizar análise/estratégia obrigatórias no orçamento de 4–6 horas; registrar eventual extrapolação. Revisão humana desta SPEC continua sendo o gate anterior à implementação.
+Riscos aceitos e explícitos: grupos cruzados podem resultar em poucas recomendações; fallback anual pode misturar sazonalidade (mostrar os dois períodos e a cobertura); dados de audiência não observam pessoas individualmente; views não medem alcance único; snapshot sem zeros limita a análise de survivorship; diferenças de patrocínio continuam sujeitas a confundimento; scores/limites são heurísticos e versionados. A resposta a evidência fraca é abstenção/teste/coleta, não relaxamento silencioso dos controles. Priorizar análise/estratégia obrigatórias no orçamento de 4–6 horas; registrar eventual extrapolação. A revisão humana desta SPEC foi o gate anterior à implementação e está registrada no diário.
 
 ## Implementation Process
 
@@ -381,7 +388,7 @@ O plano operacional detalhado e normativo está em [`IMPLEMENTATION-PLAN.md`](./
 
 ### Execution directive
 
-Pré-condição externa: revisão humana da SPEC registrada no diário. Não é uma dependência de passo nem está satisfeita pela solicitação de escrever esta SPEC. Esta decomposição é um plano, não autorização para implementar, publicar, contratar serviço ou chamar API paga.
+Gate histórico: a revisão humana da SPEC foi registrada no diário antes da implementação e autorizou a execução local. Esta decomposição nunca autorizou publicação, contratação de serviço ou chamada de API paga; esses limites continuam vigentes.
 
 Depois desse gate, executar as Tasks 1–6 de `IMPLEMENTATION-PLAN.md` em ordem, passando ao agente a SPEC e o plano normativo. Usar o papel/capacidade indicado na visão executiva e instruir o agente a executar somente a task ativa, incluindo testes, diário e commit. Neste plano não há tasks paralelas. Ao completar Tasks 1–3, executar um code reviewer uma única vez para a Fase 1; repetir após Tasks 4–6 para a Fase 2. Correções retornam à task responsável e seus gates; a fase seguinte exige o gate da anterior.
 
