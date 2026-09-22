@@ -893,3 +893,21 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Bypass e fechamento honesto:** por ordem explícita de Luis, `make reproduce`, `make check`, Codespace, regeneração dos 15 arquivos e inspeção visual real continuaram sem execução. A SPEC permanece `in-progress`; não declaramos reprodução, artefatos reais ou preflight como verdes. Antes de PR ou merge, esses gates continuam obrigatórios.
 
 **Estado:** as sete tasks foram implementadas no código e validadas por testes direcionados. O único trabalho técnico pendente é o gate integral deliberadamente bypassado e, depois dele, regenerar/inspecionar os artefatos reais no mesmo SHA.
+
+### Gate final — retomada integral e revisão da resposta ao CEO
+
+**Decisão:** Luis retirou o bypass e solicitou o gate final antes da entrega. Retomamos o fluxo completo no Codespace compartilhado, preservando o mesmo branch e verificando o SHA remoto antes de executar qualquer validação.
+
+**Primeiro fechamento técnico:** `make reproduce` e `make check` concluíram com 79 testes em duas execuções, Ruff e formato verdes e `artifact_sets=equal`. Os 14 payloads e o manifesto foram regenerados e publicados. A inspeção real confirmou que as três abas funcionavam, mas a revisão editorial encontrou uma lacuna contra CK-5: o relatório explicava o paradoxo, enquanto o `ceo_answer.json` e o topo do dashboard ainda não confrontavam explicitamente uso agregado, uso dos futuros churners e satisfação dos respondentes.
+
+**Novo feedback loop:** voltamos à mesma etapa em vez de aceitar um gate tecnicamente verde com output executivo incompleto. Criamos uma regressão RED para a contradição, corrigimos o construtor canônico e incluímos claims rastreáveis com período correto. A resposta passou a declarar: uso agregado 0,336→0,493; uso entre contas que churnariam em 30 dias 0,349→0,304; satisfação dos respondentes 3,96→4,02; e satisfação dos futuros churners 4,50→3,67, sem generalizar tickets respondidos para toda a base.
+
+**Gate final definitivo:** no SHA `fd4452d`, o Codespace executou `make setup`, `make reproduce` e `make check`. Resultado: `80 passed` na primeira suíte, Ruff sem erros, `18 files already formatted`, `80 passed` na segunda suíte e `artifact_sets=equal`. Os artefatos reconciliados foram publicados no commit `e9627ea`; `findings_accepted=0` e `publish_model=False` permaneceram corretos.
+
+**Inspeção visual:** o dashboard final foi aberto em navegador real no desktop e em viewport móvel de 390×844. Headline, cinco blocos, evidências, fila operacional e limites apareceram sem exceções. O viewport foi restaurado para desktop e a aba final permaneceu aberta em `http://127.0.0.1:8503`.
+
+**Conclusão executiva registrada:** o churn mensal ponderado chegou a 12,4%, alta de 7,0 pp. O aparente conflito entre Produto e CS vem de médias sobre populações diferentes: o uso sobe no agregado, mas cai na coorte que churnará; a satisfação geral cobre apenas tickets respondidos e piora nessa mesma coorte. Nenhum mecanismo passou todos os gates, portanto `auto_renew_off` continua hipótese plausível, não causa. A ação justificável é auditar cobertura e testar prospectivamente antes de intervir.
+
+**Gargalo observado:** a reprodução integral é correta e determinística, porém lenta por executar bootstrap completo duas vezes. Esta dívida de performance não reduz a validade do resultado, mas deve ser otimizada se o pipeline virar rotina operacional.
+
+**Estado:** Fase 2 fechada com gate integral, determinismo e inspeção desktop/mobile verdes. PR e merge não foram executados; são decisões separadas de entrega.

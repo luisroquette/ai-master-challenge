@@ -248,7 +248,7 @@ GATE_STATES = {"pass", "fail", "unavailable"}
 
 Calcular todos os gates antes de confiança, ranking e fila; `fail` de sustentação não cria `rejected_claim`.
 
-- [ ] **Step 4: confirmar GREEN e fechar a Fase 1** — testes locais direcionados: 53 passed; Ruff verde. `make reproduce && make check` adiado por bypass explícito de Luis, sem declaração de gate integral verde.
+- [x] **Step 4: confirmar GREEN e fechar a Fase 1** — gate integral retomado no Codespace sobre o SHA exato: duas suítes com `80 passed`, Ruff e formato verdes, duas reproduções completas e `artifact_sets=equal`.
 
 Run: `.venv/bin/python -m pytest -q tests/test_diagnosis.py tests/test_panel.py tests/test_quality.py tests/test_publish.py`
 
@@ -311,7 +311,7 @@ def _build_report(
 
 Serializar tabelas primeiro, calcular `analysis_id`, construir resposta uma vez, escrever manifesto por último e validar tipos, IDs, refs, unidades e finitude.
 
-- [ ] **Step 4: confirmar GREEN e reprodução** — publicação: 15 passed; regressão analítica: 59 passed; Ruff verde. `make reproduce` adiado por bypass explícito de Luis, sem regenerar `artifacts/`.
+- [x] **Step 4: confirmar GREEN e reprodução** — 14 payloads mais manifesto regenerados, validados e reproduzidos deterministicamente; artefatos finais publicados no commit `e9627ea`.
 
 Run: `.venv/bin/python -m pytest -q tests/test_publish.py`
 
@@ -358,7 +358,7 @@ Expected: FAIL porque a abertura ainda não consome `ceo_answer.json`.
 
 Reusar `section_heading`, `format_display_frame` e `render_table`; remover narrativa duplicada e tratar `flat`, `insufficient`, nulo e watchlist vazia.
 
-- [ ] **Step 4: confirmar GREEN e conteúdo renderizado** — AppTest: 11 passed; Ruff verde. `make app` e inspeção desktop/mobile adiados pelo bypass explícito.
+- [x] **Step 4: confirmar GREEN e conteúdo renderizado** — AppTest incluído na suíte de `80 passed`; dashboard inspecionado ao vivo em desktop e viewport móvel de 390×844, com os cinco blocos, abas e conteúdo canônico coerentes.
 
 Run: `.venv/bin/python -m pytest -q tests/test_app.py`
 
@@ -400,7 +400,7 @@ Expected: primeiro caso FAIL porque a receita atual usa linhas shell separadas.
 
 Encadear a reprodução e o compare na mesma receita fail-fast, preservando trap/limpeza. Atualizar README a partir do `ceo_answer.json` validado, sem fixar números exploratórios divergentes.
 
-- [ ] **Step 4: executar o gate final no diff exato** — bypass explícito de Luis; `make check`, reprodução dos 15 arquivos e inspeção visual real permanecem pendentes antes de PR/merge.
+- [x] **Step 4: executar o gate final no diff exato** — `make reproduce` + `make check` concluídos no Codespace: duas suítes com `80 passed`, Ruff verde, `18 files already formatted` e `artifact_sets=equal`.
 
 Run no ambiente autorizado: `make check`
 
@@ -408,7 +408,7 @@ Run: `git diff --check`
 
 Expected: lint, formato, suíte, reprodução e comparação verdes; 14 payloads + manifesto coerentes.
 
-- [ ] **Step 5: entregar o diff; o orquestrador fecha a Fase 2**
+- [x] **Step 5: entregar o diff; o orquestrador fecha a Fase 2** — resposta canônica revisada contra a pergunta do CEO, dashboard desktop/mobile inspecionado e branch remota atualizada. PR/merge ficam fora deste gate até decisão explícita de entrega.
 
 ```bash
 git add app.py README.md Makefile tests/test_app.py tests/test_publish.py
