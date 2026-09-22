@@ -8,9 +8,20 @@
 
 ---
 
-## Executive Summary
+## As três respostas em 30 segundos
 
-Analisei 52.214 posts de cinco plataformas e construí um cockpit local para converter evidências em decisões auditáveis. O dataset histórico é muito homogêneo em ERv agregado: médias simples por plataforma não sustentam uma estratégia. A recomendação principal é testar, nunca ampliar investimento automaticamente, nos contextos priorizados pelo motor; custos reais são pré-requisito para qualquer decisão financeira. O diferencial é fechar o ciclo entre evidência, decisão humana versionada e observação posterior comparável.
+| Pergunta do Head de Marketing | Resposta do método 2.5 |
+|---|---|
+| **O que gera engajamento de verdade?** | **Não existe vencedor sustentado.** Nenhum dos 20 contextos avaliados passou simultaneamente amostra, materialidade, estabilidade e força. Manter o mix e testar antes de redistribuir esforço. |
+| **Vale patrocinar influenciadores?** | **Não escalar agora.** A cobertura comparável é 1,56%, a melhor força é 0,280 e não existem custos ou conversões para provar ROI. |
+| **Qual deve ser a estratégia?** | **Executar um programa controlado de 30 dias.** Validar YouTube, vídeo, estilo de vida e creators de 100.000–499.999 seguidores, preservando o mix fora do teste. |
+
+Analisei **52.214 posts de cinco plataformas** e construí um cockpit local que converte evidência em decisão auditável. As respostas acima são operacionais, mas não ultrapassam os dados: associação não vira causalidade e engajamento não vira ROI.
+
+## Escolha seu percurso
+
+1. **Ver a solução:** percorra o [tour guiado de três minutos](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds), siga o [roteiro de cinco minutos](./solution/004-social/README.md#roteiro-de-cinco-minutos), leia a [análise executiva](./solution/004-social/analysis.md) e consulte as [evidências reproduzíveis](./solution/004-social/evidence.csv).
+2. **Entender a construção:** leia o [estudo de caso](./docs/004-social/CONSTRUCTION-STORY.md), assista ao [vídeo explicativo](./docs/004-social/assets/notebooklm-video.mp4), veja a [evolução dos prompts](./docs/004-social/assets/methodology-evolution.png), o [mapa mental](./docs/004-social/assets/notebooklm-mind-map.png) e o [infográfico executivo](./docs/004-social/assets/notebooklm-infographic.png), ou abra as versões [DOCX](./docs/004-social/CONSTRUCTION-STORY.docx) e [texto simples](./docs/004-social/CONSTRUCTION-STORY.txt). O [manifesto](./docs/004-social/DELIVERY-MANIFEST.md) registra hashes e estado dos links; o [diário integral](./process-log/004-social.md) conserva todas as decisões.
 
 ---
 
@@ -27,10 +38,12 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 ### Resultados / Findings
 
 - Escopo: 52.214 posts, 5.000 creators, 527.376.193 views e 104.966.242 interações, de 29/05/2023 a 28/05/2025.
-- Mediana ERv geral: 19,8992%; ERv ponderado: 19,9035%. As diferenças agregadas entre plataformas, formatos e categorias são pequenas e não justificam redistribuição isolada.
+- Mediana ERv geral: 19,8992%; ERv ponderado: 19,9035%. Vinte contextos foram avaliados; nenhum passou simultaneamente amostra, materialidade, estabilidade e força.
 - Patrocínio: 12 estratos mensais elegíveis, 5.216 sem contraparte/amostra suficiente e cobertura de 1,55897% dos posts, controlando plataforma, formato, categoria, faixa de creator e mês-calendário.
-- Maior associação patrocinada observada: YouTube / video / lifestyle / 500.000+ / abril de 2024, +0,160707 p.p. de ERv; menor: Bilibili / video / lifestyle / 500.000+ / setembro de 2023, −0,136225 p.p. Nenhuma é efeito causal ou ROI.
+- Melhor contexto patrocinado comparável na síntese executiva: YouTube / vídeo / beauty / 500.000+, +0,097 p.p.; pior: Bilibili / vídeo / estilo de vida / 500.000+, −0,136 p.p. Nenhum é efeito causal ou ROI.
 - O cockpit mantém posts zero/taxas indefinidas, explica benchmark/amostra/força até as linhas de origem e preserva a fila completa. `analysis_state` impede que recorte vazio pareça desempenho zero: fonte, filtros e histórico permanecem, enquanto KPIs/prioridades/downloads somem. Delta ausente não vira zero. A cronologia usa o calendário civil da fonte; revisões/outcomes sobrevivem ao reinício.
+
+As capturas abaixo registram o ciclo validado `2.4.0` que antecedeu o refinamento executivo `2.5.0`; a análise, o CSV e os testes citados acima são a prova final do método atual.
 
 ![Fonte canônica, período, método 2.4.0 e diagnóstico de qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
 
@@ -44,9 +57,9 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 
 ### Recomendações
 
-1. **Segunda-feira:** revisar a fila determinística e testar o primeiro contexto sob controle; não interpretar a prioridade histórica minúscula como oportunidade atual.
+1. **Segunda-feira:** iniciar o baseline do programa de 30 dias para YouTube / vídeo / estilo de vida / 100.000–499.999; preservar o mix fora do teste.
 2. **Patrocínio:** exigir custos reais, contraparte orgânica e ao menos 30 taxas/5 creators por braço; força abaixo de 0,40 pede coleta/teste, não escala.
-3. **Conteúdo:** testar a cadência observada no mesmo contexto mensal, usando somente semanas ISO completas dentro do mês; nos três contextos priorizados, a hipótese atual é 1 post/creator/semana, com revisão após sete dias.
+3. **Conteúdo:** medir baseline, testar o candidato elegível, replicar somente se o sinal persistir e decidir na quarta semana; nenhuma cadência é inventada quando a evidência não a sustenta.
 4. **Creators e audiência:** preservar faixa e rótulos do contexto; não criar persona ou threshold universal de seguidores.
 5. **Parar/revisar:** não renovar ou interromper por média global/sinal isolado; agir apenas com sinais concordantes, evidência forte e decisão humana registrada.
 
@@ -69,7 +82,7 @@ Analisei 52.214 posts de cinco plataformas e construí um cockpit local para con
 | Codex | Pesquisa, ondas socráticas, SDD, implementação, regressões, documentação e auditoria final |
 | Claude Code | Skill SDD e estruturação inicial dos artefatos de especificação |
 | Chrome automatizado | Validação do upload real, decisões, reinício, erros, downloads e prova visual |
-| Python/Pandas/unittest | Motor determinístico, reconciliação e 122 testes locais |
+| Python/Pandas/unittest | Motor determinístico, reconciliação e catálogo final de 146 testes |
 
 ### Workflow
 
@@ -91,6 +104,14 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ## Evidências
 
+- [x] [Estudo de caso da construção](./docs/004-social/CONSTRUCTION-STORY.md)
+- [x] [Estudo de caso em DOCX](./docs/004-social/CONSTRUCTION-STORY.docx)
+- [x] [Linha do tempo prompt → produto](./docs/004-social/assets/methodology-evolution.png)
+- [x] [Mapa mental da construção](./docs/004-social/assets/notebooklm-mind-map.png)
+- [x] [Infográfico executivo](./docs/004-social/assets/notebooklm-infographic.png)
+- [x] [Vídeo explicativo do NotebookLM](./docs/004-social/assets/notebooklm-video.mp4)
+- [x] [Manifesto com hashes e estado dos links](./docs/004-social/DELIVERY-MANIFEST.md)
+- [x] [Tour guiado público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds)
 - [x] [Fonte, método e qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
 - [x] [Fila integral, quarta ação e componentes](./process-log/evidence/004/cockpit-audience-priority-proof.png)
 - [x] [Alvo, benchmark e amostra](./process-log/evidence/004/cockpit-priority-context-proof.png)
@@ -101,8 +122,9 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 - [x] [Análise executiva](./solution/004-social/analysis.md)
 - [x] [Evidências exportadas](./solution/004-social/evidence.csv)
 - [x] [Setup e demonstração](./solution/004-social/README.md)
-- [x] Git history local; publicação por PR ainda não autorizada
-- [ ] Screen recording e HR-01 humano cronometrado
+- [x] Git history local; PR depende dos gates finais de links e preflight
+- [x] Tour Arcade de sete etapas publicado e verificado sem sessão
+- [ ] HR-01 humano cronometrado
 
 ---
 

@@ -931,3 +931,66 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Artefatos:** `evidence.csv` tem 6.830 registros, seis recomendações, 20 `driver_context`, um `driver_overview`, quatro `strategy_week` e um `strategy_30d`; nenhuma premissa financeira manual foi exportada. SHA-256: CSV `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`; Markdown `d4e5ee40430d97f1430db7c95e54eb83a818eddc8e1692b63f66e5347f2b8537`; HTML `0284af6d3e1a602e057feb720a1d22fc54de71aab7e5739b45332b4c78ac011f`.
 - **Nota preliminar, sem autoaprovação:** clareza `9,7` (veredictos e gatilhos no primeiro bloco); objetividade `9,8` (decisões explícitas sem causalidade/ROI inventados); eficiência `9,6` (limites medidos e atingidos); profundidade `9,5` (contexto multivariado, estabilidade e cenário condicional); capacidade decisória `9,5` (manter/não escalar/validar com quatro gates). Média IA: **9,62/10**, nenhuma dimensão abaixo de `9,0`. A nota final permanece **PENDING** até leitura humana de Luis ou avaliador designado; HR-01 também permanece pendente.
 - **Gates e fronteira:** o gate focal final aprovou **45/45**, além de `py_compile` e `git diff --check`; 146 testes estão catalogados. Pelo bypass explícito, o preflight completo não foi repetido localmente nem em Codespace e continua obrigatório antes de PR. A prova visual com CSV real não foi substituída sem captura válida. Sem push, PR, merge, deploy ou API paga.
+
+## I69 — Planejamento do pacote final de entrega — 2026-09-22
+
+- **Decisão de Luis:** fechar o projeto com uma entrega multimodal: wizard guiado no estilo Arcade, narrativa da construção em Markdown, DOCX e texto simples, visual da evolução dos prompts, vídeo explicativo, mapa mental e infográfico produzidos com NotebookLM.
+- **Ajuste arquitetural:** para evitar versões concorrentes, foi definida uma única narrativa canônica. O Arcade explicará **como usar o sistema**; o vídeo e as peças do NotebookLM explicarão **como ele foi construído**; o README será o índice do avaliador.
+- **Metodologia preservada:** a história mostrará SDD, ondas socráticas adaptativas, SPEC, lapidação, feedback looping, redundância necessária, erros, correções, evidências e contribuição humana. O visual ligará cada prompt principal à decisão e à mudança observável no produto.
+- **Pesquisa antes do plano:** a documentação oficial confirma que o Arcade cobre captura interativa, hotspots, capítulos, compartilhamento e analytics; o NotebookLM cobre Video Overviews, Mind Maps, Infographics e artefatos documentais. As ferramentas atendem aos papéis definidos sem criar mídia redundante.
+- **Plano e gate:** o plano executável foi salvo em `docs/004-social/DELIVERY-PLAN.md`, dentro da pasta permitida pela submissão. A entrega final exigirá links públicos testados em janela anônima, fidelidade numérica, paridade entre formatos e duas passadas consecutivas sem correção relevante antes do PR.
+- **Limites atuais:** esta etapa planejou e documentou a entrega; não criou conta, publicou Arcade/NotebookLM, abriu PR, executou preflight ou acionou API paga.
+
+## I70 — Entrega, Task 1: narrativa canônica e índice do avaliador — 2026-09-22
+
+- **Planejamento e revisão:** o plano aprovado foi relido contra o briefing, o guia de submissão, a SPEC, a análise 2.5, a pesquisa, o diário e o histórico Git. A entrega foi dividida em rota rápida de até cinco minutos e rota de aprofundamento.
+- **Execução:** `CONSTRUCTION-STORY.md` passou a ser a fonte narrativa canônica. O texto organiza desafio, pesquisa, 24 ondas socráticas, SDD, feedback loops, redundância, lapidação, erros, resultado e limites, sempre ligando decisão humana, ação da IA e efeito no produto.
+- **Índice executivo:** o README agora começa pelas três respostas do Head de Marketing e oferece dois percursos: ver a solução ou entender a construção. A síntese foi atualizada para o método 2.5, removendo recomendações superadas pelo ranking multivariado final.
+- **Verificação:** todos os números do estudo de caso foram confrontados com `analysis.md`, `evidence.csv` ou I68; os links permanecem dentro da pasta da submissão. `git diff --check` é o gate textual desta fase.
+- **Limites:** a leitura humana cronometrada continua pendente; DOCX, TXT, linha do tempo, Arcade e NotebookLM pertencem às fases seguintes. Nenhuma publicação, assinatura, API paga, commit, push ou PR foi executado.
+
+## I71 — Entrega, Task 2: três formatos a partir da mesma fonte — 2026-09-22
+
+- **Decisão de formato:** `CONSTRUCTION-STORY.md` permanece como única fonte editável. O texto simples e o DOCX foram derivados dessa fonte; nenhum deles recebeu conteúdo narrativo exclusivo.
+- **Execução:** foram gerados `CONSTRUCTION-STORY.txt` e `CONSTRUCTION-STORY.docx`. O documento Word usa página Letter, capa, índice, hierarquia de títulos, duas tabelas, links clicáveis, cabeçalho lógico de tabela e paginação.
+- **Feedback e correção:** a primeira renderização revelou uma borda azul herdada pelo estilo Title; ela foi removida. A auditoria de acessibilidade encontrou duas tabelas sem cabeçalho semântico; ambas foram marcadas e a segunda auditoria terminou com zero achados.
+- **Validação:** as sete páginas finais foram renderizadas e inspecionadas em resolução original, sem corte, sobreposição ou tabela quebrada. Os seis marcadores críticos têm contagens idênticas em Markdown, TXT e DOCX: `52.214`, `1,56%`, `0,280`, `0,950`, `45 de 45` e `146`.
+- **Limites:** o renderizador empacotado não encontrou `pdf2image`; o fluxo manual previsto pela própria skill usou LibreOffice e `pdftoppm`. O PDF e os PNGs serviram apenas à inspeção e não foram incluídos na entrega.
+
+## I72 — Entrega, Task 3: linha do tempo prompt → produto — 2026-09-22
+
+- **Planejamento:** oito marcos foram selecionados do diário: absorção, pesquisa, ondas socráticas, SDD, feedback loops, redundância, lapidação e método 2.5. Cada marco conserva um fragmento de prompt, uma mudança observável e a referência do diário.
+- **Execução:** `assets/methodology-evolution.png` foi produzido de forma determinística em 2.000 × 2.800 pixels, usando a mesma direção de mesa editorial do cockpit. O rodapé conecta o processo às três decisões finais.
+- **Verificação:** a imagem foi aberta na resolução original; textos, acentos, ordem, contraste, hierarquia e referências permanecem legíveis. Nenhum caminho local, segredo, dado pessoal ou alegação nova foi incluído.
+- **Limite e escolha técnica:** a skill `imagegen` foi consultada, mas o próprio contrato recomenda um ativo code-native para diagramas. SVG temporário e conversão local produziram o PNG final sem API paga ou geração probabilística.
+
+## I73 — Entrega, Task 4: tour guiado no Arcade — 2026-09-22
+
+- **Execução:** foi criado o rascunho `Cockpit de Social Media — decisões em 3 minutos` no Arcade, usando a captura real do cockpit e sete etapas ligadas por callouts.
+- **Roteiro:** abertura e volume do dataset; validação da fonte; três respostas executivas; ausência de vencedor sustentado; condição mínima para patrocínio; programa de 30 dias; evidência, exportação e diário.
+- **Verificação:** o modo Preview exibiu a aplicação real, o título correto, o callout legível e a navegação entre etapas. A alternativa de upload manual evitou instalar extensão ou aplicativo.
+- **Limite externo:** após o fim do trial, o Arcade exige uma seleção irreversível de até três arquivos que continuarão editáveis; todos os demais permanecem publicados, mas bloqueados para edição. O tour novo está completo, porém ainda retorna “not published yet” em acesso sem sessão. Nenhuma seleção irreversível ou compra foi feita sem confirmação humana.
+
+## I74 — Entrega, Task 5: fontes e ativos do NotebookLM — 2026-09-22
+
+- **Fontes:** foi criado o notebook `Challenge 004 — Social Media | Construção e entrega` com quatro fontes equivalentes à narrativa canônica, análise 2.5, SPEC e guia de uso. Como o seletor bloqueou os arquivos Markdown, o conteúdo integral foi inserido como texto copiado, sem alterar a fonte local.
+- **Mapa mental:** o prompt preservou os quatro ramos Desafio, Método de construção, Produto e Evidências. Todos os ramos foram expandidos antes do download; o PNG final registra 52.214 posts, a sequência metodológica, a stack e as provas.
+- **Vídeo:** a primeira geração de 6min31s foi rejeitada porque excedeu o intervalo e permitia confundir 18,01 segundos de execução da CLI com tempo para gerar código. A segunda geração tornou a distinção explícita; a versão final foi acelerada uniformemente em `1,1×`, sem cortes, e ficou em 5min57,54s. O MP4 H.264/AAC decodificou integralmente e teve seis quadros distribuídos mais o encerramento inspecionados.
+- **Infográfico:** a primeira geração foi rejeitada por escrever “download em 5 minutos” e `1,55%`. A versão final corrigiu a promessa para decisão rastreável em até cinco minutos e a cobertura para `1,56%`; imagem completa inspecionada em 1.536 × 2.752 px.
+- **Estado desta anotação:** mapa, infográfico e vídeo finais estão versionados; os binários e hashes constam em `DELIVERY-MANIFEST.md`. O notebook permanece privado até o gate explícito de permissões.
+
+## I75 — Gate de publicação e manifesto — 2026-09-22
+
+- **Manifesto:** `DELIVERY-MANIFEST.md` registra percurso, URLs, estados reais, propriedades, tamanhos e SHA-256 de cinco binários. Nenhum link privado foi rotulado como público.
+- **Arcade:** o Preview confirma sete etapas; uma requisição anônima ao link de compartilhamento recebeu HTTP 200 com a página “not published yet”. A publicação depende da seleção irreversível de até três arquivos editáveis no plano gratuito.
+- **NotebookLM:** Luis questionou a necessidade de expor a conta quando os arquivos já estavam baixados. A decisão foi manter o notebook `Restrito` e entregar somente MP4 e PNGs versionados; o avaliador não precisa entrar no ambiente proprietário.
+- **Gates locais:** links Markdown relativos, integridade ZIP do DOCX, dimensões dos PNGs, decodificação integral do MP4 e `git diff --check` passaram. O preflight pesado, as duas passadas finais, o push e o PR ainda não foram executados nesta anotação.
+- **Decisão de conta:** Luis autorizou explicitamente excluir os cinco projetos antigos do Arcade e preservar apenas o novo Cockpit. Foram removidos `Swen.ia.br`, `Upload and Enrich Company Data for Lead Insights`, `Start a Free Trial and Deploy an AI Agent`, `Untitled (Wed Mar 18 2026)` e `Set Up a Custom AI Agent With Communication Channel`; o Arcade os moveu para `Recently deleted`.
+- **Publicação:** após a remoção, o botão Share publicou `https://app.arcade.software/share/VHx5b51f94IAFSr6pmds`. Uma requisição sem cookies retornou HTTP 200, URL final idêntica, 25.844 bytes e o título correto, sem o marcador `notPublished`.
+
+## I76 — QA final do pacote multimodal — 2026-09-22
+
+- **Prova pública:** o Arcade foi aberto em uma segunda sessão do Chrome e percorreu as sete etapas: abertura, fonte, três respostas, ausência de vencedor, condição de patrocínio, programa de 30 dias e trilha auditável. O encerramento e o watermark gratuito apareceram corretamente.
+- **Passada 1 (`clean=true`):** links relativos, hashes dos cinco binários, duração e decodificação do vídeo, integridade do DOCX, ausência de link privado do NotebookLM e resposta pública do Arcade passaram sem correção.
+- **Passada 2 (`clean=true`):** estrutura exigida pelo template, três perguntas do Head, presença dos dez artefatos finais, entrypoints, ausência de vazamento do notebook privado, HTTP 200 do Arcade e `git diff --check` passaram sem correção.
+- **Goal:** duas passadas finais consecutivas sem erro, gap ou otimização relevante: `2/2`. A entrega multimodal está pronta para o preflight pesado e o PR; HR-01 continua sendo o único gate humano declarado.
