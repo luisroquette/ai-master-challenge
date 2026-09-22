@@ -518,10 +518,10 @@ Snapshot S07 é saída obrigatória de 07, selada após a revisão da fase 2: `d
 | 01 [DONE] | 1 | sonnet | sdd:developer | None | None | `.specs/sub-tasks/implement-support-decision-copilot/01-environment-proof.md` |
 | 02 [DONE] | 1 | opus | sdd:data-engineer | 01 | None | `.specs/sub-tasks/implement-support-decision-copilot/02-sanitized-data-contracts.md` |
 | 03 [DONE] | 1 | sonnet | sdd:data-engineer | 02 | None | `.specs/sub-tasks/implement-support-decision-copilot/03-operational-diagnostic.md` |
-| 04 | 2 | opus | sdd:ml-engineer | 02 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/04-models-and-risk-gate.md` |
-| 05 | 2 | opus | sdd:developer | 02 | 04, 06 | `.specs/sub-tasks/implement-support-decision-copilot/05-transactional-audit.md` |
-| 06 | 2 | opus | sdd:ml-engineer | 02, 04 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/06-safe-retrieval-and-review.md` |
-| 07 | 2 | opus | sdd:developer | 03, 04, 05, 06 | None | `.specs/sub-tasks/implement-support-decision-copilot/07-integrated-local-workflow.md` |
+| 04 [DONE] | 2 | opus | sdd:ml-engineer | 02 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/04-models-and-risk-gate.md` |
+| 05 [DONE] | 2 | opus | sdd:developer | 02 | 04, 06 | `.specs/sub-tasks/implement-support-decision-copilot/05-transactional-audit.md` |
+| 06 [DONE] | 2 | opus | sdd:ml-engineer | 02, 04 | 05 | `.specs/sub-tasks/implement-support-decision-copilot/06-safe-retrieval-and-review.md` |
+| 07 [DONE] | 2 | opus | sdd:developer | 03, 04, 05, 06 | None | `.specs/sub-tasks/implement-support-decision-copilot/07-integrated-local-workflow.md` |
 | 08 | 3 | opus | sdd:ml-engineer | 07 | 09 | `.specs/sub-tasks/implement-support-decision-copilot/08-human-evaluation-and-freeze.md` |
 | 09 | 3 | sonnet | sdd:tech-writer | 07 | 08 | `.specs/sub-tasks/implement-support-decision-copilot/09-delivery-documentation.md` |
 | 10 | 3 | sonnet | sdd:test-engineer | 08, 09 | None | `.specs/sub-tasks/implement-support-decision-copilot/10-real-demo-and-final-gates.md` |
@@ -552,7 +552,7 @@ Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revi
 - Independent and Reproducible Validation — fontes/splits de desenvolvimento, sem alegação de avaliação final.
 - Project Guidelines Alignment — Regra Zero, aprovação inicial e ambiente comprovado.
 
-#### Phase 2
+#### Phase 2 [REVIEWED]
 
 **Steps:** 04, 05, 06, 07.
 
