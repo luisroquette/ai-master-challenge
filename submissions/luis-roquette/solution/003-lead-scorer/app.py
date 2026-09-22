@@ -172,12 +172,21 @@ button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-bottom: 1.35rem;
 }
+.focus-start {
+    background: var(--teal);
+    border-radius: 14px;
+    color: #f7fbfa;
+    margin-bottom: .8rem;
+    padding: .9rem 1.1rem;
+}
+.focus-start strong { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+.focus-start span { display: block; font: 700 1.05rem/1.35 Charter, Georgia, serif; margin-top: .25rem; }
 .focus-card {
     background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(220,236,232,.48));
     border: 1px solid var(--line);
     border-radius: 16px;
     box-shadow: 0 14px 34px rgba(23,33,43,.045);
-    min-height: 210px;
+    min-height: 250px;
     overflow: hidden;
     padding: 1.15rem 1.25rem 1.2rem;
     position: relative;
@@ -196,19 +205,38 @@ button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
     letter-spacing: .13em;
     text-transform: uppercase;
 }
+.focus-stage-note { color: var(--muted); font-size: .78rem; margin: .2rem 0 .7rem; }
+.focus-item {
+    border-top: 1px solid var(--line);
+    display: grid;
+    gap: .1rem .75rem;
+    grid-template-columns: 2.2rem 1fr;
+    padding: .7rem 0;
+}
+.focus-rank {
+    align-items: center;
+    background: var(--paper-deep);
+    border-radius: 999px;
+    color: var(--teal);
+    display: flex;
+    font-size: .72rem;
+    font-weight: 800;
+    grid-row: 1 / span 3;
+    height: 2.2rem;
+    justify-content: center;
+    width: 2.2rem;
+}
 .focus-id {
     color: var(--ink);
-    font: 700 1.45rem/1.1 Charter, Georgia, serif;
-    margin: .7rem 0 .2rem;
+    font: 700 1rem/1.2 Charter, Georgia, serif;
 }
 .focus-product { color: var(--muted); font-size: .85rem; }
 .focus-signal {
     color: #315b57;
-    font-size: .78rem;
+    font-size: .73rem;
     font-weight: 700;
-    margin: .85rem 0 .45rem;
 }
-.focus-action { color: var(--ink); font-size: .92rem; line-height: 1.45; }
+.focus-action { color: var(--ink); font-size: .82rem; grid-column: 2; line-height: 1.35; margin-top: .2rem; }
 .focus-empty { color: var(--muted); margin-top: 1.5rem; }
 @media (max-width: 800px) {
     .block-container { padding: 1.5rem 1rem 3rem; }
@@ -324,38 +352,52 @@ def stage_sections(rows, stage, pin):
             "insufficient_data": insufficient}
 
 
-def focus_candidate(rows, stage):
-    ranked = list(rank_stage(rows, stage))
-    supported = [row for row in ranked if row.state != "insufficient_data"]
-    return (supported or ranked or [None])[0]
+def focus_queue(rows, stage, limit=3):
+    if limit < 1:
+        raise ValueError("O limite da fila deve ser positivo")
+    return [row for row in rank_stage(rows, stage)
+            if row.state != "insufficient_data"][:limit]
 
 
 def render_focus_radar(rows):
+    queues = {stage: focus_queue(rows, stage) for stage in ("Engaging", "Prospecting")}
+    start = (queues["Engaging"] or queues["Prospecting"] or [None])[0]
+    if start is None:
+        start_html = ('<div class="focus-start"><strong>Comece aqui</strong>'
+                      '<span>Nenhuma oportunidade acionável neste recorte.</span></div>')
+    else:
+        start_html = (f'<div class="focus-start"><strong>Comece aqui · {escape(start.stage)}</strong>'
+                      f'<span>{escape(start.opportunity_id)} — {escape(start.next_action)}</span></div>')
     cards = []
     for stage in ("Engaging", "Prospecting"):
-        row = focus_candidate(rows, stage)
-        if row is None:
+        queue = queues[stage]
+        if not queue:
             cards.append(
                 f'<section class="focus-card"><div class="focus-stage">{stage}</div>'
-                '<div class="focus-empty">Nenhuma oportunidade neste recorte.</div></section>')
+                '<div class="focus-empty">Nenhuma oportunidade acionável neste recorte.</div></section>')
             continue
-        if row.state == "calibrated":
-            signal = f"Probabilidade validada {row.probability:.1%} · faixa {row.band}"
-        elif row.state == "relative":
-            signal = f"Índice relativo {row.relative_index:.3f} · faixa {row.band}"
-        else:
-            signal = "Dados insuficientes · correção necessária"
+        items = []
+        for position, row in enumerate(queue, 1):
+            signal = (f"Probabilidade validada {row.probability:.1%} · faixa {row.band}"
+                      if row.state == "calibrated" else
+                      f"Índice relativo {row.relative_index:.3f} · faixa {row.band}")
+            items.append(
+                f'<div class="focus-item"><div class="focus-rank">{position}</div>'
+                f'<div class="focus-id">{escape(row.opportunity_id)} · '
+                f'{escape(row.product or "Produto não identificado")}</div>'
+                f'<div class="focus-signal">{escape(signal)} · evidência '
+                f'{escape(row.evidence_strength)}</div>'
+                f'<div class="focus-action"><strong>Ação:</strong> '
+                f'{escape(row.next_action)}</div></div>')
+        note = ("Avance as conversas em andamento" if stage == "Engaging"
+                else "Alimente a próxima etapa do pipeline")
         cards.append(
-            f'<section class="focus-card"><div class="focus-stage">Foco {stage}</div>'
-            f'<div class="focus-id">{escape(row.opportunity_id)}</div>'
-            f'<div class="focus-product">{escape(row.product or "Produto não identificado")}</div>'
-            f'<div class="focus-signal">{escape(signal)} · evidência {escape(row.evidence_strength)}</div>'
-            f'<div class="focus-action"><strong>Próxima ação:</strong> '
-            f'{escape(row.next_action)}</div></section>')
+            f'<section class="focus-card"><div class="focus-stage">{stage}</div>'
+            f'<div class="focus-stage-note">{note}</div>{"".join(items)}</section>')
     st.markdown(
-        '<div class="focus-intro"><strong>Foco automático</strong>'
-        '<span>Um líder por estágio · escalas independentes</span></div>'
-        f'<div class="focus-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+        '<div class="focus-intro"><strong>Minha fila agora</strong>'
+        '<span>Até 3 ações por estágio · escalas independentes</span></div>'
+        f'{start_html}<div class="focus-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 
 
 def _diagnostic_value(item, name):

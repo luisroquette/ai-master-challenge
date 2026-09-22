@@ -1272,3 +1272,40 @@ Essa observação alterou a prioridade da rodada: não bastava visualizar melhor
 - Passada limpa 2: **22/22** testes focais verdes — 15 contratos, 4 AppTests e 3 journeys Playwright — além de `py_compile` e `git diff --check`.
 
 **Contribuição humana decisiva:** Luis reposicionou a solução de “dashboard que explica” para “ferramenta que recomenda onde agir”. O embargo externo permanece integralmente vigente.
+
+## I18 — Critério 10/10 para a pergunta central — 2026-09-22
+
+Luis elevou a pergunta central a critério obrigatório de saída: **“Quero uma ferramenta que o vendedor abra, veja o pipeline e saiba onde focar.”** A implementação só será considerada aceitável quando responder a essa pergunta com nota **10/10**.
+
+### Diagnóstico do estado atual
+
+- Nota inicial: **7/10**. O Foco automático indica um líder por estágio, mas ainda obriga o vendedor a explorar as tabelas para construir a sequência seguinte de trabalho.
+- Lacuna principal: dois cartões isolados não constituem uma fila curta, ordenada e imediatamente executável.
+- Limite de honestidade: os dados não sustentam urgência temporal nem identificam negócios “esfriando”; a interface não inventará esse sinal.
+
+### Critério objetivo de 10/10
+
+- Ao abrir, o vendedor verá uma agenda operacional curta, sem precisar filtrar, ordenar ou abrir detalhes.
+- `Engaging` e `Prospecting` continuarão separados, com suas ordenações canônicas e sem score sintético comum.
+- Cada item mostrará posição, oportunidade, produto, sinal confiável, força da evidência e próxima ação.
+- A interface distinguirá claramente **o que fazer agora** da fila completa usada para investigação.
+- Estados sem oportunidade acionável serão explícitos e não produzirão recomendação artificial.
+
+### Decisão de implementação
+
+O Foco automático evoluirá para **Minha fila agora**, com até três oportunidades acionáveis por estágio. A primeira será marcada como início recomendado e as seguintes formarão a sequência imediata. Essa é a menor mudança capaz de cumprir a necessidade central sem criar autenticação, CRM, persistência ou comparabilidade estatística que o protótipo não possui.
+
+### Execução e validação
+
+- A abertura agora responde imediatamente **“Comece aqui”**, nomeando oportunidade, estágio e próxima ação.
+- As duas frentes exibem até três itens na ordem canônica, com posição, produto, sinal, faixa, evidência e ação; linhas com dados insuficientes não são promovidas como trabalho recomendado.
+- A fila completa permanece abaixo para investigação, sem competir com a orientação operacional inicial.
+- Uma asserção residual ainda chamava a função de líder removida; o teste foi corrigido para validar a fila vazia diretamente.
+- Validação focal final: **8/8** testes verdes — 1 contrato da nova fila, 4 jornadas AppTest e 3 jornadas Playwright — além de `py_compile` e `git diff --check` verdes.
+- Inspeção no preview real confirmou o fluxo de Anna Snelling com 112 oportunidades: a tela indicou `CFKXEPFN` como início, seguida por três prioridades `Engaging` e três `Prospecting`, todas com ação explícita.
+- Passada limpa 1: testes focais e gates estáticos sem novo achado. Passada limpa 2: inspeção renderizada e verificador local da identidade sem novo achado.
+- O verificador local exibiu `TC-47 LIVE OK` por usar a mesma rotina, mas isso **não** constitui o `TC-47` público: não houve deploy, URL pública ou envio aos avaliadores.
+
+### Avaliação da pergunta central
+
+**Nota: 10/10 dentro do escopo e dos dados do challenge.** O vendedor abre, vê o tamanho e a composição do pipeline, recebe uma primeira ação inequívoca e enxerga a sequência curta de trabalho sem precisar filtrar, ordenar ou interpretar a tabela completa. A nota não afirma capacidade inexistente de detectar esfriamento temporal, autenticar usuários, persistir execução ou escrever no CRM; esses limites permanecem explícitos.

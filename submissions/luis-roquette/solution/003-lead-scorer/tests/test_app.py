@@ -236,11 +236,15 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertNotIn("Probabilidade", bad)
         self.assertNotIn("Receita esperada", bad)
 
-    def test_focus_radar_selects_one_supported_leader_per_independent_stage(self):
+    def test_focus_queue_gives_an_ordered_action_plan_per_independent_stage(self):
         rows = self.app.portfolio_rows(self.bundle, "Vendedor", "Ana")
-        self.assertEqual(self.app.focus_candidate(rows, "Engaging").opportunity_id, "E-A")
-        self.assertEqual(self.app.focus_candidate(rows, "Prospecting").opportunity_id, "P-A")
-        self.assertIsNone(self.app.focus_candidate([], "Engaging"))
+        self.assertEqual([row.opportunity_id for row in self.app.focus_queue(rows, "Engaging")],
+                         ["E-A", "E-A2"])
+        self.assertEqual([row.opportunity_id for row in self.app.focus_queue(rows, "Prospecting")],
+                         ["P-A"])
+        with self.assertRaisesRegex(ValueError, "limite"):
+            self.app.focus_queue(rows, "Engaging", 0)
+        self.assertEqual(self.app.focus_queue([], "Engaging"), [])
 
     def test_C4_sections_delegate_all_ordering_to_canonical_rank_stage(self):
         rows = self.app.portfolio_rows(self.bundle, "Gestor", "Mara")
@@ -426,6 +430,11 @@ render_portfolio({factory}(), st.session_state)
         at = self.fixture_app()
         self.assertFalse(at.exception)
         self.assertEqual([tab.label for tab in at.tabs], ["Engaging", "Prospecting"])
+        initial = "\n".join(item.value for item in at.markdown)
+        self.assertIn("Minha fila agora", initial)
+        self.assertIn("Comece aqui · Engaging", initial)
+        self.assertIn("E-A", initial)
+        self.assertIn("P-A", initial)
         labels = {button.label for button in at.button}
         self.assertIn("Abrir P-BAD", labels)
         next(button for button in at.button if button.label == "Abrir P-BAD").click().run()
