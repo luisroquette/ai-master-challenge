@@ -20,9 +20,9 @@ validação humana opcional que habilitaria essa capacidade.
 2. **O que automatizar?** Classificação e roteamento interno somente com modelo suportado,
    confiança calibrada e ausência de riscos. Resposta externa, caso crítico, sensível,
    ambíguo, inválido ou incerto permanece humano.
-3. **Como funciona?** Streamlit abre na fila, explica a decisão, mostra precedentes,
-   registra quatro ações em SQLite e exporta CSV; scorecard e Laboratório IT ficam em
-   páginas separadas.
+3. **Como funciona?** Streamlit abre em **Resposta ao Diretor**; fila, scorecard,
+   Laboratório IT e evidências aprofundam a decisão. O fluxo registra ações em SQLite e
+   exporta CSV sem enviar mensagens externas.
 
 ## Arquitetura mínima
 
@@ -118,7 +118,9 @@ validado, aprovação é bloqueada e a saída correta é revisão humana ou esca
 - O intervalo temporal disponível é pós-primeira-resposta, não resolução total.
 - Há 1.404 intervalos válidos e 2.769 ratings. Chat tem mediana `6,52 h` (`355/2.073`),
   High `7,12 h` (`355/2.085`) e Product inquiry `6,98 h` (`257/1.641`).
-- A pior combinação é Chat / Low / Technical issue: `13,23 h`, `n=15`.
+- Grupos com `n≥30` formam o ranking suportado; grupos menores ficam separados como
+  exploratórios com IC95%. Chat / Low / Technical issue (`13,23 h`, `n=15`) não sustenta
+  sozinho uma prioridade operacional.
 - O proxy de excesso soma `4.047,83 h` em 20 grupos; Refund request / High lidera com
   `274,17 h`. Excesso é oportunidade histórica, não economia realizada.
 - Spearman entre intervalo e satisfação é `0,00264` em 1.404 pares. Ridge MAE `1,2026`
@@ -130,15 +132,25 @@ validado, aprovação é bloqueada e a saída correta é revisão humana ou esca
 - Teste fica lacrado até modelos, calibração, regras e thresholds estarem congelados.
 - No teste congelado, Customer obteve macro-F1 `0,1394`, log loss `1,6124` e ECE
   `0,0328` em 231 casos; IT obteve `0,8351`, `0,4578` e `0,0414` em 5.301 casos.
+- Customer tem `0%` de cobertura segura. IT cobre `37,43%` no limiar travado de `0,55`,
+  mas o risco seletivo de `10,64%` supera o teto; ambos permanecem sem autonomia de
+  produção, e IT pode operar somente em shadow com revisão humana.
 - Fixtures cobrem regressões; a evidência final abaixo usa fila, SQLite, export e
   navegador reais. O desempenho Customer baixo mantém sua automação desativada.
 
 ### Cenários projetados
 
-Conservador, base e otimista aplicam volume elegível, fração endereçável, minutos poupados
-e custo/hora editáveis. Horas são `volume × fração × minutos / 60`; custo é `horas ×
-custo/hora`. A fonte não contém custo, moeda ou salário: nenhum cenário é apresentado
-como economia realizada ou efeito causal.
+O volume inicial de `30.000 tickets/ano` vem do briefing. Conservador, base e otimista
+projetam, respectivamente, `150`, `625` e `1.600 h/ano`; fração, minutos e custo/hora são
+editáveis. A fonte não contém custo, moeda ou salário: nenhum cenário é economia realizada.
+
+### Piloto shadow e go/no-go
+
+Duração de duas semanas, mínimo de `1.000` tickets estratificados e baseline do tempo
+manual. Cada sugestão é comparada com a decisão humana, sem alterar helpdesk ou responder
+ao cliente. Promoção exige todos: macro-F1 `≥75%`, recall por classe `≥65%`, ECE `≤5%`,
+risco seletivo `≤10%` com cobertura `≥20%`, zero escape sensível/crítico e redução `≥20%`
+do tempo mediano de triagem.
 
 ## Protocolo humano de recuperação
 

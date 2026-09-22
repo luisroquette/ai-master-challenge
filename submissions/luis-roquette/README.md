@@ -34,7 +34,9 @@ opcional futura sustentar sua habilitação.
   demografia, produto ou resolução e encontrou 1.404 intervalos válidos.
 - Maiores medianas unidimensionais: Chat `6,52 h` (`355/2.073`), prioridade High
   `7,12 h` (`355/2.085`) e Product inquiry `6,98 h` (`257/1.641`).
-- Pior combinação: Chat / Low / Technical issue, `13,23 h`, `n=15`.
+- Combinações com `n≥30` sustentam o ranking principal; grupos menores aparecem como
+  exploratórios com IC95%. Chat / Low / Technical issue (`13,23 h`, `n=15`) não é
+  tratado como conclusão operacional.
 - O proxy histórico soma `4.047,83 h` acima das medianas em 20 grupos; Refund request /
   High lidera com `274,17 h`. Isso é oportunidade observada, não economia realizada.
 - Satisfação não apresentou sinal confiável: Spearman `ρ=0,00264` em 1.404 pares; Ridge
@@ -45,6 +47,9 @@ opcional futura sustentar sua habilitação.
 - **Classificação e roteamento interno** podem ser automatizados somente quando o modelo
   é suportado, a entrada é válida, a confiança calibrada supera o limite e nenhuma regra
   de risco bloqueia o caso.
+- Customer: macro-F1 `13,94%` em `231` casos e `0%` de cobertura segura; automação
+  bloqueada. IT: macro-F1 `83,51%` em `5.301` casos; no limiar travado `0,55`, cobre
+  `37,43%` com risco seletivo `10,64%`, acima do teto. IT permanece em shadow.
 - Prioridade crítica, tema sensível, ambiguidade, PII, artefato inválido ou incerteza
   sempre levam a revisão humana, mesmo com confiança alta.
 - **Respostas não são enviadas automaticamente.** O sistema só pode oferecer um
@@ -56,12 +61,10 @@ opcional futura sustentar sua habilitação.
 
 #### 3. Como isso funciona na prática?
 
-O agente abre uma fila Customer Support, vê categoria, confiança, riscos e decisão do
-gate, consulta até três fontes sanitizadas e decide entre aprovar, editar e aprovar,
-rejeitar ou escalonar. A decisão é gravada atomicamente em SQLite e pode ser exportada
-em CSV. O scorecard separa histórico observado, desempenho medido e cenários projetados.
-Um Laboratório IT independente demonstra a taxonomia de oito classes do Dataset 2 sem
-misturar linhas, rótulos ou métricas com Customer Support.
+A aplicação abre em **Resposta ao Diretor**, com as três decisões e seus limites. O agente
+aprofunda na fila Customer, vê categoria, confiança, riscos e gate, e decide entre aprovar,
+editar, rejeitar ou escalonar. A decisão é gravada em SQLite e exportada em CSV. Scorecard
+e Laboratório IT permanecem independentes, sem misturar domínios.
 
 ### Abordagem
 
@@ -97,6 +100,15 @@ escolhas está em [pesquisa técnica](research/002-support.md).
 3. Coletar timestamps de criação para medir primeira resposta e resolução total.
 4. Avaliar 30 consultas independentes antes de habilitar qualquer rascunho histórico.
 5. Manter custo/hora editável: a fonte não traz moeda, salário ou custo operacional.
+
+### Impacto projetado e piloto
+
+Com o contexto de `~30.000 tickets/ano`, os cenários editáveis projetam `150 h/ano`
+(conservador), `625 h/ano` (base) e `1.600 h/ano` (otimista), sem apresentá-las como
+economia realizada. O piloto é shadow por duas semanas, com mínimo de `1.000` tickets,
+baseline manual e go/no-go cumulativo: macro-F1 `≥75%`, recall por classe `≥65%`, ECE
+`≤5%`, risco `≤10%` com cobertura `≥20%`, zero escape sensível e redução `≥20%` do tempo
+mediano de triagem.
 
 ### Limitações
 
@@ -160,8 +172,8 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 - [x] Intervenção humana real: escalonamento persistido após reinício e exportado
 - [ ] Validação futura opcional CK-12 — 30 avaliações por split; zero consultas elegíveis,
   sem impacto no fechamento dos entregáveis canônicos e com drafts bloqueados
-- [x] Evidência técnica mais recente: 242 testes completos, 41 testes de workflow e
-  2 testes de documentação/evidência aprovados
+- [x] Tela inicial responde às três perguntas com confiabilidade, risco-cobertura,
+  impacto projetado e contrato de piloto rastreáveis
 - [ ] Preflight terminal do SHA final: pulado por instrução do owner; não marcado verde
 
 ---

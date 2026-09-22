@@ -559,7 +559,7 @@ def render_director_brief(bundle=None) -> None:
             "Cobertura no teste": "{:.2%}", "Risco seletivo": "{:.2%}",
         }, na_rep="—"),
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
     it_evidence = evidence.loc[evidence["Domínio"].eq("IT")]
     if not it_evidence.empty and pd.notna(it_evidence.iloc[0]["Risco seletivo"]):
