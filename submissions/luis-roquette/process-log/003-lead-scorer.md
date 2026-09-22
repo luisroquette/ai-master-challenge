@@ -1543,3 +1543,9 @@ Após o registro transparente do bypass, o PR oficial `#140` foi reaberto em vez
 - A descrição do PR orienta o avaliador ao README, experiência guiada, aplicação e diário; também declara explicitamente que não houve novo preflight integral final.
 
 Esse PR é o canal oficial de entrega previsto pelo regulamento. Nenhum deploy público foi reivindicado como requisito cumprido e nenhuma mensagem paralela foi enviada aos avaliadores.
+
+## I36 — Revisão pública final da experiência do avaliador — 2026-09-22
+
+Luis solicitou uma revisão geral adicional antes de considerar a entrega encerrada. A branch local, o fork e o PR foram comparados no mesmo SHA; o PR permaneceu público, `OPEN`, não-draft e `CLEAN`, com todos os 63 arquivos restritos à pasta autorizada.
+
+A inspeção da página pública sem login encontrou um único refinamento de comunicação: os quatro caminhos da seção “Como avaliar” estavam formatados como código, não como links. A descrição do PR foi atualizada com links diretos para o README, a experiência guiada, o setup da aplicação e o diário. Nenhuma lógica, dado, métrica ou limitação foi alterada nessa lapidação.
