@@ -816,3 +816,12 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Erro e correção:** o primeiro patch de teste apontou por engano para `submissions/luisroquette/`. O arquivo vazio e toda a árvore criada foram removidos imediatamente; o teste foi recriado somente em `submissions/luis-roquette/`.
 - **Teste local focado:** Ruff passou nos seis arquivos tocados; `pytest tests/test_analytics.py tests/test_workflow.py -q` concluiu 13 testes em 26,40 s; compilação, `git diff --check`, casos 29/30, timestamps inválidos, corte de 2%, cenários inválidos e invariância histórica passaram.
 - **Motivo para repetir antes de avançar:** os relatórios reais e suas contagens ainda precisam ser produzidos no Codespace pelo SHA exato. Resultado local focado não substitui `make test && make lint && make reproduce` no ambiente gerenciado.
+
+## I46 — Step 03: diagnóstico real validado — 2026-09-21 21:34 BRT
+
+- **Primeira tentativa remota:** bloqueada antes dos gates porque a conferência usou um SHA completo digitado incorretamente. O SHA foi obtido novamente do Git, sem inferir o sufixo: `5eeb981a5b65bf24205d0d472bfe656f635c288f`.
+- **Segunda tentativa remota:** o gerenciador recusou corretamente o Codespace em `ShuttingDown`. A sessão não foi interferida; a execução aguardou `Shutdown` e reutilizou o mesmo ambiente limpo.
+- **Gate no SHA correto:** `make lint` passou; `make test` concluiu 19 testes em 23,16 s; `make reproduce` passou duas vezes. Manifestos iguais após remover somente `generated_at`; os seis relatórios esperados existem e estão registrados no manifesto. O checkout permaneceu limpo.
+- **Resultado real:** 904 representantes sanitizados compõem treino + calibração; somente quatro intervalos pós-primeira-resposta são válidos. Há 21 notas válidas no desenvolvimento, contra 34 em todas as 1.392 linhas sanitizadas da fonte. Ridge não obteve ganho de MAE de 2%, portanto o estado é `no_reliable_signal` e nenhuma importância multivariada é publicada.
+- **Oportunidade:** nenhum par tipo/prioridade alcança 30 intervalos válidos; todos permanecem `insufficient_support`, sem estimativa de excesso. O relatório IT declara ausência de desfecho operacional e de chave entre registros.
+- **Motivo para avançar:** o marco executável funciona e os resultados negativos permanecem visíveis. Não há justificativa para relaxar privacidade, abrir o teste ou fabricar economia para preencher o painel.
