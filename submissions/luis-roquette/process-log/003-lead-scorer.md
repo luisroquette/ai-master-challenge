@@ -1171,3 +1171,12 @@ Por bypass explícito do owner e ausência de Codespace limpo, os quatro testes 
 O mesmo revisor concluiu a reavaliação estática com conformidade à SPEC `4,45`, avaliação interna `4,35`, resultado combinado `4,40`, `issues: []` e `rework_required: false`. Os dois issues residuais foram considerados fechados por inspeção.
 
 A limitação permanece explícita: as quatro regressões finais não foram executadas por bypass autorizado. Portanto, a Fase 2 pode ser marcada como `[REVIEWED]`, sem alegação de full pós-fix verde nem reivindicação do `TC47`.
+
+## I13 — Passo 05: entrega pública até o bloqueio OAuth — 2026-09-22
+
+- A branch foi enviada e o PR upstream [#140](https://github.com/luisroquette/ai-master-challenge/pull/140) está aberto, `mergeable` e sem checks registrados.
+- O commit de evidências foi `f4cf4b1`. A correção de `source_identity` entrou em `14d0296`, seguida da documentação em `429c5e9`.
+- Causa da falha: `Path(...).parent` subia um diretório além do necessário e fazia os hashes aparecerem como ausentes. A regressão focal direta passou com digest iniciado em `7e25ba0` e terminado em `d311`.
+- Os gates leves ficaram verdes. `unittest` e preflight não foram executados, conforme o bypass autorizado e porque o Mac não dispõe de Streamlit.
+
+Não havia app existente no Streamlit Community Cloud. O login foi iniciado e ficou bloqueado na tela de OAuth do GitHub, em `Authorize Streamlit Community Cloud`; o botão não foi clicado. Assim, o passo `05`, o `TC47`, o deploy, a URL pública e os screenshots continuam incompletos e não foram reivindicados.
