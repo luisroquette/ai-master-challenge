@@ -1378,3 +1378,49 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   `72f485a`; os títulos “Fila diária” e “Diagnóstico operacional” foram confirmados
   visíveis no hero do deploy público. O primeiro carregamento levou cerca de 17 minutos
   sob limitação temporária de CPU do Streamlit, sem traceback ou falha funcional.
+
+## I75 — Avaliação da pergunta central e plano para nota ≥ 9,5 — 2026-09-22
+
+- **Decisão do owner:** tratar como prioridade central a resposta ao Diretor de Operações:
+  onde há perda de tempo, o que pode ser automatizado com IA e qual prova funcional
+  demonstra que a proposta funciona. O redesign visual, isoladamente, não encerra o
+  desafio.
+- **Avaliação exigente do estado atual:** nota média estimada em `8,0/10`, com intervalo
+  provável de `7,6–8,4`. Diagnóstico: `8,8`; automação: `7,2`; prova funcional: `8,5`.
+  Cobertura total estimada entre `80%` e `85%` da pergunta central.
+- **Forças comprovadas:** diagnóstico numérico e honesto; `4.047,83 h` de excesso
+  histórico; pior combinação explicitada; ausência de sinal confiável de satisfação
+  documentada; modelo IT com macro-F1 `0,8351`; aplicação pública, gate de risco,
+  persistência e export reais.
+- **Gaps que impedem 9,5:** a resposta executiva está fragmentada; o modelo Customer tem
+  macro-F1 `0,1394` e automação desativada; não há percentual seguro e atual de tickets
+  Customer automatizáveis; o simulador abre com volume zero; não existe piloto com metas
+  e critérios de aprovação; a prova é um protótipo isolado, sem integração ou mensuração
+  antes/depois.
+- **Plano — Frente 1, resposta única ao Diretor:** criar uma tela inicial executiva com
+  as três respostas, números principais, qualidade da evidência, recomendação e próximo
+  experimento. Torná-la a rota padrão, preservando Fila, Scorecard, Laboratório IT e
+  Evidências como aprofundamentos.
+- **Plano — Frente 2, robustez do diagnóstico:** mostrar cobertura `1.404/8.469`, tamanho
+  de amostra e incerteza por achado; separar ranking suportado de achados exploratórios;
+  não apresentar grupos pequenos, como `n=15`, sem alerta ou intervalo de confiança.
+- **Plano — Frente 3, automação Customer verificável:** executar análise de erros e novas
+  candidatas congeladas sem vazamento; medir curva risco-cobertura e percentual realmente
+  elegível. Só habilitar roteamento se superar baseline, calibração e erro seletivo máximo;
+  caso contrário, declarar `0% seguro hoje` e demonstrar o copiloto humano como decisão
+  correta, sem maquiar o resultado.
+- **Plano — Frente 4, impacto e piloto:** preencher um cenário executivo, explicitamente
+  projetado, usando o contexto de aproximadamente `30 mil tickets/ano`; mostrar horas por
+  mês/ano e custo somente quando a premissa for informada. Definir piloto shadow de duas
+  semanas, amostra, baseline, métricas, guardrails e critérios go/no-go.
+- **Plano — Frente 5, prova e gate final:** demonstrar no navegador a narrativa completa,
+  incluindo classificação, bloqueio seguro, decisão persistida, reinício e export;
+  atualizar evidências e matriz de rastreabilidade do briefing; executar testes focados e
+  o preflight canônico remoto antes da entrega final, sem usar o Mac para gates pesados.
+- **Critério de encerramento ≥ 9,5:** três respostas compreensíveis em menos de 90 segundos;
+  toda afirmação marcada como observada, medida ou projetada; automação Customer com
+  cobertura e risco quantificados, ainda que resulte em zero; cenário anual acionável;
+  piloto executável; demo pública e evidências reproduzíveis no mesmo SHA.
+- **Limite desta etapa:** somente planejamento e documentação foram alterados. Nenhum
+  código, threshold, métrica ou evidência foi modificado para elevar artificialmente a
+  avaliação.
