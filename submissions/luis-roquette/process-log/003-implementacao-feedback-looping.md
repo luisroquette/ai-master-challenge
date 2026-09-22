@@ -819,3 +819,19 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Fechamento do loop:** o gate final, sobre o diff exato aplicado no SHA-base `f7b82ea`, produziu `17 passed in 8.17s`, Ruff lint sem erros e `4 files already formatted`. O ambiente remoto reverteu o patch após a validação. Nenhuma etapa foi contornada durante a disputa pelos dois slots globais de Codespaces.
 
 **Estado:** Task 2 validada. O próximo ciclo cronológico é a Task 3, painel alinhado aos eventos, repetindo `Planejamento → Revisão → Execução → Teste`.
+
+### Task 3 — painel relativo ao churn
+
+**Pesquisa e planejamento:** antes do código, consultamos a documentação do pandas sobre intervalos fechados, o repositório `setzler/eventStudy` sobre controles ainda não tratados e o projeto `Khan-zoh/churn-cohort-analytics` sobre testes de poluição pós-cutoff. Mantivemos a stack existente e escolhemos reutilizar `build_account_panel`, em vez de criar um segundo motor de features.
+
+**Revisão:** fixamos dois recortes: âncoras no churn terminal entre junho e novembro de 2024 e o horizonte diagnóstico iniciado em 1º de dezembro. Casos e controles compartilham calendário; controles só precisam permanecer sem terminal até `t+29` e podem churnar depois. As janelas `[-90,-61]`, `[-60,-31]` e `[-30,-1]` terminam antes do evento; a janela de 90 dias é marcada como contexto adicional, não evidência independente.
+
+**Execução:** `build_event_aligned_panel` passou a produzir casos e controles contemporâneos, conservar as mesmas contas nas três janelas, manter ausências como nulas, identificar controles reutilizados e impedir que dados do dia do churn entrem nas features. O painel permanece isolado de scoring e fila.
+
+**Decisão de bypass:** o Codespace compartilhado demorou mais de dois minutos para desligar e disputava dois slots com os outros terminais. Luis determinou bypass do preflight. A espera foi interrompida; o teste RED remoto não foi executado nem reconstruído retroativamente. Rodamos somente o gate unitário pontual no Mac, usando o ambiente Python já existente, sem build ou suíte pesada.
+
+**Teste e fechamento:** o primeiro gate local retornou `19 passed`; lint verde e duas correções mecânicas de formatação. Após aplicá-las, o gate final retornou `19 passed in 0.63s`, Ruff sem erros e `2 files already formatted`. A busca de callers confirmou que a nova função existe apenas em `panel.py` e nos testes; ainda não alimenta scoring.
+
+**Limitação registrada:** o preflight remoto e a execução integral sobre as 136 datas de âncora observadas ficaram adiados por decisão explícita, não declarados como verdes. Esse gate deve ser retomado antes de PR ou merge.
+
+**Estado:** Task 3 concluída no escopo autorizado. Próximo ciclo: Task 4, integração das métricas, gates e escada de evidência.

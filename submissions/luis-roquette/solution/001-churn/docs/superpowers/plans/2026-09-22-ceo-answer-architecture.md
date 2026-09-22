@@ -161,7 +161,7 @@ Informar arquivos, testes e limitações ao orquestrador; aguardar o Step 3. Nã
 - Row key: `account_id/anchor_date/cohort/relative_window_start/relative_window_end/chronology`.
 - Consumed by: Task 4; nunca por scoring ou fila.
 
-- [ ] **Step 1: escrever testes RED de vazamento e elegibilidade**
+- [x] **Step 1: escrever testes RED de vazamento e elegibilidade**
 
 ```python
 def test_event_aligned_features_stop_day_before_churn(): ...
@@ -175,7 +175,9 @@ Run: `.venv/bin/python -m pytest -q tests/test_panel.py -k "event_aligned or con
 
 Expected: FAIL porque o painel relativo ainda não existe.
 
-- [ ] **Step 3: implementar reusando os helpers atuais**
+Não executado: Luis determinou bypass do preflight durante a contenção do Codespace compartilhado. Os testes foram escritos antes da implementação, mas o estado RED não foi reivindicado retroativamente.
+
+- [x] **Step 3: implementar reusando os helpers atuais**
 
 ```python
 def build_event_aligned_panel(
@@ -187,7 +189,7 @@ def build_event_aligned_panel(
 
 Não duplicar fórmulas de uso/suporte; extrair montagem de linha apenas se o produto cartesiano se tornar necessário.
 
-- [ ] **Step 4: confirmar GREEN e ausência de scoring**
+- [x] **Step 4: confirmar GREEN e ausência de scoring**
 
 Run: `.venv/bin/python -m pytest -q tests/test_panel.py`
 
@@ -195,7 +197,7 @@ Run: `rg -n "build_event_aligned_panel" src/ravenstack_churn`
 
 Expected: PASS; somente `cli.py`/diagnóstico integram o painel.
 
-- [ ] **Step 5: entregar o diff; o orquestrador integra Tasks 2 e 3**
+- [x] **Step 5: entregar o diff; o orquestrador integra Tasks 2 e 3**
 
 ```bash
 git add src/ravenstack_churn/diagnosis.py src/ravenstack_churn/panel.py tests/test_diagnosis.py tests/test_panel.py
@@ -203,6 +205,8 @@ git commit -m "feat(churn): add historical and event-aligned evidence"
 ```
 
 Somente o orquestrador executa esses comandos depois que ambos os agentes terminarem, o diff integrado for revisado e os testes de Tasks 2/3 passarem juntos.
+
+Adaptação autorizada: a execução deixou de ser paralela e passou a ser cronológica. A Task 2 foi commitada antes da Task 3; esta entrega usa commit local separado e permanece sem push.
 
 ### Task 4: Integrar métricas, gates e escada de evidência
 

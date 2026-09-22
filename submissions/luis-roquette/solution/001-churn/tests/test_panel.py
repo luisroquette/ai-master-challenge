@@ -2,10 +2,77 @@ import pandas as pd
 
 from ravenstack_churn.panel import (
     build_account_panel,
+    build_event_aligned_panel,
     first_terminal_churn,
     mrr_lost_at_churn,
     select_first_terminal_events,
 )
+
+
+def _terminal_events(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    selected, _ = select_first_terminal_events(
+        tables["accounts"], tables["churn_events"], pd.Timestamp("2024-12-31")
+    )
+    return selected
+
+
+def test_event_aligned_features_stop_day_before_churn(mini_tables) -> None:
+    same_day = mini_tables["feature_usage"].iloc[[1]].copy()
+    same_day["usage_id"] = "U-churn-day"
+    same_day["usage_date"] = "2024-06-15"
+    same_day["usage_count"] = 1_000
+    mini_tables["feature_usage"] = pd.concat(
+        [mini_tables["feature_usage"], same_day], ignore_index=True
+    )
+
+    panel = build_event_aligned_panel(mini_tables, _terminal_events(mini_tables), "strict")
+    anchor = panel.loc[panel["anchor_date"].eq(pd.Timestamp("2024-06-15"))]
+    case = anchor.loc[
+        anchor["cohort"].eq("terminal_cases") & anchor["relative_window_start"].eq(-30)
+    ].iloc[0]
+    late_control = anchor.loc[anchor["account_id"].eq("A-2")]
+
+    assert case["usage_count_30d"] == 5
+    assert late_control["relative_window_start"].tolist() == [-90, -60, -30]
+    assert late_control["eligible_at_window_cutoff"].tolist() == [False, False, True]
+
+
+def test_control_may_churn_after_outcome_horizon(mini_tables) -> None:
+    later = mini_tables["churn_events"].iloc[[0]].copy()
+    later["churn_event_id"] = "C-later"
+    later["account_id"] = "A-2"
+    later["churn_date"] = "2024-07-20"
+    mini_tables["churn_events"] = pd.concat([mini_tables["churn_events"], later], ignore_index=True)
+
+    panel = build_event_aligned_panel(mini_tables, _terminal_events(mini_tables), "observed")
+    control = panel.loc[
+        panel["anchor_date"].eq(pd.Timestamp("2024-06-15")) & panel["account_id"].eq("A-2")
+    ]
+
+    assert len(control) == 3
+    assert control["cohort"].eq("contemporaneous_controls").all()
+    assert control["first_terminal_churn_date"].eq(pd.Timestamp("2024-07-20")).all()
+
+
+def test_strict_and_observed_event_panels_share_anchors_and_labels(mini_tables) -> None:
+    terminal = _terminal_events(mini_tables)
+    observed = build_event_aligned_panel(mini_tables, terminal, "observed")
+    strict = build_event_aligned_panel(mini_tables, terminal, "strict")
+    key = ["account_id", "anchor_date", "cohort", "relative_window_start"]
+
+    assert observed[key].to_dict("records") == strict[key].to_dict("records")
+    assert (
+        observed["churn_in_outcome_horizon"].tolist() == strict["churn_in_outcome_horizon"].tolist()
+    )
+    assert strict.loc[strict["account_id"].eq("A-2"), "reused_control"].all()
+
+
+def test_scoring_cutoff_keeps_incomplete_label_unknown(mini_tables) -> None:
+    panel = build_account_panel(
+        mini_tables, pd.DatetimeIndex([pd.Timestamp("2024-12-31")]), "strict"
+    )
+
+    assert panel["churn_next_30d"].isna().all()
 
 
 def test_first_terminal_churn_ignores_reactivation(mini_tables) -> None:

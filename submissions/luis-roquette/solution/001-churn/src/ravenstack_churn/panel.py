@@ -3,7 +3,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from .config import DEFAULT_WINDOWS, OBSERVATION_END, SCORING_CUTOFF
+from .config import DEFAULT_WINDOWS, OBSERVATION_END, RECENT_PERIOD, SCORING_CUTOFF
 from .contracts import _coerce_table, _coerce_tables
 
 
@@ -390,3 +390,165 @@ def build_account_panel(
     if panel.duplicated(["account_id", "cutoff", "chronology"]).any():
         raise ValueError("duplicate account/cutoff/chronology rows")
     return panel
+
+
+def build_event_aligned_panel(
+    tables: dict[str, pd.DataFrame],
+    terminal_events: pd.DataFrame,
+    chronology: Literal["observed", "strict"],
+) -> pd.DataFrame:
+    if chronology not in {"observed", "strict"}:
+        raise ValueError("chronology must be 'observed' or 'strict'")
+
+    parsed = _coerce_tables(tables)
+    terminal = terminal_events.copy()
+    if terminal.empty:
+        terminal = terminal.reindex(columns=parsed["churn_events"].columns)
+    selected, _ = select_first_terminal_events(
+        parsed["accounts"], parsed["churn_events"], OBSERVATION_END
+    )
+    if set(terminal.get("churn_event_id", [])) != set(selected.get("churn_event_id", [])):
+        raise ValueError("terminal_events must match shared terminal selection")
+
+    historical_dates = sorted(
+        terminal.loc[
+            terminal["churn_date"].between(RECENT_PERIOD[0], RECENT_PERIOD[1]),
+            "churn_date",
+        ].unique()
+    )
+    diagnostic_start = SCORING_CUTOFF - pd.Timedelta(days=30)
+    anchors = [
+        {
+            "anchor_date": pd.Timestamp(anchor_date),
+            "anchor_kind": "terminal_event",
+            "outcome_end": pd.Timestamp(anchor_date) + pd.Timedelta(days=29),
+        }
+        for anchor_date in historical_dates
+    ]
+    anchors.append(
+        {
+            "anchor_date": diagnostic_start,
+            "anchor_kind": "diagnostic_horizon",
+            "outcome_end": SCORING_CUTOFF - pd.Timedelta(days=1),
+        }
+    )
+    windows = ((-90, -61), (-60, -31), (-30, -1))
+    cutoffs = pd.DatetimeIndex(
+        sorted(
+            {
+                anchor["anchor_date"] + pd.Timedelta(days=window_end)
+                for anchor in anchors
+                for _, window_end in windows
+            }
+        )
+    )
+    base = build_account_panel(parsed, cutoffs, chronology)
+    base_index = base.set_index(["account_id", "cutoff"], drop=False)
+    terminal_dates = terminal.set_index("account_id")["churn_date"]
+    rows: list[dict[str, object]] = []
+
+    for anchor in anchors:
+        anchor_date = anchor["anchor_date"]
+        outcome_end = anchor["outcome_end"]
+        primary_cutoff = anchor_date - pd.Timedelta(days=1)
+        primary = base.loc[base["cutoff"].eq(primary_cutoff) & base["has_active_subscription"]]
+        if anchor["anchor_kind"] == "terminal_event":
+            case_ids = set(terminal_dates.loc[terminal_dates.eq(anchor_date)].index)
+        else:
+            case_ids = set(
+                terminal_dates.loc[terminal_dates.between(anchor_date, outcome_end)].index
+            )
+        case_ids &= set(primary["account_id"])
+        outcome_complete = bool(outcome_end <= OBSERVATION_END)
+        control_ids = (
+            set(
+                primary.loc[
+                    primary["first_terminal_churn_date"].isna()
+                    | primary["first_terminal_churn_date"].gt(outcome_end),
+                    "account_id",
+                ]
+            )
+            if outcome_complete
+            else set()
+        )
+
+        for cohort, account_ids in (
+            ("terminal_cases", case_ids),
+            ("contemporaneous_controls", control_ids),
+        ):
+            for account_id in sorted(account_ids):
+                terminal_date = terminal_dates.get(account_id, pd.NaT)
+                for window_start, window_end in windows:
+                    cutoff = anchor_date + pd.Timedelta(days=window_end)
+                    key = (account_id, cutoff)
+                    if key in base_index.index:
+                        row = base_index.loc[key].to_dict()
+                        eligible_at_window = True
+                    else:
+                        row = {column: pd.NA for column in base.columns}
+                        row.update(
+                            account_id=account_id,
+                            cutoff=cutoff,
+                            chronology=chronology,
+                            first_terminal_churn_date=terminal_date,
+                        )
+                        eligible_at_window = False
+                    row.update(
+                        anchor_id=f"{anchor['anchor_kind']}:{anchor_date.date()}",
+                        anchor_date=anchor_date,
+                        anchor_kind=anchor["anchor_kind"],
+                        cohort=cohort,
+                        outcome_start=anchor_date,
+                        outcome_end=outcome_end,
+                        outcome_complete=outcome_complete,
+                        relative_window_start=window_start,
+                        relative_window_end=window_end,
+                        eligible_at_window_cutoff=eligible_at_window,
+                        includes_90d_context=eligible_at_window and window_start == -30,
+                        churn_in_outcome_horizon=int(cohort == "terminal_cases"),
+                    )
+                    rows.append(row)
+
+    annotation_columns = [
+        "anchor_id",
+        "anchor_date",
+        "anchor_kind",
+        "cohort",
+        "outcome_start",
+        "outcome_end",
+        "outcome_complete",
+        "relative_window_start",
+        "relative_window_end",
+        "eligible_at_window_cutoff",
+        "includes_90d_context",
+        "churn_in_outcome_horizon",
+        "reused_control",
+    ]
+    if not rows:
+        return pd.DataFrame(columns=[*base.columns, *annotation_columns])
+
+    result = pd.DataFrame(rows)
+    control_anchor_counts = (
+        result.loc[result["cohort"].eq("contemporaneous_controls")]
+        .drop_duplicates(["account_id", "anchor_date"])
+        .groupby("account_id")["anchor_date"]
+        .nunique()
+    )
+    result["reused_control"] = result["cohort"].eq("contemporaneous_controls") & result[
+        "account_id"
+    ].map(control_anchor_counts).gt(1).fillna(False)
+    result = result.sort_values(
+        ["anchor_date", "cohort", "account_id", "relative_window_start"]
+    ).reset_index(drop=True)
+    if result.duplicated(
+        [
+            "account_id",
+            "anchor_date",
+            "cohort",
+            "relative_window_start",
+            "relative_window_end",
+            "chronology",
+        ]
+    ).any():
+        raise ValueError("duplicate event-aligned panel rows")
+    return result
