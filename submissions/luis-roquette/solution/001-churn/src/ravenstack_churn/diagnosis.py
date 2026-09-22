@@ -6,13 +6,108 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from statsmodels.stats.proportion import proportion_confint
 from statsmodels.tools.sm_exceptions import (
     PerfectSeparationError,
     PerfectSeparationWarning,
     SingularMatrixWarning,
 )
 
-from .config import MIN_COVERAGE, MIN_SEGMENT_ACCOUNTS, MIN_SEGMENT_CHURNS, SCORING_CUTOFF
+from .config import (
+    BOOTSTRAP_REPLICATES,
+    HISTORICAL_START,
+    MIN_COVERAGE,
+    MIN_SEGMENT_ACCOUNTS,
+    MIN_SEGMENT_CHURNS,
+    OBSERVATION_END,
+    RANDOM_SEED,
+    RECENT_PERIOD,
+    REFERENCE_PERIOD,
+    SCORING_CUTOFF,
+)
+from .contracts import _coerce_tables
+from .panel import mrr_lost_at_churn, select_first_terminal_events
+
+HISTORICAL_DIMENSIONS = (
+    "industry",
+    "country",
+    "referral_source",
+    "plan_tier",
+    "billing_frequency",
+    "is_trial",
+    "mrr_band",
+)
+
+MONTHLY_CHURN_COLUMNS = (
+    "evidence_id",
+    "period_start",
+    "period_end",
+    "population",
+    "chronology",
+    "status",
+    "limitation",
+    "source_refs",
+    "calculation",
+    "period_kind",
+    "dimension",
+    "segment",
+    "comparison_kind",
+    "at_risk_accounts",
+    "unique_accounts",
+    "terminal_churns",
+    "new_accounts",
+    "entrant_churns",
+    "excluded_events",
+    "observation_complete",
+    "churn_rate",
+    "rate_unit",
+    "ci_low",
+    "ci_high",
+    "ci_level",
+    "ci_method",
+    "comparator_id",
+    "comparator_rate",
+    "relative_risk",
+    "rr_ci_low",
+    "rr_ci_high",
+    "rate_difference",
+    "difference_ci_low",
+    "difference_ci_high",
+    "mrr_lost",
+    "mrr_known_accounts",
+    "mrr_unknown_accounts",
+    "mrr_exposed",
+    "mrr_exposed_as_of",
+    "currency",
+    "financial_unit",
+)
+
+REASON_DISTRIBUTION_COLUMNS = (
+    "evidence_id",
+    "period_start",
+    "period_end",
+    "population",
+    "chronology",
+    "status",
+    "limitation",
+    "source_refs",
+    "calculation",
+    "reason_code",
+    "terminal_accounts",
+    "eligible_events",
+    "excluded_events",
+    "share",
+    "unit",
+    "ci_low",
+    "ci_high",
+    "ci_method",
+    "ci_level",
+    "comparator_id",
+    "mrr_lost",
+    "mrr_known_accounts",
+    "mrr_unknown_accounts",
+    "currency",
+)
 
 CANDIDATES = {
     "F-product-usage-drop": ("usage_change_30_vs_90", "lower", "product", "le", -0.30),
@@ -73,6 +168,563 @@ CONTROL_COLUMNS = (
     "seats",
     "tenure_days",
 )
+
+
+def _wilson(count: int, total: int) -> tuple[float, float]:
+    if total <= 0:
+        return np.nan, np.nan
+    low, high = proportion_confint(count, total, alpha=0.05, method="wilson")
+    return float(low), float(high)
+
+
+def _bootstrap_rate_contrast(
+    account_months: pd.DataFrame,
+    target: pd.Series,
+    comparator: pd.Series | None,
+    replicates: int = BOOTSTRAP_REPLICATES,
+    seed: int = RANDOM_SEED,
+) -> dict[str, object]:
+    work = account_months.assign(
+        _target=target,
+        _comparator=False if comparator is None else comparator,
+    )
+    work = work.loc[work["_target"] | work["_comparator"]]
+    accounts = pd.Index(work["account_id"].astype(str).unique())
+    if len(accounts) < 2:
+        return {"status": "unavailable", "limitation": "fewer_than_two_accounts"}
+
+    grouped = work.groupby("account_id", sort=True)
+    vectors = pd.DataFrame(
+        {
+            "target_den": grouped["_target"].sum(),
+            "target_num": grouped.apply(
+                lambda group: int((group["_target"] & group["is_terminal_churn"]).sum()),
+                include_groups=False,
+            ),
+            "comparator_den": grouped["_comparator"].sum(),
+            "comparator_num": grouped.apply(
+                lambda group: int((group["_comparator"] & group["is_terminal_churn"]).sum()),
+                include_groups=False,
+            ),
+        }
+    ).reindex(accounts, fill_value=0)
+    weights = np.random.default_rng(seed).multinomial(
+        len(accounts), np.full(len(accounts), 1 / len(accounts)), size=replicates
+    )
+    target_den = weights @ vectors["target_den"].to_numpy()
+    comparator_den = weights @ vectors["comparator_den"].to_numpy()
+    target_rate = np.divide(
+        weights @ vectors["target_num"].to_numpy(),
+        target_den,
+        out=np.full(replicates, np.nan),
+        where=target_den > 0,
+    )
+    valid_target = target_rate[np.isfinite(target_rate)]
+    if len(valid_target) < 0.95 * replicates:
+        return {"status": "unavailable", "limitation": "insufficient_valid_bootstrap_replicates"}
+
+    result: dict[str, object] = {
+        "status": "available",
+        "limitation": "",
+        "target_ci_low": float(np.quantile(valid_target, 0.025)),
+        "target_ci_high": float(np.quantile(valid_target, 0.975)),
+    }
+    if comparator is None:
+        return result
+
+    comparator_rate = np.divide(
+        weights @ vectors["comparator_num"].to_numpy(),
+        comparator_den,
+        out=np.full(replicates, np.nan),
+        where=comparator_den > 0,
+    )
+    difference = target_rate - comparator_rate
+    ratio = np.divide(
+        target_rate,
+        comparator_rate,
+        out=np.full(replicates, np.nan),
+        where=comparator_rate > 0,
+    )
+    valid_difference = difference[np.isfinite(difference)]
+    valid_ratio = ratio[np.isfinite(ratio)]
+    if len(valid_difference) < 0.95 * replicates:
+        return {"status": "unavailable", "limitation": "insufficient_valid_bootstrap_replicates"}
+
+    result.update(
+        difference_ci_low=float(np.quantile(valid_difference, 0.025)),
+        difference_ci_high=float(np.quantile(valid_difference, 0.975)),
+    )
+    if len(valid_ratio) >= 0.95 * replicates:
+        result.update(
+            rr_ci_low=float(np.quantile(valid_ratio, 0.025)),
+            rr_ci_high=float(np.quantile(valid_ratio, 0.975)),
+        )
+    else:
+        result.update(rr_ci_low=np.nan, rr_ci_high=np.nan)
+        result["limitation"] = "relative_risk_bootstrap_unavailable"
+    return result
+
+
+def _active_subscription_attributes(
+    subscriptions: pd.DataFrame, account_ids: pd.Index, as_of: pd.Timestamp
+) -> pd.DataFrame:
+    active = subscriptions.loc[
+        subscriptions["account_id"].isin(account_ids)
+        & subscriptions["start_date"].le(as_of)
+        & (subscriptions["end_date"].isna() | subscriptions["end_date"].gt(as_of))
+    ].drop_duplicates("subscription_id")
+    rows = []
+    for account_id in account_ids:
+        history = subscriptions.loc[subscriptions["account_id"].eq(account_id)]
+        group = active.loc[active["account_id"].eq(account_id)]
+
+        def one_or_mixed(column: str, active_group: pd.DataFrame = group) -> object:
+            values = active_group[column].dropna().unique()
+            if not len(values):
+                return "unknown"
+            return values[0] if len(values) == 1 else "mixed"
+
+        mrr = group["mrr_amount"]
+        mrr_active = np.nan if history.empty or mrr.isna().any() else float(mrr.sum())
+        rows.append(
+            {
+                "account_id": account_id,
+                "plan_tier": one_or_mixed("plan_tier"),
+                "billing_frequency": one_or_mixed("billing_frequency"),
+                "is_trial": one_or_mixed("is_trial"),
+                "mrr_active": mrr_active,
+            }
+        )
+    result = pd.DataFrame(rows)
+    if result.empty:
+        return pd.DataFrame(
+            columns=[
+                "account_id",
+                "plan_tier",
+                "billing_frequency",
+                "is_trial",
+                "mrr_active",
+                "mrr_band",
+            ]
+        )
+    result["mrr_band"] = (
+        pd.cut(
+            result["mrr_active"],
+            bins=[-np.inf, 500, 2_000, np.inf],
+            labels=["low", "mid", "high"],
+        )
+        .astype("string")
+        .fillna("unknown")
+    )
+    return result
+
+
+def _historical_account_months(
+    tables: dict[str, pd.DataFrame], terminal_events: pd.DataFrame
+) -> pd.DataFrame:
+    accounts = tables["accounts"]
+    subscriptions = tables["subscriptions"]
+    terminal = terminal_events.set_index("account_id")
+    months = pd.date_range(HISTORICAL_START, RECENT_PERIOD[1], freq="MS")
+    rows = []
+    for month_start in months:
+        month_end = month_start + pd.offsets.MonthBegin(1)
+        churn_date = accounts["account_id"].map(terminal["churn_date"])
+        eligible = accounts["signup_date"].le(month_start) & (
+            churn_date.isna() | churn_date.ge(month_start)
+        )
+        at_risk = accounts.loc[eligible].drop(columns=["plan_tier", "is_trial"]).copy()
+        attributes = _active_subscription_attributes(
+            subscriptions, pd.Index(at_risk["account_id"]), month_start
+        )
+        at_risk = at_risk.merge(attributes, on="account_id", how="left", validate="one_to_one")
+        at_risk[["plan_tier", "billing_frequency", "is_trial", "mrr_band"]] = at_risk[
+            ["plan_tier", "billing_frequency", "is_trial", "mrr_band"]
+        ].fillna("unknown")
+        at_risk["period_start"] = month_start
+        at_risk["period_end"] = month_end - pd.Timedelta(days=1)
+        at_risk["terminal_date"] = at_risk["account_id"].map(terminal["churn_date"])
+        at_risk["is_terminal_churn"] = at_risk["terminal_date"].ge(month_start) & at_risk[
+            "terminal_date"
+        ].lt(month_end)
+        rows.append(at_risk)
+    return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+
+
+def _financial_loss(lost: pd.Series, account_ids: pd.Series) -> tuple[float, int, int]:
+    if account_ids.empty:
+        return 0.0, 0, 0
+    values = account_ids.map(lost)
+    known = int(values.notna().sum())
+    unknown = int(values.isna().sum())
+    return (float(values.dropna().sum()) if known else np.nan, known, unknown)
+
+
+def build_monthly_churn(
+    tables: dict[str, pd.DataFrame], terminal_events: pd.DataFrame
+) -> pd.DataFrame:
+    parsed = _coerce_tables(tables)
+    terminal = terminal_events.copy()
+    if terminal.empty:
+        terminal = terminal.reindex(columns=parsed["churn_events"].columns)
+    selected, exclusions = select_first_terminal_events(
+        parsed["accounts"], parsed["churn_events"], OBSERVATION_END
+    )
+    if set(terminal.get("churn_event_id", [])) != set(selected.get("churn_event_id", [])):
+        raise ValueError("terminal_events must match shared terminal selection")
+    account_months = _historical_account_months(parsed, terminal)
+    terminal_series = terminal.set_index("account_id")["churn_date"]
+    lost = mrr_lost_at_churn(parsed["subscriptions"], terminal_series)
+    raw_exclusions = exclusions.merge(
+        parsed["churn_events"][["churn_event_id", "churn_date"]],
+        on="churn_event_id",
+        how="left",
+    )
+    rows: list[dict[str, object]] = []
+
+    def add_row(
+        data: pd.DataFrame,
+        period_start: pd.Timestamp,
+        period_end: pd.Timestamp,
+        period_kind: str,
+        dimension: str,
+        segment: str,
+        comparison_kind: str = "none",
+        comparator: pd.DataFrame | None = None,
+        comparator_id: str | None = None,
+    ) -> None:
+        churned = data.loc[data["is_terminal_churn"]]
+        count = len(churned)
+        denominator = len(data)
+        rate = count / denominator if denominator else np.nan
+        ci_low, ci_high = _wilson(count, denominator)
+        mrr_lost, known, unknown = _financial_loss(lost, churned["account_id"])
+        is_month = period_kind == "month"
+        new_mask = parsed["accounts"]["signup_date"].gt(period_start) & parsed["accounts"][
+            "signup_date"
+        ].le(period_end)
+        new_accounts = int(new_mask.sum()) if dimension == "all" else 0
+        entrant_ids = set(parsed["accounts"].loc[new_mask, "account_id"])
+        entrant_churns = (
+            int(
+                (
+                    terminal["account_id"].isin(entrant_ids)
+                    & terminal["churn_date"].ge(period_start)
+                    & terminal["churn_date"].le(period_end)
+                ).sum()
+            )
+            if dimension == "all"
+            else 0
+        )
+        excluded_events = (
+            int(
+                raw_exclusions.loc[
+                    raw_exclusions["churn_date"].ge(period_start)
+                    & raw_exclusions["churn_date"].le(period_end),
+                    "churn_event_id",
+                ].nunique()
+            )
+            if dimension == "all"
+            else 0
+        )
+        status = "available" if denominator else "unavailable"
+        limitation = "" if denominator else "zero_denominator"
+        comparator_rate = relative_risk = rate_difference = np.nan
+        rr_low = rr_high = diff_low = diff_high = np.nan
+        target_mask = account_months.index.isin(data.index)
+        if not is_month and denominator:
+            period_bootstrap = _bootstrap_rate_contrast(account_months, target_mask, None)
+            ci_low = period_bootstrap.get("target_ci_low", np.nan)
+            ci_high = period_bootstrap.get("target_ci_high", np.nan)
+            if period_bootstrap["status"] != "available":
+                status = "inconclusive"
+                limitation = str(period_bootstrap["limitation"])
+        if comparator is not None and denominator:
+            comparator_rate = (
+                float(comparator["is_terminal_churn"].mean()) if len(comparator) else np.nan
+            )
+            relative_risk = (
+                float(rate / comparator_rate)
+                if pd.notna(rate) and pd.notna(comparator_rate) and comparator_rate > 0
+                else np.nan
+            )
+            rate_difference = (
+                float(rate - comparator_rate)
+                if pd.notna(rate) and pd.notna(comparator_rate)
+                else np.nan
+            )
+            contrast = _bootstrap_rate_contrast(
+                account_months,
+                target_mask,
+                account_months.index.isin(comparator.index),
+            )
+            rr_low = contrast.get("rr_ci_low", np.nan)
+            rr_high = contrast.get("rr_ci_high", np.nan)
+            diff_low = contrast.get("difference_ci_low", np.nan)
+            diff_high = contrast.get("difference_ci_high", np.nan)
+            if contrast["status"] != "available":
+                status = "inconclusive"
+                limitation = str(contrast["limitation"])
+            elif contrast.get("limitation"):
+                limitation = str(contrast["limitation"])
+            if comparison_kind == "segment_complement" and (
+                data["account_id"].nunique() < MIN_SEGMENT_ACCOUNTS
+                or count < MIN_SEGMENT_CHURNS
+                or comparator["account_id"].nunique() < MIN_SEGMENT_ACCOUNTS
+                or int(comparator["is_terminal_churn"].sum()) < MIN_SEGMENT_CHURNS
+            ):
+                status = "inconclusive"
+                limitation = "insufficient_segment_or_complement_sample"
+        mrr_exposed = (
+            np.nan
+            if not is_month or data["mrr_active"].isna().any()
+            else float(data["mrr_active"].sum())
+        )
+        financial_limitations = []
+        if unknown:
+            financial_limitations.append("mrr_lost_unknown_for_some_accounts")
+        if is_month and data["mrr_active"].isna().any():
+            financial_limitations.append("mrr_exposed_unknown_for_some_accounts")
+        if not is_month:
+            financial_limitations.append("mrr_exposed_not_aggregated_across_months")
+        if financial_limitations:
+            limitation = "|".join(filter(None, [limitation, *financial_limitations]))
+            if status == "available" and (
+                unknown or (is_month and data["mrr_active"].isna().any())
+            ):
+                status = "partial"
+        evidence_id = (
+            f"churn:{period_kind}:{period_start.date()}:{period_end.date()}:"
+            f"{dimension}:{segment}:{comparison_kind}"
+        )
+        rows.append(
+            {
+                "evidence_id": evidence_id,
+                "period_start": period_start,
+                "period_end": period_end,
+                "population": "registered_at_start",
+                "chronology": "shared",
+                "status": status,
+                "limitation": limitation,
+                "source_refs": "accounts|subscriptions|churn_events",
+                "calculation": "build_monthly_churn:v1",
+                "period_kind": period_kind,
+                "dimension": dimension,
+                "segment": segment,
+                "comparison_kind": comparison_kind,
+                "at_risk_accounts": denominator,
+                "unique_accounts": int(data["account_id"].nunique()),
+                "terminal_churns": count,
+                "new_accounts": new_accounts,
+                "entrant_churns": entrant_churns,
+                "excluded_events": excluded_events,
+                "observation_complete": bool(period_end <= RECENT_PERIOD[1]),
+                "churn_rate": rate,
+                "rate_unit": "account_churn/account_month",
+                "ci_low": ci_low,
+                "ci_high": ci_high,
+                "ci_level": 0.95,
+                "ci_method": "wilson" if is_month else "cluster_bootstrap_account",
+                "comparator_id": comparator_id,
+                "comparator_rate": comparator_rate,
+                "relative_risk": relative_risk,
+                "rr_ci_low": rr_low,
+                "rr_ci_high": rr_high,
+                "rate_difference": rate_difference,
+                "difference_ci_low": diff_low,
+                "difference_ci_high": diff_high,
+                "mrr_lost": mrr_lost,
+                "mrr_known_accounts": known,
+                "mrr_unknown_accounts": unknown,
+                "mrr_exposed": mrr_exposed,
+                "mrr_exposed_as_of": period_start if is_month else pd.NaT,
+                "currency": "USD",
+                "financial_unit": "monthly_recurring_revenue",
+            }
+        )
+
+    for month_start in pd.date_range(HISTORICAL_START, RECENT_PERIOD[1], freq="MS"):
+        month_data = account_months.loc[account_months["period_start"].eq(month_start)]
+        month_end = month_start + pd.offsets.MonthEnd(1)
+        add_row(month_data, month_start, month_end, "month", "all", "all")
+        for dimension in HISTORICAL_DIMENSIONS:
+            for segment in sorted(month_data[dimension].astype(str).unique()):
+                add_row(
+                    month_data.loc[month_data[dimension].astype(str).eq(segment)],
+                    month_start,
+                    month_end,
+                    "month",
+                    dimension,
+                    segment,
+                )
+
+    periods = {"reference": REFERENCE_PERIOD, "recent": RECENT_PERIOD}
+    period_data = {
+        name: account_months.loc[
+            account_months["period_start"].ge(start) & account_months["period_start"].le(end)
+        ]
+        for name, (start, end) in periods.items()
+    }
+    add_row(
+        period_data["reference"],
+        REFERENCE_PERIOD[0],
+        REFERENCE_PERIOD[1],
+        "comparison_period",
+        "all",
+        "all",
+    )
+    add_row(
+        period_data["recent"],
+        RECENT_PERIOD[0],
+        RECENT_PERIOD[1],
+        "comparison_period",
+        "all",
+        "all",
+        "previous_period",
+        period_data["reference"],
+        f"churn:comparison_period:{REFERENCE_PERIOD[0].date()}:{REFERENCE_PERIOD[1].date()}:all:all:none",
+    )
+    for period_name, data in period_data.items():
+        start, end = periods[period_name]
+        for dimension in HISTORICAL_DIMENSIONS:
+            for segment in sorted(data[dimension].astype(str).unique()):
+                selected_segment = data.loc[data[dimension].astype(str).eq(segment)]
+                complement = data.loc[~data[dimension].astype(str).eq(segment)]
+                add_row(
+                    selected_segment,
+                    start,
+                    end,
+                    "comparison_period",
+                    dimension,
+                    segment,
+                    "segment_complement",
+                    complement,
+                    f"complement:{period_name}:{dimension}:{segment}",
+                )
+                if period_name == "recent":
+                    reference_segment = period_data["reference"].loc[
+                        period_data["reference"][dimension].astype(str).eq(segment)
+                    ]
+                    add_row(
+                        selected_segment,
+                        start,
+                        end,
+                        "comparison_period",
+                        dimension,
+                        segment,
+                        "previous_period",
+                        reference_segment,
+                        f"reference:{dimension}:{segment}",
+                    )
+    return pd.DataFrame(rows, columns=MONTHLY_CHURN_COLUMNS)
+
+
+def build_reason_distribution(
+    tables: dict[str, pd.DataFrame], terminal_events: pd.DataFrame
+) -> pd.DataFrame:
+    parsed = _coerce_tables(tables)
+    terminal = terminal_events.copy()
+    if terminal.empty:
+        terminal = terminal.reindex(columns=parsed["churn_events"].columns)
+    selected_terminal, exclusions = select_first_terminal_events(
+        parsed["accounts"], parsed["churn_events"], OBSERVATION_END
+    )
+    if set(terminal.get("churn_event_id", [])) != set(selected_terminal.get("churn_event_id", [])):
+        raise ValueError("terminal_events must match shared terminal selection")
+    terminal_series = terminal.set_index("account_id")["churn_date"]
+    lost = mrr_lost_at_churn(parsed["subscriptions"], terminal_series)
+    diagnostic_cutoff = SCORING_CUTOFF - pd.Timedelta(days=31)
+    windows = (
+        (
+            "reference_period",
+            REFERENCE_PERIOD[0],
+            REFERENCE_PERIOD[1],
+            "registered_at_start",
+            None,
+        ),
+        (
+            "recent_period",
+            RECENT_PERIOD[0],
+            RECENT_PERIOD[1],
+            "registered_at_start",
+            None,
+        ),
+        (
+            "diagnostic_horizon",
+            diagnostic_cutoff + pd.Timedelta(days=1),
+            diagnostic_cutoff + pd.Timedelta(days=30),
+            "diagnostic_horizon",
+            diagnostic_cutoff,
+        ),
+    )
+    rows = []
+    accounts = parsed["accounts"].set_index("account_id")
+    raw_exclusions = exclusions.merge(
+        parsed["churn_events"][["churn_event_id", "churn_date"]],
+        on="churn_event_id",
+        how="left",
+    )
+    for window_id, start, end, population, eligibility_cutoff in windows:
+        in_window = terminal["churn_date"].ge(start) & terminal["churn_date"].le(end)
+        selected = terminal.loc[in_window].copy()
+        if population == "registered_at_start" and not selected.empty:
+            month_start = selected["churn_date"].dt.to_period("M").dt.start_time
+            signup = selected["account_id"].map(accounts["signup_date"])
+            selected = selected.loc[signup.le(month_start)]
+        elif population == "diagnostic_horizon" and not selected.empty:
+            selected = selected.loc[
+                selected["account_id"].map(accounts["signup_date"]).le(eligibility_cutoff)
+            ]
+        reasons = selected["reason_code"].astype("string").fillna("unknown")
+        reason_values = sorted(set(reasons) | {"unknown"})
+        excluded_count = int(
+            raw_exclusions.loc[
+                raw_exclusions["churn_date"].ge(start) & raw_exclusions["churn_date"].le(end),
+                "churn_event_id",
+            ].nunique()
+        )
+        for reason in reason_values:
+            reason_events = selected.loc[reasons.eq(reason)]
+            count = len(reason_events)
+            denominator = len(selected)
+            ci_low, ci_high = _wilson(count, denominator)
+            mrr_lost, known, unknown = _financial_loss(lost, reason_events["account_id"])
+            status = "available" if denominator else "unavailable"
+            limitation = "" if denominator else "zero_eligible_events"
+            if unknown:
+                status = "partial" if status == "available" else status
+                limitation = "|".join(
+                    filter(None, [limitation, "mrr_lost_unknown_for_some_accounts"])
+                )
+            rows.append(
+                {
+                    "evidence_id": f"reason:{window_id}:{population}:{reason}",
+                    "period_start": start,
+                    "period_end": end,
+                    "population": population,
+                    "chronology": "shared",
+                    "status": status,
+                    "limitation": limitation,
+                    "source_refs": "accounts|subscriptions|churn_events",
+                    "calculation": "build_reason_distribution:v1",
+                    "reason_code": reason,
+                    "terminal_accounts": count,
+                    "eligible_events": denominator,
+                    "excluded_events": excluded_count,
+                    "share": count / denominator if denominator else np.nan,
+                    "unit": "share_of_first_valid_terminal_accounts",
+                    "ci_low": ci_low,
+                    "ci_high": ci_high,
+                    "ci_method": "wilson",
+                    "ci_level": 0.95,
+                    "comparator_id": None,
+                    "mrr_lost": mrr_lost,
+                    "mrr_known_accounts": known,
+                    "mrr_unknown_accounts": unknown,
+                    "currency": "USD",
+                }
+            )
+    return pd.DataFrame(rows, columns=REASON_DISTRIBUTION_COLUMNS)
 
 
 def build_diagnostic_snapshot(panel: pd.DataFrame) -> pd.DataFrame:

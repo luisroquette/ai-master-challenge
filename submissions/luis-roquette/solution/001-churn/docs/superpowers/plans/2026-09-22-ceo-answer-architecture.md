@@ -109,7 +109,7 @@ O agente não executa esses comandos; informa arquivos e testes ao orquestrador,
 - Produces: `build_reason_distribution(tables, terminal_events) -> pd.DataFrame`.
 - Consumed by: Task 4; Task 5 serializa sem recalcular.
 
-- [ ] **Step 1: escrever testes RED com resultados calculáveis à mão**
+- [x] **Step 1: escrever testes RED com resultados calculáveis à mão**
 
 ```python
 def test_monthly_churn_uses_registered_at_start_denominator(): ...
@@ -118,13 +118,13 @@ def test_segment_comparator_is_disjoint_complement(): ...
 def test_reason_distribution_uses_first_valid_event_in_window(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_diagnosis.py -k "monthly_churn or period_bootstrap or segment_comparator or reason_distribution"`
 
 Expected: FAIL porque as funções ainda não existem.
 
-- [ ] **Step 3: implementar histórico e motivos**
+- [x] **Step 3: implementar histórico e motivos**
 
 ```python
 def build_monthly_churn(
@@ -138,13 +138,13 @@ def build_reason_distribution(
 
 Wilson vale por mês; contrastes repetidos usam bootstrap clusterizado por conta, com identificador de ocorrência do sorteio.
 
-- [ ] **Step 4: confirmar GREEN e determinismo**
+- [x] **Step 4: confirmar GREEN e determinismo**
 
 Run: `.venv/bin/python -m pytest -q tests/test_diagnosis.py`
 
 Expected: PASS duas vezes com seed 42 e schemas presentes mesmo sem linhas.
 
-- [ ] **Step 5: entregar o diff sem commit**
+- [x] **Step 5: entregar o diff sem commit**
 
 Informar arquivos, testes e limitações ao orquestrador; aguardar o Step 3. Não executar `git add` ou `git commit` durante o grupo paralelo.
 

@@ -805,3 +805,17 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Teste e retorno ao loop:** a primeira execução remota chegou a `24 passed, 2 failed`. As duas falhas estavam nas novas fixtures — import ausente de pandas e coluna booleana não-nullable — e foram corrigidas. A revisão seguinte encontrou que `_segment_metrics` ainda somava nulos como zero; corrigimos o consumidor e adicionamos regressão. A nova validação ainda não foi concluída porque os dois slots globais de Codespaces permaneceram ocupados ou em transição. Nenhum gate foi contornado e a Task 1 continua aberta até teste e lint verdes.
 
 **Fechamento do loop:** o Codespace correto foi alinhado ao SHA remoto `f7b82ea`, recebeu o diff exato e executou o gate direcionado. Resultado final: `37 passed in 12.46s`, Ruff lint sem erros e `9 files already formatted`. O patch de validação foi revertido no ambiente remoto. Com o ciclo `Planejamento → Revisão → Execução → Teste` verde, a Task 1 foi validada e a SPEC passou de `todo` para `in-progress`.
+
+### Task 2 — histórico, segmentos e motivos
+
+**Planejamento:** antes de implementar, revisitamos a SPEC e referências públicas sobre denominador de churn, coortes mensais, Wilson e bootstrap clusterizado. A decisão foi reutilizar pandas, NumPy e statsmodels já instalados, sem novo módulo ou dependência. O contrato local ficou limitado a `build_monthly_churn` e `build_reason_distribution`.
+
+**Revisão:** a leitura adversarial encontrou cinco lacunas relevantes antes do fechamento: atributos contratuais deveriam vir da assinatura ativa; conta sem histórico de assinatura não poderia virar MRR zero; meses sem população precisavam continuar publicados; a janela diagnóstica deveria respeitar o cutoff de elegibilidade; e o bootstrap não poderia sortear contas sem exposição em nenhum dos grupos.
+
+**Execução:** implementamos a série abril/2023–novembro/2024, comparação referência versus recente, população `registered_at_start`, entrantes e exclusões, Wilson mensal, bootstrap por conta, complemento disjunto de segmentos, MRR conhecido/desconhecido e distribuição do primeiro motivo terminal válido. Foram adicionadas regressões para ponderação conta-mês, sorteios duplicados, calendário bissexto, denominador zero, amostra insuficiente, receita parcial e evento fora da janela.
+
+**Feedback do teste:** o primeiro gate relevante retornou `11 passed, 3 failed`; a causa comum foi colisão entre atributos antigos da conta e os atributos da assinatura ativa. Depois da correção, uma revisão adicional fechou MRR desconhecido, meses vazios, cutoff diagnóstico e universo do bootstrap. O gate seguinte retornou `15 passed, 2 failed`: faltava `mrr_band` no schema vazio e um teste exigia igualdade de uma limitação que, corretamente, acumulava duas causas. O ciclo seguinte chegou a `17 passed`, mas o lint encontrou uma closure não vinculada (`B023`). Após vinculá-la, testes e lint passaram; o formatador ainda pediu duas alterações mecânicas.
+
+**Fechamento do loop:** o gate final, sobre o diff exato aplicado no SHA-base `f7b82ea`, produziu `17 passed in 8.17s`, Ruff lint sem erros e `4 files already formatted`. O ambiente remoto reverteu o patch após a validação. Nenhuma etapa foi contornada durante a disputa pelos dois slots globais de Codespaces.
+
+**Estado:** Task 2 validada. O próximo ciclo cronológico é a Task 3, painel alinhado aos eventos, repetindo `Planejamento → Revisão → Execução → Teste`.
