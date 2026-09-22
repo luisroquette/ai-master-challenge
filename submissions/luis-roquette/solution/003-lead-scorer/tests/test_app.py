@@ -9,6 +9,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -336,10 +337,10 @@ render_portfolio(bundle_fixture(), st.session_state)
         next(button for button in at.button if button.label == "Abrir E-B").click().run()
         pin = next(button for button in at.button if button.label == "Prioridade temporária do gestor")
         pin.click().run()
-        self.assertTrue(any("Gestor Mara ·" in caption.value for caption in at.caption))
+        self.assertTrue(any(caption.value.startswith("Gestor Mara ·") for caption in at.caption))
         self.assertTrue(any(button.label == "Abrir E-B" for button in at.button))
         next(button for button in at.button if button.label == "Recalcular prioridades").click().run()
-        self.assertFalse(any("Gestor Mara ·" in caption.value for caption in at.caption))
+        self.assertFalse(any(caption.value.startswith("Gestor Mara ·") for caption in at.caption))
 
 
 class PlaywrightJourneyTests(unittest.TestCase):
@@ -415,9 +416,9 @@ render_portfolio(bundle_fixture(), st.session_state)
         self.open_details(manager, "E-B")
         manager.get_by_text("Origem:", exact=False).wait_for()
         manager.get_by_role("button", name="Prioridade temporária do gestor").click()
-        manager.get_by_text("Gestor Mara ·", exact=False).wait_for()
+        manager.get_by_text(re.compile(r"^Gestor Mara ·")).wait_for()
         manager.get_by_role("button", name="Recalcular prioridades").click()
-        expect(manager.get_by_text("Gestor Mara ·", exact=False)).to_have_count(0)
+        expect(manager.get_by_text(re.compile(r"^Gestor Mara ·"))).to_have_count(0)
         manager_context.close()
 
 
