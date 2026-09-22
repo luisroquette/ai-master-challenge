@@ -204,7 +204,7 @@ def test_invalid_it_artifact_isolated_before_deserialization(prepared, tmp_path,
     assert bundle.get("models.it").correction == "make reproduce"
 
 
-def fixture_bundle(prepared, *, priority="Low", text="technical technical device aatoken"):
+def fixture_bundle(prepared, *, priority="Low", text=None):
     """A synthetic perfect classifier is adversarial fixture only, never a real artifact."""
     bundle = ui.load_artifacts(prepared[0])
     policy = lock_policy(replace(base_policy("customer", "fixture"), automation_enabled=True,
@@ -214,6 +214,9 @@ def fixture_bundle(prepared, *, priority="Low", text="technical technical device
                             "fixture", False)
     model = SimpleNamespace(predict_one=lambda _: prediction)
     retriever = bundle.get("retrieval.customer").value
+    if text is None:
+        text = next(row["text"] for row in retriever.records
+                    if row["text"].startswith("technical "))
     retrieval = RetrievalPolicy(True, 0.2, "fixture", "fixture", "a" * 64,
                                  "enabled", retriever.index_version)
     states = dict(bundle.features)
@@ -291,6 +294,12 @@ def test_risk_precedes_perfect_confidence_in_pipeline_and_ui(prepared, tmp_path,
                                 RetrievalPolicy(**bundle.get("retrieval.policy").value))
     assert assessed["route"]["action"] == "human_review"
     assert assessed["retrieval"]["draft"] is None
+    if changes.get("priority") == "Critical":
+        # An exact indexed description is the maximal cosine match, still never a draft.
+        assert assessed["prediction"]["confidence"] == 1.0
+        assert assessed["retrieval"]["sources"][0]["similarity"] == pytest.approx(1.0)
+    if "@" in changes.get("text", ""):
+        assert assessed["retrieval"]["sources"] == ()  # Privacy blocks querying altogether.
 
 
 def test_ticket_change_and_failed_write_preserve_form(prepared, tmp_path, monkeypatch):
