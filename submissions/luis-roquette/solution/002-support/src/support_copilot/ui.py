@@ -511,9 +511,31 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         "MAE Ridge": satisfaction.get("ridge_mae"),
     })
     st.caption(
-        "Validação cruzada somente no desenvolvimento. Associação não demonstra causalidade; "
-        "o teste continua lacrado."
+        "Validação cruzada somente no desenvolvimento. Associação não demonstra causalidade."
     )
+    metrics = bundle.get("models.metrics")
+    test_status = metrics.value.get("status") if (
+        metrics.status == "ready" and isinstance(metrics.value, dict)) else None
+    if test_status == "sealed":
+        st.caption("Teste final lacrado: aguardando decisão de revisão e locks válidos.")
+    elif test_status == "released_after_locks":
+        st.caption("Teste final aberto após locks. A validação cruzada acima continua sendo "
+                   "evidência de desenvolvimento, não resultado do teste final.")
+    else:
+        st.caption("Estado do teste final não verificável; execute make reproduce.")
+        if metrics.status != "ready":
+            _show_state(metrics)
+    retrieval = bundle.get("retrieval.metrics")
+    if retrieval.status == "ready" and isinstance(retrieval.value, dict):
+        messages = {
+            "disabled": "Assistência de recuperação desativada; abertura do teste não "
+                        "autoriza respostas automáticas.",
+            "insufficient_evidence": "Recuperação sem evidência suficiente; não há "
+                                     "validação humana concluída para aprovar drafts.",
+            "pending_review": "Recuperação aguardando revisão humana; drafts não aprovados.",
+        }
+        if retrieval.value.get("status") in messages:
+            st.caption(messages[retrieval.value["status"]])
 
     st.subheader("Cenários projetados")
     defaults = {

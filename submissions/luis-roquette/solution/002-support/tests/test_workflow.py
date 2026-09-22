@@ -149,7 +149,7 @@ def test_comparison_allows_only_manifest_generated_at(prepared, tmp_path):
     assert canonical_run(prepared[0]) == canonical_run(changed)
 
 
-def test_release_only_after_explicit_lock_preserves_runtime(prepared, tmp_path):
+def test_release_only_after_explicit_lock_preserves_runtime(prepared, tmp_path, monkeypatch):
     import shutil
     original, customer, it = prepared
     root = tmp_path / "artifacts"
@@ -167,6 +167,11 @@ def test_release_only_after_explicit_lock_preserves_runtime(prepared, tmp_path):
     released = ui.load_artifacts(root)
     assert released.get("queue.customer").status == "ready"
     assert "models.customer" in released.manifest["artifacts"]["queue.customer"]["dependencies"]
+    app = app_for(released, tmp_path / "runtime", monkeypatch)
+    scorecard = app.switch_page("pages/scorecard.py").run()
+    assert not scorecard.exception
+    captions = " ".join(item.value for item in scorecard.caption)
+    assert "Teste final aberto após locks" in captions and "lacrado" not in captions
     before = canonical_run(root)
     REPRODUCE(customer, it, root)
     assert canonical_run(root) == before
@@ -340,6 +345,37 @@ def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, m
     lab.text_area[0].input("hardware device")
     button(lab, "Classificar IT").click().run()
     assert not lab.exception
+
+
+@pytest.mark.parametrize("test_status,retrieval_status,expected", [
+    ("sealed", "pending_review", "aguardando revisão humana"),
+    ("sealed", "insufficient_evidence", "sem evidência suficiente"),
+    ("released_after_locks", "enabled", "Teste final aberto após locks"),
+    ("released_after_locks", "disabled", "recuperação desativada"),
+    ("released_after_locks", "insufficient_evidence", "sem evidência suficiente"),
+    ("unknown", "disabled", "Estado do teste final não verificável"),
+    (None, "insufficient_evidence", "Estado do teste final não verificável"),
+])
+def test_scorecard_reports_verified_test_lifecycle(
+        prepared, tmp_path, monkeypatch, test_status, retrieval_status, expected):
+    bundle = ui.load_artifacts(prepared[0])
+    states = dict(bundle.features)
+    states["models.metrics"] = ui.FeatureState(
+        "corrupt" if test_status is None else "ready", {"status": test_status},
+        "models/metrics.json", "artifact_hash_mismatch" if test_status is None else None)
+    states["retrieval.metrics"] = ui.FeatureState(
+        "ready", {"status": retrieval_status}, "retrieval/metrics.json")
+    app = app_for(replace(bundle, features=states), tmp_path, monkeypatch)
+    scorecard = app.switch_page("pages/scorecard.py").run()
+    assert not scorecard.exception
+    captions = " ".join(item.value for item in scorecard.caption)
+    assert "Associação não demonstra causalidade" in captions
+    assert expected in captions
+    assert ("Teste final lacrado" in captions) == (test_status == "sealed")
+    assert ("Teste final aberto após locks" in captions) == (
+        test_status == "released_after_locks")
+    if test_status is None:
+        assert any("make reproduce" in item.value for item in scorecard.warning)
 
 
 def test_demo_has_no_install_download_or_training():
