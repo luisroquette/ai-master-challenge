@@ -209,9 +209,8 @@ def rejected_bundle_fixture():
 def empty_stage_bundle_fixture():
     evaluations = tuple(_evaluation(candidate, route) for candidate in ("logistic", "boosting")
                         for route in ("full", "fallback"))
-    scores = (_score("P-EMPTY", "Prospecting", seller="Vazio", state="relative"),)
     return s.ScoringBundle("fixture-empty", s.DEFAULT_CONFIG.version, evaluations,
-        tuple(s.select_route(evaluations, route) for route in ("full", "fallback")), scores, (),
+        tuple(s.select_route(evaluations, route) for route in ("full", "fallback")), (), (),
         {"revision": "fixture-empty", "source_digest": "fixture-source"})
 
 
@@ -241,13 +240,18 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertEqual([row.opportunity_id for row in sections["calibrated"]], ["E-A", "E-B"])
 
     def test_C4_native_table_selection_maps_the_displayed_section_positions(self):
-        rows = [next(row for row in self.bundle.scores if row.opportunity_id == "E-A")]
-        event = {"selection": {"rows": [0]}}
+        rows = [next(row for row in self.bundle.scores if row.opportunity_id == item)
+                for item in ("E-A", "E-B")]
+        event = {"selection": {"rows": [1]}}
         with patch.object(self.app.st, "dataframe", return_value=event) as dataframe:
             positions = self.app.render_selectable_table(rows, "calibrated", None, "fixture-grid")
-        self.assertEqual(positions, [0])
+        self.assertEqual(positions, [1])
         self.assertEqual(dataframe.call_args.kwargs["on_select"], "rerun")
         self.assertEqual(dataframe.call_args.kwargs["selection_mode"], "single-row")
+        state = {}
+        self.app.ensure_session(state, "fixture")
+        self.assertEqual(self.app.resolve_selection(state, "Engaging", "page-1",
+            [row.opportunity_id for row in rows], positions), "E-B")
 
     def test_TC33_unassigned_rows_stay_in_quality_view_without_a_portfolio_owner(self):
         unassigned = next(row for row in self.bundle.scores if row.opportunity_id == "UNASSIGNED")
@@ -337,9 +341,11 @@ class PortfolioContractTests(unittest.TestCase):
         self.app._cached_bundle.clear()
         with patch.object(self.app, "load_dataset", return_value=object()), \
              patch.object(self.app, "source_identity", return_value=identity), \
-             patch.object(self.app, "build_scoring_bundle", return_value=self.bundle) as build:
-            self.app.cached_bundle(snapshot, s.DEFAULT_CONFIG)
+             patch.object(self.app, "build_scoring_bundle",
+                          return_value=replace(self.bundle, source_identity=identity)) as build:
+            bundle = self.app.cached_bundle(snapshot, s.DEFAULT_CONFIG)
         self.assertEqual(dict(build.call_args.args[2]), identity)
+        self.assertEqual(bundle.source_identity["source_digest"], identity["source_digest"])
 
     def test_TC41_cached_bundle_reuses_training_for_same_identity(self):
         from data import Snapshot

@@ -6,18 +6,18 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
-import subprocess
 from typing import Mapping
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
 
 from data import DataValidationError, fingerprint, load_dataset, read_snapshot
-from scoring import DEFAULT_CONFIG, build_scoring_bundle
+from scoring import DEFAULT_CONFIG, build_scoring_bundle, rank_stage, source_identity
 
 ROOT = Path(__file__).resolve().parent
-BAND_ORDER = {"alta": 0, "media": 1, "baixa": 2, None: 3}
 PAGE_SIZE = 25
+PIN_TIMEZONE = ZoneInfo("America/Sao_Paulo")
 
 
 @dataclass(frozen=True)
@@ -29,19 +29,6 @@ class TemporaryPin:
     generation: int
 
 
-def source_identity():
-    """Digest executable sources; Git metadata is optional and never guessed."""
-    files = (ROOT / name for name in ("app.py", "data.py", "scoring.py", "requirements.txt"))
-    source_digest = hashlib.sha256(b"".join(
-        path.name.encode() + b"\0" + path.read_bytes() for path in files)).hexdigest()
-    try:
-        revision = subprocess.run(("git", "rev-parse", "HEAD"), cwd=ROOT, check=True,
-            capture_output=True, text=True, timeout=3).stdout.strip() or None
-    except (OSError, subprocess.SubprocessError):
-        revision = None
-    return {"revision": revision, "source_digest": source_digest}
-
-
 def bundle_cache_key(snapshot, config, identity):
     payload = {"data_config": fingerprint(snapshot, config), "source": identity}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -49,13 +36,16 @@ def bundle_cache_key(snapshot, config, identity):
 
 
 @st.cache_resource(show_spinner="Calculando prioridades…")
-def _cached_bundle(cache_key, snapshot, config):
+def _cached_bundle(cache_key, snapshot, config, source_revision, source_digest):
     del cache_key  # Part of Streamlit's cache key; model inputs stay explicit below.
-    return build_scoring_bundle(load_dataset(snapshot), config)
+    identity = {"revision": source_revision, "source_digest": source_digest}
+    return build_scoring_bundle(load_dataset(snapshot), config, identity)
 
 
 def cached_bundle(snapshot, config=DEFAULT_CONFIG):
-    return _cached_bundle(bundle_cache_key(snapshot, config, source_identity()), snapshot, config)
+    identity = source_identity(ROOT)
+    return _cached_bundle(bundle_cache_key(snapshot, config, identity), snapshot, config,
+                          identity["revision"], identity["source_digest"])
 
 
 def ensure_session(session, current_fingerprint):
@@ -87,7 +77,10 @@ def set_temporary_priority(session, role, stage, opportunity_id, manager, allowe
         raise ValueError("A oportunidade não pertence ao portfólio atual do gestor")
     if stage not in ("Engaging", "Prospecting"):
         raise ValueError("Estágio inválido")
-    pin = TemporaryPin(opportunity_id, manager, now or datetime.now(timezone.utc),
+    created_at = now or datetime.now(timezone.utc)
+    if created_at.tzinfo is None:
+        raise ValueError("O horário da prioridade deve incluir fuso")
+    pin = TemporaryPin(opportunity_id, manager, created_at.astimezone(timezone.utc),
         current_fingerprint, session["calculation_generation"])
     session["pins_by_stage"][stage] = pin
     return pin
@@ -115,16 +108,12 @@ def portfolio_rows(bundle, role, identity, region="Todas as regiões", seller="T
 
 
 def stage_sections(rows, stage, pin):
-    stage_rows = [row for row in rows if row.stage == stage]
-    pinned = [row for row in stage_rows if pin and row.opportunity_id == pin.opportunity_id]
-    remaining = [row for row in stage_rows if not pinned or row.opportunity_id != pinned[0].opportunity_id]
-    calibrated = sorted((row for row in remaining if row.state == "calibrated"),
-        key=lambda row: (BAND_ORDER[row.band], -row.expected_revenue, row.opportunity_id))
-    relative = sorted((row for row in remaining if row.state == "relative"), key=lambda row: (
-        row.route or "", row.origin or "", row.explanation_scale or "", BAND_ORDER[row.band],
-        -row.relative_index, -(row.potential_revenue or 0), row.opportunity_id))
-    insufficient = sorted((row for row in remaining if row.state == "insufficient_data"),
-                          key=lambda row: row.opportunity_id)
+    ranked = list(rank_stage(rows, stage))
+    pinned = [row for row in ranked if pin and row.opportunity_id == pin.opportunity_id]
+    remaining = [row for row in ranked if not pinned or row.opportunity_id != pinned[0].opportunity_id]
+    calibrated = [row for row in remaining if row.state == "calibrated"]
+    relative = [row for row in remaining if row.state == "relative"]
+    insufficient = [row for row in remaining if row.state == "insufficient_data"]
     return {"pinned": pinned, "calibrated": calibrated, "relative": relative,
             "insufficient_data": insufficient}
 
@@ -179,25 +168,32 @@ def paginate_rows(rows, page, page_size=PAGE_SIZE):
     return current, page_count, rows[start:start + page_size]
 
 
-def _compact_metric(row):
-    if row.state == "calibrated":
-        return f"Prob. {row.probability:.1%} · Receita {row.expected_revenue:.2f}"
-    if row.state == "relative":
-        return (f"Índice {row.relative_index:.3f} · Evidência {row.evidence_strength} · "
-                f"Potencial {(row.potential_revenue or 0):.2f}")
-    return "Corrigir dados"
+def _selection_rows(event):
+    selection = event.get("selection") if isinstance(event, Mapping) else getattr(event, "selection", None)
+    rows = selection.get("rows") if isinstance(selection, Mapping) else getattr(selection, "rows", ())
+    return list(rows or ())
 
 
-def _render_compact_row(row, stage, context, session):
-    columns = st.columns((1.1, 1.6, 1.1, 2.4, 1.25))
-    columns[0].markdown(f"**{row.opportunity_id}**")
-    columns[1].write(row.product or "indisponível")
-    columns[2].write(row.band or "Dados insuficientes")
-    columns[3].write(_compact_metric(row))
-    if columns[4].button(f"Abrir {row.opportunity_id}",
-                         key=f"open-{stage}-{context}-{row.opportunity_id}"):
-        session["selection_by_stage"][stage] = {
-            "context": context, "id": row.opportunity_id}
+def render_selectable_table(rows, state, pin, key):
+    event = st.dataframe(_table(rows, state, pin), hide_index=True, width="stretch", key=key,
+                         on_select="rerun", selection_mode="single-row")
+    return _selection_rows(event)
+
+
+def _render_open_actions(rows, stage, context, session):
+    st.caption("Ações acessíveis")
+    for start in range(0, len(rows), 4):
+        columns = st.columns(4)
+        for column, row in zip(columns, rows[start:start + 4]):
+            if column.button(f"Abrir {row.opportunity_id}",
+                             key=f"open-{stage}-{context}-{row.opportunity_id}"):
+                session["selection_by_stage"][stage] = {
+                    "context": context, "id": row.opportunity_id}
+
+
+def format_pin_timestamp(pin):
+    local = pin.created_at_utc.astimezone(PIN_TIMEZONE)
+    return f"{local:%d/%m/%Y %H:%M:%S} (America/Sao_Paulo)"
 
 
 def _table(rows, state, pin=None):
@@ -210,7 +206,8 @@ def _table(rows, state, pin=None):
             record.update({"Índice relativo": row.relative_index, "Evidência": row.evidence_strength,
                            "Valor potencial do catálogo": row.potential_revenue})
         elif state == "pinned":
-            record.update({"Gestor": pin.manager, "Registrada em UTC": pin.created_at_utc.isoformat()})
+            record.update({"Gestor": pin.manager,
+                           "Registrada em America/Sao_Paulo": format_pin_timestamp(pin)})
             if row.state == "calibrated":
                 record.update({"Probabilidade": row.probability,
                                "Receita esperada (valor catálogo)": row.expected_revenue})
@@ -248,18 +245,20 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
         page_state["page"] = page
         row_section = {row.opportunity_id: name for name, section in sections.items()
                        for row in section}
-        previous_section = None
-        for row in visible_rows:
-            name = row_section[row.opportunity_id]
-            if name != previous_section:
-                st.markdown(f"### {labels[name]}")
-                if name == "pinned":
-                    st.caption(f"Gestor {pin.manager} · {pin.created_at_utc.isoformat()}")
-                headers = st.columns((1.1, 1.6, 1.1, 2.4, 1.25))
-                for column, label in zip(headers, ("ID", "Produto", "Faixa", "Métrica", "Ação")):
-                    column.caption(label)
-                previous_section = name
-            _render_compact_row(row, stage, context, session)
+        selected_positions = []
+        displayed_ids = [row.opportunity_id for row in visible_rows]
+        offset = 0
+        for name in ("pinned", "calibrated", "relative", "insufficient_data"):
+            section_rows = [row for row in visible_rows if row_section[row.opportunity_id] == name]
+            if not section_rows:
+                continue
+            st.markdown(f"### {labels[name]}")
+            if name == "pinned":
+                st.caption(f"Gestor {pin.manager} · {format_pin_timestamp(pin)}")
+            selected_positions.extend(offset + position for position in render_selectable_table(
+                section_rows, name, pin, f"portfolio-{stage}-{context}-{page}-{name}"))
+            _render_open_actions(section_rows, stage, context, session)
+            offset += len(section_rows)
         navigation = st.columns((1, 1, 2))
         if navigation[0].button(f"Página anterior de {stage}", disabled=page == 0,
                                 key=f"previous-{stage}-{context}"):
@@ -273,10 +272,10 @@ def _render_stage(stage, rows, role, identity, region, seller, bundle, session):
             f"Página {page + 1} de {page_count} · {len(visible_rows)} de {len(ordered)} oportunidades")
         if stage == "Engaging":
             calibrated = [row for row in ordered if row.state == "calibrated"]
-            st.caption(f"Receita esperada cobre {len(calibrated)}/{len(ordered)} oportunidades; "
-                       f"total em valor de catálogo: {sum(row.expected_revenue for row in calibrated):.2f}")
-    selected_id = resolve_selection(session, stage, context,
-                                    [row.opportunity_id for row in ordered], [])
+            if calibrated:
+                st.caption(f"Receita esperada cobre {len(calibrated)}/{len(ordered)} oportunidades; "
+                           f"total em valor de catálogo: {sum(row.expected_revenue for row in calibrated):.2f}")
+    selected_id = resolve_selection(session, stage, context, displayed_ids, selected_positions)
     with detail_column:
         if not selected_id:
             st.caption("Selecione uma linha para ver os detalhes.")

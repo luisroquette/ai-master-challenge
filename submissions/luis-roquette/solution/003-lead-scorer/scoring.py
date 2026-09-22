@@ -686,14 +686,16 @@ def evaluate_history(records, config=DEFAULT_CONFIG):
     return split, fitted, evaluations, selections
 
 
-def build_scoring_bundle(dataset, config=DEFAULT_CONFIG):
+def build_scoring_bundle(dataset, config=DEFAULT_CONFIG, identity=None):
     """Fit the frozen policy once and publish every active row in an honest state."""
     required = ("opportunities", "data_fingerprint", "diagnostics")
     if any(not hasattr(dataset, name) for name in required):
         raise ValueError("dataset must provide opportunities, diagnostics and data_fingerprint")
     records = tuple(dict(row) for row in _records(dataset.opportunities))
     _, fitted, evaluations, selections = evaluate_history(records, config)
-    source = source_identity()
+    source = source_identity() if identity is None else MappingProxyType(dict(identity))
+    if set(source) != {"revision", "source_digest"} or not source["source_digest"]:
+        raise ValueError("Source identity requires revision and source_digest")
     fingerprint = digest((dataset.data_fingerprint, config.fingerprint, source["source_digest"]))
     scores = score_active(records, fitted, evaluations, selections, fingerprint,
                           dataset.diagnostics, config)
