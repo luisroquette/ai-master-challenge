@@ -17,6 +17,8 @@
 
 O último preflight canônico integral concluído terminou com `PREFLIGHT OK`: 74 testes em 92,458 s, avaliação real, startup e jornada Playwright renderizada no SHA `e052e4e`. Após o retrabalho da revisão, seis focais passaram em 26,818 s no SHA exato `9228ffd`: ordenação canônica, seleção nativa, pin/horário localizado, identidade única da fonte e jornadas AppTest/Playwright para rotas rejeitadas e portfólio vazio. Não existe resultado integral pós-correção: o owner determinou o bypass explícito dessa repetição; uma execução já iniciada foi interrompida e não é contabilizada. TC-47 continua não executado.
 
+O segundo retrabalho residual adicionou regressões em `2dbc3e5` e implementação em `af046c4` para seleção única entre grades e transparência do suporte histórico em Prospecting. Por bypass explícito do owner e ausência de Codespace limpo do repositório, esses quatro testes foram revisados estaticamente, mas não executados. Os únicos gates pós-mudança são `py_compile`, `bash -n scripts/preflight.sh` e `git diff --check`, todos aprovados; não se reivindica GREEN executado.
+
 ## Snapshot real já congelado
 
 | Tabela | Linhas |
@@ -70,6 +72,7 @@ As 2.089 oportunidades ativas ficaram em prioridade `relative`; zero ficaram em 
 - Gestor: equipe, filtros exatos, detalhe, prioridade temporária com autor/horário e limpeza por recálculo.
 - A lista usa no máximo 25 linhas por página, seleção única no `st.dataframe` nativo e botão acessível `Abrir <opportunity_id>` como fallback; o resumo `Filtros aplicados` confirma o estado final antes da ação.
 - As jornadas pós-revisão provaram que rotas probabilísticas rejeitadas não expõem probabilidade/receita esperada em nenhuma superfície e que um portfólio realmente vazio não exibe detalhes nem pin.
+- O retrabalho residual unifica seleção nativa e fallback na mesma fonte de verdade por estágio/página, invalida grades irmãs e acrescenta nos detalhes Prospecting observações históricas, suporte efetivo e peso do prior; o pin relativo mantém o valor potencial. As novas jornadas que cobrem essa afirmação estão escritas, mas pendem de execução pelo bypass registrado acima.
 - App real: startup e identidade completa (`revision`, `fingerprint`, `source_digest`) verificadas pelo gate `startup`.
 - O texto renderizado confirmou título, aviso do protótipo, filtro do vendedor e identidade completa. Não há captura versionada; nenhuma imagem é reivindicada.
 

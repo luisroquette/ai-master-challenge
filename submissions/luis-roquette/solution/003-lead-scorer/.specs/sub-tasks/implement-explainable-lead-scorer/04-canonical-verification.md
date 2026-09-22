@@ -44,6 +44,7 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 - RED at `7d023604c318264d2e85005652c65c49c7a5620a`: 6 tests, 2 failures and 4 errors, exposing all five review gaps.
 - GREEN at `9228ffdf3ff760efe0ecfb9b107d9a537c26789b`: 6 focused tests in 26.818 s, all passing, including rendered AppTest and Playwright journeys.
 - The last completed full preflight remains 74/74 at `e052e4e226a8962fc338380e6cebb2e6446dc86b`. A post-fix full run was started but interrupted by explicit owner order and is not evidence of an integral pass. TC-47 remains out of scope.
+- Residual review 2: tests were committed at `2dbc3e561b845bc11c8b54ce25219209da4b4669` and implementation at `af046c4a4d9c90f4c3e3968260b3306e794659bc` for one active grid selection and CK-19 Prospecting support/pin details. The owner extended the bypass to Codespace waiting and local AppTest/Playwright, so these tests are written but unexecuted; `py_compile`, `bash -n` and `git diff --check` passed. No executed GREEN is claimed.
 
 #### Blockers & Risks
 
