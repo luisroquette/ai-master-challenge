@@ -36,6 +36,7 @@ DATE_TIME_POLICY = (
 ISO_DATE_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:[zZ]|[+-]\d{2}:?\d{2})?)?$"
 )
+ISO_OFFSET_RE = re.compile(r"[+-](\d{2}):?(\d{2})$")
 LEGACY_DATE_RE = re.compile(r"^\d{1,2}/\d{1,2}/\d{2} \d{1,2}:\d{2} [AP]M$")
 REQUIRED_COLUMNS = (
     "id",
@@ -97,6 +98,11 @@ def _parse_post_date(value: str) -> pd.Timestamp:
     if LEGACY_DATE_RE.fullmatch(value):
         parsed = pd.Timestamp(datetime.strptime(value, "%m/%d/%y %I:%M %p"))
     elif ISO_DATE_RE.fullmatch(value):
+        offset = ISO_OFFSET_RE.search(value)
+        if offset:
+            hours, minutes = (int(component) for component in offset.groups())
+            if hours > 14 or minutes > 59 or (hours == 14 and minutes != 0):
+                raise ValueError("unsupported UTC offset")
         parsed = pd.Timestamp(value)
     else:
         raise ValueError("unsupported date grammar")

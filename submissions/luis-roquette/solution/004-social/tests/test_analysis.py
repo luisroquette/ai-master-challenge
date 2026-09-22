@@ -142,7 +142,11 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual(sys.get_int_max_str_digits(), digit_limit)
 
     def test_date_grammar_rejects_relative_and_unknown_timezone_values(self):
-        for value in ("today", "now", "2025-01-15 12:00 XYZ", "2025-01-15T12:00:00+15:00"):
+        for value in (
+            "today", "now", "2025-01-15 12:00 XYZ", "2025-01-15T12:00:00+15:00",
+            "2025-01-15T12:00:00+00:99", "2025-01-15T12:00:00+13:60",
+            "2025-01-15T12:00:00-00:99", "2025-01-15T12:00:00+14:01",
+        ):
             with self.subTest(value=value):
                 frame, errors = load_csv(csv_bytes([make_post(post_date=value)]))
                 self.assertIsNone(frame)
@@ -157,6 +161,9 @@ class CsvBoundaryTests(unittest.TestCase):
             "2025-01-15T12:00:00.123456789+02:00",
             "2025-01-15T12:00:00Z",
             "2025-01-15T12:00:00-0300",
+            "2025-01-15T12:00:00+01:30",
+            "2025-01-15T12:00:00+14:00",
+            "2025-01-15T12:00:00-1400",
         )
         for value in accepted:
             with self.subTest(value=value):
