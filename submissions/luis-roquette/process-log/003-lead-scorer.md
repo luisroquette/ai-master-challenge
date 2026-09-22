@@ -1123,3 +1123,26 @@ Este método começa somente quando a implementação estiver completa e a Redun
 Luis autorizou explicitamente a aceitação do segundo relatório de revisão da Fase 1, semanticamente completo. As evidências registradas foram: conformidade com a SPEC `4,00`, avaliação interna `2,00`, resultado combinado `3,00`, duas passagens limpas consecutivas e **42/42 testes aprovados em ambas**.
 
 A única exceção foi de serialização: o relatório emitiu `scores.combined` em vez da chave literal `combined_score`. Nenhum teste, achado ou gate técnico foi dispensado. Com essa autorização, a Fase 1 foi marcada como `[REVIEWED]` e a Fase 2 foi liberada.
+
+## I12 — Jornada construtiva da Fase 2 — 2026-09-22
+
+### Construção por etapas
+
+- `4eccd2f`: interface do passo `03b` implementada; gate focal **8/8**.
+- `9acf3ed`: scoring do passo `03a` implementado; gate focal **32/32** e validação relativa **2.089/2.089**.
+- `e052e4e`: implementação do passo `04` validada no Codespace; o HEAD documental observado depois foi `c16a6d6`.
+- Evidências do passo `04`: focal **2/2**, preflight **74/74**, `REAL_RENDERED_JOURNEY` e Python **3.11.15**.
+
+### Feedback looping: RED → GREEN
+
+- Quatro rotas foram rejeitadas honestamente pelos critérios definidos; nessas rotas, `probability` e `expected_revenue` permaneceram em zero.
+- O cold start real foi medido em **72,851 s**; o timeout foi ajustado para **120 s**, com base nessa evidência.
+- Widgets virtualizados e formulário foram substituídos por botões por linha, em páginas, para tornar a jornada renderizada determinística e testável.
+- O estado dos filtros passou a ter resumo determinístico. Cada achado retornou ao ciclo `Planejamento → Revisão → Execução → Teste` até o gate verde.
+- A contenção do semáforo compartilhado foi respeitada durante as execuções em Codespace; nenhuma validação concorrente foi tratada como prova da etapa.
+
+### Estado e bloqueio da Fase 2
+
+Dois checkboxes do subtask `04` permanecem desmarcados. A SPEC exige repetição pesada local no Mac, mas o `AGENTS.md` proíbe gates pesados no Mac sem autorização explícita de Luis. O conflito não foi contornado: a Fase 2 **não está concluída nem revisada**.
+
+O `TC47` não foi reivindicado. Nenhum push foi realizado.
