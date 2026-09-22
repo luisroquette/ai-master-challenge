@@ -8,6 +8,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from analysis import METHOD_VERSION
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,7 +30,7 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
         self.assertGreaterEqual(len(rows), 3)
         self.assertEqual(cited, [row["evidence_id"] for row in rows[:3]])
         for rank, row in enumerate(rows, 1):
-            self.assertEqual(row["method_version"], "2.3.0")
+            self.assertEqual(row["method_version"], METHOD_VERSION)
             self.assertEqual(int(row["rank"]), rank)
             values, normalization = json.loads(row["priority_values"]), json.loads(row["normalization"])
             impact = sum(min(value / normalization[key], 1) if normalization[key] else 0 for key, value in values.items()) / 3
@@ -60,6 +62,32 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
         for term in ("plataforma", "conteúdo", "categoria", "creator", "audiência", "patrocínio", "frequência", "parar/revisar", "quick wins", "roi", "causalidade"):
             with self.subTest(term=term):
                 self.assertIn(term, report)
+
+    def test_report_answers_the_heads_three_questions_with_kpis_and_actions(self):
+        report = (ROOT / "analysis.md").read_text(encoding="utf-8")
+        required = {
+            "O que gera engajamento?": (
+                "NÃO HÁ DRIVER CAUSAL COMPROVADO; TEXTO LIDERA NUMERICAMENTE",
+                "ERv mediano: 19,912%", "52.214 posts", "Ação:",
+            ),
+            "Vale patrocinar influenciadores?": (
+                "NÃO ESCALAR PATROCÍNIO AGORA", "Cobertura comparável: 1,56%",
+                "0/12 comparações", "Ação:",
+            ),
+            "Qual deve ser a estratégia?": (
+                "MANTER O MIX E TESTAR YOUTUBE / VÍDEO / ESTILO DE VIDA / 500.000+ POR 7 DIAS",
+                "1 post/creator/semana", "18 creators", "Ação:",
+            ),
+        }
+        executive = report.split("## Decisão para segunda-feira", 1)[0]
+        self.assertEqual(executive.count("- KPI:"), 3)
+        self.assertEqual(executive.count("- Comparação:"), 3)
+        self.assertEqual(executive.count("- Amostra/cobertura:"), 3)
+        self.assertEqual(executive.count("- Ação:"), 3)
+        for question, evidence in required.items():
+            section = executive.split(f"### {question}", 1)[1].split("### ", 1)[0]
+            for expected in evidence:
+                self.assertIn(expected, section)
 
 
 if __name__ == "__main__":

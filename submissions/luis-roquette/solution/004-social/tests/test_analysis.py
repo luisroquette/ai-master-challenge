@@ -7,7 +7,7 @@ import unittest
 
 import pandas as pd
 
-from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, follower_band, load_csv
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, derive_metrics, executive_answers, follower_band, load_csv
 from tests.helpers import (
     aggregate_effect_rows,
     alert_for_target,
@@ -29,6 +29,22 @@ class CsvBoundaryTests(unittest.TestCase):
         frame, errors = load_csv(csv_bytes([make_post(platform="Instagram")]))
         self.assertEqual(errors, [])
         self.assertEqual(frame["platform"].unique().tolist(), ["Instagram"])
+
+    def test_executive_answers_have_three_complete_unambiguous_decisions(self):
+        frame = frame_from_rows([
+            make_post(id="text", content_id="text", content_type="text", likes=9, shares=0, comments_count=0),
+            make_post(id="video", content_id="video", content_type="video", likes=3, shares=0, comments_count=0),
+        ])
+        result = analyze(frame, {"include_post_alerts": False}, str(frame["source_hash"].iloc[0]))
+        answers = executive_answers(result)
+        self.assertEqual([item["question"] for item in answers], [
+            "O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?",
+        ])
+        self.assertTrue(all(set(item) == {"question", "verdict", "kpi", "comparison", "sample", "action"}
+                            and all(item.values()) for item in answers))
+        self.assertIn("TEXTO", answers[0]["verdict"])
+        self.assertEqual(answers[1]["verdict"], "NÃO ESCALAR PATROCÍNIO AGORA")
+        self.assertIn("COLETAR", answers[2]["verdict"])
 
     def test_load_csv_reports_missing_required_column_without_partial_frame(self):
         row = make_post()

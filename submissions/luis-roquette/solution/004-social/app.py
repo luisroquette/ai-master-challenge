@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import os
 import sqlite3
@@ -16,7 +17,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from analysis import METHOD_VERSION, align_scope_timestamp, analyze, decision_baseline, executive_summary, export_evidence, load_csv, observe_evidence
+from analysis import METHOD_VERSION, align_scope_timestamp, analyze, decision_baseline, executive_answers, executive_summary, export_evidence, load_csv, observe_evidence
 from storage import connect, list_decisions, record_decision, record_import, record_outcome, utc_now
 
 
@@ -115,6 +116,32 @@ def _render_design_system() -> None:
         }
         [data-testid="stMetricLabel"] { color: var(--ink-soft); letter-spacing: .04em; }
 
+        .head-answers {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1rem;
+          margin: 1rem 0 2rem;
+        }
+        .head-answer {
+          padding: 1.1rem;
+          border: 1px solid var(--line);
+          border-top: 5px solid var(--signal);
+          background: var(--paper-raised);
+          box-shadow: 8px 8px 0 rgba(23, 32, 30, .06);
+        }
+        .head-answer h4 {
+          min-height: 2.5rem;
+          margin: 0 0 .8rem;
+          color: var(--ink-soft);
+          font: 700 .72rem/1.3 "Avenir Next", sans-serif;
+          letter-spacing: .09em;
+          text-transform: uppercase;
+        }
+        .head-answer strong { display: block; min-height: 3.5rem; color: var(--ink); line-height: 1.25; }
+        .head-answer .answer-kpi { margin: .9rem 0 .55rem; color: var(--signal-dark); font-weight: 800; }
+        .head-answer p { margin: .45rem 0; color: var(--ink-soft); font-size: .88rem; line-height: 1.45; }
+        .head-answer .answer-action { padding-top: .55rem; border-top: 1px solid var(--line); color: var(--ink); }
+
         [data-testid="stFileUploaderDropzone"] {
           border: 1px dashed var(--ink-soft);
           border-radius: 0;
@@ -168,6 +195,8 @@ def _render_design_system() -> None:
           .cockpit-kicker span { display: block; margin-bottom: .5rem; }
           .workflow-rail { grid-template-columns: 1fr; }
           .workflow-rail span + span { border-left: 0; border-top: 1px solid var(--line); }
+          .head-answers { grid-template-columns: 1fr; }
+          .head-answer h4, .head-answer strong { min-height: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
@@ -271,6 +300,22 @@ def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
                 lambda value: _display_integer(value) if isinstance(value, Integral) else value
             )
     return frame
+
+
+def _render_head_answers(answers: list[dict[str, str]]) -> None:
+    def safe(value: object) -> str:
+        return html.escape(str(value))
+
+    cards = "".join(
+        f"""<article class="head-answer">
+        <h4>{safe(item['question'])}</h4><strong>{safe(item['verdict'])}</strong>
+        <p class="answer-kpi">{safe(item['kpi'])}</p><p>{safe(item['comparison'])}</p>
+        <p>{safe(item['sample'])}</p><p class="answer-action"><b>Ação:</b> {safe(item['action'])}</p>
+        </article>"""
+        for item in answers
+    )
+    st.subheader("Três respostas para o Head de Marketing")
+    st.markdown(f'<section class="head-answers">{cards}</section>', unsafe_allow_html=True)
 
 
 def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dict[str, Any]) -> None:
@@ -385,6 +430,23 @@ else:
         f"{_literal_caption(', '.join(metadata['platforms']))}"
     )
     st.caption("Dados históricos são rotulados pela data do dataset; associação não implica causalidade nem ROI.")
+
+    head_answer_key = (str(metadata["source_hash"]), METHOD_VERSION)
+    if st.session_state.get("head_answer_key") != head_answer_key:
+        with st.spinner("Consolidando as três respostas no histórico completo…"):
+            history_scope = {
+                "target_start": min(active_frame["post_date"]).isoformat(),
+                "target_end": max(active_frame["post_date"]).isoformat(),
+                "reference_date": max(active_frame["post_date"]).isoformat(),
+                "filters": {},
+                "strict_audience": False,
+                "include_post_alerts": False,
+                "method_version": METHOD_VERSION,
+            }
+            history_result = analyze(active_frame, history_scope, str(metadata["source_hash"]))
+            st.session_state["head_answers"] = executive_answers(history_result)
+            st.session_state["head_answer_key"] = head_answer_key
+    _render_head_answers(st.session_state["head_answers"])
 
     filter_columns = {
         "platform": "Plataformas",

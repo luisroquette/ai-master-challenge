@@ -308,30 +308,36 @@ class AppTests(unittest.TestCase):
         ):
             app = self.app()
             app.file_uploader[0].set_value(("mixed.csv", raw, "text/csv")).run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 1))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 2))
+            head_answers = app.session_state["head_answers"]
+            self.assertEqual(len(head_answers), 3)
+            self.assertIn("Três respostas para o Head de Marketing", [item.value for item in app.subheader])
+            rendered = "\n".join(item.value for item in app.markdown)
+            self.assertTrue(all(item["verdict"] in rendered for item in head_answers))
 
             second = app.session_state["active_result"]["all_recommendations"][1]
             app.selectbox(key="decision_recommendation").set_value(second).run()
             app.button(key="save_decision").click().run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 1))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 2))
             self.assertEqual(self.stored()[0]["recommendation_key"], second["recommendation_key"])
             payload = next(call.args[1] for call in reversed(download.call_args_list)
                            if call.args[0] == "Baixar evidências e decisões (CSV)")
             self.assertTrue(any(row["record_type"] == "decision" for row in parse_export(payload)))
 
             app.multiselect(key="filter_content_category").set_value(["beauty"]).run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 2))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 3))
+            self.assertEqual(app.session_state["head_answers"], head_answers)
 
             app.selectbox(key="period_mode").set_value("Todo o histórico").run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 3))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 4))
 
             changed = csv_bytes([{**row, "likes": int(row["likes"]) + 1} for row in tech + beauty])
             app.file_uploader[0].set_value(("changed.csv", changed, "text/csv")).run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (2, 2, 4))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (2, 2, 6))
             preserved = app.session_state["active_result"]
 
             app.file_uploader[0].set_value(("invalid.csv", b"invalid", "text/csv")).run()
-            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (3, 2, 4))
+            self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (3, 2, 6))
             self.assertEqual(app.session_state["active_result"]["scope"], preserved["scope"])
             self.assertTrue(app.error)
 

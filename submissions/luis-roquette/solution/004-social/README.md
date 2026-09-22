@@ -1,6 +1,6 @@
 # Cockpit de Social Media — Challenge 004
 
-Aplicação local que valida o CSV do desafio, produz análise contextual reproduzível, prioriza ações, registra decisões humanas em SQLite e exporta o mesmo resultado em HTML e CSV.
+Aplicação local que valida o CSV do desafio, responde na abertura às três perguntas do Head de Marketing com base no histórico completo, produz análise contextual reproduzível, prioriza ações, registra decisões humanas em SQLite e exporta o mesmo resultado em HTML e CSV.
 
 ## Instalação
 
@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após a correção dos dois achados da Passada 7, o gate acumulado aprovou **122/122 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` `a1a1692f3e448169b612a83d2006657173feb26eced0eecf592138d2414d6dbc` e HTML `40e7d9ea711c630512c6a48fcfc4aba13cb0a0734b3f0e6b6f064a12027fca77`. O CSV contém seis recomendações e 6.703 registros; o resumo normal e a fixture adversarial permaneceram em uma página A4.
+Após a correção dos dois achados da Passada 7, o gate acumulado aprovou **122/122 testes** com warnings tratados como erros. A CLI real foi regenerada para incluir as três respostas executivas: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` `41ab16f88839869bb7693778e4e1f72d54d1815c66ef30ceb5c31e19bc109084` e HTML `6e0c84ab59cae9318384113f7cd490eb9e48153c1f06ec4b427bc5248ec3f90d`. O CSV contém seis recomendações e 6.703 registros; a última prova A4 completa permanece a da Passada 7.
 
 As três prioridades executivas mantiveram scores e ordem sob IDs 2.4.0: `sponsorship-bcd859ce1b79e99d`, `sponsorship-4bfa6bf4c2b6b7e9` e `sponsorship-ab345324b2d495ba`. O CSV preserva ainda `sponsorship-e0088572ab877b95`, `sponsorship-5aa3da373ed4f6a2` e `sponsorship-5d0bd99974adeb18`.
 

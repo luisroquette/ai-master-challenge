@@ -1,5 +1,34 @@
 # Estratégia Social Media — Challenge 004
 
+## Três respostas para o Head de Marketing
+
+### O que gera engajamento?
+
+**NÃO HÁ DRIVER CAUSAL COMPROVADO; TEXTO LIDERA NUMERICAMENTE**
+
+- KPI: ERv mediano: 19,912%
+- Comparação: texto: 19,912% vs. vídeo: 19,895% (+0,0167 p.p.).
+- Amostra/cobertura: Base: 52.214 posts; 5.198 no formato líder.
+- Ação: Não redistribuir o mix por formato sozinho; validar o contexto em teste controlado.
+
+### Vale patrocinar influenciadores?
+
+**NÃO ESCALAR PATROCÍNIO AGORA**
+
+- KPI: Cobertura comparável: 1,56%
+- Comparação: 0/12 comparações com força ≥ 0,40; ΔERv de -0,136 a +0,161 p.p.
+- Amostra/cobertura: 12 estratos elegíveis; 5.216 insuficientes; ROI indisponível por ausência de custos e conversões.
+- Ação: Coletar custo e conversão; só então testar de forma controlada antes de investir mais.
+
+### Qual deve ser a estratégia?
+
+**MANTER O MIX E TESTAR YOUTUBE / VÍDEO / ESTILO DE VIDA / 500.000+ POR 7 DIAS**
+
+- KPI: 1 post/creator/semana; ΔERv +0,027 p.p.; força 0,30
+- Comparação: Alvo vs. comparador: 31 vs. 38 posts.
+- Amostra/cobertura: 18 creators em 3 semanas ISO completas.
+- Ação: Executar teste limitado nos próximos 7 dias e revisar 7 dias após o teste; não escalar automaticamente.
+
 ## Decisão para segunda-feira
 
 Fila única: o top 3 abaixo vem de `result[recommendations]`, na mesma ordem do HTML e do início do CSV; o CSV preserva a fila completa `result[all_recommendations]`, incluindo as demais ações decidíveis na UI. São propostas para decisão humana; não executam gasto, publicação ou interrupção.
