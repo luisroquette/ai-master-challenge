@@ -43,6 +43,7 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 - Git: branch `submission/luis-roquette-003-lead-scorer` publicada no fork na revisão `aa70dc6435e9df85c512007e3d1c008e4cf78876`; PR upstream [#140](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/140), base `main`, título exato e estado inicial mergeable.
 - Checks: não há workflow versionado, ruleset ou check pendente; a exceção explícita do owner ao preflight integral repetido está registrada no corpo do PR e em `docs/evaluation.md`.
 - Provider: tentativa no Streamlit Community Cloud chegou ao consentimento OAuth do GitHub. Nenhum deploy foi submetido porque essa autorização interativa exige confirmação do owner no momento do clique.
+- Correção pré-deploy: `14d0296` corrige `source_identity(ROOT)`, que resolvia o diretório pai e produzia digest de arquivos ausentes. A regressão TC-40 reconstrói o digest real. A asserção focal direta passou com fonte `7e25ba0ecbda9e3e06e89141182dc538e8407af543adca676ad23632f345d311`; `py_compile`, `bash -n` e `git diff --check` também passaram. O `unittest` focal versionado não iniciou no Mac por ausência de `streamlit`; não se reivindica teste executado nem preflight pós-correção.
 - Pendente sem falsa reivindicação: URL, estado terminal do deploy, TC-47, jornadas seller/manager e duas capturas reais.
 
 #### Blockers & Risks

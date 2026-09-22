@@ -24,15 +24,18 @@ O segundo retrabalho residual adicionou regressões em `2dbc3e5` e implementaç�
 | Campo | Evidência |
 |---|---|
 | Branch publicada | `submission/luis-roquette-003-lead-scorer` |
-| Revisão publicada | `aa70dc6435e9df85c512007e3d1c008e4cf78876` |
+| Revisão inicialmente publicada | `aa70dc6435e9df85c512007e3d1c008e4cf78876` |
+| Correção da identidade da fonte | `14d0296`: o diretório explícito deixou de ser resolvido como seu pai |
 | Pull request | [#140 — [Submission] Luis Roquette — Challenge 003](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/140) |
 | Base / estado inicial | `upstream/main`; aberto e mergeable; nenhum check configurado ou pendente |
 | Regras verificadas | sem workflows versionados; rulesets vazios; `main` do fork sem branch protection |
-| Identidade calculada pelo app | fonte `f765d497c5fd992d0dd3bb7fa96caf81c78c77b30111f07b8c5cd82ce71a32e3`; fingerprint `fa97e0da30b8ce873461690d493d1a8ce02759a0664da57ab77bd6fdcaf3d2a4` |
+| Identidade calculada apó a correção | fonte `7e25ba0ecbda9e3e06e89141182dc538e8407af543adca676ad23632f345d311`; fingerprint `2003cb28535c6a4b48e038c6bf1412081d6588b30ab0e2b1396a6f2b5c1173eb` |
 | Streamlit Community Cloud | tentativa chegou ao consentimento OAuth do GitHub; publicação não submetida sem a autorização interativa do owner |
 | URL / TC-47 / screenshots | pendentes; nenhuma URL, prova live ou captura é reivindicada |
 
 O owner dispensou explicitamente apenas a repetição do preflight integral. Essa exceção não substitui a publicação, a renderização live nem o TC-47. Assim que o OAuth for autorizado, o deploy deve usar o fork `luisroquette/ai-master-challenge`, a branch acima e o entrypoint `submissions/luis-roquette/solution/003-lead-scorer/app.py`; depois, o verificador deve receber a identidade efetivamente renderizada.
+
+A regressão TC-40 agora reconstrói o digest dos quatro arquivos reais e rejeita implicitamente o digest constante de arquivos ausentes. O ambiente local não possui `streamlit`, portanto o método `unittest` versionado não iniciou; nenhuma instalação ou preflight foi feita por causa do bypass. A mesma asserção focal executada diretamente contra `scoring.py` passou (`FOCAL SOURCE IDENTITY OK`), assim como `py_compile`, `bash -n scripts/preflight.sh` e `git diff --check`.
 
 ## Snapshot real já congelado
 
