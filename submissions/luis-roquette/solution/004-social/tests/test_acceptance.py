@@ -28,6 +28,7 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(cited, [row["evidence_id"] for row in rows])
         for rank, row in enumerate(rows, 1):
+            self.assertEqual(row["method_version"], "2.0.0")
             self.assertEqual(int(row["rank"]), rank)
             values, normalization = json.loads(row["priority_values"]), json.loads(row["normalization"])
             impact = sum(min(value / normalization[key], 1) if normalization[key] else 0 for key, value in values.items()) / 3
@@ -48,7 +49,7 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
     def test_every_evidence_id_cited_by_report_exists_in_export(self):
         with (ROOT / "evidence.csv").open(encoding="utf-8", newline="") as handle:
             exported = {row["evidence_id"] for row in csv.DictReader(handle) if row["record_type"] == "evidence"}
-        cited = set(re.findall(r"`((?:summary|dimension|sponsorship(?:-overview)?)-[0-9a-f]{16})`", (ROOT / "analysis.md").read_text(encoding="utf-8")))
+        cited = set(re.findall(r"`((?:summary|dimension|sponsorship(?:-overview)?|audience(?:-overview)?)-[0-9a-f]{16})`", (ROOT / "analysis.md").read_text(encoding="utf-8")))
         self.assertTrue(cited)
         self.assertEqual(cited - exported, set())
 

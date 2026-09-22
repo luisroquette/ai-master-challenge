@@ -747,6 +747,8 @@ def _editorial(
                 "context": context,
                 "current": _summary(now),
                 "previous": _summary(before),
+                "current_source_row_ids": sorted(now["source_row_id"].astype(str)),
+                "previous_source_row_ids": sorted(before["source_row_id"].astype(str)),
                 "delta_erv_pp": delta_erv,
                 "delta_views_per_post": delta_views,
                 "delta_interactions_per_post": delta_interactions,
@@ -757,6 +759,77 @@ def _editorial(
             }
         )
     return evidence
+
+
+ACTION_TEXT = {
+    "scale_test": "Ampliar gradualmente o padrão editorial em teste controlado; reavaliar taxa e volume antes de escalar",
+    "test": "Testar o padrão em escala limitada e coletar evidência antes de ampliar esforço ou investimento",
+    "review": "Revisar o criativo e evitar repetir o padrão até novo teste",
+    "review_stop": "Revisar a interrupção do padrão editorial com sinais negativos concordantes; decidir humanamente antes de parar",
+    "sponsorship_test_after_costs": "Obter custos reais e, somente depois, avaliar um teste controlado de patrocínio; não autorizar desembolso automaticamente",
+    "review_renewal": "Revisar a renovação do patrocínio diante de taxa e volume negativos; obter custos e decisão humana antes de renovar ou interromper",
+    "collect": "Coletar amostra comparável antes de recomendar mudança",
+}
+
+
+def _audience_analysis(targets: pd.DataFrame, source_hash: str, scope: dict[str, object]) -> list[dict[str, object]]:
+    """Pair eligible labels within monthly core strata, also controlling sponsorship.
+
+    Labels are post metadata, not personas. Effects remain observational; other
+    audience dimensions are not controlled and no cross-stratum winner is ranked.
+    """
+    controls = [*SPONSORSHIP_KEYS, "is_sponsored"]
+    output = []
+    for dimension in AUDIENCE_KEYS:
+        keys = [*controls, dimension]
+        cells = targets.groupby(keys, dropna=False, sort=True).agg(
+            posts=("id", "size"), n_rate=("erv", "count"),
+        )
+        creators = targets.dropna(subset=["erv"]).groupby(keys, dropna=False)["creator_id"].nunique()
+        cells["creators"] = creators.reindex(cells.index, fill_value=0)
+        eligible = cells.loc[(cells["n_rate"] >= 30) & (cells["creators"] >= 5)]
+        comparisons = []
+        covered_ids: set[str] = set()
+        eligible_strata = 0
+        for key, labels in eligible.groupby(level=list(range(len(controls))), sort=True):
+            if len(labels) < 2:
+                continue
+            eligible_strata += 1
+            context = dict(zip(controls, key, strict=True))
+            context["is_sponsored"] = bool(context["is_sponsored"])
+            pool = _context_rows(targets, context)
+            arms = {str(label[-1]): pool.loc[pool[dimension] == label[-1]].dropna(subset=["erv"])
+                    for label in labels.index}
+            names = sorted(arms)
+            for index, label in enumerate(names):
+                for comparator in names[:index]:
+                    target, reference = arms[label], arms[comparator]
+                    target_ids = sorted(target["source_row_id"].astype(str))
+                    reference_ids = sorted(reference["source_row_id"].astype(str))
+                    covered_ids.update(target_ids + reference_ids)
+                    comparisons.append({
+                        "evidence_id": _stable_id("audience", source_hash, {"scope": scope, "dimension": dimension,
+                            "context": context, "target": label, "comparator": comparator, "statistic": "post_median_erv_difference"}),
+                        "context": {**context, "dimension": dimension, "target_label": label, "comparator_label": comparator},
+                        "target": _summary(target), "comparator": _summary(reference),
+                        "delta_erv_pp": float(target["erv"].median() - reference["erv"].median()),
+                        "strength": min(_strength(target)[0], _strength(reference)[0]),
+                        "target_source_row_ids": target_ids, "comparator_source_row_ids": reference_ids,
+                    })
+        total_strata = targets.groupby(controls, dropna=False).ngroups
+        output.append({
+            "evidence_id": _stable_id("audience-overview", source_hash, {"scope": scope, "dimension": dimension,
+                "statistic": "eligible_audience_label_pair_coverage"}),
+            "dimension": dimension, "controls": controls, **_summary(targets),
+            "total_strata": total_strata, "eligible_strata": eligible_strata,
+            "uncovered_count": total_strata - eligible_strata, "total_cells": len(cells),
+            "eligible_cells": len(eligible), "max_cell_defined_rates": int(cells["n_rate"].max()) if len(cells) else 0,
+            "covered_posts": len(covered_ids), "coverage": len(covered_ids) / len(targets) if len(targets) else 0.0,
+            "required_rates_per_label": 30, "required_creators_per_label": 5,
+            "status": "observational_pairs" if comparisons else "insufficient_comparable_labels",
+            "comparisons": comparisons, "source_row_ids": sorted(targets["source_row_id"].astype(str)),
+        })
+    return output
 
 
 def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dict[str, object]:
@@ -892,7 +965,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "evidence_type": "post",
                 "topic": "quick_win" if alert["direction"] == "high" else "stop",
                 "action_type": action_type,
-                "action": "Testar repetição controlada do padrão" if alert["direction"] == "high" else "Revisar o criativo e evitar repetir o padrão até novo teste",
+                "action": ACTION_TEXT[action_type],
                 "owner": "Gestor de Social Media",
                 "execution_window": "próximos 7 dias",
                 "review_window": "7 dias após o teste",
@@ -970,7 +1043,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
                 "evidence_type": "aggregate",
                 "topic": topic,
                 "action_type": action_type,
-                "action": "Executar teste controlado e reavaliar; patrocínio depende de custos reais" if kind == "sponsorship" else "Testar o padrão editorial e reavaliar sinais de taxa e volume",
+                "action": ACTION_TEXT[action_type],
                 "owner": "Gestor de Social Media",
                 "execution_window": "próximos 7 dias",
                 "review_window": "7 dias após o teste",
@@ -1030,6 +1103,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
             "pending", source_hash, {"scope": scope_identity, "statistic": "eligibility_abstention"}
         ),
         "action_type": "collect",
+        "action": ACTION_TEXT["collect"],
         "reason": "no_eligible_performance_evidence",
     }]
     return {
@@ -1062,6 +1136,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         },
         "metrics": _summary(targets),
         "dimensions": _dimensions(targets, source_hash, scope_identity),
+        "audience": _audience_analysis(targets, source_hash, scope_identity),
         "cohorts": {"editorial": editorial},
         "alerts": alerts,
         "sponsorship": sponsorship,
@@ -1071,6 +1146,7 @@ def analyze(df: pd.DataFrame, scope: dict[str, object], source_hash: str) -> dic
         },
         "pending": pending,
         "row_references": {str(row["source_row_id"]): int(row["source_line"]) for _, row in frame.iterrows()},
+        "target_source_row_ids": sorted(targets["source_row_id"].astype(str)),
     }
 
 
@@ -1083,7 +1159,8 @@ EXPORT_COLUMNS = (
     "rank", "recommendation_key", "priority", "impact", "strength", "recency",
     "priority_values", "normalization", "delta_erv_pp", "representative_date",
     "action", "action_type", "topic", "metric", "frequency_hypothesis",
-    "reference_chunk", "reference_index",
+    "reference_chunk", "reference_index", "reference_role", "statistics",
+    "field_name", "field_chunk", "field_value",
 )
 
 # History columns are appended only when history exists, preserving the static
@@ -1096,7 +1173,7 @@ HISTORY_EXPORT_COLUMNS = (
     "period_start", "period_end", "coverage_days", "baseline_coverage_days",
     "coverage_equal", "comparable", "baseline_median", "observed_median",
     "median_delta", "baseline_volume_per_day", "observed_volume_per_day",
-    "non_causal", "field_name", "field_chunk", "field_value",
+    "non_causal",
 )
 
 
@@ -1166,6 +1243,19 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         yield exported
         yield from chunks
 
+    def analytical_row(record_type: str, evidence_id: str = "", **values: object) -> Iterable[dict[str, object]]:
+        exported = row(record_type, evidence_id, **values)
+        chunks = []
+        for name, value in exported.items():
+            if isinstance(value, str) and len(value) > 32_768:
+                exported[name] = ""
+                for offset in range(0, len(value), 4096):
+                    chunks.append(row("analysis_field", evidence_id, scope=None,
+                        reference_role=values.get("reference_role", ""), field_name=f"{record_type}.{name}",
+                        field_chunk=offset // 4096 + 1, field_value=json.dumps(value[offset:offset + 4096], ensure_ascii=False)))
+        yield exported
+        yield from chunks
+
     yield row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
     summary_id = _stable_id("summary", str(source_hash), scope)
     evidence: list[dict[str, object]] = [{
@@ -1173,7 +1263,7 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         "dimension": "overall",
         "value": "Escopo completo",
         **result.get("metrics", {}),
-        "source_row_ids": list(result.get("row_references", {})),
+        "source_row_ids": result.get("target_source_row_ids", []),
     }]
     for items in result.get("dimensions", {}).values():
         evidence.extend(items)
@@ -1183,6 +1273,9 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         evidence.append(result["sponsorship"])
     evidence.extend(result.get("sponsorship", {}).get("strata", []))
     evidence.extend(result.get("pending", []))
+    for overview in result.get("audience", []):
+        evidence.append(overview)
+        evidence.extend(overview.get("comparisons", []))
 
     emitted: set[str] = set()
     for item in evidence:
@@ -1196,13 +1289,47 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
         context = dict(item.get("context") or {"dimension": item.get("dimension"), "value": item.get("value")})
         context.update({name: item[name] for name in ("posts", "creators", "n_rate", "views", "interactions", "creator_exposure", "undefined_rates", "zero_interaction_share", "weighted_erv", "q1_erv", "q3_erv", "strength", "organic", "sponsored", "creator_overlap", "eligible_strata", "uncovered_count", "coverage", "period_granularity", "required_financial_data") if name in item})
         formula = "eligible controlled posts / scoped posts" if evidence_id.startswith("sponsorship-overview-") else "median_by_creator(sponsored ERv) - median_by_creator(organic ERv)" if evidence_id.startswith("sponsorship-") else "median(100 * (likes + shares + comments_count) / views)" if evidence_id.startswith(("dimension-", "summary-")) else "method_version contract"
-        yield row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name == "delta_erv_pp" else "percent" if "erv" in metric_name else "count", context=context, formula=formula)
-        source_row_ids = item.get("source_row_ids", [])
-        for chunk in _reference_chunks(source_row_ids, result.get("row_references", {})):
-            yield row("source_ref", evidence_id, **chunk)
+        if "benchmark" in item:
+            formula = "target ERv - comparator median; Tukey bounds q1-1.5*IQR, q3+1.5*IQR; IQR=q3-q1"
+        elif "current_source_row_ids" in item:
+            formula = "median(current ERv) - median(previous ERv); equal duration filtered organic periods"
+        elif evidence_id.startswith("audience-overview-"):
+            formula = "posts in eligible within-stratum label pairs / scoped posts; each label >=30 defined rates and >=5 creators"
+        elif evidence_id.startswith("audience-"):
+            formula = "median(target label ERv) - median(comparator label ERv); matched monthly core and sponsorship"
+        statistics = {key: value for key, value in item.items() if key not in (
+            "source_row_ids", "source_row_id", "current_source_row_ids", "previous_source_row_ids",
+            "target_source_row_ids", "comparator_source_row_ids", "strata", "uncovered_strata", "comparisons", "benchmark")}
+        yield from analytical_row("evidence", evidence_id, text=text, metric_name=metric_name, metric_value=metric_value, unit="ratio" if metric_name == "coverage" else "percentage_points" if metric_name == "delta_erv_pp" else "percent" if "erv" in metric_name else "count", context=context, statistics=statistics, formula=formula)
+        roles = {"target": item.get("source_row_ids", [])}
+        if "benchmark" in item:
+            roles = {"target": [item["source_row_id"]], "comparator": item["benchmark"]["source_row_ids"]}
+            for role, stats in (("target", {key: item[key] for key in ("source_id", "post_date", "erv", "values")}),
+                                ("comparator", {key: value for key, value in item["benchmark"].items() if key != "source_row_ids"})):
+                yield from analytical_row("evidence_detail", evidence_id, reference_role=role, statistics=stats, context=item["context"])
+        elif "current_source_row_ids" in item:
+            roles = {"target": item["current_source_row_ids"], "comparator": item["previous_source_row_ids"]}
+            for role, name in (("target", "current"), ("comparator", "previous")):
+                yield from analytical_row("evidence_detail", evidence_id, reference_role=role, statistics=item[name], text=name)
+        elif "target_source_row_ids" in item:
+            roles = {"target": item["target_source_row_ids"], "comparator": item["comparator_source_row_ids"]}
+            for role in roles:
+                yield from analytical_row("evidence_detail", evidence_id, reference_role=role, statistics=item[role])
+        for role, source_row_ids in roles.items():
+            for chunk in _reference_chunks(source_row_ids, result.get("row_references", {})):
+                yield row("source_ref", evidence_id, scope=None, reference_role=role, **chunk)
+
+    quality = result.get("quality", {})
+    yield from analytical_row("quality", statistics={key: value for key, value in quality.items() if key not in ("benchmark_diagnostics", "warnings")})
+    for warning in quality.get("warnings", []):
+        yield from analytical_row("warning", text=warning.get("message", ""), statistics=warning)
+    for index, diagnostic in enumerate(quality.get("benchmark_diagnostics", [])):
+        yield from analytical_row("benchmark_diagnostic", f"diagnostic-{index + 1}", statistics=diagnostic, context=diagnostic.get("context", {}))
+    for index, uncovered in enumerate(result.get("sponsorship", {}).get("uncovered_strata", [])):
+        yield from analytical_row("sponsorship_uncovered", f"uncovered-{index + 1}", statistics=uncovered, context={key: uncovered[key] for key in SPONSORSHIP_KEYS})
 
     for rank, item in enumerate(result.get("recommendations", []), start=1):
-        yield row("recommendation", str(item["evidence_id"]), rank=rank,
+        yield from analytical_row("recommendation", str(item["evidence_id"]), rank=rank,
                   **{name: item.get(name) for name in ("recommendation_key", "priority", "priority_values", "normalization", "delta_erv_pp", "representative_date", "context", "action", "action_type", "topic", "metric", "owner", "execution_window", "review_window", "frequency_hypothesis")},
                   **item.get("priority_components", {}),
                   formula="100 * mean(min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1)) * strength * 2**(-age_days/7)")
@@ -1286,25 +1413,86 @@ def _recommendation_text(item: dict[str, object]) -> str:
     )
 
 
+def _short(value: object, limit: int = 180) -> str:
+    value = " ".join(str(value).split())
+    return value if len(value) <= limit else value[:limit - 1] + "…"
+
+
+def _scope_text(result: dict[str, object]) -> str:
+    scope, source = result.get("scope", {}), result.get("source", {})
+    return (f"Método {scope.get('method_version', METHOD_VERSION)}. Escopo efetivo: "
+            f"{scope.get('target_start', 'não informado')} a {scope.get('target_end', 'não informado')}; "
+            f"referência {scope.get('reference_date', 'não informada')}; "
+            f"filtros {json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True)}. "
+            f"{result.get('metrics', {}).get('posts', 0)} posts-alvo de {source.get('rows', 0)} linhas na fonte.")
+
+
+def _coverage_text(result: dict[str, object]) -> str:
+    sponsorship, quality = result.get("sponsorship", {}), result.get("quality", {})
+    diagnostics = quality.get("benchmark_diagnostics", [])
+    missing = sum(int(item.get("target_count", 0)) for item in diagnostics)
+    return (f"Cobertura parcial: patrocínio {100 * sponsorship.get('coverage', 0):.3g}% dos posts, "
+            f"{sponsorship.get('eligible_strata', 0)} estratos elegíveis, {sponsorship.get('uncovered_count', 0)} insuficientes. "
+            f"Benchmarks: {quality.get('benchmark_levels_attempted', 0)} níveis tentados; {missing} alvos sem referência elegível; "
+            f"alertas post a post {'ativados' if result.get('scope', {}).get('include_post_alerts', True) else 'desativados'}. "
+            f"{len(quality.get('warnings', []))} avisos de qualidade; detalhes e motivos completos no CSV.")
+
+
+def _decision_lines(result: dict[str, object], decisions: list[dict[str, object]]) -> list[str]:
+    source_hash = result.get("source", {}).get("source_hash")
+    relevant = [item for item in decisions if item.get("source_hash") == source_hash]
+    replaced = {str(item["revision_of"]): str(item.get("decision_id", "")) for item in decisions if item.get("revision_of")}
+
+    def order(item: dict[str, object]) -> tuple[int, str]:
+        try:
+            date = pd.Timestamp(item.get("decided_at")).value
+        except (ValueError, TypeError):
+            date = 0
+        return date, str(item.get("decision_id", ""))
+
+    lines = []
+    for item in sorted(relevant, key=order, reverse=True)[:6]:
+        effective = item.get("edited_text", "") if item.get("status") == "edited" else item.get("original_text", item.get("text", item.get("action", "")))
+        revision = f"; revisa {_short(item['revision_of'], 40)}" if item.get("revision_of") else ""
+        superseded = f"; SUPERADA por {_short(replaced[str(item['decision_id'])], 40)}" if str(item.get("decision_id")) in replaced else "; vigente"
+        lines.append(f"{_short(item.get('decision_id', ''), 40)} · {_short(item.get('decided_at', 'data ausente'), 32)} · "
+                     f"{_short(item.get('status', ''), 20)}{revision}{superseded} · fonte {_short(item.get('source_hash', ''), 12)} · "
+                     f"método {_short(item.get('method_version', 'ausente'), 12)} · {_short(effective, 100)}")
+    omitted = len(decisions) - len(relevant)
+    if omitted:
+        lines.append(f"{omitted} eventos de outras fontes ou sem proveniência omitidos deste resumo; íntegra no CSV.")
+    if len(relevant) > 6:
+        lines.append(f"Exibidos os 6 eventos mais recentes desta fonte, de {len(relevant)}; íntegra no CSV.")
+    return lines or ["Nenhuma decisão registrada nesta fonte."]
+
+
 def executive_summary(result: dict[str, object], decisions: list[dict[str, object]]) -> str:
     source = result.get("source", {})
     metrics = result.get("metrics", {})
     recommendations = result.get("recommendations", [])
     dimensions = [item for items in result.get("dimensions", {}).values() for item in items]
     priority_items = recommendations or result.get("pending", [])
-    priorities = "".join(
-        f"<li>{html.escape(_recommendation_text(item))}</li>"
-        for item in priority_items[:3]
-    )
+    priorities = ""
+    for item in priority_items[:3]:
+        context = _short(" / ".join(str(value) for value in item.get("context", {}).values()), 150)
+        cadence = item.get("frequency_hypothesis", {})
+        compact = (f"{context}: {_short(item.get('action', item.get('reason', 'Coletar evidência')), 180)}. "
+                   f"Prioridade {item.get('priority', 0):.6g}; força {item.get('priority_components', {}).get('strength', 0):.3g}; "
+                   f"ΔERv {item.get('delta_erv_pp', 0):+.4g} p.p. Responsável {_short(item.get('owner', 'Gestor'), 45)}; "
+                   f"execução {_short(item.get('execution_window', 'coletar'), 45)}; revisão {_short(item.get('review_window', 'após coleta'), 45)}. "
+                   f"Cadência observacional: {cadence.get('value', 'N/A')} posts/creator/semana; estado {cadence.get('status', 'collect')}. "
+                   f"Evidência {item.get('evidence_id', '')}.")
+        priorities += f"<li>{html.escape(compact)}<details><summary>Detalhe auditável</summary>{html.escape(_recommendation_text(item))}</details></li>"
     findings = "".join(
         f"<li>{html.escape(str(item.get('dimension', 'segmento')))} = {html.escape(str(item.get('value', '')))}: {int(item.get('posts', 0))} posts; mediana ERv {format(float(item['median_erv']), '.2f') + '%' if item.get('median_erv') is not None else 'não definida (views=0: sem denominador para ERv)'} <small>{html.escape(str(item.get('evidence_id', '')))}</small></li>"
         for item in sorted(dimensions, key=lambda value: (-int(value.get("posts", 0)), str(value.get("evidence_id", ""))))[:5]
     )
-    decisions_html = "".join(f"<li>{html.escape(str(item.get('status', '')))} — {html.escape(str(item.get('text', item.get('action', ''))))}</li>" for item in decisions[:5]) or "<li>Nenhuma decisão registrada.</li>"
-    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}@media print{{body{{font-size:11px}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas · {html.escape(str(source.get('period_start', '')))} a {html.escape(str(source.get('period_end', '')))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><p><small>{html.escape(RECENCY_NOTE)}</small></p><h2>Evidências</h2><ul>{findings}</ul><h2>Decisões</h2><ul>{decisions_html}</ul><p><b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+    decisions_html = "".join(f"<li>{html.escape(line)}</li>" for line in _decision_lines(result, decisions))
+    warnings = " ".join(_short(item.get("message", ""), 160) for item in result.get("quality", {}).get("warnings", [])[:2])
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\"><b>{int(metrics.get('posts', 0))} posts</b><b>{int(metrics.get('views', 0))} views</b><b>{int(metrics.get('interactions', 0))} interações</b></div><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
 
 
-def analysis_report(result: dict[str, object]) -> str:
+def analysis_report(result: dict[str, object], decisions: list[dict[str, object]] | None = None) -> str:
     """Render the standalone strategy from the same evidence and queue as HTML/CSV."""
     source, scope, metrics = result["source"], result["scope"], result["metrics"]
     summary_id = _stable_id("summary", str(source["source_hash"]), scope)
@@ -1326,8 +1514,10 @@ def analysis_report(result: dict[str, object]) -> str:
               "Força limitada (<0,40) exige coleta/teste, sem ampliação de investimento. "
               "As janelas de execução/revisão são propostas futuras, não datas de performance observada.", "",
               "## O que os dados permitem afirmar", "",
-              f"Escopo: {text(scope.get('target_start'))} a {text(scope.get('target_end'))}; "
-              f"referência: {text(scope.get('reference_date'))}; filtros: `{text(json.dumps(scope.get('filters', {}), ensure_ascii=False, sort_keys=True))}`.", "",
+              text(_scope_text(result)), "", text(_coverage_text(result)), "",
+              *[text(item.get("message", "")) for item in result.get("quality", {}).get("warnings", [])], "",
+              "### Decisões recentes desta fonte", "",
+              *[f"- {text(line)}" for line in _decision_lines(result, decisions or [])], "",
               f"{metrics.get('posts', 0)} posts; {metrics.get('creators', 0)} creators; "
               f"{metrics.get('views', 0)} views; {metrics.get('interactions', 0)} interações. "
               f"Mediana ERv: {number(metrics.get('median_erv'))}{'%' if metrics.get('median_erv') is not None else ''}; "
@@ -1341,8 +1531,7 @@ def analysis_report(result: dict[str, object]) -> str:
               "As tabelas descrevem cada recorte; não criam uma segunda fila de prioridades. "
               "Diferenças pequenas de taxa, sem comparação controlada, não justificam redistribuir o mix. "
               "Idade, gênero e localização são rótulos de posts, não percentuais ou personas. "
-              "Estas marginais não identificam qual público vence dentro de cada combinação plataforma/formato/categoria: "
-              "essa pergunta exige filtros comparáveis e amostra suficiente no motor. "
+              "Estas marginais não identificam vencedores: a análise condicionada e sua cobertura aparecem abaixo. "
               "Bilibili e RedNote permanecem no escopo junto a Instagram, TikTok e YouTube.", ""]
     labels = {"platform": "Plataforma", "content_type": "Formato", "content_category": "Categoria",
               "creator_band": "Faixa de seguidores", "audience_age": "Idade", "audience_gender": "Gênero",
@@ -1356,7 +1545,27 @@ def analysis_report(result: dict[str, object]) -> str:
                          f"{item.get('views', 0)} | {item.get('interactions', 0)} | "
                          f"{number(item.get('median_erv'))} | `{item['evidence_id']}` |")
         lines.append("")
-    lines += ["## Patrocínio e o que não funciona", "",
+    lines += ["## Audiência condicionada: elegibilidade, efeito e cobertura", "",
+              "Para cada rótulo de idade, gênero ou localização, comparamos pares dentro da mesma plataforma, "
+              "formato, categoria, faixa de seguidores, mês-calendário e estado de patrocínio. Cada rótulo precisa "
+              "de 30 taxas definidas e cinco creators. O efeito é mediana ERv do alvo menos mediana do comparador; "
+              "taxa é acompanhada de volume e amostra. As demais dimensões de audiência não são controladas: "
+              "associação descritiva, não efeito causal, persona ou vencedor geral. Sem dois rótulos elegíveis, "
+              "a resposta é insuficiência quantificada, não uma preferência por público.", "",
+              "| Dimensão | Estratos elegíveis/total | Células elegíveis/total | Maior amostra de taxas por célula | Posts cobertos/total | Cobertura | Evidência |",
+              "|---|---:|---:|---:|---:|---:|---|"]
+    for audience in result.get("audience", []):
+        lines.append(f"| {text(audience['dimension'])} | {audience['eligible_strata']}/{audience['total_strata']} | "
+                     f"{audience['eligible_cells']}/{audience['total_cells']} | {audience['max_cell_defined_rates']} | "
+                     f"{audience['covered_posts']}/{audience['posts']} | {100 * audience['coverage']:.6g}% | `{audience['evidence_id']}` |")
+        for pair in audience["comparisons"]:
+            target, comparator = pair["target"], pair["comparator"]
+            lines.append(f"\nComparação observacional {text(json.dumps(pair['context'], ensure_ascii=False, sort_keys=True))}: "
+                         f"ΔERv {pair['delta_erv_pp']:+.6g} p.p.; força {pair['strength']:.6g}; "
+                         f"alvo/comparador: {target['n_rate']}/{comparator['n_rate']} taxas, "
+                         f"{target['creators']}/{comparator['creators']} creators, {target['views']}/{comparator['views']} views, "
+                         f"{target['interactions']}/{comparator['interactions']} interações. Evidência `{pair['evidence_id']}`.\n")
+    lines += ["", "## Patrocínio e o que não funciona", "",
               f"{sponsorship.get('eligible_strata', 0)} estratos elegíveis; {sponsorship.get('uncovered_count', 0)} "
               f"sem amostra/contraparte suficiente; cobertura de {100 * sponsorship.get('coverage', 0):.6g}% dos posts. "
               f"Evidência: `{overview_id}`.", "",
@@ -1406,13 +1615,22 @@ def analysis_report(result: dict[str, object]) -> str:
               "No patrocínio mensal, entram apenas semanas ISO completas inteiramente dentro do mês e do escopo; "
               "semanas que atravessam a fronteira mensal ficam fora. Sem mês fixo, vale a cobertura completa do escopo. "
               "O valor é uma hipótese de teste no mesmo contexto da recomendação, não promessa de desempenho.", "",
-              "Em `source_ref`, ordenar as linhas de cada evidência por `reference_chunk` (base 1). "
+              "Em `source_ref`, agrupar por `evidence_id` e `reference_role` (target/comparator) e ordenar por `reference_chunk` (base 1). "
               "`source_row_id`, `source_line` e `reference_index` são arrays JSON paralelos, em blocos de até 500 entradas "
               "e 32.768 caracteres no campo de IDs, legíveis pelo limite padrão do csv.reader. "
               "O índice identifica o registro dentro da evidência (base 0); concatenar fragmentos de ID com o mesmo "
               "`reference_index`, conservando a linha física inicial (base 1). IDs acima de 4.096 caracteres "
               "são fragmentados sem perder conteúdo. Reconstituir a chave completa com `source_hash + ':' + ID`. "
               "Campos multilinha contam todas as linhas físicas; células de texto neutralizam fórmulas de planilha.", "",
+              "Linhas `evidence_detail` projetam estatísticas do alvo/comparador, incluindo quartis, amostra, fallback "
+              "e controles removidos de benchmarks; no editorial, target=current e comparator=previous. "
+              "`statistics` preserva os números completos. `quality`, `warning`, `benchmark_diagnostic` e "
+              "`sponsorship_uncovered` conservam diagnósticos sem reunir milhares de contextos numa célula. "
+              "Campos analíticos acima de 32.768 caracteres ficam vazios na linha-base e são reconstruídos por "
+              "`analysis_field`: agrupar evidence_id/reference_role/field_name, ordenar field_chunk e concatenar "
+              "json.loads(field_value); field_name tem formato record_type.campo para evitar colisões entre evidência e recomendação. "
+              "O mesmo princípio vale para `history_field` no histórico, usando decision_id/outcome_id. "
+              "A neutralização de fórmulas é preservada no texto recomposto.", "",
               "A CLI publica todo o histórico, sem alertas post a post. Ausência de período anterior igualmente "
               "longo pode impedir comparações editoriais; não se inventa tendência. O monitoramento recente "
               "pode produzir outra fila porque tem outro escopo. Não há unidade confirmada de content_length, "
