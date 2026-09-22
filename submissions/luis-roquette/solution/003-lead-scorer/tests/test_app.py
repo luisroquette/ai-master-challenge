@@ -236,6 +236,12 @@ class PortfolioContractTests(unittest.TestCase):
         self.assertNotIn("Probabilidade", bad)
         self.assertNotIn("Receita esperada", bad)
 
+    def test_focus_radar_selects_one_supported_leader_per_independent_stage(self):
+        rows = self.app.portfolio_rows(self.bundle, "Vendedor", "Ana")
+        self.assertEqual(self.app.focus_candidate(rows, "Engaging").opportunity_id, "E-A")
+        self.assertEqual(self.app.focus_candidate(rows, "Prospecting").opportunity_id, "P-A")
+        self.assertIsNone(self.app.focus_candidate([], "Engaging"))
+
     def test_C4_sections_delegate_all_ordering_to_canonical_rank_stage(self):
         rows = self.app.portfolio_rows(self.bundle, "Gestor", "Mara")
         with patch.object(self.app, "rank_stage", wraps=s.rank_stage) as canonical:

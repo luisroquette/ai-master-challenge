@@ -1248,3 +1248,27 @@ Após o primeiro commit visual, a verificação local da identidade encontrou um
 - Passada limpa pós-correção 2: **21/21** testes focais — 14 contratos, 4 AppTests e 3 journeys Playwright — mais `py_compile` e `git diff --check`, sem novo achado.
 
 Com duas novas passadas consecutivas sem erro, gap ou melhoria relevante, a rodada profunda de UI/UX volta a atingir seu objetivo. O preflight integral e o `TC47` público continuam não executados.
+
+## I17 — Feedback humano: da análise para o foco automático — 2026-09-22
+
+Luis identificou uma lacuna de produto depois de usar a primeira versão lapidada: a interface estava mais clara, porém ainda exigia exploração e intervenção humana demais para cumprir a necessidade central do desafio.
+
+> “Nossos vendedores gastam tempo demais em negócios que não vão fechar e deixam boas oportunidades esfriarem. Preciso de algo funcional — não de um modelo em um Jupyter Notebook que ninguém vai usar. Quero uma ferramenta que o vendedor abra, veja o pipeline e saiba onde focar. Pode ser simples, mas precisa funcionar.”
+
+Essa observação alterou a prioridade da rodada: não bastava visualizar melhor o ranking; a ferramenta precisava transformar o ranking em orientação operacional imediata.
+
+### Decisão e implementação
+
+- Foi criado o **Foco automático**, reativo ao vendedor, gestor, região e equipe selecionados.
+- A primeira tela agora apresenta um líder de Engaging e um de Prospecting, sempre escolhidos pelo ranking canônico de cada estágio, sem criar um score sintético comum.
+- Cada cartão mostra oportunidade, produto, tipo de sinal, faixa, força da evidência e próxima ação recomendada; o vendedor obtém direção antes de abrir qualquer tabela.
+- Quando um estágio não possui oportunidades no recorte, o cartão informa o estado vazio sem inventar recomendação.
+- A fila completa, explicações, paginação e controles continuam disponíveis abaixo para aprofundamento e intervenção do gestor.
+
+### Validação em feedback looping
+
+- Teste novo prova que o radar escolhe um candidato suportado por estágio e nunca promove a linha insuficiente quando existe alternativa válida.
+- Passada limpa 1: inspeção renderizada confirmou atualização automática entre vendedor e gestor, incluindo estágio vazio, sem novo achado relevante.
+- Passada limpa 2: **22/22** testes focais verdes — 15 contratos, 4 AppTests e 3 journeys Playwright — além de `py_compile` e `git diff --check`.
+
+**Contribuição humana decisiva:** Luis reposicionou a solução de “dashboard que explica” para “ferramenta que recomenda onde agir”. O embargo externo permanece integralmente vigente.

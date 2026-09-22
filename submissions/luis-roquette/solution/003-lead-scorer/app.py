@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import partial
 import hashlib
+from html import escape
 import json
 from pathlib import Path
 from typing import Mapping
@@ -151,10 +152,69 @@ button[role="tab"][aria-selected="true"] { color: var(--teal) !important; }
     font: 700 1.35rem/1.2 Charter, Georgia, serif;
     margin-bottom: .6rem;
 }
+.focus-intro {
+    align-items: end;
+    display: flex;
+    justify-content: space-between;
+    margin: 1.5rem 0 .75rem;
+}
+.focus-intro strong {
+    color: var(--ink);
+    font: 700 1.45rem/1.1 Charter, Georgia, serif;
+}
+.focus-intro span {
+    color: var(--muted);
+    font-size: .75rem;
+}
+.focus-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 1.35rem;
+}
+.focus-card {
+    background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(220,236,232,.48));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 14px 34px rgba(23,33,43,.045);
+    min-height: 210px;
+    overflow: hidden;
+    padding: 1.15rem 1.25rem 1.2rem;
+    position: relative;
+}
+.focus-card::before {
+    background: var(--teal);
+    content: "";
+    height: 4px;
+    inset: 0 0 auto;
+    position: absolute;
+}
+.focus-stage {
+    color: var(--teal);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+}
+.focus-id {
+    color: var(--ink);
+    font: 700 1.45rem/1.1 Charter, Georgia, serif;
+    margin: .7rem 0 .2rem;
+}
+.focus-product { color: var(--muted); font-size: .85rem; }
+.focus-signal {
+    color: #315b57;
+    font-size: .78rem;
+    font-weight: 700;
+    margin: .85rem 0 .45rem;
+}
+.focus-action { color: var(--ink); font-size: .92rem; line-height: 1.45; }
+.focus-empty { color: var(--muted); margin-top: 1.5rem; }
 @media (max-width: 800px) {
     .block-container { padding: 1.5rem 1rem 3rem; }
     h1 { font-size: 2.45rem !important; }
     [data-testid="stMetric"] { min-height: 96px; }
+    .focus-grid { grid-template-columns: 1fr; }
 }
 </style>
 """
@@ -262,6 +322,40 @@ def stage_sections(rows, stage, pin):
     insufficient = [row for row in remaining if row.state == "insufficient_data"]
     return {"pinned": pinned, "calibrated": calibrated, "relative": relative,
             "insufficient_data": insufficient}
+
+
+def focus_candidate(rows, stage):
+    ranked = list(rank_stage(rows, stage))
+    supported = [row for row in ranked if row.state != "insufficient_data"]
+    return (supported or ranked or [None])[0]
+
+
+def render_focus_radar(rows):
+    cards = []
+    for stage in ("Engaging", "Prospecting"):
+        row = focus_candidate(rows, stage)
+        if row is None:
+            cards.append(
+                f'<section class="focus-card"><div class="focus-stage">{stage}</div>'
+                '<div class="focus-empty">Nenhuma oportunidade neste recorte.</div></section>')
+            continue
+        if row.state == "calibrated":
+            signal = f"Probabilidade validada {row.probability:.1%} · faixa {row.band}"
+        elif row.state == "relative":
+            signal = f"Índice relativo {row.relative_index:.3f} · faixa {row.band}"
+        else:
+            signal = "Dados insuficientes · correção necessária"
+        cards.append(
+            f'<section class="focus-card"><div class="focus-stage">Foco {stage}</div>'
+            f'<div class="focus-id">{escape(row.opportunity_id)}</div>'
+            f'<div class="focus-product">{escape(row.product or "Produto não identificado")}</div>'
+            f'<div class="focus-signal">{escape(signal)} · evidência {escape(row.evidence_strength)}</div>'
+            f'<div class="focus-action"><strong>Próxima ação:</strong> '
+            f'{escape(row.next_action)}</div></section>')
+    st.markdown(
+        '<div class="focus-intro"><strong>Foco automático</strong>'
+        '<span>Um líder por estágio · escalas independentes</span></div>'
+        f'<div class="focus-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 
 
 def _diagnostic_value(item, name):
@@ -568,6 +662,7 @@ def render_portfolio(bundle, session):
     overview[2].metric("Prospecting", sum(row.stage == "Prospecting" for row in rows))
     overview[3].metric("Sinais altos", sum(row.band == "alta" for row in rows),
         help="Contagem descritiva; Engaging e Prospecting mantêm escalas independentes")
+    render_focus_radar(rows)
     st.markdown(
         f'<p class="trace-line">Versão {bundle.config_version} · '
         f'revisão {bundle.source_identity.get("revision") or "indisponível"} · '
