@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from html import escape
 from pathlib import Path
 
 import pandas as pd
@@ -12,16 +13,12 @@ SOLUTION_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(SOLUTION_ROOT / "src"))
 
 from ravenstack_churn.publish import (
-    CLAIM_LABELS,
-    COHORT_LABELS,
     DIMENSION_LABELS,
     ELIGIBILITY_LABELS,
-    FAILURE_LABELS,
     FINDING_LABELS,
     MRR_BAND_LABELS,
     QUALITY_LABELS,
     SEGMENT_LABELS,
-    STATUS_LABELS,
     ArtifactConsistencyError,
     validate_artifact_set,
 )
@@ -218,6 +215,29 @@ st.markdown(
     .insight-card small { color: var(--signal); font-weight: 800; letter-spacing: .12em; }
     .insight-card h3 { margin: .55rem 0 .75rem; font-size: 1.55rem; font-weight: 500; }
     .insight-card p { color: #45504c; line-height: 1.55; }
+    .answer-block {
+        display: grid;
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 1rem;
+        margin: 0;
+        padding: 1.35rem 0;
+        border-top: 1px solid var(--line);
+    }
+    .answer-block:last-of-type { border-bottom: 1px solid var(--line); }
+    .answer-index {
+        color: var(--signal);
+        font: 500 2.6rem/1 var(--font-display);
+        letter-spacing: -.05em;
+    }
+    .answer-block h2 { margin: 0 0 .3rem; font-size: 1.7rem; font-weight: 500; }
+    .answer-block p { max-width: 920px; margin: 0; color: var(--muted); line-height: 1.55; }
+    .canonical-item {
+        margin: .65rem 0 0;
+        padding: .75rem 1rem;
+        border-left: 3px solid var(--sage);
+        background: rgba(255, 253, 247, .7);
+    }
+    .canonical-item strong { color: var(--signal); font: 800 .72rem/1 var(--font-body); }
     [data-testid="stAlert"] { border-radius: 2px; border-left-width: 6px; }
     [data-testid="stDataFrame"] { border: 1px solid var(--line); }
     [data-testid="stExpander"] { border: 1px solid var(--line); border-radius: 2px; }
@@ -240,6 +260,8 @@ st.markdown(
         .hero-meta { align-items: flex-start; flex-direction: column; }
         .section-heading { grid-template-columns: 2rem 1fr; gap: .55rem; margin-top: 1.8rem; }
         .section-heading h2 { font-size: 1.7rem; }
+        .answer-block { grid-template-columns: 2.4rem minmax(0, 1fr); gap: .6rem; }
+        .answer-index { font-size: 1.8rem; }
     }
     </style>
     """,
@@ -259,18 +281,16 @@ def read_csv(name: str) -> pd.DataFrame:
 
 
 findings = read_csv("findings.csv")
-claims = read_csv("claim_checks.csv")
 segments = read_csv("segment_metrics.csv")
 queue = read_csv("account_queue.csv")
 watchlist = read_csv("account_watchlist.csv")
 quality = json.loads((artifact_dir / "quality_report.json").read_text(encoding="utf-8"))
-accepted = findings.loc[findings["confidence"].eq("accepted")]
-cutoff_values = (
-    findings["diagnostic_cutoff"]
-    if "diagnostic_cutoff" in findings
-    else pd.Series(manifest.get("parameters", {}).get("cutoffs", []), dtype="object")
-)
-diagnostic_cutoff = pd.to_datetime(cutoff_values, errors="coerce").max()
+answer = json.loads((artifact_dir / "ceo_answer.json").read_text(encoding="utf-8"))
+monthly_churn = read_csv("monthly_churn.csv")
+reason_distribution = read_csv("reason_distribution.csv")
+event_metrics = read_csv("event_cohort_metrics.csv")
+mechanism_scorecard = read_csv("mechanism_scorecard.csv")
+diagnostic_cutoff = pd.to_datetime(answer["parameters"]["scoring_cutoff"], errors="coerce")
 cutoff_label = (
     f"{diagnostic_cutoff.day:02d} "
     f"{['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][diagnostic_cutoff.month - 1]} "
@@ -278,7 +298,12 @@ cutoff_label = (
     if pd.notna(diagnostic_cutoff)
     else "não disponível"
 )
-analysis_status = "Evidência priorizada" if not accepted.empty else "Evidência inconclusiva"
+analysis_status = {
+    "supported": "Mecanismo sustentado",
+    "tied": "Mecanismos empatados",
+    "inconclusive": "Evidência inconclusiva",
+    "unavailable": "Evidência indisponível",
+}[answer["mechanism_status"]]
 
 st.markdown(
     f"""
@@ -290,13 +315,14 @@ st.markdown(
         <div class="hero-grid">
             <div>
                 <h1>Churn,<br><em>sem atalhos.</em></h1>
-                <p class="hero-copy">Uma leitura executiva que separa fatos, associações e hipóteses — antes de transformar correlação em ação.</p>
+                <p class="hero-copy">{escape(answer["headline"])}</p>
             </div>
             <div class="hero-stamp">
                 Status da análise
                 <strong>{analysis_status}</strong>
                 Corte diagnóstico · {cutoff_label}<br>
                 Modelo publicado · {"sim" if manifest["publish_model"] else "não"}
+                <br>Análise · {escape(answer["analysis_id"][:10])}
             </div>
         </div>
     </section>
@@ -358,100 +384,47 @@ def render_table(frame: pd.DataFrame) -> None:
     st.table(format_display_frame(frame).style.hide(axis="index"))
 
 
+for index, block in enumerate(answer["blocks"], start=1):
+    st.markdown(
+        f"""
+        <section class="answer-block" data-block-id="{escape(str(block["id"]))}">
+            <div class="answer-index">{index:02d}</div>
+            <div>
+                <h2>{escape(str(block["title"]))}</h2>
+                <p>{escape(str(block["summary"]))}</p>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    for claim in block["claims"]:
+        st.markdown(
+            '<div class="canonical-item">'
+            f"<strong>{escape(str(claim['id']))}</strong><br>"
+            f"{escape(str(claim['statement']))}</div>",
+            unsafe_allow_html=True,
+        )
+    for action in block["actions"]:
+        st.markdown(
+            '<div class="canonical-item">'
+            f"<strong>{escape(str(action['id']))} · {escape(str(action['kind']))}</strong><br>"
+            f"{escape(str(action['description']))}<br>"
+            f"<small>{escape(str(action['owner_role']))} · {int(action['deadline_days'])} dias · "
+            f"avançar se {escape(str(action['advance_if']))}; parar se "
+            f"{escape(str(action['stop_if']))}</small></div>",
+            unsafe_allow_html=True,
+        )
+
+
 executive_tab, evidence_tab, queue_tab = st.tabs(
     ["Decisão executiva", "Evidências", "Fila operacional"]
 )
 
 with executive_tab:
     section_heading(
-        "01",
-        "O que não bate",
-        "O agregado melhora enquanto a coorte de churn perde força — a contradição central.",
-    )
-    executive_claims = claims.loc[claims["cohort"].isin(["overall", "churn_next_30d"])]
-    usage_rows = executive_claims.loc[executive_claims["claim_id"].eq("C-usage-growth")].set_index(
-        "cohort"
-    )
-    overall_change = (
-        usage_rows.loc["overall", "end_value"] / usage_rows.loc["overall", "start_value"] - 1
-    )
-    churn_change = (
-        usage_rows.loc["churn_next_30d", "end_value"]
-        / usage_rows.loc["churn_next_30d", "start_value"]
-        - 1
-    )
-    satisfaction_row = executive_claims.loc[
-        (executive_claims["claim_id"].eq("C-satisfaction-ok"))
-        & (executive_claims["cohort"].eq("overall"))
-    ].iloc[0]
-    first, second, third = st.columns(3)
-    first.metric("Uso — todas as contas", f"{overall_change:+.1%}")
-    second.metric("Uso — contas que churnarão", f"{churn_change:+.1%}")
-    third.metric("Cobertura de satisfação", f"{satisfaction_row['coverage']:.1%}")
-    claims_display = executive_claims[
-        ["claim_id", "cohort", "start_value", "end_value", "status", "coverage"]
-    ].replace({"claim_id": CLAIM_LABELS, "cohort": COHORT_LABELS, "status": STATUS_LABELS})
-    render_table(
-        claims_display.rename(
-            columns={
-                "claim_id": "Métrica",
-                "cohort": "Coorte",
-                "start_value": "Início",
-                "end_value": "Fim",
-                "status": "Leitura",
-                "coverage": "Cobertura",
-            }
-        )
-    )
-    usage_chart = usage_rows[["start_value", "end_value"]].rename(
-        index=COHORT_LABELS, columns={"start_value": "Início", "end_value": "Fim"}
-    )
-    chart_column, reading_column = st.columns([1.8, 1], gap="large")
-    with chart_column:
-        st.bar_chart(usage_chart, color=["#557164", "#d64a32"], stack=False)
-    with reading_column:
-        st.markdown(
-            f"""
-            <div class="insight-card">
-                <small>LEITURA EXECUTIVA</small>
-                <h3>Crescimento médio esconde erosão.</h3>
-                <p>O uso agregado avançou <strong>{overall_change:+.1%}</strong>, mas caiu <strong>{churn_change:+.1%}</strong> entre as contas que churnarão. A satisfação cobre apenas <strong>{satisfaction_row["coverage"]:.1%}</strong> dos tickets.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    if accepted.empty:
-        st.markdown(
-            '<div class="verdict"><small>Veredito analítico</small><strong>Evidência insuficiente para priorizar uma causa</strong></div>',
-            unsafe_allow_html=True,
-        )
-        finding_display = findings[
-            ["finding_id", "failure_reason", "counterevidence", "limitation"]
-        ].replace({"finding_id": FINDING_LABELS, "failure_reason": FAILURE_LABELS})
-        render_table(
-            finding_display.rename(
-                columns={
-                    "finding_id": "Hipótese",
-                    "failure_reason": "Por que não passou",
-                    "counterevidence": "Contraevidência",
-                    "limitation": "Limitação",
-                }
-            )
-        )
-    else:
-        top = accepted.sort_values("priority_rank").iloc[0]
-        first, second, third = st.columns(3)
-        first.metric("Causa candidata", FINDING_LABELS.get(top["finding_id"], top["finding_id"]))
-        second.metric("MRR exposto — máximo", f"US$ {top['mrr_exposed_max']:,.0f}")
-        third.metric("Contas alcançadas", int(top["affected_accounts"]))
-        st.write(f"**Confiança:** {top['confidence']} — associação, não causalidade.")
-        st.write(f"**Contraevidência:** {top['counterevidence']}")
-        st.write(f"**1 semana:** {top['immediate_action']}")
-        st.write(f"**30–90 dias:** {top['structural_action']}")
-    section_heading(
-        "02",
+        "06",
         "Qualidade que limita a decisão",
-        "As anomalias abaixo impedem que precisão aparente seja confundida com certeza.",
+        "Auditoria após a resposta canônica; não recalcula decisões nem prioridades.",
     )
     quality_rows = pd.DataFrame(
         [
@@ -551,6 +524,23 @@ with evidence_tab:
     st.caption(
         f"Cronologia selecionada: {chronology_label}. Fato = métrica observada; associação = efeito "
         "ajustado; hipótese = explicação ainda não comprovada."
+    )
+    canonical_tables = {
+        "Histórico de churn": monthly_churn,
+        "Motivos no horizonte": reason_distribution,
+        "Coortes relativas": event_metrics.loc[event_metrics["chronology"].eq(chronology)],
+        "Scorecard de mecanismos": mechanism_scorecard,
+    }
+    selected_table = st.selectbox(
+        "Tabela canônica",
+        list(canonical_tables),
+        key="canonical_evidence_table",
+    )
+    st.dataframe(
+        format_display_frame(canonical_tables[selected_table]),
+        width="stretch",
+        height=260,
+        hide_index=True,
     )
     effect_column = f"{chronology}_effect"
     evidence_columns = [
@@ -654,6 +644,8 @@ with queue_tab:
         )
         operational["finding_id"] = "validation-only"
         operational["priority"] = operational["validation_rank"]
+    if operational.empty:
+        st.info("Nenhuma conta entrou na fila ou na watchlist desta execução.")
     queue_filter_columns = st.columns(4)
     finding_values = sorted(operational["finding_id"].dropna().astype(str).unique())
     with queue_filter_columns[0]:
@@ -667,9 +659,12 @@ with queue_tab:
             key="finding_filter",
         )
     with queue_filter_columns[1]:
-        if is_watchlist:
+        if is_watchlist and not operational.empty:
             max_rank = int(operational["priority"].max())
             rank_limit = st.slider("Até a posição", 1, max_rank, min(25, max_rank))
+            priority_filter = None
+        elif is_watchlist:
+            rank_limit = 0
             priority_filter = None
         else:
             priorities = sorted(operational["priority"].dropna().unique())

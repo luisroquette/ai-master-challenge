@@ -23,6 +23,44 @@ def test_dashboard_has_three_decision_views(generated_artifacts, monkeypatch) ->
     assert len(app.get("download_button")) == 1
 
 
+def test_dashboard_starts_with_five_canonical_blocks(generated_artifacts, monkeypatch) -> None:
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(generated_artifacts))
+    answer = json.loads((generated_artifacts / "ceo_answer.json").read_text())
+    app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
+    markdown = [element.value for element in app.markdown]
+
+    positions = [
+        next(
+            index
+            for index, value in enumerate(markdown)
+            if f'data-block-id="{block["id"]}"' in value
+        )
+        for block in answer["blocks"]
+    ]
+    assert positions == sorted(positions)
+    assert all(
+        block["summary"] in markdown[position]
+        for block, position in zip(answer["blocks"], positions, strict=True)
+    )
+    assert any(answer["headline"] in value for value in markdown)
+
+
+def test_dashboard_never_imports_analytical_modules() -> None:
+    source = (SOLUTION_ROOT / "app.py").read_text()
+    assert "ravenstack_churn.diagnosis" not in source
+    assert "ravenstack_churn.panel" not in source
+
+
+def test_invalid_artifact_set_blocks_decision_view(generated_artifacts, monkeypatch) -> None:
+    (generated_artifacts / "ceo_answer.json").write_text("{}")
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(generated_artifacts))
+    app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
+
+    assert len(app.error) == 1
+    assert not any('class="hero"' in markdown.value for markdown in app.markdown)
+    assert not app.tabs
+
+
 def test_queue_filter_and_download_match_canonical_artifact(
     generated_artifacts, monkeypatch
 ) -> None:
@@ -82,6 +120,21 @@ def test_empty_queue_uses_bounded_validation_watchlist(
     assert len(app.warning) == 1
 
 
+def test_empty_queue_and_watchlist_do_not_create_invalid_slider(
+    analysis_result, tmp_path, monkeypatch
+) -> None:
+    panel = analysis_result.panel.assign(escalations_90d=0, auto_renew_off=False)
+    findings = analysis_result.findings.assign(confidence="inconclusive")
+    publish_artifacts(replace(analysis_result, panel=panel, findings=findings), tmp_path)
+    monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(tmp_path))
+
+    app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
+
+    assert not app.exception
+    assert not app.slider
+    assert any("Nenhuma conta" in info.value for info in app.info)
+
+
 def test_accepted_finding_drives_hero_status_and_cutoff(
     analysis_result, tmp_path, monkeypatch
 ) -> None:
@@ -89,16 +142,19 @@ def test_accepted_finding_drives_hero_status_and_cutoff(
     findings["confidence"] = "inconclusive"
     findings["priority_rank"] = pd.NA
     findings.loc[findings.index[0], ["confidence", "priority_rank"]] = ["accepted", 1]
-    publish_artifacts(replace(analysis_result, findings=findings), tmp_path)
-    manifest_path = tmp_path / "run_manifest.json"
-    manifest = json.loads(manifest_path.read_text())
-    manifest["parameters"]["cutoffs"][-1] = "2024-10-31"
-    manifest_path.write_text(json.dumps(manifest))
+    scorecard = analysis_result.mechanism_scorecard.copy()
+    scorecard.loc[scorecard.index[1], ["evidence_level", "status"]] = [
+        "plausible_hypothesis",
+        "inconclusive",
+    ]
+    publish_artifacts(
+        replace(analysis_result, findings=findings, mechanism_scorecard=scorecard), tmp_path
+    )
     monkeypatch.setenv("RAVENSTACK_ARTIFACT_DIR", str(tmp_path))
 
     app = AppTest.from_file(SOLUTION_ROOT / "app.py").run(timeout=20)
 
     assert not app.exception
     hero = next(markdown.value for markdown in app.markdown if 'class="hero"' in markdown.value)
-    assert "Evidência priorizada" in hero
-    assert "31 out 2024" in hero
+    assert "Mecanismo sustentado" in hero
+    assert "31 dez 2024" in hero

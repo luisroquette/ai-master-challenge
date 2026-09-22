@@ -865,3 +865,31 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Bypass mantido:** nenhum `make reproduce`, Codespace ou preflight integral foi executado por ordem explícita de Luis. Os arquivos reais de `artifacts/` não foram regenerados nem editados manualmente nesta etapa. O gate completo permanece pendente antes de PR ou merge.
 
 **Estado:** Task 5 validada localmente e pronta para checkpoint; Task 6 deve fazer o dashboard consumir exclusivamente a resposta canônica já validada.
+
+### Task 6 — dashboard como leitor da resposta canônica
+
+**Skill e pesquisa:** aplicamos `frontend-design` com direção editorial já consolidada no dashboard — papel, tinta, sinal vermelho e tipografia serifada — e consultamos a implementação oficial de `AppTest` do Streamlit. Evitamos fragments e novos componentes, mantendo o frontend testável com a stack instalada.
+
+**RED:** o novo teste procurou os cinco `data-block-id` na abertura e falhou porque o app ainda não renderizava `ceo_answer.json`. Dois controles já passavam: o app não importava módulos analíticos e um checksum inválido bloqueava a interface.
+
+**Execução:** headline, status, corte, claims, limitações e ações agora vêm diretamente da resposta validada. Os cinco blocos aparecem antes das abas em composição editorial numerada; a aba de evidências expõe as quatro novas tabelas e aplica a cronologia escolhida às coortes relativas. A narrativa executiva antiga, que recalculava percentuais e podia contradizer o JSON, foi removida. Qualidade, segmentos, filtros, downloads e três abas foram preservados.
+
+**Feedback e correção:** o primeiro ciclo chegou a `10 passed`. A revisão criou um cenário com fila e watchlist vazias; o RED reproduziu `ValueError: cannot convert float NaN to integer` no slider. A correção omite o slider quando não há linhas e mostra estado vazio explícito. Gate final: `11 passed in 2.37s`, Ruff verde.
+
+**Limite de validação:** `AppTest` prova a árvore Streamlit e a igualdade de conteúdo, mas não substitui inspeção real de navegador. `make app` e inspeção desktop/mobile ficaram adiados junto ao bypass do ambiente integral; nenhum resultado visual ao vivo foi alegado.
+
+**Estado:** Task 6 validada localmente. Próxima etapa cronológica: documentação, fail-fast do `make check` e fechamento honesto dos gates pendentes.
+
+### Task 7 — documentação e fail-fast
+
+**Pesquisa e planejamento:** consultamos Makefiles públicos que combinam diretório temporário, `trap` e encadeamento por `&&`. A solução mínima preserva todos os alvos e comandos existentes; apenas transforma reprodução e comparação em uma única condição fail-fast.
+
+**RED:** um stub executou a receita real de `make check`, fez `reproduce` retornar código 7 e registrou as chamadas. O teste falhou porque o Make retornou zero e ainda chamou `compare`, confirmando que o ponto e vírgula mascarava a falha. O caminho de sucesso já chegava ao comparador.
+
+**Execução e GREEN:** substituímos o separador por `&&`. O teste de falha passou a interromper antes de `compare`, e o teste de sucesso preservou o fluxo completo. O README deixou de congelar números exploratórios e passou a apontar `ceo_answer.json`/`analysis_id` como autoridade, documentando cinco blocos, 14 payloads, calendário, populações, MRR nullable, coortes, seis gates, escada de evidência e premissa de um escritor com app parado.
+
+**Teste:** `tests/test_publish.py` e `tests/test_app.py` retornaram `28 passed in 3.44s`; Ruff verde e diff sem whitespace inválido. Esses são gates locais direcionados, não o `make check` integral.
+
+**Bypass e fechamento honesto:** por ordem explícita de Luis, `make reproduce`, `make check`, Codespace, regeneração dos 15 arquivos e inspeção visual real continuaram sem execução. A SPEC permanece `in-progress`; não declaramos reprodução, artefatos reais ou preflight como verdes. Antes de PR ou merge, esses gates continuam obrigatórios.
+
+**Estado:** as sete tasks foram implementadas no código e validadas por testes direcionados. O único trabalho técnico pendente é o gate integral deliberadamente bypassado e, depois dele, regenerar/inspecionar os artefatos reais no mesmo SHA.

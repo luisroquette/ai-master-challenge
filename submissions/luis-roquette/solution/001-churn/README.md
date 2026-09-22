@@ -2,19 +2,17 @@
 
 Pipeline Python 3.12 que cruza as cinco tabelas do Challenge 001, testa as alegações do CEO, avalia seis causas candidatas e publica relatório, dashboard e fila operacional a partir do mesmo conjunto canônico de artefatos.
 
-## Decisão executiva
+## Resposta ao CEO
 
-Os dados não sustentam priorizar uma causa como raiz. As seis hipóteses falharam pelo menos um gate de estabilidade cronológica, associação controlada, cobertura ou corroboração entre tabelas. Portanto, a fila operacional está deliberadamente vazia; uma watchlist separada nomeia contas somente para validar sinais e o relatório recomenda corrigir a confiabilidade da medição antes de lançar uma intervenção causal.
+A fonte autoritativa é [ceo_answer.json](artifacts/ceo_answer.json), reproduzida no início do [relatório](artifacts/report.md) e do dashboard sem recalcular conclusões. Ela sempre responde na mesma ordem:
 
-Ainda assim, há fatos úteis:
+1. `what_changed`: evolução histórica do churn, denominador, unidade e incerteza;
+2. `where`: recortes descritivos elegíveis, sem transformar concentração em causa;
+3. `strongest_mechanism`: mecanismo sustentado, empate ou hipótese inconclusiva;
+4. `unknowns`: cobertura, contradições e testes que os dados ainda não permitem fechar;
+5. `next_actions`: validação ou proposta de intervenção proporcional à evidência.
 
-- o uso médio ajustado por cobertura sobe no agregado, mas cai entre as contas que churnam em até 30 dias;
-- satisfação é `concern`, não “ok”: média e cobertura de respostas não passam juntas pelo gate;
-- 19.142 usos antecedem o início da assinatura, 13.198 antecedem o cadastro e 1.077 tickets antecedem o cadastro;
-- desligamento de renovação automática expõe no máximo US$ 2.096.221 de MRR em 97 contas, mas não passou o gate entre tabelas;
-- o modelo opcional passou ganho de average precision e lift, mas foi recusado por Brier e não convergência; nenhum score foi publicado.
-
-Leia primeiro o [relatório executivo](artifacts/report.md). A [fila CSV](artifacts/account_queue.csv) é vazia por desenho, não por falha do pipeline; a [watchlist](artifacts/account_watchlist.csv) não autoriza contato ou intervenção.
+O resultado numérico vigente deve ser lido no `analysis_id` validado, não copiado deste README. Fatos permanecem publicados mesmo quando nenhum mecanismo passa os gates. Nesse caso, `selected_mechanism_id=null`, a fila acionável fica vazia e a watchlist serve somente para validação — nunca autoriza contato.
 
 ## Reproduzir
 
@@ -36,13 +34,15 @@ O dashboard abre em `http://localhost:8501`. Hospedagem pública é opcional; a 
 5 CSVs imutáveis
       ↓ contratos + qualidade
 painéis observed/strict por conta e cutoff
-      ↓ claims + 6 hipóteses + segmentos + modelo opcional
+      ↓ histórico + motivos + coortes + 6 hipóteses + gates
 AnalysisResult único
-      ↓ publicação atômica + checksums
-relatório · dashboard somente leitura · fila CSV · manifesto
+      ↓ resposta canônica + 14 payloads + checksums
+relatório · dashboard somente leitura · filas · manifesto
 ```
 
-`make check` executa Ruff e pytest, reproduz em diretório temporário e compara conteúdo e parâmetros com os artefatos canônicos. Só timestamp UTC e SHA de origem podem variar.
+`make check` executa Ruff, formatação e pytest; só então reproduz em diretório temporário e compara conteúdo e parâmetros com os artefatos canônicos. A reprodução e a comparação pertencem à mesma receita fail-fast: falha na primeira impede a segunda. Só timestamp UTC e SHA de origem podem variar.
+
+Publicação pressupõe **um escritor e o app parado**. Cada arquivo usa substituição atômica e o manifesto é escrito por último, mas o diretório inteiro não é transacional. Valide o conjunto antes de iniciar o app. Leitura concorrente, hot reload e múltiplos escritores exigiriam snapshots imutáveis e estão fora deste escopo.
 
 ## Estrutura
 
@@ -56,8 +56,13 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 
 | Arquivo | Conteúdo |
 |---|---|
-| `report.md` | decisão executiva, claims, evidências, segmentos, ações e limitações |
-| `findings.csv` | seis hipóteses com efeito, intervalo, sensibilidade e gate |
+| `ceo_answer.json` | resposta canônica em cinco blocos, `analysis_id`, claims, ações e referências |
+| `report.md` | a mesma resposta canônica, seguida pelas tabelas de auditoria |
+| `monthly_churn.csv` | série abr/2023–nov/2024 e comparação referência versus recente |
+| `reason_distribution.csv` | primeiro motivo terminal válido por período e horizonte diagnóstico |
+| `event_cohort_metrics.csv` | casos e controles contemporâneos em janelas pré-evento |
+| `mechanism_scorecard.csv` | seis gates e escada de evidência por mecanismo |
+| `findings.csv` | seis hipóteses com efeito, intervalo, Holm, sensibilidade e gates |
 | `claim_checks.csv` | uso e satisfação por coorte |
 | `segment_metrics.csv` | snapshot diagnóstico por segmento; não é taxa populacional histórica |
 | `account_panel.csv` | painel completo `observed` + `strict` |
@@ -65,11 +70,17 @@ relatório · dashboard somente leitura · fila CSV · manifesto
 | `account_watchlist.csv` | contas nomeadas para validação descritiva, sem ação autorizada |
 | `quality_report.json` | schema, nulos, duplicidades e contradições |
 | `model_evaluation.json` | métricas fora do tempo e motivos de recusa |
-| `run_manifest.json` | ambiente, parâmetros e SHA-256 dos outros nove artefatos |
+| `run_manifest.json` | ambiente, parâmetros, `analysis_id` e SHA-256 dos 14 payloads |
 
-## Gates analíticos
+## Definições e gates
 
-Uma causa só é aceita se direção e intervalo ajustado forem coerentes, a leitura `observed`/`strict` for estável, amostra e cobertura forem suficientes e outra tabela corroborar o sinal. Associação aceita ainda não é causalidade comprovada.
+- **Churn histórico:** primeiro evento terminal válido, excluindo reativação; população cadastrada no início do mês; taxa de período ponderada por exposições conta-mês, não probabilidade semestral.
+- **MRR:** perda no evento usa a assinatura vigente conhecida; desconhecido permanece nulo. MRR exposto é limite máximo de oportunidade, nunca receita recuperável.
+- **Coortes relativas:** casos e controles contemporâneos compartilham âncora; janelas terminam antes do churn. Satisfação representa tickets respondidos e é ponderada por respostas dentro da âncora.
+- **Gates:** temporalidade, comparação, amostra/cobertura, associação ajustada com Holm, robustez `observed`/`strict` e corroboração pertinente. Cada um termina em `pass`, `fail` ou `unavailable`.
+- **Escada:** `confirmed_fact`, `supported_mechanism`, `plausible_hypothesis` e `rejected_claim`. Falta de dados, intervalo amplo ou falha de ajuste nunca viram refutação automática.
+
+Uma causa só recebe `accepted` quando todos os gates passam. Mesmo assim, a leitura é observacional e não prova causalidade.
 
 O modelo usa split estável por conta, treino até agosto de 2024 e teste de setembro a novembro. Scores só são publicados se houver ganho de average precision, lift ≥ 1,25, Brier não pior que o baseline e avaliação segmentada completa.
 

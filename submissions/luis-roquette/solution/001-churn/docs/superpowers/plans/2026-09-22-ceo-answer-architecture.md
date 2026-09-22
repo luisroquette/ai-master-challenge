@@ -340,7 +340,7 @@ O agente não executa esses comandos; o orquestrador os executa após validar o 
 - Consumes: `ceo_answer.json` e quatro tabelas somente após `validate_artifact_set`.
 - Produces: apresentação; nenhuma função analítica ou decisão nova.
 
-- [ ] **Step 1: escrever testes RED de apresentação**
+- [x] **Step 1: escrever testes RED de apresentação**
 
 ```python
 def test_dashboard_starts_with_five_canonical_blocks(): ...
@@ -348,17 +348,17 @@ def test_dashboard_never_recomputes_analysis(): ...
 def test_invalid_artifact_set_blocks_decision_view(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_app.py`
 
 Expected: FAIL porque a abertura ainda não consome `ceo_answer.json`.
 
-- [ ] **Step 3: implementar renderização mínima**
+- [x] **Step 3: implementar renderização mínima**
 
 Reusar `section_heading`, `format_display_frame` e `render_table`; remover narrativa duplicada e tratar `flat`, `insufficient`, nulo e watchlist vazia.
 
-- [ ] **Step 4: confirmar GREEN e conteúdo renderizado**
+- [ ] **Step 4: confirmar GREEN e conteúdo renderizado** — AppTest: 11 passed; Ruff verde. `make app` e inspeção desktop/mobile adiados pelo bypass explícito.
 
 Run: `.venv/bin/python -m pytest -q tests/test_app.py`
 
@@ -366,7 +366,7 @@ Run: `make app`
 
 Expected: cinco blocos aparecem antes da metodologia; desktop/mobile mostram os mesmos IDs/valores do JSON.
 
-- [ ] **Step 5: entregar o diff sem commit**
+- [x] **Step 5: entregar o diff sem commit**
 
 Informar arquivos, testes e evidência renderizada ao orquestrador; aguardar o Step 7. Não executar `git add` ou `git commit` durante o grupo paralelo.
 
@@ -383,24 +383,24 @@ Informar arquivos, testes e evidência renderizada ao orquestrador; aguardar o S
 - Preserves: `setup`, `test`, `reproduce`, `app`, `check`.
 - Guarantees: falha de reprodução impede `compare`; sucesso alcança `compare`.
 
-- [ ] **Step 1: escrever teste RED do fail-fast**
+- [x] **Step 1: escrever teste RED do fail-fast**
 
 ```python
 def test_check_stops_before_compare_when_reproduce_fails(): ...
 def test_check_reaches_compare_when_reproduce_succeeds(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_publish.py -k "check_stops or check_reaches"`
 
 Expected: primeiro caso FAIL porque a receita atual usa linhas shell separadas.
 
-- [ ] **Step 3: aplicar correção mínima e documentar o resultado efetivo**
+- [x] **Step 3: aplicar correção mínima e documentar o resultado efetivo**
 
 Encadear a reprodução e o compare na mesma receita fail-fast, preservando trap/limpeza. Atualizar README a partir do `ceo_answer.json` validado, sem fixar números exploratórios divergentes.
 
-- [ ] **Step 4: executar o gate final no diff exato**
+- [ ] **Step 4: executar o gate final no diff exato** — bypass explícito de Luis; `make check`, reprodução dos 15 arquivos e inspeção visual real permanecem pendentes antes de PR/merge.
 
 Run no ambiente autorizado: `make check`
 

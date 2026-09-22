@@ -1,5 +1,8 @@
 import json
+import os
+import subprocess
 from dataclasses import replace
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -13,6 +16,45 @@ from ravenstack_churn.publish import (
     publish_artifacts,
     validate_artifact_set,
 )
+
+
+def _run_check_with_stub(tmp_path, reproduce_exit: int) -> tuple[subprocess.CompletedProcess, str]:
+    stub = tmp_path / "python-stub"
+    log = tmp_path / "calls.log"
+    stub.write_text(
+        "#!/bin/sh\n"
+        'printf "%s\\n" "$*" >> "$STUB_LOG"\n'
+        'case "$*" in\n'
+        f'  *"ravenstack_churn.cli reproduce"*) exit {reproduce_exit} ;;\n'
+        "esac\n"
+        "exit 0\n"
+    )
+    stub.chmod(0o755)
+    environment = {**os.environ, "STUB_LOG": str(log)}
+    completed = subprocess.run(
+        ["make", "check", f"PYTHON={stub}"],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=environment,
+    )
+    return completed, log.read_text() if log.exists() else ""
+
+
+def test_check_stops_before_compare_when_reproduce_fails(tmp_path) -> None:
+    completed, calls = _run_check_with_stub(tmp_path, reproduce_exit=7)
+
+    assert completed.returncode != 0
+    assert "ravenstack_churn.cli reproduce" in calls
+    assert "ravenstack_churn.cli compare" not in calls
+
+
+def test_check_reaches_compare_when_reproduce_succeeds(tmp_path) -> None:
+    completed, calls = _run_check_with_stub(tmp_path, reproduce_exit=0)
+
+    assert completed.returncode == 0
+    assert "ravenstack_churn.cli compare" in calls
 
 
 def test_ceo_answer_and_report_share_claim_ids_and_values(analysis_result, tmp_path) -> None:
