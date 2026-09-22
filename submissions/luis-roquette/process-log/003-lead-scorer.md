@@ -1180,3 +1180,15 @@ A limitação permanece explícita: as quatro regressões finais não foram exec
 - Os gates leves ficaram verdes. `unittest` e preflight não foram executados, conforme o bypass autorizado e porque o Mac não dispõe de Streamlit.
 
 Não havia app existente no Streamlit Community Cloud. O login foi iniciado e ficou bloqueado na tela de OAuth do GitHub, em `Authorize Streamlit Community Cloud`; o botão não foi clicado. Assim, o passo `05`, o `TC47`, o deploy, a URL pública e os screenshots continuam incompletos e não foram reivindicados.
+
+## Embargo externo determinado pelo owner — 2026-09-22
+
+Luis determinou que nada seja enviado aos avaliadores antes de validar o output final e conceder autorização mais que expressa.
+
+- O PR upstream `#140`, aberto antes dessa ordem, foi fechado.
+- A branch remota `origin/submission/luis-roquette-003-lead-scorer` foi apagada.
+- A branch local e seus commits foram preservados.
+- O formulário de criação da conta Streamlit não foi submetido; a aba foi fechada.
+- Nenhum app, deploy, URL pública, `TC47` ou screenshot foi produzido.
+
+**Regra operacional:** nenhuma nova publicação, push remoto, PR, merge, deploy ou comunicação aos avaliadores ocorrerá sem autorização expressa posterior de Luis.
