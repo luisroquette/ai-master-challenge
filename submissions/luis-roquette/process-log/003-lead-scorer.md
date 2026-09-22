@@ -1489,3 +1489,9 @@ O vídeo explicativo foi solicitado em português, no formato abrangente, com fo
 O requisito foi atendido como uma experiência guiada local no estilo Arcade: doze telas, navegação sequencial, hotspots, capturas reais do produto, vídeo incorporado e chamadas claras para produto e evidências. Essa escolha mantém a experiência revisável antes de qualquer publicação.
 
 O Arcade real foi aberto, mas exigiu autenticação ou criação de conta. Nenhuma conta, extensão, gravação pública ou compartilhamento foi criado automaticamente. A migração do wizard validado para a plataforma permanece uma etapa opcional posterior, sujeita à autorização específica de login/publicação e sem bloquear a entrega local.
+
+## I31 — Correção da orientação de navegação — 2026-09-22
+
+Na revisão humana, Luis identificou que não estava claro que a experiência avançava pelo botão inferior. A causa foi a hierarquia visual: a navegação parecia controle secundário e podia sair da área de atenção.
+
+A primeira tela recebeu um CTA central animado **“Começar experiência →”**, a instrução explícita **“12 etapas · avance pelos botões abaixo”** e uma barra inferior fixa. O botão principal passou a usar alto contraste e rótulos contextuais: **Começar**, **Próxima etapa** e **Fim**. A correção aplicou a orientação da skill Frontend Design sem adicionar biblioteca ou novo componente externo.
