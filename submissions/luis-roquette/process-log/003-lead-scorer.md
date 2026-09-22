@@ -1495,3 +1495,15 @@ O Arcade real foi aberto, mas exigiu autenticação ou criação de conta. Nenhu
 Na revisão humana, Luis identificou que não estava claro que a experiência avançava pelo botão inferior. A causa foi a hierarquia visual: a navegação parecia controle secundário e podia sair da área de atenção.
 
 A primeira tela recebeu um CTA central animado **“Começar experiência →”**, a instrução explícita **“12 etapas · avance pelos botões abaixo”** e uma barra inferior fixa. O botão principal passou a usar alto contraste e rótulos contextuais: **Começar**, **Próxima etapa** e **Fim**. A correção aplicou a orientação da skill Frontend Design sem adicionar biblioteca ou novo componente externo.
+
+## I32 — Auditoria pré-entrega e conformidade com o template — 2026-09-22
+
+Luis autorizou iniciar a entrega oficial “como manda o figurino”. Antes de qualquer transmissão, as regras do Challenge 003, o guia, o `CONTRIBUTING.md`, o template e o PR anterior foram confrontados novamente com o pacote final.
+
+- A entrega continua restrita a `submissions/luis-roquette/`; nenhum arquivo externo à pasta foi alterado.
+- O PR oficial anterior é o `#140`, fechado sem merge. A regra “um PR por pessoa” determina atualizar a mesma branch e reabrir esse PR, em vez de criar outro.
+- O README raiz foi alinhado explicitamente às seções do template: identificação, resumo, solução, abordagem, resultados, recomendações, limitações, workflow, erros da IA, contribuição humana e evidências.
+- O primeiro passo da experiência local passou a incluir comando e URL exatos, sem sugerir que um arquivo HTML no GitHub equivale a um deploy.
+- Os diretórios `__pycache__` encontrados são locais e ignorados; não fazem parte do diff. O whitespace apontado nos CSVs pertence ao snapshot CC0 preservado por checksum e não será reescrito.
+
+Nenhum push, reabertura de PR, deploy ou contato com avaliadores ocorreu nesta etapa. A primeira transmissão externa permanece condicionada à confirmação de Luis imediatamente antes da ação.
