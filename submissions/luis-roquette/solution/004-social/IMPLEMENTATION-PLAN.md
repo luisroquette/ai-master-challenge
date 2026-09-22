@@ -4,8 +4,8 @@
 
 - Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original.
 - A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento; a barreira final `export_field` cobre qualquer célula extensa antes de `analysis_field` e `history_field`.
-- Gate vigente após I43: **109/109 testes** com warnings como erro. `METHOD_VERSION = "2.1.0"`; `1.0.0` e `2.0.0` são legíveis, porém incompatíveis para nova comparação automática. Artefatos publicados: `evidence.csv` SHA-256 `3a91736cd23c52b2c1603f2ebb0d0324195a41997b6f15c331ad1f042626394b`, `analysis.md` SHA-256 `8fd5a1e524b798294553cfc4eb5e538001c258623b54cd6adf42281e224deba7` e HTML reproduzido SHA-256 `a5cf43b65d561d13f65709da7334d1ca69c26b3536f2b7a4d704f3b479691f9b`.
-- I42–I43 fecharam gramática/faixa de datas, inteiros extensos, guarda de ação negativa fraca, fragmentação universal de saída e rótulos impressos. Replay retrospectivo é sempre rotulado **SIMULAÇÃO**; futuro permanece `pending / observation_in_future`.
+- Gate vigente após a correção da Passada 4: **116/116 testes** com warnings como erro. `METHOD_VERSION = "2.2.0"`; `1.0.0`, `2.0.0` e `2.1.0` são legíveis, porém incompatíveis para nova comparação automática. Artefatos publicados: `evidence.csv` SHA-256 `9fb2d4dbc769863cdb4e8d92b1a8267d0799f9e21a3f6c38bc48b3e141446a98`, `analysis.md` SHA-256 `4038018d466e195c0960f9dba24d4dddbc61bb89dda499b7edee657b7e6860f0` e HTML reproduzido SHA-256 `99a493cbc7cde5d355283f173a8db15e564cdbf718c85c48fd7cb1159afb915c`.
+- A Passada 4 corrigiu mediana temporal, aritmética civil/clipping no limite de 2262, preservação da fila completa com drill-down/decisão além do top 3 e metadados de cobertura temporal no export. Replay retrospectivo é sempre rotulado **SIMULAÇÃO**; futuro permanece `pending / observation_in_future`.
 - A implementação local foi autorizada e executada após a revisão humana registrada no diário. **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -203,7 +203,7 @@ Expected: import failure for `analysis`; no test may pass accidentally.
 
 - [x] **Step 5: Implement strict parsing and diagnostics**
 
-In `analysis.py`, define `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `METRIC_COLUMNS` and `METHOD_VERSION = "2.1.0"`. `load_csv` must (o texto abaixo registra a intenção inicial; I38 substituiu `pandas.read_csv` por interpretação única com `csv.reader`, e I42 tornou datas/números estritos e limitados):
+In `analysis.py`, define `REQUIRED_COLUMNS`, `OPTIONAL_COLUMNS`, `METRIC_COLUMNS` and `METHOD_VERSION = "2.2.0"`. `load_csv` must (o texto abaixo registra a intenção inicial; I38 substituiu `pandas.read_csv` por interpretação única com `csv.reader`, I42 tornou datas/números estritos e a Passada 4 fechou aritmética civil/clipping):
 
 ```python
 source_hash = hashlib.sha256(raw).hexdigest()

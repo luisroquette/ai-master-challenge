@@ -33,7 +33,9 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após as correções documentadas em I42–I43, o gate acumulado aprovou **109/109 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `3a91736cd23c52b2c1603f2ebb0d0324195a41997b6f15c331ad1f042626394b`, `analysis.md` `8fd5a1e524b798294553cfc4eb5e538001c258623b54cd6adf42281e224deba7` e HTML `a5cf43b65d561d13f65709da7334d1ca69c26b3536f2b7a4d704f3b479691f9b`. O resumo normal e a fixture adversarial permaneceram em uma página A4.
+Após a correção dos quatro achados da Passada 4, o gate acumulado aprovou **116/116 testes** com warnings tratados como erros. A CLI real foi repetida byte a byte: `evidence.csv` SHA-256 `9fb2d4dbc769863cdb4e8d92b1a8267d0799f9e21a3f6c38bc48b3e141446a98`, `analysis.md` `4038018d466e195c0960f9dba24d4dddbc61bb89dda499b7edee657b7e6860f0` e HTML `99a493cbc7cde5d355283f173a8db15e564cdbf718c85c48fd7cb1159afb915c`. O resumo normal e a fixture adversarial permaneceram em uma página A4.
+
+As três prioridades históricas mantiveram scores e ordem, agora sob IDs 2.2.0: `sponsorship-9bc1a9a0add291a4`, `sponsorship-311c45798ab57cdf` e `sponsorship-d2421615bf5d4277`.
 
 ## Executar o cockpit
 
@@ -60,9 +62,11 @@ O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda 
 
 Cada decisão guarda o snapshot exato do motor: alvo, comparador, quartis/fallback, força, contexto e referências. Patrocínio mantém separados os braços e usa mediana das medianas por creator; editorial usa apenas o grupo orgânico definido; alertas preservam post/benchmark e um agregado contextual separado para acompanhamento. A observação posterior reaplica esse contrato à nova fonte; só a janela temporal muda, não categoria, audiência, patrocínio ou estatística. Creators sem taxa definida não satisfazem a amostra mínima.
 
-O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.1.0"` é o contrato ativo. Eventos `1.0.0` e `2.0.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`. As capturas históricas/outcomes preservadas na submissão registram eventos criados sob 2.0.0; não são apresentadas como nova comparação 2.1.0.
+O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.2.0"` é o contrato ativo. Eventos `1.0.0`, `2.0.0` e `2.1.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`. As capturas históricas/outcomes preservadas na submissão registram eventos criados sob 2.0.0; não são apresentadas como nova comparação 2.2.0.
 
-A entrada aceita somente ISO-8601 explícito ou `%m/%d/%y %I:%M %p`, dentro de 1971-01-01 a 2262-04-10. Datas relativas, timezone desconhecido e gramática inferida são rejeitados com linha/coluna. Inteiros são provados lexicalmente contra `int64`, sem alterar o limite global do Python. Sinal negativo com força abaixo de 0,40 gera coleta/teste; `review/stop` exige força suficiente.
+A entrada aceita somente ISO-8601 explícito ou `%m/%d/%y %I:%M %p`, dentro de 1971-01-01 a 2262-04-10. Datas relativas, timezone desconhecido e gramática inferida são rejeitados com linha/coluna. Inteiros são provados lexicalmente contra `int64`, sem alterar o limite global do Python. Semanas/meses são calculados como datas civis e convertidos depois do clipping, inclusive no limite superior de 2262. Sinal negativo com força abaixo de 0,40 gera coleta/teste; `review/stop` exige força suficiente.
+
+A recência agregada usa a mediana temporal real, não o elemento central superior. O top 3 permanece como síntese, mas `all_recommendations` preserva a fila deduplicada completa; a UI permite detalhar e decidir ações adicionais sem trocar filtros/scores. Seleções semanal/mensal exportam modo, janela solicitada, janela efetiva e `partial_period` no CSV, HTML e Markdown.
 
 Datas de execução ou fim da observação futuras ficam pendentes (`execution_in_future` / `observation_in_future`); o timestamp enviado não pode adiantar o relógio real. Testes injetam relógio controlado após o fim observado. Para uma demonstração sintética/retrospectiva explícita, use banco separado e defina `SOCIAL_COCKPIT_SIMULATION_NOW=2025-01-22T18:00:00+00:00` ao iniciar o comando Streamlit acima. O app exibe **SIMULAÇÃO / REPLAY RETROSPECTIVO**, e eventos persistem essa marca. Remova a variável ao retornar à produção; simulação não autoriza datas futuras em relação ao relógio controlado.
 
@@ -81,7 +85,7 @@ Para recompor o CSV, reconstrua primeiro linhas `export_field` pelo ordinal dete
 - [SPEC](./SPEC.md)
 - [Diário do processo](../../process-log/004-social.md)
 - [Fonte canônica, método e qualidade](../../process-log/evidence/004/cockpit-source-quality-proof.png)
-- [Audiência condicionada e prioridade](../../process-log/evidence/004/cockpit-audience-priority-proof.png)
+- [Quarta ação, componentes e drill-down](../../process-log/evidence/004/cockpit-audience-priority-proof.png)
 - [Alvo, benchmark, quartis e amostra](../../process-log/evidence/004/cockpit-priority-context-proof.png)
 - [Snapshot histórico e contrato de reenvio pelo mesmo hash](../../process-log/evidence/004/cockpit-history-snapshot-proof.png)
 - [SIMULAÇÃO retrospectiva e futuro pendente](../../process-log/evidence/004/cockpit-outcomes-proof.png)
