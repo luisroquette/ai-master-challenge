@@ -91,16 +91,23 @@ def _display_number(value: object) -> str:
     return "0" if number == 0 else f"{number:.6g}"
 
 
+def _display_integer(value: object) -> str:
+    """Format UI counts with the Brazilian thousands separator."""
+    return f"{int(value):,}".replace(",", ".")
+
+
 def _literal_caption(value: object) -> str:
     return "".join(f"\\{character}" if character in string.punctuation else character for character in str(value))
 
 
 def _table_numbers(frame: pd.DataFrame) -> pd.DataFrame:
-    """Arrow tables cannot carry arbitrary Python ints; keep their text exact."""
+    """Keep integer counts exact and consistently formatted for display."""
     for column in frame.columns:
-        if any(isinstance(value, Integral) and abs(int(value)) > 2**63 - 1 for value in frame[column]):
+        if any(isinstance(value, Integral) for value in frame[column]):
             frame = frame.copy()
-            frame[column] = frame[column].astype(str)
+            frame[column] = frame[column].map(
+                lambda value: _display_integer(value) if isinstance(value, Integral) else value
+            )
     return frame
 
 
@@ -115,7 +122,7 @@ def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dic
     median = reference.get("median", reference.get(rate_key))
     q1, q3 = reference.get("q1", reference.get("q1_erv")), reference.get("q3", reference.get("q3_erv"))
     st.write("Taxa-alvo ERv (%):", rate)
-    st.write("Volume-alvo — visualizações / interações:", target.get("views"), "/", target.get("interactions"))
+    st.write("Volume-alvo — visualizações / interações:", _display_integer(target.get("views", 0)), "/", _display_integer(target.get("interactions", 0)))
     st.write("Benchmark — mediana ERv (%):", median)
     st.write("Benchmark — quartis Q1 / Q3 ERv (%):", q1, "/", q3)
     if sponsorship:
@@ -123,8 +130,8 @@ def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dic
     else:
         st.caption("ERv = 100 × (likes + shares + comments_count) / views; medianas e quartis dos posts com taxa definida.")
     st.write("Delta ERv (p.p.):", evidence.get("delta_erv_pp"))
-    st.write("Amostra-alvo — posts elegíveis / creators:", target.get("n_rate", 1 if "erv" in evidence else 0), "/", target.get("creators", 1 if "erv" in evidence else 0))
-    st.write("Amostra do benchmark — posts elegíveis / creators:", reference.get("n_rate", 0), "/", reference.get("n_creators", reference.get("creators", 0)))
+    st.write("Amostra-alvo — posts elegíveis / creators:", _display_integer(target.get("n_rate", 1 if "erv" in evidence else 0)), "/", _display_integer(target.get("creators", 1 if "erv" in evidence else 0)))
+    st.write("Amostra do benchmark — posts elegíveis / creators:", _display_integer(reference.get("n_rate", 0)), "/", _display_integer(reference.get("n_creators", reference.get("creators", 0))))
     st.write("Contexto solicitado:")
     st.json(item.get("context", {}))
     st.write("Contexto efetivo:")
@@ -200,7 +207,7 @@ if active_frame is None or metadata is None:
     st.info("Nenhuma fonte ativa. Envie um CSV válido para iniciar a análise; o histórico local continua disponível.")
 else:
     st.caption(
-        f"Fonte ativa `{str(metadata['source_hash'])[:12]}…` · {metadata['row_count']} linhas · "
+        f"Fonte ativa `{str(metadata['source_hash'])[:12]}…` · {_display_integer(metadata['row_count'])} linhas · "
         f"{metadata['period_start']} a {metadata['period_end']} · "
         f"{_literal_caption(', '.join(metadata['platforms']))}"
     )
@@ -299,9 +306,9 @@ else:
         )
         if has_observations:
             columns = st.columns(3)
-            columns[0].metric("Posts", int(metrics["posts"]))
-            columns[1].metric("Visualizações", int(metrics["views"]))
-            columns[2].metric("Interações", int(metrics["interactions"]))
+            columns[0].metric("Posts", _display_integer(metrics["posts"]))
+            columns[1].metric("Visualizações", _display_integer(metrics["views"]))
+            columns[2].metric("Interações", _display_integer(metrics["interactions"]))
         else:
             st.warning(str(analysis_state["message"]))
 
@@ -313,13 +320,13 @@ else:
             st.write("Níveis de benchmark tentados:", quality["benchmark_levels_attempted"])
             st.caption("Cada comparador precisa de 30 taxas definidas e 5 creators elegíveis. Views=0 não fornece taxa.")
             diagnostics = quality.get("benchmark_diagnostics", [])
-            st.write("Contextos sem benchmark suficiente:", len(diagnostics))
+            st.write("Contextos sem benchmark suficiente:", _display_integer(len(diagnostics)))
             for diagnostic in diagnostics[:20]:
                 st.json(diagnostic)
             if len(diagnostics) > 20:
                 st.caption("Mostrando 20 contextos; todos os motivos estão no CSV de evidências.")
             sponsorship = result["sponsorship"]
-            st.write("Patrocínio — estratos elegíveis / sem contraparte suficiente:", sponsorship["eligible_strata"], "/", sponsorship["uncovered_count"])
+            st.write("Patrocínio — estratos elegíveis / sem contraparte suficiente:", _display_integer(sponsorship["eligible_strata"]), "/", _display_integer(sponsorship["uncovered_count"]))
             st.write("Cobertura patrocinada:", sponsorship["coverage"])
             if sponsorship["uncovered_strata"]:
                 st.dataframe(pd.DataFrame(sponsorship["uncovered_strata"]), hide_index=True, width="stretch")
@@ -515,7 +522,7 @@ else:
                 references = [{"papel": role, "source_row_id": source_id} for role, ids in snapshot["references"].items() for source_id in ids]
                 reference_frame = pd.DataFrame(references)
                 resolved = reference_frame.merge(active_frame[["source_row_id", "source_line", "post_date", "platform", "content_category"]], on="source_row_id", how="left", validate="many_to_one")
-                st.write("Referências verificadas no CSV histórico — escopo salvo:", len(resolved))
+                st.write("Referências verificadas no CSV histórico — escopo salvo:", _display_integer(len(resolved)))
                 st.dataframe(resolved, hide_index=True, width="stretch")
             elif item["source_hash"] != active_hash:
                 st.caption("Snapshot disponível acima. Reenvie o CSV com este hash para verificar as referências históricas, mesmo fora da fila atual.")
@@ -529,7 +536,7 @@ else:
                 st.warning("SIMULAÇÃO / REPLAY RETROSPECTIVO — observação de fixture, não resultado de produção.")
             st.markdown(f"**Observação {outcome['status']}** · motivo: `{outcome['reason']}`")
             st.caption(f"Execução declarada: {outcome['execution_status']} · data: {outcome['execution_date'] or 'não informada'} · registro: {outcome['recorded_at']}")
-            st.write(f"Janela observada: {observed['period_start']} a {observed['period_end']} · cobertura: {observed['coverage_days']} dias")
+            st.write(f"Janela observada: {observed['period_start']} a {observed['period_end']} · cobertura: {_display_integer(observed['coverage_days'])} dias")
             st.write("Comparação ERv (%) — mediana baseline / observada / delta (p.p.):", comparison["baseline_median"], "/", comparison["observed_median"], "/", comparison["median_delta"])
             st.write("Visualizações por dia — baseline / observada:", comparison["baseline_volume_per_day"], "/", comparison["observed_volume_per_day"])
             st.caption("Observação não causal: diferença descritiva; pendência não comprova resultado da ação.")

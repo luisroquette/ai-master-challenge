@@ -248,10 +248,10 @@ class AppTests(unittest.TestCase):
         app.file_uploader[0].set_value(("social.csv", valid_upload(), "text/csv")).run()
         text = "\n".join(item.value for item in app.markdown)
         for expected in (
-            "Taxa-alvo ERv (%): `8.0`", "Volume-alvo — visualizações / interações: `3000` / `240`",
+            "Taxa-alvo ERv (%): `8.0`", "Volume-alvo — visualizações / interações: 3.000 / 240",
             "Benchmark — mediana ERv (%): `4.0`", "Benchmark — quartis Q1 / Q3 ERv (%): `4.0` / `4.0`",
-            "Delta ERv (p.p.): `4.0`", "Amostra-alvo — posts elegíveis / creators: `30` / `5`",
-            "Amostra do benchmark — posts elegíveis / creators: `30` / `5`",
+            "Delta ERv (p.p.): `4.0`", "Amostra-alvo — posts elegíveis / creators: 30 / 5",
+            "Amostra do benchmark — posts elegíveis / creators: 30 / 5",
             "Contexto solicitado:", "Contexto efetivo:", "Nível efetivo / fallback: mesmo contexto; período anterior de igual duração",
             "Suficiência: suficiente", "Força da evidência (C): `0.06`", "Referências de origem:",
         ):
@@ -495,7 +495,7 @@ class AppTests(unittest.TestCase):
         app.file_uploader[0].set_value(("post.csv", csv_bytes(rows), "text/csv")).run()
         self.assertFalse(app.exception)
         text = "\n".join(item.value for item in app.markdown)
-        for expected in ("Taxa-alvo ERv (%): `30.0`", "Benchmark — mediana ERv (%): `7.0`", "Benchmark — quartis Q1 / Q3 ERv (%): `4.0` / `10.0`", "Delta ERv (p.p.): `23.0`", "Amostra do benchmark — posts elegíveis / creators: `30` / `5`", "core+age+gender/365d"):
+        for expected in ("Taxa-alvo ERv (%): `30.0`", "Benchmark — mediana ERv (%): `7.0`", "Benchmark — quartis Q1 / Q3 ERv (%): `4.0` / `10.0`", "Delta ERv (p.p.): `23.0`", "Amostra do benchmark — posts elegíveis / creators: 30 / 5", "core+age+gender/365d"):
             self.assertIn(expected, text)
         drilldown = next(item for item in app.expander if item.label == "Registros de origem e contexto")
         contexts = [json.loads(item.value) for item in drilldown.json]
