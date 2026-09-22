@@ -839,6 +839,19 @@ EXPORT_COLUMNS = (
     "reference_chunk", "reference_index",
 )
 
+# History columns are appended only when history exists, preserving the static
+# analytical export contract (and its byte identity) for empty local logs.
+HISTORY_EXPORT_COLUMNS = (
+    "event_id", "revision_of", "decided_at", "baseline", "original_text",
+    "edited_text", "effective_text", "outcome_id", "recorded_at",
+    "decision_source_hash", "decision_scope", "decision_method_version",
+    "execution_status", "execution_date", "observed", "comparison", "reason",
+    "period_start", "period_end", "coverage_days", "baseline_coverage_days",
+    "coverage_equal", "comparable", "baseline_median", "observed_median",
+    "median_delta", "baseline_volume_per_day", "observed_volume_per_day",
+    "non_causal", "field_name", "field_chunk", "field_value",
+)
+
 
 def _cell(value: object) -> str | int | float:
     if value is None:
@@ -883,9 +896,28 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
     scope = result.get("scope", {})
     source_hash = source.get("source_hash", "")
     method = scope.get("method_version", METHOD_VERSION)
+    columns = EXPORT_COLUMNS + (HISTORY_EXPORT_COLUMNS if decisions else ())
 
     def row(record_type: str, evidence_id: str = "", **values: object) -> dict[str, object]:
-        return {name: _cell({"record_type": record_type, "evidence_id": evidence_id, "source_hash": source_hash, "method_version": method, "scope": scope, **values}.get(name, "")) for name in EXPORT_COLUMNS}
+        return {name: _cell({"record_type": record_type, "evidence_id": evidence_id, "source_hash": source_hash, "method_version": method, "scope": scope, **values}.get(name, "")) for name in columns}
+
+    def history_row(record_type: str, evidence_id: str, **values: object) -> Iterable[dict[str, object]]:
+        # Never infer historical provenance from the currently active analysis.
+        values = {"source_hash": "", "scope": None, "method_version": "", **values}
+        exported = row(record_type, evidence_id, **values)
+        chunks = []
+        for name, value in exported.items():
+            if isinstance(value, str) and len(value) > 32_768:
+                exported[name] = ""
+                for offset in range(0, len(value), 4096):
+                    chunks.append(row(
+                        "history_field", evidence_id,
+                        **{key: values.get(key, "") for key in ("source_hash", "method_version", "decision_id", "outcome_id", "event_id")},
+                        scope=None, field_name=name, field_chunk=offset // 4096 + 1,
+                        field_value=json.dumps(value[offset:offset + 4096], ensure_ascii=False),
+                    ))
+        yield exported
+        yield from chunks
 
     yield row("summary", metric_name="posts", metric_value=result.get("metrics", {}).get("posts"), unit="posts", text="Escopo analisado")
     summary_id = _stable_id("summary", str(source_hash), scope)
@@ -929,15 +961,41 @@ def iter_export_rows(result: dict[str, object], decisions: list[dict[str, object
                   formula="100 * mean(min(V/P95_V,1), min(I/P95_I,1), min(F/P95_F,1)) * strength * 2**(-age_days/7)")
 
     for decision in decisions:
-        evidence_id = str(decision.get("evidence_id", ""))
-        yield row("decision", evidence_id, text=decision.get("text", decision.get("action", "")), decision_id=decision.get("decision_id", ""), status=decision.get("status", ""), owner=decision.get("owner", ""), execution_window=decision.get("execution_window", ""), review_window=decision.get("review_window", ""))
+        baseline = decision.get("baseline", {})
+        evidence_id = str(baseline.get("evidence_id") or decision.get("evidence_id") or decision.get("recommendation_key", ""))
+        effective = (decision.get("edited_text", "") if decision.get("status") == "edited" else decision.get("original_text", decision.get("text", decision.get("action", ""))))
+        decision_values = {key: decision.get(key, "") for key in (
+            "decision_id", "event_id", "revision_of", "decided_at", "recommendation_key",
+            "source_hash", "scope", "method_version", "status", "original_text", "edited_text",
+            "owner", "execution_window", "review_window",
+        )}
+        yield from history_row("decision", evidence_id, **decision_values, baseline=baseline, text=effective, effective_text=effective)
         for outcome in decision.get("outcomes", []):
-            yield row("outcome", evidence_id, text=outcome.get("text", ""), decision_id=decision.get("decision_id", ""), status=outcome.get("status", ""), metric_name=outcome.get("metric_name", ""), metric_value=outcome.get("metric_value", ""), unit=outcome.get("unit", ""))
+            observed = outcome.get("observed", {})
+            comparison = outcome.get("comparison", {})
+            yield from history_row(
+                "outcome", evidence_id,
+                **{key: outcome.get(key, "") for key in ("outcome_id", "event_id", "source_hash", "method_version", "recorded_at", "execution_status", "execution_date", "status", "reason")},
+                scope=outcome.get("scope", observed.get("scope")),
+                decision_id=decision.get("decision_id", ""), revision_of=decision.get("revision_of"),
+                decided_at=decision.get("decided_at", ""),
+                decision_source_hash=decision.get("source_hash", ""),
+                decision_scope=decision.get("scope"), decision_method_version=decision.get("method_version", ""),
+                observed=observed, comparison=comparison,
+                metric_name=observed.get("metric", outcome.get("metric_name", "")),
+                metric_value=observed.get("median", outcome.get("metric_value")),
+                unit="percent" if observed.get("metric") == "erv" else outcome.get("unit", ""),
+                **{key: observed.get(key) for key in ("period_start", "period_end", "coverage_days")},
+                baseline_coverage_days=baseline.get("coverage_days"),
+                **{key: comparison.get(key) for key in ("coverage_equal", "baseline_median", "observed_median", "median_delta", "baseline_volume_per_day", "observed_volume_per_day")},
+                comparable=outcome.get("status") == "observed", non_causal=True,
+                text="Associação observacional; não demonstra causalidade ou ROI financeiro.",
+            )
 
 
 def export_evidence(result: dict[str, object], decisions: list[dict[str, object]]) -> bytes:
     output = io.StringIO(newline="")
-    writer = csv.DictWriter(output, fieldnames=EXPORT_COLUMNS, lineterminator="\n")
+    writer = csv.DictWriter(output, fieldnames=EXPORT_COLUMNS + (HISTORY_EXPORT_COLUMNS if decisions else ()), lineterminator="\n")
     writer.writeheader()
     writer.writerows(iter_export_rows(result, decisions))
     return output.getvalue().encode("utf-8")

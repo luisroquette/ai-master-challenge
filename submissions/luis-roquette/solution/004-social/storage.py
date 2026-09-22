@@ -274,7 +274,7 @@ def record_outcome(conn: sqlite3.Connection, event: dict[str, object]) -> str:
                 str(event["recorded_at"]),
                 str(event["execution_status"]),
                 str(event["execution_date"]) if event.get("execution_date") else None,
-                _json(event["observed"]),
+                _json({**event["observed"], "scope": event.get("scope", decision["scope"])}),
                 _json(comparison),
                 status,
                 reason,
@@ -314,6 +314,7 @@ def list_decisions(conn: sqlite3.Connection) -> list[dict[str, object]]:
                 "execution_date": outcome[5], "observed": _decoded(outcome[6]),
                 "comparison": _decoded(outcome[7]), "status": outcome[8],
                 "reason": outcome[9], "method_version": outcome[10],
+                "scope": _decoded(outcome[6]).get("scope"),
             }
             for outcome in outcome_rows
         ]

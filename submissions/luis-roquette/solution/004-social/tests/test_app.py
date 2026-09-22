@@ -9,11 +9,15 @@ import unittest
 from contextlib import closing
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
+
+import streamlit as st
 
 from streamlit.testing.v1 import AppTest
 from streamlit.testing.v1.app_test import TMP_DIR
 
 from tests.helpers import csv_bytes, make_post
+from tests.test_exports import historical_log, parse_export
 
 
 APP = Path(__file__).parents[1] / "app.py"
@@ -76,6 +80,34 @@ class AppTests(unittest.TestCase):
 
     def app(self) -> AppTest:
         return AppTest.from_file(str(APP), default_timeout=20).run()
+
+    def test_download_after_reopen_uses_complete_historical_rows(self):
+        original, revision, outcome_id = historical_log(Path(self.directory.name) / "cockpit.sqlite3")
+        with patch("streamlit.download_button", wraps=st.download_button) as download:
+            app = self.app()
+            app.file_uploader[0].set_value(("active-c.csv", valid_upload(), "text/csv")).run()
+            self.assertFalse(app.exception)
+            calls = [call for call in download.call_args_list if call.args[0] == "Baixar evidências e decisões (CSV)"]
+            payload = calls[-1].args[1]
+        rows = parse_export(payload)
+        decisions = {row["decision_id"]: row for row in rows if row["record_type"] == "decision"}
+        self.assertEqual(set(decisions), {original, revision})
+        self.assertEqual(decisions[revision]["revision_of"], original)
+        self.assertEqual(decisions[revision]["source_hash"], "source-a")
+        self.assertEqual(decisions[revision]["event_id"], "revision-event")
+        self.assertEqual(decisions[revision]["effective_text"], "'+Editado")
+        outcome = next(row for row in rows if row["record_type"] == "outcome")
+        self.assertEqual((outcome["outcome_id"], outcome["decision_id"], outcome["source_hash"]), (outcome_id, revision, "source-b"))
+        self.assertEqual(outcome["decision_source_hash"], "source-a")
+        self.assertEqual(outcome["median_delta"], "1.0")
+        self.assertEqual(outcome["execution_status"], "yes")
+        active = next(row["source_hash"] for row in rows if row["record_type"] == "summary")
+        self.assertNotIn(active, {"source-a", "source-b"})
+        with patch("streamlit.download_button", wraps=st.download_button) as download:
+            reopened = self.app()
+            reopened.file_uploader[0].set_value(("active-c.csv", valid_upload(), "text/csv")).run()
+            calls = [call for call in download.call_args_list if call.args[0] == "Baixar evidências e decisões (CSV)"]
+            self.assertEqual(calls[-1].args[1], payload)
 
     def test_initial_render_has_title_uploader_source_state_and_history(self) -> None:
         app = self.app()

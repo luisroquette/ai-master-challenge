@@ -119,13 +119,9 @@ def _render_evidence(evidence: dict[str, Any], item: dict[str, Any], result: dic
 def _decision_export(items: list[dict[str, object]]) -> list[dict[str, object]]:
     return [
         {
-            "decision_id": item["decision_id"],
+            **item,
             "evidence_id": item["recommendation_key"],
-            "status": item["status"],
             "text": item["edited_text"] if item["status"] == "edited" else item["original_text"],
-            "owner": item["owner"],
-            "execution_window": item["execution_window"],
-            "outcomes": item["outcomes"],
         }
         for item in items
     ]

@@ -8,9 +8,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import closing
 
 from analysis import executive_summary, export_evidence, analysis_report, analyze, load_csv
 from tests.helpers import csv_bytes, make_post, default_scope, sponsorship_frequency_rows
+from storage import connect, list_decisions, record_decision, record_import, record_outcome
+from tests.test_storage import decision_event, import_event, outcome_event
 
 
 APP_ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +46,23 @@ def sample_decisions() -> list[dict[str, object]]:
     return [{"decision_id": "d-1", "evidence_id": "dimension-1", "status": "accepted", "owner": "Gestor"}]
 
 
+def historical_log(path: Path) -> tuple[str, str, str]:
+    with closing(connect(path)) as conn:
+        for source in ("source-a", "source-b"):
+            record_import(conn, import_event(source))
+        scope = {"filters": {"platform": ["Instagram"]}, "target_start": "2025-01-01", "target_end": "2025-01-07"}
+        original = record_decision(conn, decision_event(scope=scope, original_text="=Original", owner="@Gestor"))
+        revision = record_decision(conn, decision_event(
+            event_id="revision-event", revision_of=original, scope=scope,
+            decided_at="2025-01-07T21:00:00+00:00", status="edited",
+            original_text="=Original", edited_text="+Editado", owner="@Gestor",
+        ))
+        outcome = record_outcome(conn, outcome_event(
+            decision_id=revision, scope={**scope, "target_start": "2025-01-08", "target_end": "2025-01-14"},
+        ))
+    return original, revision, outcome
+
+
 def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
     with tempfile.TemporaryDirectory() as directory:
         output_csv = Path(directory) / "evidence.csv"
@@ -57,6 +77,81 @@ def run_cli(path: Path) -> tuple[int, tuple[bytes, ...]]:
 
 
 class ExportTests(unittest.TestCase):
+    def test_reopened_history_retains_abc_provenance_chronology_and_revision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.sqlite3"
+            original_id, revision_id, outcome_id = historical_log(path)
+            with closing(connect(path)) as conn:
+                history = list_decisions(conn)
+            result = sample_result()
+            result["source"]["source_hash"] = "source-c"
+            result["scope"] = {"filters": {"platform": ["TikTok"]}, "method_version": "active-only"}
+            payload = export_evidence(result, history)
+            self.assertEqual(payload, export_evidence(result, history))
+            with closing(connect(path)) as conn:
+                self.assertEqual(payload, export_evidence(result, list_decisions(conn)))
+            rows = parse_export(payload)
+            decisions = {row["decision_id"]: row for row in rows if row["record_type"] == "decision"}
+            revision = decisions[revision_id]
+            self.assertEqual(revision["revision_of"], original_id)
+            self.assertEqual(revision["event_id"], "revision-event")
+            self.assertEqual(revision["decided_at"], "2025-01-07T21:00:00+00:00")
+            self.assertEqual(revision["status"], "edited")
+            self.assertEqual(revision["original_text"], "'=Original")
+            self.assertEqual(revision["edited_text"], "'+Editado")
+            self.assertEqual(revision["effective_text"], "'+Editado")
+            self.assertEqual(revision["text"], revision["effective_text"])
+            self.assertEqual(revision["owner"], "'@Gestor")
+            self.assertEqual(revision["execution_window"], "próximos 7 dias")
+            for decision in decisions.values():
+                self.assertEqual(decision["source_hash"], "source-a")
+                self.assertEqual(decision["method_version"], "1.0.0")
+                self.assertEqual(json.loads(decision["scope"])["target_start"], "2025-01-01")
+                self.assertEqual(json.loads(decision["baseline"])["source_row_ids"], ["source-a:1"])
+                self.assertEqual(decision["recommendation_key"], "recommendation-1")
+            outcome = next(row for row in rows if row["record_type"] == "outcome")
+            expected = {
+                "outcome_id": outcome_id, "decision_id": revision_id, "revision_of": original_id,
+                "source_hash": "source-b", "decision_source_hash": "source-a", "method_version": "1.0.0",
+                "recorded_at": "2026-09-21T20:10:00+00:00", "execution_status": "yes", "execution_date": "2025-01-07",
+                "period_start": "2025-01-08", "period_end": "2025-01-14", "status": "observed",
+                "reason": "comparable_after_declared_execution", "metric_name": "erv", "metric_value": "5.0",
+                "coverage_days": "7", "baseline_coverage_days": "7", "coverage_equal": "true", "comparable": "true",
+                "median_delta": "1.0", "baseline_volume_per_day": "100.0", "observed_volume_per_day": "120.0", "non_causal": "true",
+            }
+            self.assertEqual({key: outcome[key] for key in expected}, expected)
+            self.assertEqual(json.loads(outcome["scope"])["target_start"], "2025-01-08")
+            self.assertEqual(json.loads(outcome["decision_scope"]), json.loads(revision["scope"]))
+            self.assertEqual(json.loads(outcome["comparison"])["median_delta"], 1.0)
+            self.assertEqual(json.loads(outcome["observed"])["views"], 840)
+            self.assertIn("não demonstra causalidade", outcome["text"])
+            self.assertTrue(all(row["source_hash"] == "source-c" for row in rows if row["record_type"] not in {"decision", "outcome"}))
+
+    def test_large_history_fields_round_trip_with_default_reader(self):
+        history = [{**decision_event(), "decision_id": "decision-long", "original_text": "=\n" + "á" * 140_000}]
+        history[0]["baseline"]["source_row_ids"] = [f"source-a:{index}" for index in range(20_000)]
+        payload = export_evidence(sample_result(), history)
+        rows = parse_export(payload)
+        decision = next(row for row in rows if row["record_type"] == "decision")
+        for name in ("baseline", "original_text", "effective_text", "text"):
+            self.assertEqual(decision[name], "")
+            chunks = [row for row in rows if row["record_type"] == "history_field" and row["field_name"] == name]
+            self.assertEqual([int(row["field_chunk"]) for row in chunks], list(range(1, len(chunks) + 1)))
+            self.assertTrue(all(row["source_hash"] == "source-a" and row["decision_id"] == "decision-long" for row in chunks))
+            value = "".join(json.loads(row["field_value"]) for row in chunks)
+            if name == "baseline":
+                self.assertEqual(json.loads(value), history[0]["baseline"])
+            else:
+                self.assertEqual(value, "'" + history[0]["original_text"])
+        self.assertEqual(payload, export_evidence(sample_result(), history))
+        self.assertLess(max(len(value) for row in rows for value in row.values()), 131_072)
+
+    def test_legacy_history_never_inherits_active_provenance(self):
+        rows = parse_export(export_evidence(sample_result(), [{"decision_id": "legacy", "outcomes": [{"observed": {}}]}]))
+        for row in rows:
+            if row["record_type"] in ("decision", "outcome"):
+                self.assertEqual((row["source_hash"], row["scope"], row["method_version"]), ("", "", ""))
+
     def test_zero_view_rate_remains_undefined_in_all_exports(self):
         for views, expected in ((0, "não definida"), (100, "0.00%")):
             frame, errors = load_csv(csv_bytes([make_post(views=views, likes=0, shares=0, comments_count=0)]))
