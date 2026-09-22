@@ -166,4 +166,4 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 
 ---
 
-_Submissão enviada em: Não enviada; publicação depende dos gates finais._
+_Submissão enviada: [PR #141](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/141) — estado `OPEN`._

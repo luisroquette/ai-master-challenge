@@ -1218,6 +1218,18 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Streak e encerramento:** `2/2` rodadas limpas consecutivas. A etapa de Lapidação está
   encerrada.
 
+## I78 — Envio obrigatório por PR — 2026-09-22
+
+- **Canal de submissão:** PR
+  [#141](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/141)
+  aberto com o título exato `[Submission] Luis Roquette — Challenge 002`, estado `OPEN` e
+  SHA inicial `7bea6aa02ae9a4a63987e1d1367a5342332e74d7`.
+- **Estado observado:** `mergeStateStatus=CLEAN`; `statusCheckRollup=[]`, portanto nenhum
+  check automático estava registrado no momento da consulta.
+- **Limites preservados:** o preflight final foi pulado por decisão do owner e continua
+  não executado/não verde. PR aberto não significa aprovação nem merge; nenhum merge foi
+  presumido.
+
 ## I74 — Lapidação R1: checkpoint de UI, NOT CLEAN — 2026-09-22
 
 - **Resultado da rodada:** `NOT CLEAN`, com `3 Medium / 1 Low`; streak da Lapidação `0/2`. Este checkpoint corrige a UI, não encerra a rodada nem substitui nova inspeção visual. A captura atualizada continua pendente para o agente de evidence; nenhum screenshot foi produzido ou alterado aqui.
