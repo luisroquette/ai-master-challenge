@@ -1367,3 +1367,10 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   secundárias falharam com `ModuleNotFoundError: support_copilot`. O runner multipágina do
   Streamlit não preservou o `sys.path` preparado pelo entrypoint; a correção passa a
   inicializar `src` em cada página e inclui teste de regressão desse contrato.
+- **Gap visual encontrado no browser:** o seletor de acessibilidade que ocultava o título
+  nativo do Streamlit também alcançava o `<h1>` do hero. O título visual foi convertido em
+  heading ARIA próprio, preservando semântica e tornando a hierarquia visível.
+- **Evidência visual ao vivo:** após o rebuild, Fila diária, Scorecard, Laboratório IT e
+  Evidências renderizaram com a nova navegação, hierarquia, KPIs, tabelas e formulários.
+  A revisão ocorreu no browser contra o deploy público; nenhum merge ou envio final foi
+  realizado.

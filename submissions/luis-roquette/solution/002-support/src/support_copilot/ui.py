@@ -201,12 +201,17 @@ def apply_design_system() -> None:
             height: 2px;
             background: currentColor;
         }
-        .ops-hero h1 {
+        .ops-hero__title {
             position: relative;
             z-index: 1;
             max-width: 900px;
             margin: 0 0 .9rem !important;
             color: #fffdf7 !important;
+            font-family: Iowan Old Style, Palatino Linotype, Georgia, serif;
+            font-size: clamp(2.7rem, 5vw, 5.2rem);
+            font-weight: 700;
+            line-height: .96;
+            letter-spacing: -.035em;
         }
         .ops-hero p {
             position: relative;
@@ -362,7 +367,7 @@ def _page_intro(eyebrow: str, title: str, description: str) -> None:
         f"""
         <section class="ops-hero">
           <div class="ops-hero__eyebrow">{escape(eyebrow)}</div>
-          <h1>{escape(title)}</h1>
+          <div class="ops-hero__title" role="heading" aria-level="1">{escape(title)}</div>
           <p>{escape(description)}</p>
         </section>
         """,
