@@ -1230,3 +1230,20 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
   e distingue o estado final. RC-2 permaneceu desmarcado.
 - **Escopo preservado:** nenhum código ou evidence foi alterado. A streak permanece em
   `0/2`; uma nova rodada completa e limpa é necessária.
+
+## I71 — Redundância Necessária R6: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com `1 Medium / 1 Low`; streak reiniciado em
+  `0/2`.
+- **Medium:** `make setup` instalava o lock e depois abria um ambiente PEP 517 isolado;
+  `setuptools>=75` podia resolver uma versão fora do lock enquanto o README sugeria setup
+  sem resolução ou rede.
+- **Low:** os fallbacks de dados diziam para baixar uma URL de ZIP e salvar o CSV no path
+  final, instrução ambígua que poderia gravar bytes compactados com extensão `.csv`.
+- **Correções:** `setuptools==84.0.0` está fixado no `pyproject.toml` e no lock; bootstrap e
+  editable reutilizam esse backend com `--no-build-isolation`. README e mensagens agora
+  declaram a rede/cache exigida no primeiro setup e mandam baixar o ZIP, extrair o CSV
+  esperado e movê-lo ao caminho exato. Testes de regressão cobrem os dois contratos.
+- **Validação:** 13 testes focados passaram; Ruff e `git diff --check` passaram sem erros.
+- **Escopo preservado:** nenhuma task ou evidence foi alterada. A streak permanece em
+  `0/2`; uma nova rodada completa e limpa é necessária.

@@ -39,8 +39,10 @@ treina, não retuna thresholds e não aprende com uma decisão individual.
 
 ## Requisitos e setup
 
-Requer Python 3.12, `make`, `curl` e `unzip`. O ambiente validado usa as versões exatas de
-`requirements.lock`; `make setup` não resolve versões novas.
+Requer Python 3.12, `make`, `curl` e `unzip`. O primeiro `make setup` precisa de rede ou de
+um cache local completo para instalar as versões exatas de `requirements.lock`. Depois do
+lock instalado, o pacote editable reutiliza o `setuptools` bloqueado, sem build isolation
+nem resolução adicional.
 
 ```bash
 make PYTHON=python3.12 data
@@ -61,10 +63,11 @@ calibração e execute `lock-review --rubric CAMINHO_DA_RUBRICA.csv` antes da se
 reprodução. Essa sequência libera a fila somente após uma decisão de recuperação
 congelada; iniciar o app logo após a primeira reprodução mantém a fila indisponível.
 
-`make data` é a única etapa normal que exige rede. Depois de baixar os CSVs e reproduzir
-os artefatos, inferência, decisões, exportação e demonstração funcionam localmente sem API,
-credencial ou serviço externo. `make demo` apenas valida o ambiente e inicia o Streamlit;
-não instala, baixa ou treina.
+`make data` exige rede para baixar as fontes; o primeiro `make setup` também exige rede ou
+cache local completo para instalar o lock. Depois de preparar ambiente, CSVs e artefatos,
+inferência, decisões, exportação e demonstração funcionam localmente sem API, credencial ou
+serviço externo. `make demo` apenas valida o ambiente e inicia o Streamlit; não instala,
+baixa ou treina.
 
 ## Fontes e retomada manual
 

@@ -529,6 +529,9 @@ def test_delivery_documentation_contract():
     assert "insufficient_evidence" in technical and "zero consultas elegíveis" in technical
     assert "Screenshot real da demonstração" in executive
     assert "CK-12" in executive and "zero consultas elegíveis" in executive
+    assert "primeiro `make setup` precisa de rede ou de" in technical
+    assert "cache local completo" in technical and "sem build isolation" in technical
+    assert "baixe os dois ZIPs" in technical and "extraia exatamente" in technical
 
     link_pattern = re.compile(r"\[[^]]+\]\(([^)]+)\)")
     for document, content in zip(documents, (technical, executive), strict=True):

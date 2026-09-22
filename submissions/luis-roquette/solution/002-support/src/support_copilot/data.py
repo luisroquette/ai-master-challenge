@@ -217,7 +217,10 @@ def _text_group(text: str, domain: Domain) -> str:
 def _read(path: Path, domain: Domain, columns: Sequence[str]) -> tuple[pd.DataFrame, str]:
     if not path.is_file():
         filename, url = SOURCES[domain]
-        raise ValueError(f"source_missing:{domain}; download {url}; save data/raw/{filename}")
+        raise ValueError(
+            f"source_missing:{domain}; download ZIP {url}; extract {filename}; "
+            f"place at data/raw/{filename}"
+        )
     try:
         raw = path.read_bytes()
         # Read as strings; downstream conversion never prints source values.

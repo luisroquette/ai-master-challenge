@@ -210,8 +210,14 @@ def test_loaders_schema_id_taxonomy_and_missing_source(tmp_path):
         pd.DataFrame(rows).to_csv(path, index=False)
         with pytest.raises(ValueError, match=message):
             load_customer_tickets(path)
-    with pytest.raises(ValueError, match="https://.*data/raw/customer_support_tickets.csv"):
+    with pytest.raises(ValueError) as missing:
         load_customer_tickets(tmp_path / "missing.csv")
+    assert str(missing.value) == (
+        "source_missing:customer; download ZIP "
+        "https://www.kaggle.com/api/v1/datasets/download/"
+        "suraj520/customer-support-ticket-dataset; extract customer_support_tickets.csv; "
+        "place at data/raw/customer_support_tickets.csv"
+    )
     it = tmp_path / "it.csv"
     pd.DataFrame({"Document": ["reset access"] * 8, "Topic_group": IT_TAXONOMY}).to_csv(
         it, index=False
