@@ -1389,3 +1389,15 @@ Luis autorizou atacar os itens “NÃO FEITO” um a um, validando cada aplicaç
 - O checklist passou de **3 FEITO / 2 NÃO FEITO / 14 NÃO APLICÁVEL** para **4 FEITO / 1 NÃO FEITO / 14 NÃO APLICÁVEL**.
 
 O único item “NÃO FEITO” restante é backup externo. Sua execução permanece bloqueada pelo embargo que proíbe push, deploy ou envio sem autorização mais que expressa de Luis.
+
+## I23 — Segurança, item 2: backup local validado e limite externo — 2026-09-22
+
+O segundo item foi atacado até o limite autorizado, sem violar o embargo externo.
+
+- Foi criado um bundle Git completo em `/Users/luisroquette/Projects/ai-master-challenge-backups/003-lead-scorer-2026-09-22.bundle`.
+- `git bundle verify` confirmou história completa e a referência correta da branch.
+- Um clone real do bundle restaurou o mesmo `HEAD`, worktree limpo e os quatro CSVs com SHA-256 idênticos ao manifesto.
+- O procedimento de recuperação foi registrado no checklist de segurança.
+- O bundle local protege contra corrupção ou perda do checkout, mas permanece no mesmo Mac e não cobre falha física do equipamento.
+
+O item continua **NÃO FEITO** quanto à cópia externa. Push da branch, upload do bundle ou qualquer outra transmissão permanece proibido até Luis autorizar especificamente o destino e a ação, sem confundir backup com envio aos avaliadores.

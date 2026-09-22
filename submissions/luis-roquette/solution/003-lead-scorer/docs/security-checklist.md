@@ -17,7 +17,7 @@ Escopo: aplicação Streamlit do Challenge 003, dados estáticos públicos CC0, 
 - [ ] **NÃO APLICÁVEL — Gerar segredo ou chave de API do frontend.** Não existe API própria. Um segredo nunca deverá ser embarcado no frontend; caso uma API seja criada, a credencial deverá permanecer no servidor.
 - [ ] **NÃO APLICÁVEL — WAF e detecção avançada de bots no Cloudflare.** Não existe deploy público, domínio próprio ou camada Cloudflare. Reavaliar antes de uma exposição pública fora da hospedagem do challenge.
 - [x] **FEITO — Logs de auditoria.** A prioridade temporária grava antes da mutação um evento append-only em `data/audit/manager-priorities.jsonl`, com permissão `0600`, `fsync`, lock exclusivo e cadeia SHA-256 validada integralmente. Falha ou adulteração impede a prioridade. O ator é marcado `actor_verified=false`, pois o perfil continua demonstrativo.
-- [ ] **NÃO FEITO — Backup de todo o sistema.** Código e quatro CSVs estão versionados; o dataset pode ser recuperado por manifesto, HTTPS e SHA-256, com rollback transacional. Porém, a revisão atual existe somente na branch local porque a branch remota foi removida por embargo. Não há cópia externa atualizada e testada.
+- [ ] **NÃO FEITO — Backup externo de todo o sistema.** Código e quatro CSVs estão versionados; o dataset pode ser recuperado por manifesto, HTTPS e SHA-256, com rollback transacional. Existe um bundle Git local completo e restaurado com sucesso, mas ele permanece no mesmo Mac. A branch remota foi removida por embargo e não há cópia externa atualizada e testada.
 - [ ] **NÃO APLICÁVEL — Sentry.** Não existe runtime público ou serviço persistente a monitorar. Sentry é observabilidade, não blindagem de segurança; reavaliar somente quando houver deploy autorizado.
 - [ ] **NÃO APLICÁVEL — Alertas de custo.** O runtime não usa API paga, banco, fila, armazenamento ou infraestrutura faturável própria. O preview é local.
 - [x] **FEITO — Ocultar chaves de API.** O projeto não precisa de chaves e nenhuma credencial está presente no código, manifesto, requisitos ou configuração.
@@ -66,3 +66,15 @@ Status alterado de **NÃO FEITO** para **FEITO** em 22 de setembro de 2026.
 - Validação: **20/20 testes focais** verdes, incluindo recuperação segura, contratos de pin, nova regressão de durabilidade/adulteração/fail-closed, quatro jornadas AppTest e três jornadas Playwright; `py_compile` e `git diff --check` também verdes.
 
 **Estado atual:** **4 FEITO, 1 NÃO FEITO e 14 NÃO APLICÁVEL**. O único item pendente é backup externo, bloqueado pelo embargo de publicação vigente.
+
+## Tratamento do item 2 — backup
+
+Camada local concluída e validada em 22 de setembro de 2026; camada externa continua pendente.
+
+- Snapshot: `/Users/luisroquette/Projects/ai-master-challenge-backups/003-lead-scorer-2026-09-22.bundle`.
+- O bundle contém a história completa da branch `submission/luis-roquette-003-lead-scorer`, incluindo código, documentação e os quatro CSVs versionados.
+- `git bundle verify` confirmou integridade e história completa. Um clone real em diretório temporário restaurou o mesmo `HEAD`, worktree limpo e os quatro SHA-256 declarados no manifesto.
+- Recuperação: `git clone --branch submission/luis-roquette-003-lead-scorer CAMINHO_DO_BUNDLE DIRETORIO_DE_RESTAURACAO`.
+- O arquivo deve ser regenerado após cada novo commit relevante. Ele protege contra dano ao checkout, mas não contra perda do computador ou disco.
+
+**Bloqueio restante:** copiar o bundle para armazenamento externo ou recriar a branch remota seria transmissão externa. O embargo vigente proíbe essa ação sem autorização específica de Luis; por isso, o item permanece **NÃO FEITO**.
