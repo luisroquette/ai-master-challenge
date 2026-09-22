@@ -4,7 +4,7 @@ Aplicação local para diagnosticar a operação Customer Support, classificar t
 dois domínios independentes, aplicar um gate de risco e registrar decisões humanas sem
 enviar mensagens externas. O estado atual é **seguro por padrão**: a recuperação não
 produz rascunhos porque a execução real encontrou zero consultas elegíveis para a
-avaliação humana obrigatória.
+validação humana opcional que habilitaria essa capacidade.
 
 - [README executivo](../../README.md)
 - [Pesquisa técnica](../../research/002-support.md)
@@ -13,9 +13,9 @@ avaliação humana obrigatória.
 
 ## Resposta curta às três perguntas
 
-1. **Onde perdemos tempo?** O dataset não contém criação do ticket; só permite medir o
-   intervalo pós-primeira-resposta. Restaram quatro intervalos válidos e nenhum grupo
-   elegível de 30 linhas, insuficientes para afirmar um gargalo ou desperdício recuperável.
+1. **Onde perdemos tempo?** Em 8.469 linhas, 1.404 intervalos pós-primeira-resposta válidos
+   mostram Chat (`6,52 h`), High (`7,12 h`) e Product inquiry (`6,98 h`) como maiores
+   medianas; o proxy soma `4.047,83 h` acima das medianas de 20 grupos.
 2. **O que automatizar?** Classificação e roteamento interno somente com modelo suportado,
    confiança calibrada e ausência de riscos. Resposta externa, caso crítico, sensível,
    ambíguo, inválido ou incerto permanece humano.
@@ -97,12 +97,17 @@ validado, aprovação é bloqueada e a saída correta é revisão humana ou esca
 
 ### Histórico observado
 
-- Dataset 1 lido: 8.469 linhas; 1.389 passaram pela sanitização conservadora no último
-  gate registrado da Phase 2.
+- Dataset 1: a lane estruturada usa 8.469/8.469 linhas sem campos textuais ou PII; a lane
+  textual conservadora mantém 1.389 linhas para classificação/recuperação.
 - Dataset 2 lido: 47.837 linhas; 26.472 passaram pela mesma fronteira pública.
 - O intervalo temporal disponível é pós-primeira-resposta, não resolução total.
-- Quatro intervalos válidos e nenhum grupo de 30 linhas impedem conclusão de gargalo ou
-  desperdício observado. A satisfação no desenvolvimento ficou sem sinal confiável.
+- Há 1.404 intervalos válidos e 2.769 ratings. Chat tem mediana `6,52 h` (`355/2.073`),
+  High `7,12 h` (`355/2.085`) e Product inquiry `6,98 h` (`257/1.641`).
+- A pior combinação é Chat / Low / Technical issue: `13,23 h`, `n=15`.
+- O proxy de excesso soma `4.047,83 h` em 20 grupos; Refund request / High lidera com
+  `274,17 h`. Excesso é oportunidade histórica, não economia realizada.
+- Spearman entre intervalo e satisfação é `0,00264` em 1.404 pares. Ridge MAE `1,2026`
+  ficou pior que o baseline `1,1867`: `no_reliable_signal`, sem alegação causal.
 
 ### Desempenho medido
 
@@ -117,7 +122,8 @@ validado, aprovação é bloqueada e a saída correta é revisão humana ou esca
 
 Conservador, base e otimista aplicam volume elegível, fração endereçável, minutos poupados
 e custo/hora editáveis. Horas são `volume × fração × minutos / 60`; custo é `horas ×
-custo/hora`. Nenhum cenário é apresentado como economia realizada ou efeito causal.
+custo/hora`. A fonte não contém custo, moeda ou salário: nenhum cenário é apresentado
+como economia realizada ou efeito causal.
 
 ## Protocolo humano de recuperação
 
@@ -140,12 +146,15 @@ A fonte normativa completa é o docstring/ajuda de
   --rubric CAMINHO_DA_RUBRICA_FINAL.csv
 ```
 
-Calibração e teste exigem amostras seeded, estratificadas e independentes de 30 consultas.
+Se houver população elegível, calibração e teste opcionais usam amostras seeded,
+estratificadas e independentes de 30 consultas.
 O avaliador preenche relevância, correção, segurança e esforço de edição de 1 a 5, além de
 pseudônimo e timestamp. Menos de 30 consultas, formulário incompleto, nota de segurança
 abaixo de 3 ou médias de correção/segurança abaixo de 4 mantêm drafts bloqueados. O teste
 final nunca retuna o threshold. A execução real atual registrou `insufficient_evidence`
-com zero consultas elegíveis; portanto, nenhuma rubrica foi fabricada.
+com zero consultas elegíveis; portanto, nenhuma rubrica foi fabricada. As 60 avaliações
+de CK-12 são validação futura opcional, não gate do briefing; sua ausência bloqueia drafts,
+não o diagnóstico, o roteamento seguro, a intervenção humana ou o protótipo real.
 
 Para congelar explicitamente uma demonstração sem revisão suficiente:
 
@@ -176,12 +185,13 @@ Para congelar explicitamente uma demonstração sem revisão suficiente:
   navegador. IT classificou `hardware device not starting` como Hardware, mas o gate
   manteve revisão humana (`0,5464 < 0,55`).
 - Aprovação/edição permaneceram bloqueadas porque zero consultas eram elegíveis para a
-  avaliação humana. `CK-12` continua incompleto; nenhum draft ou rating foi fabricado.
+  validação humana opcional. CK-12 fica como evolução futura; nenhum draft ou rating foi
+  fabricado, e o escalonamento real persistido demonstra a intervenção humana canônica.
 - Gate base no Codespace: 229 testes, Ruff, reprodução real e 33 testes de workflow
   aprovados. O gate consolidado do diff final é registrado no diário.
 
-Ausência de humano ou de amostra suficiente mantém o critério correspondente pendente;
-desativar a função é o comportamento seguro, mas não fabrica a evidência exigida.
+Ausência de amostra suficiente mantém somente a resposta assistida desativada. Essa falha
+segura é uma limitação explícita e não impede os entregáveis obrigatórios do challenge.
 
 ## Limitações e escopo excluído
 

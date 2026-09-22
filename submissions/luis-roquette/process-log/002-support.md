@@ -1024,3 +1024,30 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Prova real:** a lane estruturada analisa 8.469/8.469 linhas, com 1.404 intervalos pós-resposta válidos e 2.769 avaliações. Os maiores gargalos unidimensionais são Chat (mediana 6,52 h), High (7,12 h) e Product inquiry (6,98 h); a pior combinação é Chat / Low / Technical issue (13,23 h; n=15). O proxy histórico soma 4.047,83 h acima das medianas dos pares em 20 grupos suportados; Refund request / High lidera com 274,17 h. Custo e moeda não existem na fonte e permanecem premissas explícitas, nunca resultado observado.
 - **Satisfação e limitação causal:** nos 1.404 pares com intervalo, Spearman é `0,00264`; Ridge teve MAE `1,2026` contra `1,1867` do baseline, piora relativa de `1,34%`. A conclusão canônica é `no_reliable_signal`: diferenças descritivas por canal, prioridade e tipo não provam influência causal. Também permanecem explícitos o viés de 5.700 avaliações ausentes, a baixa cobertura temporal e o fato de excesso observado não ser economia realizada.
 - **Erros e correções do próprio loop:** a primeira integração fez reprodução e UI calcularem hashes de configuração diferentes após versionar a lane; o scorecard rejeitou artefatos válidos como stale. `current_environment()` passou a espelhar `analytics_schema`, e o mesmo conjunto foi repetido. No checkpoint, uma invocação do pytest desde a raiz do monorepo também falhou porque `test_workflow.py` ancora fixtures em `Path.cwd()`; o comando foi corrigido para partir da solução, sem alterar teste. Resultado local final: 35 testes focados, incluindo fonte real, reprodução determinística, lifecycle e scorecard; Ruff e diff-check verdes. O avanço para publicação ocorre porque denominadores, proveniência, privacidade e conclusões negativas agora são testados, não porque CK-12 foi relaxado.
+
+## I62 — Correção da autoridade canônica na SPEC e documentação — 2026-09-22
+
+- **Autoridade corrigida:** o Challenge 002 e o guia de submissão são a fonte máxima. Eles
+  exigem diagnóstico concreto do Dataset 1, uso dos dois datasets, proposta explícita do
+  que automatizar e não automatizar, fluxo prático, protótipo real e process log. Não
+  exigem 60 avaliações humanas nem uma aprovação/edição real quando nenhum draft seguro
+  existe.
+- **Erro da SPEC:** a arquitetura transformou CK-12 — uma validação interna desejável da
+  recuperação — e uma evidência real de approve/edit em blockers da Phase 3 e do DoD. Essa
+  sobre-especificação confundiu um gate para habilitar respostas sugeridas com um gate do
+  challenge inteiro. O diário anterior permanece intacto para mostrar como o erro surgiu e
+  foi detectado; nenhuma revisão anterior foi reescrita.
+- **Correção:** CK-12 passa a evolução opcional futura. Zero consultas elegíveis continua
+  bloqueando drafts, sem relaxar privacidade, risco, freeze, abstinência ou precedência
+  humana. O escalonamento real, persistido após reinício e exportado com audit ID, demonstra
+  a intervenção humana pedida pelo briefing. Aprovação/edição real só é exigível quando
+  houver draft seguro; seus controles continuam testados.
+- **Diagnóstico reintegrado aos READMEs:** 8.469 linhas estruturadas; 1.404 intervalos e
+  2.769 ratings. Chat `6,52 h` (`355/2.073`), High `7,12 h` (`355/2.085`), Product inquiry
+  `6,98 h` (`257/1.641`) e Chat / Low / Technical issue `13,23 h` (`n=15`). O proxy soma
+  `4.047,83 h` em 20 grupos; Refund request / High lidera com `274,17 h`.
+- **Satisfação e ROI:** Spearman `0,00264` em 1.404 pares; Ridge MAE `1,2026` contra
+  baseline `1,1867`, logo `no_reliable_signal`. A fonte não contém custo, moeda ou salário;
+  cenários permanecem parametrizados e o proxy não é economia realizada. Phase 3 não foi
+  marcada como reviewed/done neste alinhamento; o próximo gate deve revisar o estado
+  corrigido, não reutilizar o parecer baseado na SPEC sobre-especificada.

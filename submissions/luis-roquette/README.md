@@ -12,12 +12,12 @@
 
 Construí um **Support Decision Copilot** local que conecta diagnóstico operacional,
 classificação, gate de risco, precedentes históricos e decisão humana auditável. A
-análise encontrou uma limitação estrutural: o Dataset 1 não permite medir tempo até a
-primeira resposta nem resolução total; só permite o intervalo pós-primeira-resposta.
-Além disso, a amostra sanitizada atual não sustenta uma estimativa observada de
-desperdício nem valida respostas sugeridas. A recomendação é usar a fila e os modelos
-como apoio à revisão humana, mantendo rascunhos bloqueados até existir avaliação humana
-suficiente e preservando custos apenas como cenários editáveis.
+análise das 8.469 linhas encontrou 1.404 intervalos pós-primeira-resposta válidos e um
+proxy de 4.047,83 horas acima das medianas de 20 grupos, sem confundir essa oportunidade
+com economia realizada. Satisfação não apresentou sinal confiável e custo/hora não existe
+na fonte. A recomendação é usar classificação e roteamento como apoio conservador,
+preservar intervenção humana e manter respostas sugeridas bloqueadas até uma validação
+opcional futura sustentar sua habilitação.
 
 ---
 
@@ -30,12 +30,15 @@ suficiente e preservando custos apenas como cenários editáveis.
 - O único intervalo temporal observável é
   `Time to Resolution - First Response Time`, chamado de **intervalo
   pós-primeira-resposta**. Não é tempo total de resolução.
-- A execução real encontrou somente quatro intervalos válidos após a sanitização.
-  Isso não sustenta ranking de gargalos por canal, prioridade e tipo.
-- Nenhum grupo atingiu as 30 linhas válidas exigidas para estimar excesso recuperável.
-  A aplicação mostra a limitação em vez de transformar amostra insuficiente em finding.
-- A associação com satisfação também ficou sem sinal confiável no desenvolvimento; não
-  há alegação causal sobre canal, tipo ou tempo.
+- A lane operacional estruturada preserva 8.469/8.469 linhas sem texto, contato,
+  demografia, produto ou resolução e encontrou 1.404 intervalos válidos.
+- Maiores medianas unidimensionais: Chat `6,52 h` (`355/2.073`), prioridade High
+  `7,12 h` (`355/2.085`) e Product inquiry `6,98 h` (`257/1.641`).
+- Pior combinação: Chat / Low / Technical issue, `13,23 h`, `n=15`.
+- O proxy histórico soma `4.047,83 h` acima das medianas em 20 grupos; Refund request /
+  High lidera com `274,17 h`. Isso é oportunidade observada, não economia realizada.
+- Satisfação não apresentou sinal confiável: Spearman `ρ=0,00264` em 1.404 pares; Ridge
+  MAE `1,2026` contra baseline `1,1867`. Associação não prova causalidade.
 
 #### 2. O que pode ser automatizado com IA?
 
@@ -48,6 +51,8 @@ suficiente e preservando custos apenas como cenários editáveis.
   precedente histórico editável após uma avaliação humana formal da recuperação.
 - A população elegível atual foi zero; portanto, os rascunhos permanecem bloqueados e
   não houve relaxamento de regra, duplicação de consulta nem geração livre como fallback.
+  As 60 avaliações humanas de CK-12 são validação opcional futura, não requisito do
+  briefing nem bloqueio para o diagnóstico, o roteamento seguro ou o protótipo real.
 
 #### 3. Como isso funciona na prática?
 
@@ -73,32 +78,33 @@ escolhas está em [pesquisa técnica](research/002-support.md).
 ### Resultados / Findings
 
 - Fontes reais inspecionadas: 8.469 linhas Customer Support e 47.837 linhas IT.
-- Após a sanitização conservadora registrada no último gate da Phase 2: 1.389 linhas
-  Customer e 26.472 linhas IT permaneceram disponíveis; exclusões e denominadores são
-  parte do manifesto reproduzível.
+- Duas lanes preservam finalidades distintas: a operacional usa 8.469 linhas estruturadas
+  sem PII/texto; a textual conservadora usa 1.389 Customer e 26.472 IT para modelos.
+- O diagnóstico quantificou 1.404 intervalos, 2.769 ratings, 20 grupos suportados e
+  `4.047,83 h` de excesso histórico; custo não foi observado.
 - Classificadores, calibração, risco e cobertura são mantidos por domínio; nenhum join
   fictício conecta os datasets.
 - A fila real, o escalonamento, a persistência após reinício, o export e as páginas
   separadas foram comprovados no navegador. Aprovação/edição ficaram corretamente
   bloqueadas; fixtures cobrem as quatro ações, mas não contam como evidência real.
-- A avaliação humana de recuperação não pôde começar por ausência de 30 consultas
-  elegíveis. Essa insuficiência mantém a assistência de resposta desativada.
+- A validação humana opcional da recuperação não pôde começar por zero consultas
+  elegíveis. Essa insuficiência mantém somente a assistência de resposta desativada.
 
 ### Recomendações
 
 1. Operar primeiro como copiloto: revisão humana obrigatória para comunicação externa.
-2. Coletar timestamps de criação e estados do atendimento para medir gargalos reais.
-3. Auditar a coleta de satisfação e ampliar denominadores antes de priorizar drivers.
+2. Atacar primeiro Refund request / High e validar operacionalmente o proxy de `274,17 h`.
+3. Coletar timestamps de criação para medir primeira resposta e resolução total.
 4. Avaliar 30 consultas independentes antes de habilitar qualquer rascunho histórico.
-5. Tratar horas e custo como cenários editáveis até existir medição operacional posterior.
+5. Manter custo/hora editável: a fonte não traz moeda, salário ou custo operacional.
 
 ### Limitações
 
 - O Dataset 1 não observa criação do ticket; não mede primeira resposta nem resolução total.
 - A sanitização conservadora reduz cobertura e pode introduzir viés de seleção.
 - Associação não prova causalidade; projeção de custo não é economia realizada.
-- Um único revisor seria permitido pelo protocolo, mas nenhuma rubrica humana foi
-  preenchida porque a população elegível foi insuficiente.
+- CK-12 permanece como validação futura opcional: nenhuma rubrica foi preenchida porque
+  houve zero consultas elegíveis; drafts seguem corretamente bloqueados.
 - Não há helpdesk, envio de mensagem, autenticação, multiempresa, aprendizado online ou
   deploy obrigatório. A entrega é uma demonstração local.
 
@@ -151,7 +157,9 @@ O registro completo, incluindo perguntas, respostas e verificações, está no
 - [x] [Screenshot real da demonstração](solution/002-support/evidence/screenshot.png)
 - [x] [Export persistido correlacionado ao audit ID 1](solution/002-support/evidence/decisions-demo.csv)
 - [x] [Métricas, hashes e limitações finais](solution/002-support/evidence/metrics.json)
-- [ ] CK-12 — 30 avaliações humanas por split: **incompleto por zero consultas elegíveis**
+- [x] Intervenção humana real: escalonamento persistido após reinício e exportado
+- [ ] Validação futura opcional CK-12 — 30 avaliações por split; zero consultas elegíveis,
+  sem impacto no fechamento dos entregáveis canônicos e com drafts bloqueados
 - [x] Gate consolidado: `make doctor`, 230 testes, Ruff, reprodução real e 34 testes
   de workflow no Python 3.12 do Codespace gerenciado
 

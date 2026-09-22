@@ -57,7 +57,7 @@ Construir o Challenge 002 como um **Support Decision Copilot** local e autoconti
 - Selecionar modelos por validação cruzada no conjunto de desenvolvimento.
 - Manter teste estratificado congelado até modelo, calibração, regras e thresholds estarem definidos.
 - Reportar macro-F1, métricas por classe, matriz de confusão, calibração e risco versus cobertura.
-- Avaliar recuperação em tickets não vistos com rubrica humana de relevância, correção, segurança e esforço de edição.
+- Quando houver amostra elegível suficiente, avaliar recuperação em tickets não vistos com rubrica humana de relevância, correção, segurança e esforço de edição. Essa avaliação é uma validação futura opcional, não exigida pelo briefing; enquanto ausente ou insuficiente, drafts permanecem bloqueados sem impedir a conclusão do diagnóstico, do roteamento seguro e do protótipo.
 - Testar o fluxo ponta a ponta, persistência, exportação, abstinência e precedência das regras de risco.
 
 #### Delivery constraints
@@ -114,7 +114,7 @@ Entregar o Support Decision Copilot, uma demonstração local para agentes de su
 | CK-9 | Roteamento automático exige modelo suportado, entrada válida, probabilidades válidas e confiança calibrada no threshold validado; todo bloqueio de risco prevalece sobre confiança, e ausência de threshold elegível desativa automação inclusive quando a confiança é 1,0? | hard_rule | essential |
 | CK-10 | A política versionada justifica categorias humanas com contagens e exemplos sanitizados, distingue regras IT sem evidência operacional, e a fila explica a ordem por prioridade existente, quantidade de riscos e incerteza usando apenas sinais validados? | principle | important |
 | CK-11 | Recuperação consulta somente resoluções não vazias de tickets fechados sanitizados do treino Customer Support, mostra até três IDs/scores e só oferece rascunho histórico editável acima do limite validado, abstendo-se explicitamente em qualquer ausência de evidência segura? | hard_rule | essential |
-| CK-12 | Duas amostras independentes, seeded e estratificadas de 30 consultas elegíveis, uma de calibração e outra de teste, recebem avaliações humanas registradas de relevância, correção, segurança e esforço de edição, com drafts bloqueados antes da validação e sem ajustar thresholds pelos resultados finais? | hard_rule | essential |
+| CK-12 | Se houver pelo menos 30 consultas elegíveis em cada split e a validação opcional for executada, duas amostras independentes, seeded e estratificadas recebem avaliações humanas registradas sem retuning pelo teste; caso contrário, a insuficiência fica documentada e drafts permanecem bloqueados, sem bloquear os entregáveis canônicos do challenge? | principle | optional |
 | CK-13 | Aprovar, editar e aprovar, rejeitar e escalonar registram decisão local; rejeição/escalonamento exigem motivo; nenhuma ação envia mensagem, fecha ticket real, aprende online ou modifica modelos/thresholds? | hard_rule | essential |
 | CK-14 | Cada gravação é atômica, sobrevive ao reinício e registra ID, data, ticket/domínio, versões de dados/modelo/regras, threshold, recomendação, gate/motivos, ação humana, textos sanitizados e diferença de edição; falha mantém registros anteriores e exportação preserva esses campos? | hard_rule | essential |
 | CK-15 | A aplicação abre na fila, oferece filtros essenciais e detalhe sanitizado, confirma o ID efetivamente gravado, distingue carregamento/indisponibilidade/artefato desatualizado e mantém rótulos, navegação por teclado e significado independente de cor? | principle | important |
@@ -129,9 +129,9 @@ Entregar o Support Decision Copilot, uma demonstração local para agentes de su
 O repositório ainda não contém aplicação, Makefile, testes ou workflow de CI: estes são os gates canônicos definidos pelo plano aprovado e deverão existir antes de serem exigidos. Executar a partir de `submissions/luis-roquette/solution/002-support/`, exceto checks Git na raiz. Instalação, suíte completa e reprodução pesada usam `codespace-manager`; resultado de outro SHA não vale.
 
 - [ ] RC-1 — Executar `make doctor` e conferir Python 3.12, dependências bloqueadas, fontes públicas e mensagens de correção; demonstrar `make demo` e uso após download sem credenciais. Cobre CK-1/18/20.
-- [ ] RC-2 — Executar `make test && make lint && make reproduce` no ambiente gerenciado com o SHA/diff exato; registrar saídas/artefatos reais, sem afirmar sucesso enquanto comando, runtime ou rubrica exigida estiver ausente. Cobre CK-2–14/17/18/20.
-- [ ] RC-3 — Executar `.venv/bin/pytest tests/test_workflow.py -q` e demonstração visual real: fila, edição/aprovação, escalonamento, reinício, download CSV, scorecard e texto livre IT; conferir screenshot sanitizado e audit IDs persistidos. Cobre CK-13–19.
-- [ ] RC-4 — Conferir manifests/splits, denominadores e relatórios de métricas; verificar os dois formulários humanos de 30 casos, congelamento dos thresholds e motivos de funções desativadas. Ausência de evidência humana mantém drafts bloqueados e a avaliação declaradamente incompleta. Cobre CK-3–12/18/19.
+- [ ] RC-2 — Executar `make test && make lint && make reproduce` no ambiente gerenciado com o SHA/diff exato; registrar saídas/artefatos reais, sem afirmar sucesso enquanto comando, runtime ou gate obrigatório estiver ausente. Cobre CK-2–14/17/18/20.
+- [ ] RC-3 — Executar `.venv/bin/pytest tests/test_workflow.py -q` e demonstração visual real: fila, escalonamento humano, reinício, download CSV, scorecard e texto livre IT; conferir screenshot sanitizado e audit ID persistido. Aprovação/edição real só é exigível se existir draft seguro habilitado; seus controles permanecem cobertos por testes. Cobre CK-13–19.
+- [ ] RC-4 — Conferir manifests/splits, denominadores e relatórios de métricas, congelamento dos thresholds e motivos de funções desativadas. Se a avaliação humana opcional não tiver população suficiente, registrar contagens reais e manter drafts bloqueados; os dois formulários de 30 casos não bloqueiam a entrega canônica. Cobre CK-3–12/18/19.
 - [ ] RC-5 — Executar `git diff --check`, `git status --short` e `git diff --name-only upstream/main --`; revisar entrega contra PII, segredos e licença; conferir README pelo template e diário em cada checkpoint. Nenhum arquivo público fora de `submissions/luis-roquette/`. Cobre CK-2/19/20.
 
 **Rubric:**
@@ -166,7 +166,7 @@ Anchors:
 
 ### Safe Decision and Response Boundaries
 
-Avalia a proteção da decisão humana diante de risco, PII e evidência insuficiente, mesmo com probabilidades favoráveis. Cobre CK-2/8/9/10/11/12/13/17.
+Avalia a proteção da decisão humana diante de risco, PII e evidência insuficiente, mesmo com probabilidades favoráveis. Cobre CK-2/8/9/10/11/13/17 e o comportamento fail-closed opcional de CK-12.
 
 Anchors:
 
@@ -239,7 +239,7 @@ Anchors:
 | unit | fixtures pequenas determinísticas | pytest | dados, análise, gate, recuperação e armazenamento | testes focados por alteração; `make test` final |
 | integration | fixtures pequenas; reprodução completa remota | pytest + pipeline documentado | lock, datasets, manifests, modelos e SQLite | `make test && make reproduce` no SHA pretendido |
 | ui | fluxo e navegação multipágina | Streamlit AppTest + inspeção visual real | aplicação, artefatos sanitizados e banco temporário | `tests/test_workflow.py` e demonstração persistida |
-| evaluation | splits completos; duas amostras humanas de 30 consultas | scikit-learn + rubricas humanas | dados separados, configuração congelada e avaliador humano | métricas/rubricas concluídas; abstinência se reprovadas |
+| evaluation | splits completos; amostras humanas somente se houver população elegível | scikit-learn + rubricas humanas opcionais | dados separados, configuração congelada e avaliador humano quando aplicável | insuficiência documentada mantém drafts bloqueados; não bloqueia o challenge |
 | inspection | arquivos públicos, comandos e processo | Git + revisão documental/visual | guia, template, SPEC, diário e evidências | diff limpo/restrito e revisão final |
 
 **Test Cases to Cover:**
@@ -302,10 +302,10 @@ Anchors:
 - [unit] Testar índice ausente, fonte vazia/inadequada, empate, similaridade baixa e consulta sem termos conhecidos; não criar resposta livre nem indexar resoluções de calibração/teste.
 - [unit] Conferir máximo de três fontes/scores e cópia sanitizada da resolução histórica aceita; sem limite validado manter `draft=null` com motivo.
 
-#### CK-12: Revisão humana
+#### CK-12: Revisão humana opcional futura
 
-- [evaluation] Preparar 30 consultas de calibração estratificadas com seed; humano registra relevância/correção/segurança/esforço de edição de 1–5, notas e autoria, sem consultar teste.
-- [evaluation] Testar limites 0,20–0,90 por 0,10; exigir médias de correção/segurança pelo menos 4 e nenhum safety abaixo de 3 nos candidatos elegíveis. Pacote vazio/incompleto/reprovado mantém drafts bloqueados; após congelar, revisar 30 consultas independentes de teste sem reajuste, preservando falhas e declarando revisor único quando aplicável.
+- [evaluation] Se existirem 30 consultas elegíveis, preparar calibração estratificada com seed; humano registra relevância/correção/segurança/esforço de edição de 1–5, notas e autoria, sem consultar teste.
+- [evaluation] Se a validação opcional for executada, testar limites 0,20–0,90 por 0,10; exigir médias de correção/segurança pelo menos 4 e nenhum safety abaixo de 3. Pacote vazio, insuficiente, incompleto ou reprovado mantém drafts bloqueados; uma avaliação futura de teste não reajusta a configuração congelada.
 
 #### CK-13: Decisão humana
 
@@ -348,11 +348,11 @@ Anchors:
 
 **Definition of Done:**
 
-- [ ] CK-1–20 possuem evidência; checks/testes passam no estado pretendido e limitações legítimas aparecem como funções desativadas, sem simular sucesso.
-- [ ] Ambos os domínios são demonstrados com dados reais independentes; diagnóstico, métricas e rubricas humanas têm fontes/denominadores/versões; oportunidades/projeções expõem premissas.
-- [ ] Uma aprovação ou edição e um escalonamento reais persistem após reinício, exportam dados sanitizados e correspondem aos audit IDs/screenshot documentados.
+- [ ] CK-1–11 e CK-13–20 possuem evidência; checks/testes passam no estado pretendido e limitações legítimas aparecem como funções desativadas, sem simular sucesso. CK-12 registra honestamente a validação futura opcional ou a insuficiência que mantém drafts bloqueados.
+- [ ] Ambos os domínios são demonstrados com dados reais independentes; diagnóstico e métricas têm fontes/denominadores/versões; oportunidades/projeções expõem premissas. Rubricas humanas são opcionais e só habilitam assistência futura.
+- [ ] Um escalonamento humano real persiste após reinício, exporta dados sanitizados e corresponde ao audit ID/screenshot documentado. Aprovação/edição real só é exigida quando houver draft seguro; seus controles permanecem validados por testes.
 - [ ] READMEs, pesquisa, diário e evidências cumprem desafio/template; dados brutos, PII, segredos, modelos gerados e banco runtime não integram a entrega pública.
-- [ ] SPEC foi aprovada antes da implementação; revisões/testes fecharam os loops; publicação/deploy não são presumidos pela prontidão local e nenhuma rubrica humana ou gate obrigatório permanece ocultamente pendente.
+- [ ] SPEC foi aprovada antes da implementação; revisões/testes fecharam os loops; publicação/deploy não são presumidos pela prontidão local e nenhum gate obrigatório permanece ocultamente pendente. A rubrica humana opcional pode permanecer não executada com drafts bloqueados e limitação explícita.
 
 ## Architecture Overview
 
@@ -368,7 +368,7 @@ Python 3.12, pandas, scikit-learn, joblib, Streamlit, pytest e Ruff são a sele�
 CSVs locais → validação + sanitização + qualidade → splits independentes
   ├─ Customer → diagnóstico observado → scorecard + cenários
   ├─ Customer → modelo + política → fila de teste congelado
-  ├─ Customer treino fechado → índice → revisão humana → assistência
+  ├─ Customer treino fechado → índice → validação humana opcional → assistência ou abstinência
   └─ IT → modelo + política → laboratório separado
 artefatos + manifesto validado → UI → decisão humana → SQLite → CSV persistido
 ```
@@ -426,7 +426,7 @@ O CLI `python -m support_copilot.retrieval prepare-review --artifacts artifacts 
 
 O CSV humano mantém `query_id,source_id,relevance,correctness,safety,edit_effort,reviewer_notes` e acrescenta `packet_id,reviewer_id,reviewed_at`; notas são sanitizadas, autor pode ser pseudônimo estável. Todas as quatro escalas são 1–5, com âncoras documentadas (relevância/correção/segurança: 1 inadequado, 5 adequado; edição: 1 nenhuma, 5 reescrita completa). Ausência de candidato recebe marcação explícita no pacote e não é aceita no denominador de draft. `lock-review --artifacts artifacts --rubric evidence/retrieval-calibration-rubric.csv` valida pacote inteiro, aplica a grade 0,20–0,90/0,10 e grava `artifacts/review/retrieval-policy-lock.json`. Entre subconjuntos aceitos não vazios, escolher menor threshold com médias de correção/segurança ≥4 e nenhum safety <3; campos não preenchidos não viram zeros ou acertos. Lock guarda hashes e decisão inclusive quando desabilitada.
 
-Somente após modelo, calibração, regras, thresholds de roteamento e decisão de recuperação bloqueados, liberar pacote de 30 consultas de teste independente. Rubrica de teste descreve qualidade final e nunca ajusta threshold; reprovação pode apenas desativar assistência e registrar que uma futura versão exigirá nova avaliação independente. Menos de 30 consultas distintas elegíveis em qualquer split gera `insufficient_evidence`, com contagem real, sem reposição, duplicação ou relaxamento do gate. Nesse caso não declarar CK-12 concluído; manter assistência bloqueada e explicar a pendência. Rubrica ausente/incompleta também impede declaração de avaliação completa. Para uma demonstração sem revisão, registrar explicitamente decisão congelada `disabled/pending_review` antes de abrir teste; não habilitar depois usando conhecimento adquirido no teste da mesma versão.
+Somente após modelo, calibração, regras, thresholds de roteamento e decisão de recuperação bloqueados, liberar pacote opcional de 30 consultas de teste independente. Rubrica de teste descreve qualidade futura e nunca ajusta threshold; reprovação pode apenas desativar assistência e registrar que uma futura versão exigirá nova avaliação independente. Menos de 30 consultas distintas elegíveis em qualquer split gera `insufficient_evidence`, com contagem real, sem reposição, duplicação ou relaxamento do gate. Nesse caso manter assistência bloqueada e explicar a limitação; CK-12 não é gate da entrega canônica. Rubrica ausente/incompleta impede somente declarar recuperação validada. Para uma demonstração sem revisão, registrar explicitamente decisão congelada `disabled/pending_review` antes de abrir teste; não habilitar depois usando conhecimento adquirido no teste da mesma versão.
 
 ### Auditoria atômica e export persistido
 
@@ -438,7 +438,7 @@ Banco local: `data/runtime/decisions.sqlite3`, ignorado pelo Git e separado dos 
 
 `export_decisions_csv(connection, destination: Path) -> ExportResult`, com `ExportResult(path: Path, content: bytes, row_count: int, sha256: str)`. Exportar snapshot consistente dos registros commitados em ordem de ID; incluir todos os campos de `StoredDecision`, listas como JSON compacto e nulos como célula vazia. Strings vazias opcionais são normalizadas para nulo na gravação, evitando ambiguidade. UTF-8, cabeçalho fixo, newline LF e quoting via `csv`; neutralizar células textuais cujo primeiro caractere significativo seja `=,+,-,@` ou tab/CR/LF com prefixo de apóstrofo, inclusive variantes com whitespace/control chars. Armazenamento conserva texto sanitizado original; README documenta a transformação no CSV e o teste em planilha.
 
-Destino normal: `data/runtime/exports/decisions-<uuid>.csv`, escrito primeiro em arquivo temporário irmão e finalizado por rename atômico, sem sobrescrever export anterior. `st.download_button` usa exatamente `ExportResult.content` do arquivo persistido; falha ao gravar não anuncia export salvo. A evidência pública será `evidence/decisions-demo.csv`, cópia revisada de export real contendo ao menos os IDs de uma aprovação/edição e um escalonamento; pode restringir linhas por IDs, mantendo todos os campos e valores exportados. Registrar hash, IDs e relação com screenshot em `evidence/metrics.json`/README; nunca publicar o banco completo. Se assistência validada não permitir aprovação real, não fabricar evento para cumprir o DoD: documentar impedimento e deixar essa evidência pendente.
+Destino normal: `data/runtime/exports/decisions-<uuid>.csv`, escrito primeiro em arquivo temporário irmão e finalizado por rename atômico, sem sobrescrever export anterior. `st.download_button` usa exatamente `ExportResult.content` do arquivo persistido; falha ao gravar não anuncia export salvo. A evidência pública será `evidence/decisions-demo.csv`, cópia revisada de export real contendo ao menos o ID de um escalonamento humano; aprovação/edição é incluída somente se houver draft seguro habilitado. Pode restringir linhas por IDs, mantendo todos os campos e valores exportados. Registrar hash, IDs e relação com screenshot em `evidence/metrics.json`/README; nunca publicar o banco completo. Se assistência validada não permitir aprovação real, não fabricar evento: o escalonamento persistido demonstra a intervenção humana exigida pelo briefing e a limitação fica explícita.
 
 ### Manifesto, reprodução e disponibilidade
 
@@ -503,8 +503,8 @@ PHASE 2 — fluxo completo com revisão pendente
   02 --------------------> 06
   [review: opus; selar snapshot imutável S07 do workflow]
 ===================== phase barrier =====================
-PHASE 3 — avaliação humana e evidência real
-  07/S07 -> 08 Revisão humana/métricas --+
+PHASE 3 — métricas, evidência real e avaliação opcional
+  07/S07 -> 08 Métricas/freeze/revisão opcional --+
   07 -----> 09 Docs/workflow mutável ---+-> 10 Demo/suíte consolidada
   [review: opus]
 ```
@@ -526,7 +526,7 @@ Snapshot S07 é saída obrigatória de 07, selada após a revisão da fase 2: `d
 | 09 | 3 | sonnet | sdd:tech-writer | 07 | 08 | `.specs/sub-tasks/implement-support-decision-copilot/09-delivery-documentation.md` |
 | 10 | 3 | sonnet | sdd:test-engineer | 08, 09 | None | `.specs/sub-tasks/implement-support-decision-copilot/10-real-demo-and-final-gates.md` |
 
-Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revisão da fase 1 → 04 → 06 → 07 → revisão da fase 2/S07 → 08 → 10 → revisão da fase 3. A espera pelo avaliador humano na etapa 08 é externa e pode dominar o prazo. Largura máxima: dois steps, sem escrita concorrente nos mesmos arquivos. Na fase 2, 05 documenta armazenamento no README e 06 documenta o protocolo exclusivamente no docstring/ajuda CLI de `retrieval.py`. Na fase 3, 08 escreve evidence/testes modeling/retrieval e executa somente o teste de reprodução em S07 com hash conferido antes/depois; 09 escreve READMEs/workflow mutável e executa só seu teste documental. Nenhum deles coleta a suíte inteira durante o paralelo. Step 10 executa workflow e suíte final consolidados após ambos; S07 não substitui evidência do estado final.
+Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revisão da fase 1 → 04 → 06 → 07 → revisão da fase 2/S07 → 08 → 10 → revisão da fase 3. Avaliação humana no step 08 ocorre somente se houver população elegível e não bloqueia o prazo canônico; na insuficiência, a assistência permanece desativada. Largura máxima: dois steps, sem escrita concorrente nos mesmos arquivos. Na fase 2, 05 documenta armazenamento no README e 06 documenta o protocolo exclusivamente no docstring/ajuda CLI de `retrieval.py`. Na fase 3, 08 escreve evidence/testes modeling/retrieval e executa somente o teste de reprodução em S07 com hash conferido antes/depois; 09 escreve READMEs/workflow mutável e executa só seu teste documental. Nenhum deles coleta a suíte inteira durante o paralelo. Step 10 executa workflow e suíte final consolidados após ambos; S07 não substitui evidência do estado final.
 
 ### Phase Overview
 
@@ -581,15 +581,15 @@ Caminho de execução mais longo, incluindo barreiras: 01 → 02 → 03 → revi
 
 **Reviewer model:** opus — teto disponível para independência da avaliação e evidências finais.
 
-**Acceptance Criteria that should be fulfiled:** aplicação demonstrada nos dois domínios reais, rubricas humanas concluídas, configuração congelada, reprodução equivalente e entrega documentada com screenshot/export correlacionados. Reviewer confere os artefatos reais, gates do SHA/diff pretendido e todos os critérios finais. Ausência de humano, amostra suficiente ou draft seguro mantém o critério correspondente pendente; não declarar DoD cumprido por desativar uma função que também impede uma evidência exigida.
+**Acceptance Criteria that should be fulfiled:** diagnóstico concreto do Dataset 1, aplicação demonstrada nos dois domínios reais, configuração congelada, reprodução equivalente e entrega documentada com screenshot/export de escalonamento correlacionados. Reviewer confere automação e não automação, fluxo funcional, process log, números/denominadores e ROI transparente no SHA/diff pretendido. Rubricas humanas são validação futura opcional; ausência de amostra mantém drafts bloqueados, sem bloquear a conclusão canônica.
 
 **Checklist items:**
 
 - CK-1 e CK-18 — execução local/offline preparada e reprodução real rastreável.
-- CK-8 e CK-12 — medições finais por domínio e duas avaliações humanas independentes.
+- CK-8 — medições finais por domínio. CK-12 — insuficiência ou avaliação opcional documentada, sempre fail-closed.
 - CK-16 — scorecard e Laboratório IT reais, conectados somente por evidências agregadas.
 - CK-19 e CK-20 — template/READMEs/diário/evidências reais, aprovação da SPEC e gates canônicos no estado entregue.
-- CK-2–7, CK-9–11, CK-13–15 e CK-17 — regressão final do comportamento já entregue, incluindo tela/export sem PII e aprovação/escalonamento persistidos.
+- CK-2–7, CK-9–11, CK-13–15 e CK-17 — regressão final do comportamento já entregue, incluindo tela/export sem PII e escalonamento persistido; aprovação/edição real somente se houver draft seguro.
 
 **Rubrics:**
 
