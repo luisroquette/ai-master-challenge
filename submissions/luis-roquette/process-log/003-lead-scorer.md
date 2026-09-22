@@ -1337,3 +1337,25 @@ O feedback invalida a nota 10/10 anterior. A fila dizia **o que fazer**, mas ain
 ### Reavaliação
 
 **Nota restabelecida: 10/10 dentro do escopo do challenge.** A primeira dobra agora responde, em sequência: **qual lead**, **por que ele**, **quais sinais sustentam a atenção** e **qual ação executar**. O sistema continua sem inventar causalidade ou urgência temporal.
+
+## I20 — Encerramento da lapidação e abertura do check de segurança — 2026-09-22
+
+Luis aprovou o output lapidado e encerrou essa rodada. A contribuição humana consolidada foi exigir que a interface não apenas ordenasse leads, mas declarasse **qual lead merece foco, por quê, quais sinais sustentam a decisão e qual ação deve ser executada**.
+
+A última etapa antes da documentação geral será segurança. Por determinação de Luis, a análise deve considerar somente o que é pertinente ao projeto e classificar cada controle como **FEITO**, **NÃO FEITO** ou **NÃO APLICÁVEL**. Primeiro será emitido o parecer completo; os itens “NÃO FEITO” serão tratados depois, um a um, sem antecipar remediações.
+
+### Resultado do diagnóstico inicial
+
+- **3 FEITO:** ausência de chaves expostas, ausência de segredos detectados no histórico e proteção contra adulteração dos dados/scores do protótipo.
+- **2 NÃO FEITO:** trilha persistente de auditoria para a repriorização e backup externo da revisão local.
+- **14 NÃO APLICÁVEL:** login, cadastro, e-mail, API, Cloudflare, Sentry, custos, banco, RLS, criptografia de dados sensíveis, autenticação, restrição de registros, cookies autenticados e senhas não existem no escopo atual.
+
+### Evidências e limites
+
+- O app declara explicitamente que o seletor vendedor/gestor é demonstrativo e não autentica usuários.
+- Os quatro CSVs são públicos, CC0, versionados e recuperáveis por manifesto; downloads exigem HTTPS e passam por SHA-256, validação de ZIP, limites de tamanho, lock e rollback.
+- A prioridade temporária valida papel, estágio, carteira, fingerprint e geração, mas sua atribuição de gestor/horário existe apenas na sessão e não forma log durável.
+- A branch remota continua removida por embargo; portanto, a revisão atual não possui backup externo, embora os dados-fonte sejam reproduzíveis.
+- A varredura focal do estado atual e do histórico encontrou zero padrões de credenciais de alta confiança. `gitleaks` e `trufflehog` não estão instalados; essa limitação foi registrada sem instalar ferramentas adicionais.
+
+O relatório completo foi criado em `docs/security-checklist.md`. Nenhuma remediação, publicação, deploy ou comunicação externa ocorreu.
