@@ -88,3 +88,29 @@ de 47.837 a 26.472 representantes sanitizados. Quarentena: 7.077 Customer e 21.3
 Essas exclusões podem enviesar análises e devem acompanhar seus denominadores; somente
 34 linhas Customer sanitizadas têm satisfação observada. Os dois splits tiveram
 suporte suficiente; isso não comprova sinal preditivo nem qualidade das respostas.
+
+## Auditoria local e exportação
+
+`store.py` usa SQLite da biblioteca padrão, schema v1 e transações explícitas em
+`data/runtime/decisions.sqlite3`, fora do Git. Schema desconhecido bloqueia escrita
+sem recriar o banco. UUID repetido com payload sanitizado idêntico retorna o mesmo
+registro; payload divergente falha. Strings opcionais vazias viram SQL NULL.
+`edit_ratio` é `1 - SequenceMatcher(None, suggestion, final).ratio()` sobre textos
+sanitizados; rejeição/escalonamento têm valor nulo.
+
+O CSV inclui todos os campos de `StoredDecision`, em ordem de ID, num snapshot dos
+registros commitados. Usa UTF-8, linhas LF, listas em JSON compacto e NULL como
+célula vazia. Células textuais com prefixos de fórmula (`=`, `+`, `-`, `@`, tab,
+CR ou LF), inclusive após whitespace/caracteres de controle, recebem apóstrofo.
+Essa transformação ocorre somente no CSV; SQLite preserva o texto sanitizado.
+
+A exportação grava e sincroniza um temporário irmão, publica por `link`/`unlink`
+atômico sem sobrescrita e devolve os bytes lidos do arquivo salvo. Esse equivalente
+de rename sem sobrescrita exige suporte a hard links; sua ausência causa erro,
+sem anunciar sucesso nem substituir export anterior. O download deve usar
+exatamente `ExportResult.content`; caminho, contagem e SHA-256 acompanham o retorno.
+
+O caller fecha suas conexões, por exemplo com `contextlib.closing`, e reabre uma
+conexão para confirmar o ID antes de anunciar sucesso. Transações pendentes do
+caller são recusadas sem commit/rollback implícito. Os testes focados comprovam
+persistência e CSV; integração da UI e abertura real em planilha ainda estão pendentes.
