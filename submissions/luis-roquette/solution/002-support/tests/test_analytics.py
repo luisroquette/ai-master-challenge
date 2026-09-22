@@ -12,11 +12,16 @@ from support_copilot.analytics import (
     _signal_status,
     add_operational_fields,
     grouped_bottlenecks,
+    operational_summary,
     recoverable_excess_hours,
     satisfaction_associations,
     scenario_projection,
 )
-from support_copilot.data import CUSTOMER_COLUMNS, IT_TAXONOMY
+from support_copilot.data import (
+    CUSTOMER_COLUMNS,
+    IT_TAXONOMY,
+    load_customer_analytics,
+)
 
 ROOT = Path(__file__).parents[1]
 reproduce = runpy.run_path(ROOT / "scripts" / "reproduce.py")["reproduce"]
@@ -107,6 +112,8 @@ def test_waste_requires_30_valid_peers_and_never_has_negative_excess() -> None:
     assert pd.isna(report.loc["Low", "observed_excess_hours"])
     assert report.loc["High", "status"] == "supported"
     assert report.loc["High", "observed_excess_hours"] >= 0
+    assert report.loc["High", "rank_excess"] == 1
+    assert report.loc["High", "share_of_supported_excess"] == pytest.approx(1.0)
     assert not report.loc["High", "realized_savings"]
 
 
@@ -178,9 +185,11 @@ def test_raw_or_wrong_domain_frames_are_rejected() -> None:
         add_operational_fields(raw)
     with pytest.raises(ValueError, match="domain"):
         add_operational_fields(operational_frame().assign(domain="it"))
+    with pytest.raises(ValueError, match="sanitized"):
+        add_operational_fields(operational_frame().assign(text="model input"))
 
 
-def test_reproduce_emits_typed_null_diagnostic_when_split_is_insufficient(
+def test_reproduce_keeps_structured_diagnostic_when_text_split_is_insufficient(
     tmp_path,
 ) -> None:
     customer = tmp_path / "customer.csv"
@@ -211,9 +220,86 @@ def test_reproduce_emits_typed_null_diagnostic_when_split_is_insufficient(
     bottlenecks = pd.read_csv(output / "analytics" / "bottlenecks.csv")
 
     assert manifest["splits"]["customer"]["status"] == "insufficient_support"
-    assert summary_payload["status"] == "insufficient_support"
-    assert summary_payload["reason"] == "no_sanitized_development_representatives"
-    assert summary_payload["median_post_response_hours"] is None
+    assert summary_payload["status"] == "ready"
+    assert summary_payload["reason"] is None
+    assert summary_payload["analysis_scope"] == "customer_structured_operational_all_rows"
+    assert summary_payload["analysis_rows"] == 1
+    assert summary_payload["source_rows"] == summary_payload["sanitized_rows"] == 1
+    assert summary_payload["representative_rows"] is None
+    assert summary_payload["source_lane"] == "structured_operational"
+    assert summary_payload["text_fields_retained"] is False
+    assert summary_payload["median_post_response_hours"] == pytest.approx(
+        1.0000342933333333
+    )
     assert summary_payload["observed_excess_hours"] is None
-    assert waste.empty and "status" in waste
-    assert bottlenecks.empty and "n_eligible" in bottlenecks
+    assert not waste.empty and set(waste["status"]) == {"insufficient_support"}
+    assert not bottlenecks.empty and set(bottlenecks["n_eligible"]) == {1}
+    analytics_source = manifest["sources"]["customer"]["analytics"]
+    assert analytics_source["lane"] == "structured_operational"
+    assert analytics_source["quality"]["text_fields_retained"] is False
+    assert manifest["artifacts"]["data.customer.analytics"]["status"] == "ready"
+    assert manifest["artifacts"]["analytics.operational_summary"]["dependencies"] == [
+        "data.customer.analytics"
+    ]
+
+
+REAL_CUSTOMER_FIXTURE = ROOT / "data/raw/customer_support_tickets.csv"
+
+
+@pytest.mark.skipif(
+    not REAL_CUSTOMER_FIXTURE.is_file(), reason="optional public CSV not downloaded"
+)
+def test_real_customer_diagnostic_has_traceable_denominators_and_rankings() -> None:
+    frame = load_customer_analytics(REAL_CUSTOMER_FIXTURE)
+    operational = add_operational_fields(frame)
+    operational.attrs = frame.attrs.copy()
+    bottlenecks = grouped_bottlenecks(operational)
+    waste = recoverable_excess_hours(operational)
+    satisfaction = satisfaction_associations(operational)
+    report = operational_summary(operational)
+
+    assert report.analysis_rows == report.source_rows == report.sanitized_rows == 8469
+    assert report.valid_intervals == 1404
+    assert report.satisfaction_sample == 2769
+    assert report.source_lane == "structured_operational"
+    assert report.text_fields_retained is False and report.cost_observed is False
+    assert report.observed_excess_hours == pytest.approx(4047.833333333333)
+    assert report.supported_waste_groups == 20
+
+    one_way = {
+        grouping: bottlenecks.loc[bottlenecks["grouping"].eq(grouping)].iloc[0]
+        for grouping in ("Ticket Channel", "Ticket Priority", "target")
+    }
+    assert one_way["Ticket Channel"]["Ticket Channel"] == "Chat"
+    assert one_way["Ticket Channel"]["median_hours"] == pytest.approx(6.516666666666667)
+    assert one_way["Ticket Priority"]["Ticket Priority"] == "High"
+    assert one_way["Ticket Priority"]["median_hours"] == pytest.approx(7.116666666666666)
+    assert one_way["target"]["target"] == "Product inquiry"
+    assert one_way["target"]["median_hours"] == pytest.approx(6.983333333333333)
+
+    worst = bottlenecks.loc[
+        bottlenecks["grouping"].eq("Ticket Channel+Ticket Priority+target")
+    ].iloc[0]
+    assert (worst["Ticket Channel"], worst["Ticket Priority"], worst["target"]) == (
+        "Chat", "Low", "Technical issue"
+    )
+    assert worst["n_eligible"] == 15
+    assert worst["median_hours"] == pytest.approx(13.233333333333333)
+
+    top_waste = waste.loc[waste["status"].eq("supported")].iloc[0]
+    assert (top_waste["target"], top_waste["Ticket Priority"]) == (
+        "Refund request", "High"
+    )
+    assert top_waste["observed_excess_hours"] == pytest.approx(274.1666666666667)
+    assert satisfaction.status == "no_reliable_signal"
+    assert satisfaction.baseline_mae == pytest.approx(1.1867039645909088)
+    assert satisfaction.ridge_mae == pytest.approx(1.2026170582002638)
+    assert satisfaction.relative_mae_improvement == pytest.approx(-0.013409488873529385)
+    assert satisfaction.permutation_importance is None
+    interval_effect = next(
+        effect for effect in satisfaction.univariate_effects
+        if effect["feature"] == "post_response_hours"
+    )
+    assert interval_effect["association_metric"] == "spearman_rank_correlation"
+    assert interval_effect["n"] == 1404
+    assert interval_effect["association_value"] == pytest.approx(0.002637570495552492)

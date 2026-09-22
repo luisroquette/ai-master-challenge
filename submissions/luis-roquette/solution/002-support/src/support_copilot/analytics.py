@@ -1,4 +1,4 @@
-"""Operational evidence from sanitized Customer Support development rows only."""
+"""Operational evidence from the text-free Customer Support structured lane."""
 
 from __future__ import annotations
 
@@ -28,11 +28,13 @@ BOTTLENECK_COLUMNS = (
     "grouping", *GROUP_COLUMNS, "n_total", "n_eligible", "n_excluded",
     "excluded_not_closed", "excluded_missing", "excluded_invalid_timestamp",
     "excluded_negative", "median_hours", "q1_hours", "q3_hours", "iqr_hours",
-    "interval_name", "first_response_observable", "total_resolution_observable",
+    "rank_worst", "interval_name", "first_response_observable",
+    "total_resolution_observable",
 )
 WASTE_COLUMNS = (
     "target", "Ticket Priority", "eligible_n", "peer_median_hours",
-    "observed_excess_hours", "status", "evidence_kind", "realized_savings",
+    "observed_excess_hours", "rank_excess", "share_of_supported_excess",
+    "status", "evidence_kind", "realized_savings",
 )
 
 
@@ -74,6 +76,10 @@ class OperationalSummary:
     limitations: tuple[str, ...]
     status: Literal["ready", "insufficient_support"] = "ready"
     reason: str | None = None
+    analysis_rows: int | None = None
+    source_lane: str | None = None
+    text_fields_retained: bool | None = None
+    cost_observed: bool = False
 
 
 @dataclass(frozen=True)
@@ -115,8 +121,10 @@ class ScenarioResult:
 
 
 def _require_sanitized_customer(frame: pd.DataFrame, columns: set[str]) -> None:
-    forbidden = {"Customer Name", "Customer Email", "Customer Age", "Customer Gender",
-                 "Ticket Description"}
+    forbidden = {
+        "Customer Name", "Customer Email", "Customer Age", "Customer Gender",
+        "Ticket Description", "text", "resolution", "text_group_id",
+    }
     if forbidden & set(frame.columns):
         raise ValueError("analytics_requires_sanitized_frame")
     required = {"ticket_id", "domain", *columns}
@@ -209,7 +217,17 @@ def grouped_bottlenecks(frame: pd.DataFrame) -> pd.DataFrame:
                     "total_resolution_observable": False,
                 })
                 rows.append(row)
-    return pd.DataFrame(rows, columns=BOTTLENECK_COLUMNS)
+    report = pd.DataFrame(rows)
+    if report.empty:
+        return pd.DataFrame(columns=BOTTLENECK_COLUMNS)
+    report["rank_worst"] = (
+        report.groupby("grouping")["median_hours"]
+        .rank(method="min", ascending=False).astype("Int64")
+    )
+    return report.loc[:, BOTTLENECK_COLUMNS].sort_values(
+        ["grouping", "rank_worst", "n_eligible"], ascending=[True, True, False],
+        na_position="last",
+    ).reset_index(drop=True)
 
 
 def recoverable_excess_hours(frame: pd.DataFrame) -> pd.DataFrame:
@@ -237,7 +255,24 @@ def recoverable_excess_hours(frame: pd.DataFrame) -> pd.DataFrame:
             "evidence_kind": "observed_proxy",
             "realized_savings": False,
         })
-    return pd.DataFrame(rows, columns=WASTE_COLUMNS)
+    report = pd.DataFrame(rows)
+    if report.empty:
+        return pd.DataFrame(columns=WASTE_COLUMNS)
+    supported = report["status"].eq("supported")
+    total = report.loc[supported, "observed_excess_hours"].sum()
+    report["rank_excess"] = pd.Series(pd.NA, index=report.index, dtype="Int64")
+    report.loc[supported, "rank_excess"] = (
+        report.loc[supported, "observed_excess_hours"]
+        .rank(method="min", ascending=False).astype("Int64")
+    )
+    report["share_of_supported_excess"] = None
+    if total > 0:
+        report.loc[supported, "share_of_supported_excess"] = (
+            report.loc[supported, "observed_excess_hours"] / total
+        )
+    return report.loc[:, WASTE_COLUMNS].sort_values(
+        ["rank_excess", "target", "Ticket Priority"], na_position="last"
+    ).reset_index(drop=True)
 
 
 def _signal_status(baseline_mae: float, ridge_mae: float) -> tuple[str, float]:
@@ -261,8 +296,25 @@ def _univariate_effects(data: pd.DataFrame) -> tuple[dict[str, object], ...]:
                 "n": int(len(group)),
                 "mean_rating": _finite(group[rating].mean()),
                 "median_rating": _finite(group[rating].median()),
+                "association_metric": "group_rating",
+                "association_value": None,
                 "evidence_kind": "univariate_association",
             })
+    pair = data[[rating, "post_response_hours"]].dropna()
+    correlation = None
+    if len(pair) >= MIN_SATISFACTION_SUPPORT:
+        correlation = _finite(
+            pair[rating].rank(method="average").corr(
+                pair["post_response_hours"].rank(method="average")
+            )
+        )
+    effects.append({
+        "feature": "post_response_hours", "level": None, "n": int(len(pair)),
+        "mean_rating": None, "median_rating": None,
+        "association_metric": "spearman_rank_correlation",
+        "association_value": correlation,
+        "evidence_kind": "univariate_association",
+    })
     return tuple(effects)
 
 
@@ -283,8 +335,8 @@ def satisfaction_associations(frame: pd.DataFrame) -> SatisfactionReport:
     invalid = int(data["satisfaction_status"].eq("invalid").sum())
     effects = _univariate_effects(valid)
     limitation = (
-        "A quarentena de privacidade, a seleção de representantes canônicos e a escassez "
-        "de avaliações podem enviesar esta amostra; associações não demonstram causalidade."
+        "Apenas campos operacionais estruturados foram usados; avaliações ausentes ou inválidas "
+        "podem introduzir viés de seleção e associações não demonstram causalidade."
     )
     if len(valid) < MIN_SATISFACTION_SUPPORT:
         return SatisfactionReport(
@@ -363,16 +415,15 @@ def operational_summary(frame: pd.DataFrame) -> OperationalSummary:
     supported = waste.loc[waste["status"].eq("supported"), "observed_excess_hours"]
     source = frame.attrs.get("source", {})
     quality = source.get("quality", frame.attrs.get("quality", {}))
-    split = frame.attrs.get("split", {})
-    has_development_rows = bool(len(data))
+    has_analysis_rows = bool(len(data))
     return OperationalSummary(
         schema_version=1,
         evidence_kind="historical_observed",
-        analysis_scope="sanitized_customer_train_plus_calibration_representatives",
+        analysis_scope="customer_structured_operational_all_rows",
         data_version=source.get("data_version"),
         source_rows=source.get("total_rows"),
         sanitized_rows=quality.get("sanitized_rows"),
-        representative_rows=split.get("representatives"),
+        representative_rows=None,
         development_rows=len(data),
         valid_intervals=len(valid),
         interval_exclusions={status: int(data["interval_status"].eq(status).sum())
@@ -387,10 +438,16 @@ def operational_summary(frame: pd.DataFrame) -> OperationalSummary:
             "resposta e resolução total não são observáveis.",
             "Excesso é proxy histórico não negativo, não economia realizada.",
             satisfaction.selection_limitation,
-            "O teste permanece lacrado; este relatório é diagnóstico de desenvolvimento.",
+            "O diagnóstico histórico usa todas as linhas estruturadas e permanece separado "
+            "dos splits textuais de modelo e recuperação.",
+            "Custo e moeda não são observados; qualquer valor financeiro é somente cenário.",
         ),
-        status="ready" if has_development_rows else "insufficient_support",
-        reason=None if has_development_rows else "no_sanitized_development_representatives",
+        status="ready" if has_analysis_rows else "insufficient_support",
+        reason=None if has_analysis_rows else "no_structured_operational_rows",
+        analysis_rows=len(data),
+        source_lane=source.get("lane", frame.attrs.get("lane")),
+        text_fields_retained=quality.get("text_fields_retained"),
+        cost_observed=False,
     )
 
 

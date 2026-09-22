@@ -7,11 +7,15 @@ import pytest
 from support_copilot.data import (
     CUSTOMER_COLUMNS,
     IT_TAXONOMY,
+    OPERATIONAL_COLUMNS,
     atomic_json,
+    canonical_json,
     canonical_text,
+    load_customer_analytics,
     load_customer_tickets,
     load_it_tickets,
     make_split,
+    sanitize_customer_analytics_frame,
     sanitize_customer_frame,
     sanitize_text,
     write_manifest,
@@ -83,6 +87,116 @@ def test_customer_boundary_and_quality():
     assert frame.iloc[1].satisfaction_status == "invalid"
     assert frame.iloc[1]["First Response Time"] == "[INVALID_TIMESTAMP]"
     assert frame.attrs["quality"]["excluded"]["privacy_quarantine"] == 1
+
+
+def test_structured_lane_preserves_observations_without_text_or_pii():
+    raw = pd.DataFrame([
+        customer_row(**{"First Response Time": "2023-01-01 09:00:00",
+                        "Time to Resolution": "2023-01-01 10:00:00"}),
+        customer_row(**{"Ticket ID": "2", "Ticket Description": "ask Jane Smith",
+                        "First Response Time": "2023-01-01 09:00:00",
+                        "Time to Resolution": "2023-01-01 11:00:00"}),
+        customer_row(**{"Ticket ID": "3", "Resolution": "ask Jane Smith",
+                        "First Response Time": "2023-01-01 09:00:00",
+                        "Time to Resolution": "2023-01-01 12:00:00"}),
+        customer_row(**{"Ticket ID": "4", "Ticket Description": "",
+                        "First Response Time": "private@example.invalid",
+                        "Customer Satisfaction Rating": "private@example.invalid"}),
+    ])
+    before = raw.copy(deep=True)
+    structured = sanitize_customer_analytics_frame(raw)
+    textual = sanitize_customer_frame(raw)
+    pd.testing.assert_frame_equal(raw, before)
+    assert len(structured) == 4
+    assert len(textual) == 1
+    assert textual.attrs["quality"]["excluded"] == {"privacy_quarantine": 2, "empty_text": 1}
+    assert set(structured) == {
+        *OPERATIONAL_COLUMNS, "ticket_id", "domain", "target", "satisfaction_status",
+    }
+    assert structured.attrs["quality"]["input_rows"] == 4
+    assert structured.attrs["quality"]["sanitized_rows"] == 4
+    assert structured.attrs["quality"]["invalid_satisfaction"] == 1
+    assert structured["satisfaction_status"].eq("valid").sum() == 3
+    assert structured["First Response Time"].eq("[INVALID_TIMESTAMP]").sum() == 1
+    payload = canonical_json(structured.to_dict("records")).decode()
+    for secret in ("Example", "Jane", "Smith", "@", "device does not boot", "Other"):
+        assert secret not in payload
+    # Expose no textual schema even if metadata is accidentally dropped downstream.
+    with pytest.raises(ValueError, match="split_forbidden:structured_analytics"):
+        make_split(structured.assign(text="injected", text_group_id="injected"), "target")
+    without_attrs = structured.copy()
+    without_attrs.attrs = {}
+    with pytest.raises(ValueError, match="split_schema_mismatch"):
+        make_split(without_attrs, "target")
+    pd.testing.assert_frame_equal(
+        structured, sanitize_customer_analytics_frame(raw.sample(frac=1, random_state=17))
+    )
+
+
+def test_structured_loader_provenance_and_shared_validation(tmp_path):
+    path = tmp_path / "customer.csv"
+    raw = pd.DataFrame([customer_row(), customer_row(**{"Ticket ID": "2"})])
+    raw.to_csv(path, index=False)
+    structured, textual = load_customer_analytics(path), load_customer_tickets(path)
+    pd.testing.assert_frame_equal(structured, load_customer_analytics(path))
+    assert structured.attrs["source"]["sha256"] == textual.attrs["source"]["sha256"]
+    assert structured.attrs["source"]["data_version"] != textual.attrs["source"]["data_version"]
+    assert structured.attrs["source"]["allowed_columns"] == list(structured.columns)
+    assert structured.attrs["source"]["lane"] == "structured_operational"
+    assert "lane" not in textual.attrs
+    for changed, message in (
+        (raw.drop(columns=["Ticket Channel"]), "schema_mismatch"),
+        (raw.assign(**{"Ticket ID": ["1", "1"]}), "duplicate_id"),
+        (raw.assign(**{"Ticket Channel": "private@example.invalid"}), "invalid_enum"),
+        (raw.assign(**{"Ticket Type": "private@example.invalid"}), "invalid_taxonomy"),
+    ):
+        for loader in (sanitize_customer_frame, sanitize_customer_analytics_frame):
+            with pytest.raises(ValueError, match=message) as error:
+                loader(changed)
+            assert "private@example.invalid" not in str(error.value)
+
+
+def test_structured_loading_cannot_change_textual_splits(tmp_path):
+    path = tmp_path / "customer.csv"
+    words = ("alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
+             "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
+             "sigma", "tau", "upsilon")
+    raw = pd.DataFrame([
+        customer_row(**{"Ticket ID": str(i + 1), "Ticket Description": f"device {word}"})
+        for i, word in enumerate(words)
+    ] + [customer_row(**{"Ticket ID": "21", "Ticket Description": "ask Jane Smith"})])
+    raw.to_csv(path, index=False)
+    before = make_split(load_customer_tickets(path), "target")
+    assert len(load_customer_analytics(path)) == 21
+    after = make_split(load_customer_tickets(path), "target")
+    assert before.manifest == after.manifest
+    assert [len(after.train), len(after.calibration), len(after.test)] == [12, 4, 4]
+    assert "customer:21" not in {
+        ticket for partition in after.manifest["partitions"].values() for ticket in partition["ids"]
+    }
+
+
+REAL_CUSTOMER_FIXTURE = Path(__file__).parents[1] / "data/raw/customer_support_tickets.csv"
+
+
+@pytest.mark.skipif(
+    not REAL_CUSTOMER_FIXTURE.is_file(), reason="optional public CSV not downloaded"
+)
+def test_structured_real_customer_source_counts():
+    frame = load_customer_analytics(REAL_CUSTOMER_FIXTURE)
+    first = pd.to_datetime(frame["First Response Time"], format="mixed", utc=True)
+    resolved = pd.to_datetime(frame["Time to Resolution"], format="mixed", utc=True)
+    eligible = frame["Ticket Status"].eq("Closed") & first.notna() & resolved.notna()
+    eligible &= resolved >= first
+    assert len(frame) == frame.attrs["source"]["total_rows"] == 8469
+    assert int(eligible.sum()) == 1404
+    assert int(frame["satisfaction_status"].eq("valid").sum()) == 2769
+    assert set(frame) == {
+        *OPERATIONAL_COLUMNS, "ticket_id", "domain", "target", "satisfaction_status",
+    }
+    assert canonical_json(frame.to_dict("records")) == canonical_json(
+        load_customer_analytics(REAL_CUSTOMER_FIXTURE).to_dict("records")
+    )
 
 
 def test_loaders_schema_id_taxonomy_and_missing_source(tmp_path):

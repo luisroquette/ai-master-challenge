@@ -111,10 +111,19 @@ def current_environment():
                     solution / "configuration.json", solution / "requirements.lock",
                     solution / "pyproject.toml", solution / "Makefile"])
     configuration = json.loads((solution / "configuration.json").read_text())
-    from support_copilot.data import GROUPING_VERSION, SANITIZER_VERSION
+    from support_copilot.data import (
+        ANALYTICS_SCHEMA_VERSION,
+        GROUPING_VERSION,
+        SANITIZER_VERSION,
+    )
 
-    configuration.update(sanitizer=SANITIZER_VERSION, grouping=GROUPING_VERSION,
-                         mode="development_then_locked_test", protocol=1)
+    configuration.update(
+        sanitizer=SANITIZER_VERSION,
+        analytics_schema=ANALYTICS_SCHEMA_VERSION,
+        grouping=GROUPING_VERSION,
+        mode="development_then_locked_test",
+        protocol=1,
+    )
     return {
         "configuration_sha256": content_hash(configuration),
         "lock_sha256": hashlib.sha256((solution / "requirements.lock").read_bytes()).hexdigest(),
@@ -489,7 +498,10 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         "Tempo até primeira resposta e resolução total não são observáveis."
     )
     first, second, third = st.columns(3)
-    first.metric("Linhas no diagnóstico", summary.development_rows)
+    first.metric(
+        "Linhas no diagnóstico",
+        summary.analysis_rows if summary.analysis_rows is not None else summary.development_rows,
+    )
     second.metric("Intervalos válidos", summary.valid_intervals)
     third.metric(
         "Mediana pós-resposta (h)",
@@ -499,8 +511,42 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
     st.write({"exclusões mutuamente exclusivas": summary.interval_exclusions})
     st.caption(
         "Excesso observado é proxy não negativo; não representa economia realizada. "
-        "A seleção conservadora de privacidade pode enviesar os resultados."
+        f"Escopo: {summary.analysis_scope}; fonte: {summary.source_lane}; "
+        f"linhas brutas={summary.source_rows}, sanitizadas={summary.sanitized_rows}, "
+        f"texto retido={summary.text_fields_retained}."
     )
+    bottleneck_state = bundle.get("analytics.bottlenecks")
+    if bottleneck_state.status == "ready":
+        bottlenecks = pd.DataFrame(bottleneck_state.value)
+        dimension_worst = bottlenecks.loc[
+            bottlenecks["grouping"].isin(["Ticket Channel", "Ticket Priority", "target"])
+            & bottlenecks["rank_worst"].eq(1)
+        ].sort_values("grouping")
+        st.markdown("**Gargalo principal por canal, prioridade e tipo**")
+        st.dataframe(dimension_worst[[
+            "grouping", "Ticket Channel", "Ticket Priority", "target", "n_total",
+            "n_eligible", "median_hours", "q1_hours", "q3_hours",
+        ]])
+        worst = bottlenecks.loc[
+            bottlenecks["grouping"].eq("Ticket Channel+Ticket Priority+target")
+            & bottlenecks["n_eligible"].gt(0)
+        ].sort_values(["rank_worst", "n_eligible"], ascending=[True, False]).head(5)
+        st.markdown("**Piores combinações com intervalo válido**")
+        st.dataframe(worst[[
+            "Ticket Channel", "Ticket Priority", "target", "n_total", "n_eligible",
+            "median_hours", "q1_hours", "q3_hours",
+        ]])
+    waste_state = bundle.get("analytics.waste_opportunities")
+    if waste_state.status == "ready":
+        waste = pd.DataFrame(waste_state.value)
+        top_waste = waste.loc[waste["status"].eq("supported")].sort_values(
+            "rank_excess"
+        ).head(5)
+        st.markdown("**Maiores excessos sobre a mediana dos pares**")
+        st.dataframe(top_waste[[
+            "target", "Ticket Priority", "eligible_n", "peer_median_hours",
+            "observed_excess_hours", "share_of_supported_excess",
+        ]])
 
     st.subheader("Desempenho medido")
     st.write({
@@ -511,8 +557,22 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
         "MAE Ridge": satisfaction.get("ridge_mae"),
     })
     st.caption(
-        "Validação cruzada somente no desenvolvimento. Associação não demonstra causalidade."
+        "Validação cruzada histórica nos campos operacionais estruturados. Avaliações ausentes "
+        "ou inválidas podem causar viés de seleção. Associação não demonstra causalidade."
     )
+    association_state = bundle.get("analytics.satisfaction_associations")
+    if association_state.status == "ready":
+        associations = pd.DataFrame(association_state.value)
+        interval_association = associations.loc[
+            associations["feature"].eq("post_response_hours")
+        ]
+        if not interval_association.empty:
+            row = interval_association.iloc[0]
+            st.write({
+                "associação intervalo-satisfação": row["association_metric"],
+                "valor": row["association_value"],
+                "n pareado": int(row["n"]),
+            })
     metrics = bundle.get("models.metrics")
     test_status = metrics.value.get("status") if (
         metrics.status == "ready" and isinstance(metrics.value, dict)) else None
@@ -538,10 +598,14 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
             st.caption(messages[retrieval.value["status"]])
 
     st.subheader("Cenários projetados")
+    st.caption(
+        "Volume, fração, minutos e custo são premissas editáveis. O Dataset 1 não observa "
+        "custo nem moeda; o valor monetário fica indisponível até uma premissa ser informada."
+    )
     defaults = {
-        "conservative": (1000, 0.10, 3.0, 30.0),
-        "base": (1000, 0.25, 5.0, 30.0),
-        "optimistic": (1000, 0.40, 8.0, 30.0),
+        "conservative": (0, 0.10, 3.0, 0.0),
+        "base": (0, 0.25, 5.0, 0.0),
+        "optimistic": (0, 0.40, 8.0, 0.0),
     }
     labels = {"conservative": "Conservador", "base": "Base", "optimistic": "Otimista"}
     for name, values in defaults.items():
@@ -558,7 +622,8 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
                 key=f"{name}-minutes",
             ))
             cost = float(st.number_input(
-                "Custo por hora", min_value=0.0, value=values[3], key=f"{name}-cost"
+                "Custo por hora (premissa; moeda não definida)", min_value=0.0,
+                value=values[3], key=f"{name}-cost"
             ))
             projection = scenario_projection(
                 summary,
@@ -566,7 +631,9 @@ def render_scorecard(root: Path | ArtifactBundle | None = None) -> None:
             )
             st.write({
                 "horas anuais projetadas": round(projection.annual_hours, 2),
-                "custo anual projetado": round(projection.annual_cost, 2),
+                "custo anual projetado": (
+                    round(projection.annual_cost, 2) if cost > 0 else "não calculado"
+                ),
                 "natureza": projection.evidence_kind,
             })
 

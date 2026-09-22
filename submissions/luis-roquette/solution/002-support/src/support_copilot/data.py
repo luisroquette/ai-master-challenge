@@ -23,6 +23,7 @@ import pandas as pd
 Domain = Literal["customer", "it"]
 SANITIZER_VERSION = "conservative-v2"
 GROUPING_VERSION = "canonical-v1"
+ANALYTICS_SCHEMA_VERSION = "structured-operational-v1"
 IT_TAXONOMY = (
     "Access", "Administrative rights", "HR Support", "Hardware", "Internal Project",
     "Miscellaneous", "Purchase", "Storage",
@@ -228,7 +229,7 @@ def _read(path: Path, domain: Domain, columns: Sequence[str]) -> tuple[pd.DataFr
     return frame, hashlib.sha256(raw).hexdigest()
 
 
-def sanitize_customer_frame(frame: pd.DataFrame) -> pd.DataFrame:
+def _validate_customer_frame(frame: pd.DataFrame) -> None:
     if not set(CUSTOMER_COLUMNS).issubset(frame.columns):
         raise ValueError("schema_mismatch:customer")
     ids = frame["Ticket ID"].astype(str)
@@ -243,6 +244,11 @@ def sanitize_customer_frame(frame: pd.DataFrame) -> pd.DataFrame:
     }.items():
         if not frame[column].isin(allowed).all():
             raise ValueError(f"invalid_enum:{column}")
+
+
+def sanitize_customer_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Textual lane: quarantine a row when either description or resolution is unsafe."""
+    _validate_customer_frame(frame)
     records = []
     excluded = {"privacy_quarantine": 0, "empty_text": 0}
     for row in frame.to_dict("records"):
@@ -262,6 +268,16 @@ def sanitize_customer_frame(frame: pd.DataFrame) -> pd.DataFrame:
         records.append(record)
     result = pd.DataFrame(records, columns=[*OPERATIONAL_COLUMNS, "ticket_id", "domain", "text",
                                             "target", "text_group_id", "resolution"])
+    quality = _clean_operational_fields(result)
+    result.attrs["quality"] = {
+        "input_rows": len(frame), "sanitized_rows": len(result), "excluded": excluded,
+        **quality, "public_sample_review": "pending_human_review",
+    }
+    return result
+
+
+def _clean_operational_fields(result: pd.DataFrame) -> dict:
+    """Normalize allowlisted fields without retaining arbitrary source values."""
     invalid_timestamps = {}
     for column in ("First Response Time", "Time to Resolution"):
         parsed = pd.to_datetime(result[column], errors="coerce", format="mixed", utc=True)
@@ -282,12 +298,33 @@ def sanitize_customer_frame(frame: pd.DataFrame) -> pd.DataFrame:
     ]
     result["Customer Satisfaction Rating"] = ratings.where(~bad).astype(object)
     result.loc[ratings.isna() | bad, "Customer Satisfaction Rating"] = None
-    result.attrs["quality"] = {
-        "input_rows": len(frame), "sanitized_rows": len(result), "excluded": excluded,
+    return {
         "invalid_satisfaction": int(bad.sum()),
         "missing_satisfaction": int((result["satisfaction_status"] == "missing").sum()),
         "invalid_timestamps": invalid_timestamps,
-        "public_sample_review": "pending_human_review",
+    }
+
+
+def sanitize_customer_analytics_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Structured lane: keep operational rows independently of free-text quarantine.
+
+    Never copy free text, demographics, products, or contact fields into this lane.
+    Ticket type is an observed diagnostic dimension, not a textual training target here.
+    """
+    _validate_customer_frame(frame)
+    result = frame.loc[:, list(OPERATIONAL_COLUMNS)].astype(object).replace("", None)
+    result = result.where(result.notna(), None)
+    result["ticket_id"] = "customer:" + frame["Ticket ID"].astype(str)
+    result["domain"] = "customer"
+    result["target"] = frame["Ticket Type"]
+    quality = _clean_operational_fields(result)
+    result = result.sort_values("ticket_id").reset_index(drop=True)
+    result.attrs = {
+        "domain": "customer", "lane": "structured_operational",
+        "quality": {
+            "input_rows": len(frame), "sanitized_rows": len(result), "excluded": {},
+            "text_fields_retained": False, **quality,
+        },
     }
     return result
 
@@ -308,6 +345,21 @@ def _source(frame: pd.DataFrame, domain: Domain, sha256: str, total: int,
 def load_customer_tickets(path: Path) -> pd.DataFrame:
     frame, sha256 = _read(path, "customer", CUSTOMER_COLUMNS)
     return _source(sanitize_customer_frame(frame), "customer", sha256, len(frame), CUSTOMER_COLUMNS)
+
+
+def load_customer_analytics(path: Path) -> pd.DataFrame:
+    """Load observed structured Customer data; never route this frame into textual splits."""
+    raw, sha256 = _read(path, "customer", CUSTOMER_COLUMNS)
+    result = _source(sanitize_customer_analytics_frame(raw), "customer", sha256,
+                     len(raw), CUSTOMER_COLUMNS)
+    result.attrs["source"].update({
+        "lane": "structured_operational", "sanitizer_version": ANALYTICS_SCHEMA_VERSION,
+        "data_version": content_hash([
+            "customer", sha256, list(CUSTOMER_COLUMNS), ANALYTICS_SCHEMA_VERSION,
+            list(result.columns),
+        ]),
+    })
+    return result
 
 
 def load_it_tickets(path: Path) -> pd.DataFrame:
@@ -353,6 +405,8 @@ class DatasetSplit:
 
 
 def make_split(frame: pd.DataFrame, target: str, random_state: int = 42) -> DatasetSplit:
+    if frame.attrs.get("lane") == "structured_operational":
+        raise ValueError("split_forbidden:structured_analytics")
     required = {"ticket_id", "domain", "text", "text_group_id", target}
     if not required.issubset(frame.columns):
         raise ValueError("split_schema_mismatch")

@@ -24,12 +24,14 @@ from support_copilot.analytics import (
     satisfaction_associations,
 )
 from support_copilot.data import (
+    ANALYTICS_SCHEMA_VERSION,
     CUSTOMER_TAXONOMY,
     GROUPING_VERSION,
     IT_TAXONOMY,
     SANITIZER_VERSION,
     atomic_json,
     content_hash,
+    load_customer_analytics,
     load_customer_tickets,
     load_it_tickets,
     make_split,
@@ -90,8 +92,13 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
     if (configuration.get("schema_version") != 1 or configuration.get("seed") != 42
             or stamp.tzinfo is None or stamp > datetime.now(UTC)):
         raise ValueError("invalid_evaluation_configuration")
-    configuration.update(sanitizer=SANITIZER_VERSION, grouping=GROUPING_VERSION,
-                         mode="development_then_locked_test", protocol=1)
+    configuration.update(
+        sanitizer=SANITIZER_VERSION,
+        analytics_schema=ANALYTICS_SCHEMA_VERSION,
+        grouping=GROUPING_VERSION,
+        mode="development_then_locked_test",
+        protocol=1,
+    )
     revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=solution, text=True
     ).strip()
@@ -117,7 +124,6 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
         "artifacts": {},
     }
     frames, splits, results = {}, {}, {}
-    customer_frame = None
     customer_split = None
     for domain, path, loader, taxonomy in (
         ("customer", customer, load_customer_tickets, CUSTOMER_TAXONOMY),
@@ -127,7 +133,7 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
         split = make_split(frame, "target")
         frames[domain], splits[domain] = frame, split
         if domain == "customer":
-            customer_frame, customer_split = frame, split
+            customer_split = split
         manifest["sources"][domain] = frame.attrs["source"]
         manifest["splits"][domain] = split.manifest
         manifest["models"][domain] = {
@@ -136,7 +142,6 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
             "calibration": None, "model_version": None, "automation_enabled": False,
             "threshold": None, "configuration_lock_sha256": None,
         }
-        # Analytics may use the development rows, never the withheld test payload.
         for partition in ("train", "calibration"):
             part = getattr(split, partition)
             relative = f"data/{domain}-{partition}.json"
@@ -158,19 +163,26 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
                 "reason": "not_implemented_test_sealed",
             }
 
-    if customer_frame is None or customer_split is None:
+    if customer_split is None:
         raise ValueError("analytics_customer_data_unavailable")
-    development = pd.concat(
-        [customer_split.train, customer_split.calibration], ignore_index=True
-    )
-    development.attrs["source"] = customer_frame.attrs["source"]
-    development.attrs["split"] = {
-        "representatives": customer_split.manifest["exclusions"]["representatives"],
-        "development_rows": len(development),
-        "test_rows": len(customer_split.test),
+    analytics_frame = load_customer_analytics(customer)
+    analytics_source = analytics_frame.attrs["source"]
+    manifest["sources"]["customer"]["analytics"] = {
+        "lane": analytics_source["lane"],
+        "data_version": analytics_source["data_version"],
+        "sanitizer_version": analytics_source["sanitizer_version"],
+        "allowed_columns": analytics_source["allowed_columns"],
+        "quality": analytics_source["quality"],
     }
-    operational = add_operational_fields(development)
-    operational.attrs = development.attrs.copy()
+    analytics_records = analytics_frame.to_dict("records")
+    analytics_relative = "data/customer-analytics.json"
+    atomic_json(analytics_records, output / analytics_relative)
+    _register_artifact(
+        manifest, output, "data.customer.analytics", analytics_relative, "sanitized-frame",
+        analytics_records, dependencies=["sources.customer"],
+    )
+    operational = add_operational_fields(analytics_frame)
+    operational.attrs = analytics_frame.attrs.copy()
     bottlenecks = grouped_bottlenecks(operational)
     waste = recoverable_excess_hours(operational)
     satisfaction = satisfaction_associations(operational)
@@ -187,10 +199,14 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
     }
     for key, (relative, artifact_type, payload) in reports.items():
         atomic_json(payload, output / relative)
-        _register_artifact(manifest, output, key, relative, artifact_type, payload)
+        _register_artifact(
+            manifest, output, key, relative, artifact_type, payload,
+            dependencies=["data.customer.analytics"],
+        )
 
     association_columns = [
-        "feature", "level", "n", "mean_rating", "median_rating", "evidence_kind"
+        "feature", "level", "n", "mean_rating", "median_rating", "association_metric",
+        "association_value", "evidence_kind",
     ]
     associations = pd.DataFrame(satisfaction.univariate_effects, columns=association_columns)
     automation = pd.DataFrame([{
@@ -213,7 +229,10 @@ def _build(customer: Path, it: Path, output: Path) -> dict:
     }
     for key, (relative, table) in tables.items():
         _atomic_csv(table, output / relative)
-        _register_artifact(manifest, output, key, relative, "csv-report", _records(table))
+        _register_artifact(
+            manifest, output, key, relative, "csv-report", _records(table),
+            dependencies=["data.customer.analytics"],
+        )
 
     def save(key, relative, payload, artifact_type="json", domain=None, dependencies=()):
         destination = output / relative
@@ -396,7 +415,7 @@ def main() -> None:
               f"sanitized={source['quality']['sanitized_rows']}, split={split['status']}")
     analytics = manifest["artifacts"]["analytics.operational_summary"]
     print(f"diagnóstico de desenvolvimento: {analytics['status']} ({analytics['path']})")
-    print("Teste lacrado; satisfação selecionada; revisão humana de amostras pendente.")
+    print("Diagnóstico histórico estruturado; modelos/retrieval preservam splits próprios.")
 
 
 if __name__ == "__main__":

@@ -341,6 +341,13 @@ def test_missing_manifest_default_queue_and_separate_pages(prepared, tmp_path, m
     assert not scorecard.exception
     assert [x.value for x in scorecard.subheader] == [
         "Histórico observado", "Desempenho medido", "Cenários projetados"]
+    captions = " ".join(item.value for item in scorecard.caption)
+    assert "fonte: structured_operational" in captions
+    assert "não observa custo nem moeda" in captions
+    assert all(item.value == 0 for item in scorecard.number_input if (
+        item.label == "Volume anual elegível"
+        or item.label == "Custo por hora (premissa; moeda não definida)"
+    ))
     lab = app.switch_page("pages/it_lab.py").run()
     lab.text_area[0].input("hardware device")
     button(lab, "Classificar IT").click().run()
