@@ -1146,3 +1146,7 @@ A única exceção foi de serialização: o relatório emitiu `scores.combined` 
 Dois checkboxes do subtask `04` permanecem desmarcados. A SPEC exige repetição pesada local no Mac, mas o `AGENTS.md` proíbe gates pesados no Mac sem autorização explícita de Luis. O conflito não foi contornado: a Fase 2 **não está concluída nem revisada**.
 
 O `TC47` não foi reivindicado. Nenhum push foi realizado.
+
+### Exceção autorizada para a repetição local — 2026-09-22
+
+Luis autorizou explicitamente o bypass **apenas** da repetição pesada local no Mac, resolvendo o conflito entre a SPEC e a proibição do `AGENTS.md`. O preflight canônico do Codespace permanece obrigatório e verde, com **74/74 testes** e `REAL_RENDERED_JOURNEY`. A autorização não dispensa teste, CI, segurança nem gate remoto. A Fase 2 ainda não está marcada como revisada.
