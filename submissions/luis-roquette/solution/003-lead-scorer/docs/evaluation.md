@@ -5,16 +5,16 @@
 | Campo | Evidência |
 |---|---|
 | Comando canônico | `bash scripts/preflight.sh` |
-| Ambiente gerenciado | Pendente da execução final no Codespace com diff exato |
+| Ambiente gerenciado | `codex-preflight-657v7q4ggx7f5557`, via `codespace-manager` |
 | Reprodução no Mac | Não executada: gates pesados são exclusivos do Codespace por regra operacional |
-| Python | Pendente da execução final; contrato obrigatório `3.11.x` |
-| Revisão Git | Pendente do commit exato do passo 04 |
-| Diff | Pendente; deve estar limpo no ambiente de validação |
+| Python | `Python 3.11.15`, provisionado por `uv==0.10.10` |
+| Revisão Git validada | `e052e4e226a8962fc338380e6cebb2e6446dc86b` |
+| Diff | Limpo; `EXACT_SHA` conferido antes do gate |
 | SHA-256 de `requirements.txt` | `43a420f22b5e31ceadf0946434689dca39359c7a69d358e4636ee6c0fb344843` |
-| Fingerprint dados/modelo | Pendente da execução final |
-| Source digest | Pendente da execução final |
+| Fingerprint dados/modelo | `515a0c991c0fc58c705463ed8067d01860e3338d563b88e3987c411b1a18c0fd` |
+| Source digest | `8c65922c2654ed480e7d8024f27c6f9936e6ab207817a4b3ef0fe5eefe3390f2` |
 
-Nenhum campo pendente acima deve ser interpretado como gate executado. TC-47 só poderá ser marcado depois do deploy da mesma revisão.
+O preflight canônico terminou com `PREFLIGHT OK`: 74 testes em 92,458 s, avaliação real, startup e jornada Playwright renderizada. O focal da jornada gestor passou 2/2 em 9,824 s no mesmo SHA. TC-47 continua não executado e só poderá ser marcado depois do deploy da mesma revisão.
 
 ## Snapshot real já congelado
 
@@ -37,14 +37,39 @@ São 6.711 oportunidades fechadas e 2.089 ativas. O split temporal validado usa 
 | TC-28–39 | `test_TC28_logistic_raw_and_calibrated_affine_reconstruct_outputs`; `test_TC29_boosting_tree_paths_reconstruct_raw_margin`; `test_TC30_factor_summary_preserves_value_sign_and_absent_direction`; `test_TC31_TC32_versioned_playbook_uses_only_actionable_evidence`; famílias `test_TC33_*` a `test_TC39_*`, incluindo AppTest e `test_TC34_TC35_TC36_TC37_TC38_TC39_rendered_journeys` |
 | TC-40–46 | famílias `test_TC40_*`; `test_TC41_cached_bundle_reuses_training_for_same_identity`; `test_TC42_seeded_active_scores_are_deterministic_and_stage_safe`; família `test_TC43_*`; `test_TC44_offline_runtime_denies_external_and_permits_loopback`; `test_TC45_preflight_failure_injection_returns_nonzero`; `test_TC46_clean_startup_owns_only_its_child_without_recursion` |
 
-Status final e contagem só serão registrados após o preflight canônico verde. O método `test_live_verifier_local_contract_is_not_TC47` testa localmente os erros do verificador, mas não reivindica o TC-47.
+Status: TC-01–46 verdes na suíte canônica (74/74). O método `test_live_verifier_local_contract_is_not_TC47` testa localmente os erros do verificador, mas não reivindica o TC-47.
+
+## Mapa de cobertura CK
+
+| Checklist | Evidência principal | Estado nesta fase |
+|---|---|---|
+| CK-1–5 | TC-01–07: proveniência, recuperação, esquema, normalização e diagnósticos | comprovado |
+| CK-6–16 | TC-08–24: cortes temporais, rotas, features proibidas, calibração, seleção e supressão | comprovado |
+| CK-17–23 | TC-25–32: backoff Prospecting, explicações reconstruíveis e playbook | comprovado |
+| CK-24–32 | TC-33–42: abas, contextos, filtros, detalhes, pins, cache e determinismo | comprovado |
+| CK-33–34, CK-36–38 | TC-43–46, inspeção estrutural e jornada renderizada; zero API de IA | comprovado |
+| CK-35 | bootstrap Python 3.11 reproduzido no Codespace; reprodução pesada no Mac não executada por política operacional | parcial |
+| CK-39–49 | documentação inicial presente; screenshots, URL e TC-47 dependem das fases 05/06 | pendente da entrega |
+| CK-50 | documentação não faz afirmação causal | conforme: resposta **NÃO** |
+
+## Resultados reais das quatro rotas
+
+| Candidato/rota | Brier (baseline `0,228038`) | Log loss (baseline `0,648628`) | Resultado |
+|---|---:|---:|---|
+| `logistic/full` | `0,227178` | `0,646784` | rejeitada: `fewer_than_two_supported_bands` |
+| `logistic/fallback` | `0,227719` | `0,647981` | rejeitada: `fewer_than_two_supported_bands` |
+| `boosting/full` | `0,227151` | `0,646719` | rejeitada: `fewer_than_two_supported_bands` |
+| `boosting/fallback` | `0,227741` | `0,648029` | rejeitada: `fewer_than_two_supported_bands` |
+
+As 2.089 oportunidades ativas ficaram em prioridade `relative`; zero ficaram em `insufficient_data`. Nenhuma rota rejeitada publicou `probability` ou `expected_revenue`.
 
 ## Jornada renderizada
 
 - Vendedor: ambas as abas, portfólio próprio, detalhe e linha `Dados insuficientes` sem probabilidade/receita esperada.
 - Gestor: equipe, filtros exatos, detalhe, prioridade temporária com autor/horário e limpeza por recálculo.
+- A lista usa no máximo 25 linhas por página e cada linha possui botão nativo acessível `Abrir <opportunity_id>`; o resumo `Filtros aplicados` confirma o estado final antes da ação.
 - App real: startup e identidade completa (`revision`, `fingerprint`, `source_digest`) verificadas pelo gate `startup`.
-- Capturas versionadas: pendentes da execução de navegador/deploy; nenhuma imagem é reivindicada antes de existir.
+- O texto renderizado confirmou título, aviso do protótipo, filtro do vendedor e identidade completa. Não há captura versionada; nenhuma imagem é reivindicada.
 
 ## Limites e próxima evidência
 

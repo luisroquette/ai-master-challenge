@@ -26,18 +26,18 @@ All paths are relative to `submissions/luis-roquette/solution/003-lead-scorer/` 
 #### Success Criteria
 
 - [ ] bash scripts/preflight.sh passes at the exact intended diff and data/config identity in managed Codespace and fresh local Python 3.11 execution; locations/results are recorded separately.
-- [ ] TC-44 blocks outbound runtime networking but permits loopback fixtures; TC-45 injects a failing required gate and observes nonzero; TC-46 proves clean setup/startup and child-only teardown without recursive preflight.
-- [ ] Every TC-01..TC-46 resolves to real passing stable named tests, including all business matrix partitions; TC-47 is an explicit separate required live gate, never a silently skipped discovered test.
-- [ ] Complete pipeline records four actual outcomes and rejects invalid/incomplete outputs; legitimately rejected probability candidates do not fail solely for underperformance.
-- [ ] The live verifier requires all four explicit arguments and rejects a mismatched rendered source identity/fingerprint or missing active-stage view; invocation behavior has synthetic/local negative tests.
+- [x] TC-44 blocks outbound runtime networking but permits loopback fixtures; TC-45 injects a failing required gate and observes nonzero; TC-46 proves clean setup/startup and child-only teardown without recursive preflight.
+- [x] Every TC-01..TC-46 resolves to real passing stable named tests, including all business matrix partitions; TC-47 is an explicit separate required live gate, never a silently skipped discovered test.
+- [x] Complete pipeline records four actual outcomes and rejects invalid/incomplete outputs; legitimately rejected probability candidates do not fail solely for underperformance.
+- [x] The live verifier requires all four explicit arguments and rejects a mismatched rendered source identity/fingerprint or missing active-stage view; invocation behavior has synthetic/local negative tests.
 
 #### Subtasks
 
-- [ ] Implement scripts/preflight.sh with strict failure propagation, one disposable environment owner, locked install/browser setup, imports/tests/full real evaluation and local rendered journeys; disable spawned Streamlit telemetry.
-- [ ] Add tests/test_app.py TC-44/45/46 for external-network denial, gate failure injection and safe server teardown; reuse tests/test_data.py loopback fixtures and avoid hidden installed dependencies.
-- [ ] Implement tests/test_app.py live CLI and verify_live_revision with explicit URL/revision/source-digest/fingerprint arguments; write local positive/negative verifier tests without pretending they satisfy actual TC-47.
+- [x] Implement scripts/preflight.sh with strict failure propagation, one disposable environment owner, locked install/browser setup, imports/tests/full real evaluation and local rendered journeys; disable spawned Streamlit telemetry.
+- [x] Add tests/test_app.py TC-44/45/46 for external-network denial, gate failure injection and safe server teardown; reuse tests/test_data.py loopback fixtures and avoid hidden installed dependencies.
+- [x] Implement tests/test_app.py live CLI and verify_live_revision with explicit URL/revision/source-digest/fingerprint arguments; write local positive/negative verifier tests without pretending they satisfy actual TC-47.
 - [ ] Run all canonical gates via codespace-manager at verified exact source/diff using the pinned `uv`/Python 3.11 seeded bootstrap, then reproduce in fresh local Python 3.11 as the approved requirement; integrate 03b with the real 03a bundle here, inspect real and synthetic browser journeys and record actual evidence in docs/evaluation.md.
-- [ ] Write README.md setup/run/test/recovery commands and docs/evaluation.md TC/CK coverage map with actual test method names and statuses; resolve every local deterministic failure, re-run the canonical gate and retain honest global/route rejection diagnostics.
+- [x] Write README.md setup/run/test/recovery commands and docs/evaluation.md TC/CK coverage map with actual test method names and statuses; resolve every local deterministic failure, re-run the canonical gate and retain honest global/route rejection diagnostics.
 
 #### Blockers & Risks
 
