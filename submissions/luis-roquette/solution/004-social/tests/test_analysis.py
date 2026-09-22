@@ -929,6 +929,18 @@ class ExecutiveAnswerTests(unittest.TestCase):
         self.assertIn("NÃO EXISTE VENCEDOR SUSTENTADO", answers[0]["verdict"])
         self.assertIn("mudaria", answers[0]["change_trigger"].lower())
 
+    def test_strategy_collects_on_best_eligible_candidate_when_no_context_is_material(self):
+        rows = driver_rows([0.05, 0.06, 0.07])
+        result = analyze(frame_from_rows(rows), default_scope_all_history(rows), "hash")
+        self.assertIsNone(result["engagement_drivers"]["leader"])
+        strategy = content_strategy_30d(result)
+        self.assertEqual(strategy["driver_evidence_id"], result["engagement_drivers"]["best_candidate"]["evidence_id"])
+        self.assertGreater(result["engagement_drivers"]["best_candidate"]["eligible_months"], 0)
+        self.assertFalse(strategy["scale_gate_met"])
+        answer = executive_answers(result)[2]
+        self.assertIn("PARA VALIDAR", answer["verdict"])
+        self.assertIn("3 meses elegíveis", answer["coverage"])
+
 
 if __name__ == "__main__":
     unittest.main()

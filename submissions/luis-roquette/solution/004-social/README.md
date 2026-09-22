@@ -33,9 +33,11 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-Após a correção dos dois achados da Passada 7, o gate acumulado aprovou **122/122 testes** com warnings tratados como erros. A CLI real foi regenerada para incluir as três respostas executivas: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` `41ab16f88839869bb7693778e4e1f72d54d1815c66ef30ceb5c31e19bc109084` e HTML `6e0c84ab59cae9318384113f7cd490eb9e48153c1f06ec4b427bc5248ec3f90d`. O CSV contém seis recomendações e 6.703 registros; a última prova A4 completa permanece a da Passada 7.
+O refinamento 2.5 catalogou **146 testes**; o gate focal final aprovou **45/45**. O preflight completo não foi repetido por bypass explícito e continua obrigatório antes de PR. A CLI real foi regenerada e repetida byte a byte: `evidence.csv` SHA-256 `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`, `analysis.md` `d4e5ee40430d97f1430db7c95e54eb83a818eddc8e1692b63f66e5347f2b8537` e HTML `0284af6d3e1a602e057feb720a1d22fc54de71aab7e5739b45332b4c78ac011f`. O CSV contém seis recomendações e 6.830 registros; a última prova A4 completa permanece a da Passada 7.
 
-As três prioridades executivas mantiveram scores e ordem sob IDs 2.4.0: `sponsorship-bcd859ce1b79e99d`, `sponsorship-4bfa6bf4c2b6b7e9` e `sponsorship-ab345324b2d495ba`. O CSV preserva ainda `sponsorship-e0088572ab877b95`, `sponsorship-5aa3da373ed4f6a2` e `sponsorship-5d0bd99974adeb18`.
+As três prioridades executivas do método 2.5.0 são `sponsorship-fec1a70afd70ad88`, `sponsorship-0d364864017b2146` e `sponsorship-aae70c7cbea56355`. O CSV preserva ainda `sponsorship-580416ff6bbd90ab`, `sponsorship-90ca1125d3824a6d` e `sponsorship-9332c8416ba393aa`.
+
+As respostas executivas atuais são inequívocas: não existe vencedor orgânico sustentado para redistribuir o mix; patrocínio não deve ser escalado sem dados financeiros e evidência mais forte; e o melhor candidato elegível deve passar por um programa de validação de 30 dias. A matriz técnica cobre 15/15 itens. A avaliação preliminar da IA é `9,62/10`; a nota final permanece `PENDING` até leitura humana de Luis ou avaliador designado.
 
 ## Executar o cockpit
 
@@ -62,7 +64,7 @@ O navegador automatizado concluiu esse fluxo técnico, inclusive erro sem perda 
 
 Cada decisão guarda o snapshot exato do motor: alvo, comparador, quartis/fallback, força, contexto e referências. Patrocínio mantém separados os braços e usa mediana das medianas por creator; editorial usa apenas o grupo orgânico definido; alertas preservam post/benchmark e um agregado contextual separado para acompanhamento. A observação posterior reaplica esse contrato à nova fonte; só a janela temporal muda, não categoria, audiência, patrocínio ou estatística. Creators sem taxa definida não satisfazem a amostra mínima.
 
-O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.4.0"` é o contrato ativo. Eventos `1.0.0`–`2.3.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`. As capturas históricas/outcomes preservadas registram eventos 2.0.0; não são apresentadas como nova comparação 2.4.0.
+O histórico mostra o snapshot mesmo sem CSV. Reenviar o mesmo hash verifica referências pelo escopo salvo, inclusive quando a recomendação não está na fila ativa ou os filtros mudaram. `METHOD_VERSION = "2.5.0"` é o contrato ativo. Eventos `1.0.0`–`2.4.0` continuam legíveis, mas são incompatíveis para nova comparação automática e ficam `pending / method_mismatch`. As capturas históricas/outcomes preservadas registram eventos 2.0.0; não são apresentadas como nova comparação 2.5.0.
 
 A entrada aceita somente ISO-8601 explícito ou `%m/%d/%y %I:%M %p`, dentro de 1971-01-01 a 2262-04-10. Datas relativas, timezone desconhecido e gramática inferida são rejeitados com linha/coluna. Inteiros são provados lexicalmente contra `int64`, sem alterar o limite global do Python. Semanas/meses são calculados como datas civis e convertidos depois do clipping, inclusive no limite superior de 2262. Sinal negativo com força abaixo de 0,40 gera coleta/teste; `review/stop` exige força suficiente.
 

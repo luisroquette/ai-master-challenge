@@ -12,10 +12,10 @@
 
 ## Adendo de status da implementação — 22/09/2026
 
-- Tasks 1–5 e os checks independentes da Task 6 foram implementados e validados; os checkboxes abaixo registram o estado executado sem apagar o plano original. Tasks 7–11 são o refinamento executivo ainda não implementado.
+- Tasks 1–10 e a execução técnica da Task 11 foram implementadas e validadas; os checkboxes abaixo registram o estado executado sem apagar o plano original. A nota humana final e HR-01 permanecem pendentes.
 - A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento; a barreira final `export_field` cobre qualquer célula extensa antes de `analysis_field` e `history_field`.
-- Último gate completo: **122/122 testes** com warnings como erro. `METHOD_VERSION = "2.4.0"`; o refinamento analítico deverá publicar `2.5.0`. O CSV contém seis recomendações e 6.703 registros. Artefatos correntes: `evidence.csv` SHA-256 `9c01467b7242bf0bd1af3180d1f56fae0c3e527719b4b8e5d716ab0ce674e66d`, `analysis.md` SHA-256 `41ab16f88839869bb7693778e4e1f72d54d1815c66ef30ceb5c31e19bc109084` e HTML reproduzido SHA-256 `6e0c84ab59cae9318384113f7cd490eb9e48153c1f06ec4b427bc5248ec3f90d`.
-- O gate executivo anterior atingiu 15/15 em cobertura estrutural. O novo gate adiciona sustentação multivariada, estabilidade, decisão operacional e estratégia executável; não reutiliza 15/15 como prova automática de nota `≥9,5`.
+- Refinamento publicado localmente em `METHOD_VERSION = "2.5.0"`: 146 testes catalogados, gate focal final **45/45**, matriz técnica **15/15** e preflight completo não repetido por bypass explícito. O CSV contém seis recomendações e 6.830 registros. Artefatos correntes: `evidence.csv` SHA-256 `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`, `analysis.md` SHA-256 `d4e5ee40430d97f1430db7c95e54eb83a818eddc8e1692b63f66e5347f2b8537` e HTML reproduzido SHA-256 `0284af6d3e1a602e057feb720a1d22fc54de71aab7e5739b45332b4c78ac011f`.
+- A avaliação preliminar da IA é `9,62/10`, sem dimensão abaixo de `9,5`; a nota final permanece `PENDING` até leitura humana, sem transformar 15/15 técnico em aprovação subjetiva automática.
 - **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
 
 ## Global Constraints
@@ -1139,7 +1139,7 @@ git commit -m "feat(004): expose executive decision program"
 - Consumes: método 2.5.0 completo, CSV real e matriz de avaliação abaixo.
 - Produces: artefatos regenerados, hashes, tempo/memória, matriz 15/15, nota humana e decisão explícita sobre o goal `≥9,5`.
 
-- [ ] **Step 1: Criar a regressão da matriz executiva**
+- [x] **Step 1: Criar a regressão da matriz executiva**
 
 Em `test_acceptance.py`, exigir para cada pergunta os cinco critérios: resposta direta, sustentação multivariada, estabilidade temporal, decisão operacional e estratégia executável. O teste verifica presença/evidência; não atribui nota subjetiva sozinho.
 
@@ -1162,7 +1162,7 @@ def test_three_executive_answers_cover_the_fifteen_item_matrix(self):
 
 Atualizar no mesmo arquivo as provas publicadas existentes: `test_report_answers_the_heads_three_questions_with_kpis_and_actions` passa a exigir os veredictos, KPIs, estabilidade, evidência e ações realmente gerados pelo método 2.5; `test_every_evidence_id_cited_by_report_exists_in_export` amplia o padrão para IDs `driver-*` e `strategy-*`. Não apagar asserções para fazer a suíte passar: substituir apenas expectativas 2.4 comprovadamente obsoletas pelos valores reconciliados no Step 2.
 
-- [ ] **Step 2: Regenerar com o CSV real e reconciliar independentemente**
+- [x] **Step 2: Regenerar com o CSV real e reconciliar independentemente**
 
 Run:
 
@@ -1176,17 +1176,17 @@ Recalcular fora das funções sob teste: líder/abstenção multivariada, limiar
 
 Expected: CLI retorna zero; `analysis.md`, `evidence.csv` e HTML compartilham método `2.5.0`, fonte, três veredictos e IDs; a reconciliação independente produz os mesmos deltas, gates e contextos.
 
-- [ ] **Step 3: Medir eficiência no caminho real**
+- [x] **Step 3: Medir eficiência no caminho real**
 
 Medir upload + histórico completo até os cards: alvo frio `≤30 s` no Mac de referência; rerun com mesma fonte `≤1 s`; pico de memória sem swap. Se ultrapassar, perfilar primeiro e otimizar somente a causa medida, sem mudar resultado.
 
 Expected: os três limites são registrados com comando, máquina, horário e amostra no diário; qualquer limite excedido mantém a Task 11 aberta.
 
-- [ ] **Step 4: Aplicar a nota global sem autoengano**
+- [x] **Step 4: Aplicar a nota global sem autoengano**
 
 Usar cinco dimensões com pesos iguais: clareza, objetividade, eficiência, profundidade e capacidade decisória. O goal só passa com média `≥9,5`, nenhuma dimensão `<9,0`, matriz técnica `15/15` e justificativa textual para cada nota. A IA pode produzir avaliação preliminar; a nota final precisa de leitura humana de Luis ou avaliador designado. Ausência dessa leitura fica `PENDING`, nunca arredondada para sucesso.
 
-- [ ] **Step 5: Executar gates focais locais e gate pesado remoto antes de PR**
+- [x] **Step 5: Executar gates focais locais e gate pesado remoto antes de PR**
 
 No Mac: `py_compile`, `git diff --check` e testes focais afetados. Antes de abrir/atualizar PR, executar:
 
@@ -1197,13 +1197,13 @@ codespace-manager run <nome-parado-limpo-do-mesmo-repo> -- 'python -m pip instal
 
 Expected: instalação sem conflito e suíte completa verde no mesmo commit/diff pretendido. Se o semáforo estiver congestionado e Luis mantiver o bypass, registrar a exceção e deixar Actions/Vercel fecharem os gates; nunca alegar preflight local completo.
 
-- [ ] **Step 6: Atualizar documentação, provas e hashes**
+- [x] **Step 6: Atualizar documentação, provas e hashes**
 
 Registrar resultados reais no diário, atualizar método/hashes/contagem de testes nos quatro documentos, substituir screenshots somente após inspeção real e verificar que `evidence.csv` não contém inputs manuais. Preservar HR-01 separadamente.
 
 Expected: matriz técnica `15/15`; nota humana `≥9,5` sem dimensão `<9,0`, ou status honesto `PENDING`; hashes recalculados; nenhum segredo, dataset bruto ou premissa manual versionada.
 
-- [ ] **Step 7: Commitar o handoff local**
+- [x] **Step 7: Commitar o handoff local**
 
 ```bash
 git add -u -- analysis.md evidence.csv README.md SPEC.md IMPLEMENTATION-PLAN.md \

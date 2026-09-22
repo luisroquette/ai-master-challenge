@@ -912,6 +912,7 @@ def _engagement_drivers(
         "contexts": contexts,
         "leader": leader,
         "laggard": laggard,
+        "best_candidate": positive[0] if positive else None,
         "runner_up": positive[1] if len(positive) > 1 else None,
         "verdict": "stable_winner" if leader else "no_sustained_winner",
         "change_trigger": (
@@ -1732,7 +1733,18 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
     if result.get("sponsorship", {}).get("evidence_id"):
         evidence.append(result["sponsorship"])
     evidence.extend(result.get("sponsorship", {}).get("strata", []))
-    for driver in result.get("engagement_drivers", {}).get("contexts", []):
+    drivers = result.get("engagement_drivers", {})
+    if drivers.get("evidence_id"):
+        evidence.append({
+            "evidence_id": drivers["evidence_id"],
+            "export_metric_name": "driver_overview",
+            "metric_value": len(drivers.get("contexts", [])),
+            "verdict": drivers.get("verdict"),
+            "materiality_threshold_pp": drivers.get("materiality_threshold_pp"),
+            "change_trigger": drivers.get("change_trigger"),
+            "source_row_ids": [],
+        })
+    for driver in drivers.get("contexts", []):
         evidence.append({
             **driver,
             "export_metric_name": "driver_context",
@@ -1741,6 +1753,12 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
             "comparator": driver.get("peer", {}),
         })
     strategy = content_strategy_30d(result)
+    evidence.append({
+        **strategy,
+        "export_metric_name": "strategy_30d",
+        "metric_value": len(strategy["weeks"]),
+        "source_row_ids": [],
+    })
     for week in strategy["weeks"]:
         evidence.append({
             **week,
@@ -1774,9 +1792,9 @@ def _iter_export_rows(result: dict[str, object], decisions: list[dict[str, objec
             formula = "posts in eligible within-stratum label pairs / scoped posts; each label >=30 defined rates and >=5 creators"
         elif evidence_id.startswith("audience-"):
             formula = "median(target label ERv) - median(comparator label ERv); matched monthly core and sponsorship"
-        elif metric_name == "driver_context":
+        elif metric_name in ("driver_overview", "driver_context"):
             formula = "median(monthly target ERv - same-platform-and-follower-band peer ERv); organic posts only"
-        elif metric_name == "strategy_week":
+        elif metric_name in ("strategy_30d", "strategy_week"):
             formula = "deterministic 30-day operating sequence derived from the selected driver and decision gates"
         statistics = {key: value for key, value in item.items() if key not in (
             "source_row_ids", "source_row_id", "current_source_row_ids", "previous_source_row_ids",
@@ -2006,7 +2024,7 @@ def _executive_context(context: dict[str, object]) -> str:
 def content_strategy_30d(result: dict[str, object]) -> dict[str, object]:
     drivers = result.get("engagement_drivers", {})
     driver = drivers.get("leader")
-    collection = drivers.get("runner_up") or next(iter(drivers.get("contexts", [])), None)
+    collection = drivers.get("best_candidate")
     selected = driver or collection
     context = dict(selected.get("context", {})) if selected else {}
     recommendation = next(
@@ -2038,7 +2056,7 @@ def content_strategy_30d(result: dict[str, object]) -> dict[str, object]:
         (1, "D1–D7", "baseline", "Congelar o contexto e registrar o baseline orgânico comparável",
          "ERv mediano, visualizações e interações por post", "manter o mix corrente fora do teste",
          "30 taxas definidas e cinco creators em alvo e comparador"),
-        (2, "D8–D14", "test", "Testar o contexto vencedor sem alterar o mix fora do experimento",
+        (2, "D8–D14", "test", ("Testar o contexto vencedor" if driver else "Testar o melhor candidato elegível") + " sem alterar o mix fora do experimento",
          "Delta de ERv contra pares da mesma plataforma e faixa", tested_cadence,
          "Efeito acima da materialidade e guards não negativos"),
         (3, "D15–D21", "replicate_or_revise", "Replicar uma vez se o sinal persistir; revisar se divergir",
@@ -2196,10 +2214,11 @@ def executive_answers(
 
     program = content_strategy_30d(result)
     program_context = _executive_context(program["context"]) or "CONTEXTO A COLETAR"
-    selected = leader or {}
+    selected = leader or drivers.get("best_candidate") or {}
+    strategy_verb = "EXECUTAR PROGRAMA DE 30 DIAS PARA" if leader else "EXECUTAR PROGRAMA DE 30 DIAS PARA VALIDAR"
     strategy = {
         "question": questions[2],
-        "verdict": f"EXECUTAR PROGRAMA DE 30 DIAS PARA {program_context.upper()}; PRESERVAR O MIX FORA DO TESTE",
+        "verdict": f"{strategy_verb} {program_context.upper()}; PRESERVAR O MIX FORA DO TESTE",
         "kpi": "4 semanas: baseline → teste → replicação/revisão → decisão humana.",
         "comparison": f"Contexto escolhido pelo ranking multivariado; escala automática: não; gate final: {'atingido' if program['scale_gate_met'] else 'não atingido'}.",
         "sample": f"Base: {count(posts)} posts; {len(program['weeks'])} janelas operacionais.",

@@ -86,7 +86,9 @@ class ExportTests(unittest.TestCase):
         second = parse_export(export_evidence(result, []))
         self.assertEqual(first, second)
         metrics = [row["metric_name"] for row in first if row["record_type"] == "evidence"]
+        self.assertEqual(metrics.count("driver_overview"), 1)
         self.assertIn("driver_context", metrics)
+        self.assertEqual(metrics.count("strategy_30d"), 1)
         self.assertEqual(metrics.count("strategy_week"), 4)
         driver = next(row for row in first if row["metric_name"] == "driver_context")
         self.assertEqual(driver["unit"], "percentage_points")
