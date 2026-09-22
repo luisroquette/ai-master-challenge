@@ -1247,3 +1247,12 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Validação:** 13 testes focados passaram; Ruff e `git diff --check` passaram sem erros.
 - **Escopo preservado:** nenhuma task ou evidence foi alterada. A streak permanece em
   `0/2`; uma nova rodada completa e limpa é necessária.
+
+## I72 — Redundância Necessária R7: CLEAN — 2026-09-22
+
+- **Base auditada:** SHA `d5664a1b754e3650b751cb0d6fc9c4b33446450e`.
+- **Resultado:** `CLEAN`; a regressão dos achados de R1–R6 não encontrou novo erro, falha,
+  gap, melhoria ou otimização relevante.
+- **Verificação:** 4 testes passaram; Ruff e `git diff --check` passaram. O preflight
+  terminal continua pulado por decisão do owner e explicitamente `não executado/não verde`.
+- **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
