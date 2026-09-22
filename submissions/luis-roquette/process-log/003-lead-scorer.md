@@ -1156,3 +1156,18 @@ Luis autorizou explicitamente o bypass **apenas** da repetição pesada local no
 Após questionar a demora, Luis esclareceu que o bypass solicitado também abrangia o preflight integral ainda pendente depois do retrabalho da revisão. A decisão evita nova espera no semáforo compartilhado: o full pós-fix não será repetido.
 
 A evidência válida do SHA `9228ffd` é o gate focal **6/6**. O último full **74/74** e `REAL_RENDERED_JOURNEY` pertencem ao SHA anterior; portanto, não se declara preflight full pós-fix verde. A Fase 2 permanece sem marcação de revisada até nova avaliação do revisor.
+
+### Ciclos de revisão e retrabalho da Fase 2 — 2026-09-22
+
+- **Revisão inicial:** nota `3,30`, com cinco achados.
+- **Retrabalho 1:** gate RED com seis ocorrências — duas falhas e quatro erros — seguido de GREEN focal **6/6** no SHA `9228ffd`.
+- **Reavaliação:** nota `3,90`, com duas issues residuais.
+- **Retrabalho 2:** commits `2dbc3e5` para testes, `af046c4` para implementação e `3e94015` para documentação.
+
+Por bypass explícito do owner e ausência de Codespace limpo, os quatro testes novos do segundo retrabalho foram escritos e revisados, mas **não executados**. Apenas `py_compile`, `bash -n` e `git diff --check` ficaram verdes. Não se declara GREEN nem full pós-fix, e o `TC47` não foi reivindicado. A Fase 2 aguarda a reavaliação estática final.
+
+### Reavaliação estática final da Fase 2 — 2026-09-22
+
+O mesmo revisor concluiu a reavaliação estática com conformidade à SPEC `4,45`, avaliação interna `4,35`, resultado combinado `4,40`, `issues: []` e `rework_required: false`. Os dois issues residuais foram considerados fechados por inspeção.
+
+A limitação permanece explícita: as quatro regressões finais não foram executadas por bypass autorizado. Portanto, a Fase 2 pode ser marcada como `[REVIEWED]`, sem alegação de full pós-fix verde nem reivindicação do `TC47`.

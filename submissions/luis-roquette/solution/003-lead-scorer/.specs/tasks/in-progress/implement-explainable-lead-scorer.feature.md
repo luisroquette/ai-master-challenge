@@ -819,7 +819,7 @@ Rubrics:
 
 - `Correction Specificity`
 
-#### Phase 2: Working explainable seller and manager application
+#### Phase 2: Working explainable seller and manager application [REVIEWED]
 
 Steps: `03a-explainable-priorities`, `03b-portfolio-session-ui`, `04-canonical-verification`
 Reviewer model: `opus`
