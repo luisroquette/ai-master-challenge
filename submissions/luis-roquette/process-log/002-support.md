@@ -1178,3 +1178,16 @@ Ficam fora do MVP: helpdesk real, envio de mensagens, APIs pagas, autenticação
 - **Ponytail:** revisão não encontrou código, dependência ou abstração a remover; nenhum
   corte foi feito porque os contratos existentes são necessários para os gates seguros.
 - **Streak:** `1/2`; falta uma rodada limpa consecutiva para encerrar a Redundância.
+
+## I68 — Redundância Necessária R3: NOT CLEAN — 2026-09-22
+
+- **Resultado da rodada:** `NOT CLEAN`, com um único achado Low; streak reiniciado em
+  `0/2`.
+- **Causa:** as três fases estavam `[REVIEWED]`, os dez steps `[DONE]` e o DoD `5/5 [X]`,
+  mas a task permanecia fisicamente em `.specs/tasks/in-progress/`, divergindo do ciclo de
+  vida obrigatório da skill `implement-task`.
+- **Correção:** movimentação rastreada por `git mv` para
+  `.specs/tasks/done/implement-support-decision-copilot.feature.md`. Nenhum link interno
+  exigiu ajuste; os subtasks permanecem no diretório estável previsto pela metodologia.
+- **Escopo preservado:** nenhum código ou evidence foi alterado. Uma nova rodada completa
+  é necessária; somente duas rodadas limpas consecutivas encerram a Redundância.
