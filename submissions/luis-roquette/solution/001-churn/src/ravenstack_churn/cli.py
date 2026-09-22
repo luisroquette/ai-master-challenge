@@ -38,7 +38,7 @@ def reproduce(raw_dir: Path, output_dir: Path) -> dict[str, Path]:
     )
     observed = build_account_panel(tables, cutoffs, "observed")
     strict = build_account_panel(tables, cutoffs, "strict")
-    _monthly_churn = build_monthly_churn(tables, terminal_events)
+    monthly_churn = build_monthly_churn(tables, terminal_events)
     reasons = build_reason_distribution(tables, terminal_events)
     event_panel = pd.concat(
         [
@@ -55,7 +55,7 @@ def reproduce(raw_dir: Path, output_dir: Path) -> dict[str, Path]:
         event_metrics,
         reasons,
     )
-    _scorecard = build_mechanism_scorecard(findings, event_metrics, reasons)
+    scorecard = build_mechanism_scorecard(findings, event_metrics, reasons)
     claims = build_claim_checks(strict)
     model_evaluation, model_scores = evaluate_model(strict)
     result = AnalysisResult(
@@ -64,6 +64,10 @@ def reproduce(raw_dir: Path, output_dir: Path) -> dict[str, Path]:
         claim_checks=claims,
         findings=findings,
         segment_metrics=segments,
+        monthly_churn=monthly_churn,
+        reason_distribution=reasons,
+        event_cohort_metrics=event_metrics,
+        mechanism_scorecard=scorecard,
         model_evaluation=model_evaluation,
         model_scores=model_scores,
     )

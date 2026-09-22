@@ -282,7 +282,7 @@ O agente não executa esses comandos; o orquestrador os executa após a revisão
 - Changes: `_build_report(..., answer) -> str`.
 - Publishes: 14 payloads + `run_manifest.json`.
 
-- [ ] **Step 1: escrever testes RED do contrato e da integridade**
+- [x] **Step 1: escrever testes RED do contrato e da integridade**
 
 ```python
 def test_ceo_answer_and_report_share_claim_ids_and_values(): ...
@@ -291,13 +291,13 @@ def test_all_inconclusive_keeps_facts_and_empty_queue(): ...
 def test_analysis_id_is_stable_and_non_recursive(): ...
 ```
 
-- [ ] **Step 2: confirmar RED**
+- [x] **Step 2: confirmar RED**
 
 Run: `.venv/bin/python -m pytest -q tests/test_publish.py`
 
 Expected: FAIL nos novos testes porque os cinco payloads e a validação semântica não existem.
 
-- [ ] **Step 3: implementar escrita e validação como migração indivisível**
+- [x] **Step 3: implementar escrita e validação como migração indivisível**
 
 ```python
 def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]: ...
@@ -311,7 +311,7 @@ def _build_report(
 
 Serializar tabelas primeiro, calcular `analysis_id`, construir resposta uma vez, escrever manifesto por último e validar tipos, IDs, refs, unidades e finitude.
 
-- [ ] **Step 4: confirmar GREEN e reprodução**
+- [ ] **Step 4: confirmar GREEN e reprodução** — publicação: 15 passed; regressão analítica: 59 passed; Ruff verde. `make reproduce` adiado por bypass explícito de Luis, sem regenerar `artifacts/`.
 
 Run: `.venv/bin/python -m pytest -q tests/test_publish.py`
 
@@ -319,7 +319,7 @@ Run no ambiente autorizado: `make reproduce`
 
 Expected: 15 arquivos totais; duas reproduções equivalentes; nenhum NaN/Infinity em JSON.
 
-- [ ] **Step 5: entregar o diff; o orquestrador registra o checkpoint**
+- [x] **Step 5: entregar o diff; o orquestrador registra o checkpoint local**
 
 ```bash
 git add src/ravenstack_churn/publish.py src/ravenstack_churn/cli.py tests/conftest.py tests/test_publish.py artifacts

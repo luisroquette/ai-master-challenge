@@ -4,13 +4,101 @@ from dataclasses import replace
 import pandas as pd
 import pytest
 
+from ravenstack_churn.config import sha256_file
 from ravenstack_churn.publish import (
     ArtifactConsistencyError,
+    _build_ceo_answer,
     _markdown_table,
     compare_artifact_sets,
     publish_artifacts,
     validate_artifact_set,
 )
+
+
+def test_ceo_answer_and_report_share_claim_ids_and_values(analysis_result, tmp_path) -> None:
+    paths = publish_artifacts(analysis_result, tmp_path)
+    answer = json.loads(paths["ceo_answer"].read_text())
+    report = paths["report"].read_text()
+
+    assert [block["id"] for block in answer["blocks"]] == [
+        "what_changed",
+        "where",
+        "strongest_mechanism",
+        "unknowns",
+        "next_actions",
+    ]
+    for block in answer["blocks"]:
+        for claim in block["claims"]:
+            assert claim["id"] in report
+            assert claim["statement"] in report
+
+
+def test_rehashed_invalid_reference_is_rejected(analysis_result, tmp_path) -> None:
+    paths = publish_artifacts(analysis_result, tmp_path)
+    answer = json.loads(paths["ceo_answer"].read_text())
+    evidence_id = next(iter(answer["evidence_refs"]))
+    answer["evidence_refs"][evidence_id]["artifact"] = "missing.csv"
+    paths["ceo_answer"].write_text(json.dumps(answer, allow_nan=False))
+    manifest = json.loads(paths["run_manifest"].read_text())
+    manifest["artifact_checksums"]["ceo_answer.json"] = sha256_file(paths["ceo_answer"])
+    paths["run_manifest"].write_text(json.dumps(manifest))
+
+    with pytest.raises(ArtifactConsistencyError, match="unknown artifact"):
+        validate_artifact_set(tmp_path)
+
+
+def test_rehashed_invalid_schema_is_rejected(analysis_result, tmp_path) -> None:
+    paths = publish_artifacts(analysis_result, tmp_path)
+    scorecard = pd.read_csv(paths["mechanism_scorecard"]).drop(columns="temporal_support")
+    scorecard.to_csv(paths["mechanism_scorecard"], index=False)
+    manifest = json.loads(paths["run_manifest"].read_text())
+    manifest["artifact_checksums"]["mechanism_scorecard.csv"] = sha256_file(
+        paths["mechanism_scorecard"]
+    )
+    paths["run_manifest"].write_text(json.dumps(manifest))
+
+    with pytest.raises(ArtifactConsistencyError, match="schema missing columns"):
+        validate_artifact_set(tmp_path)
+
+
+def test_rehashed_non_finite_json_is_rejected(analysis_result, tmp_path) -> None:
+    paths = publish_artifacts(analysis_result, tmp_path)
+    text = paths["ceo_answer"].read_text().replace('"value": 0.04', '"value": NaN', 1)
+    paths["ceo_answer"].write_text(text)
+    manifest = json.loads(paths["run_manifest"].read_text())
+    manifest["artifact_checksums"]["ceo_answer.json"] = sha256_file(paths["ceo_answer"])
+    paths["run_manifest"].write_text(json.dumps(manifest))
+
+    with pytest.raises(ArtifactConsistencyError, match="non-finite JSON number"):
+        validate_artifact_set(tmp_path)
+
+
+def test_all_inconclusive_keeps_facts_and_empty_queue(analysis_result, tmp_path) -> None:
+    findings = analysis_result.findings.assign(confidence="inconclusive")
+    scorecard = analysis_result.mechanism_scorecard.assign(
+        evidence_level="plausible_hypothesis", status="inconclusive"
+    )
+    paths = publish_artifacts(
+        replace(analysis_result, findings=findings, mechanism_scorecard=scorecard), tmp_path
+    )
+    answer = json.loads(paths["ceo_answer"].read_text())
+
+    assert answer["selected_mechanism_id"] is None
+    assert answer["mechanism_status"] == "inconclusive"
+    assert answer["blocks"][0]["claims"]
+    assert pd.read_csv(paths["account_queue"]).empty
+
+
+def test_analysis_id_is_stable_and_non_recursive(analysis_result, tmp_path) -> None:
+    first = publish_artifacts(analysis_result, tmp_path / "first")
+    second = publish_artifacts(analysis_result, tmp_path / "second")
+
+    first_answer = _build_ceo_answer(analysis_result)
+    assert first_answer["analysis_id"] == json.loads(first["ceo_answer"].read_text())["analysis_id"]
+    assert (
+        json.loads(first["run_manifest"].read_text())["analysis_id"]
+        == json.loads(second["run_manifest"].read_text())["analysis_id"]
+    )
 
 
 def test_queue_and_report_use_same_finding_ids(analysis_result, tmp_path) -> None:

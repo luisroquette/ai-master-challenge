@@ -335,8 +335,122 @@ def analysis_result(accepted_findings, claim_panel):
                     "segment": "FinTech",
                     "churn_rate": 0.2,
                     "relative_risk": 1.2,
+                    "mrr_lost": 500.0,
                     "confidence": "eligible",
                 }
+            ]
+        ),
+        monthly_churn=pd.DataFrame(
+            [
+                {
+                    "evidence_id": "churn:reference",
+                    "period_start": pd.Timestamp("2023-07-01"),
+                    "period_end": pd.Timestamp("2023-12-31"),
+                    "population": "registered_at_start",
+                    "status": "available",
+                    "source_refs": "accounts|churn_events",
+                    "calculation": "fixture",
+                    "period_kind": "comparison_period",
+                    "dimension": "all",
+                    "segment": "all",
+                    "at_risk_accounts": 100,
+                    "terminal_churns": 2,
+                    "churn_rate": 0.02,
+                    "rate_difference": pd.NA,
+                    "difference_ci_low": pd.NA,
+                    "difference_ci_high": pd.NA,
+                    "ci_method": "cluster_bootstrap_account",
+                    "ci_level": 0.95,
+                    "mrr_lost": 200.0,
+                    "rate_unit": "account_churn/account_month",
+                },
+                {
+                    "evidence_id": "churn:recent",
+                    "period_start": pd.Timestamp("2024-06-01"),
+                    "period_end": pd.Timestamp("2024-11-30"),
+                    "population": "registered_at_start",
+                    "status": "available",
+                    "source_refs": "accounts|churn_events",
+                    "calculation": "fixture",
+                    "period_kind": "comparison_period",
+                    "dimension": "all",
+                    "segment": "all",
+                    "at_risk_accounts": 100,
+                    "terminal_churns": 6,
+                    "churn_rate": 0.06,
+                    "rate_difference": 0.04,
+                    "difference_ci_low": 0.01,
+                    "difference_ci_high": 0.07,
+                    "ci_method": "cluster_bootstrap_account",
+                    "ci_level": 0.95,
+                    "mrr_lost": 600.0,
+                    "rate_unit": "account_churn/account_month",
+                },
+            ]
+        ),
+        reason_distribution=pd.DataFrame(
+            [
+                {
+                    "evidence_id": "reason:diagnostic:product",
+                    "period_start": pd.Timestamp("2024-12-01"),
+                    "period_end": pd.Timestamp("2024-12-30"),
+                    "population": "diagnostic_horizon",
+                    "reason_code": "product",
+                    "terminal_accounts": 10,
+                    "eligible_events": 20,
+                    "share": 0.5,
+                    "unit": "share_of_first_valid_terminal_accounts",
+                }
+            ]
+        ),
+        event_cohort_metrics=pd.DataFrame(
+            [
+                {
+                    "evidence_id": "event:strict:usage:cases",
+                    "period_start": pd.Timestamp("2024-06-01"),
+                    "period_end": pd.Timestamp("2024-11-30"),
+                    "population": "terminal_event",
+                    "chronology": "strict",
+                    "metric": "F-product-usage-drop",
+                    "cohort": "terminal_cases",
+                    "relative_window_start": -30,
+                    "relative_window_end": -1,
+                    "value": 1.0,
+                    "difference": -0.5,
+                    "unit": "usage_events/account/day",
+                }
+            ]
+        ),
+        mechanism_scorecard=pd.DataFrame(
+            [
+                {
+                    "evidence_id": f"mechanism:{finding_id}",
+                    "period_start": pd.Timestamp("2024-11-30"),
+                    "period_end": pd.Timestamp("2024-11-30"),
+                    "population": "diagnostic_horizon",
+                    "status": "available",
+                    "limitation": "Associação observacional.",
+                    "source_refs": "findings|event_cohort_metrics",
+                    "calculation": "fixture",
+                    "mechanism_id": finding_id,
+                    "finding_id": finding_id,
+                    "claim": f"{finding_id} antecede churn.",
+                    "evidence_level": "supported_mechanism",
+                    "temporal_support": "pass",
+                    "comparison_support": "pass",
+                    "sample_support": "pass",
+                    "association_support": "pass",
+                    "chronology_support": "pass",
+                    "cross_table_support": "pass",
+                    "effect": 2.0,
+                    "effect_unit": "adjusted_odds_ratio",
+                    "ci_low": 1.2,
+                    "ci_high": 3.0,
+                    "ci_level": 0.95,
+                    "ci_method": "glm_hc3",
+                    "counterevidence": "Limite do fixture.",
+                }
+                for finding_id in ("F-commercial-renewal", "F-support-escalation")
             ]
         ),
         model_evaluation={"publish_model": False, "failure_reasons": ["fixture"]},

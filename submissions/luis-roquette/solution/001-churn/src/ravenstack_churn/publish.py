@@ -6,6 +6,7 @@ import platform
 import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -99,6 +100,10 @@ class AnalysisResult:
     claim_checks: pd.DataFrame
     findings: pd.DataFrame
     segment_metrics: pd.DataFrame
+    monthly_churn: pd.DataFrame
+    reason_distribution: pd.DataFrame
+    event_cohort_metrics: pd.DataFrame
+    mechanism_scorecard: pd.DataFrame
     model_evaluation: dict[str, Any]
     model_scores: pd.DataFrame | None = None
 
@@ -122,11 +127,66 @@ EXPECTED_ARTIFACT_FILENAMES = {
     "account_queue.csv",
     "account_watchlist.csv",
     "claim_checks.csv",
+    "ceo_answer.json",
+    "event_cohort_metrics.csv",
     "findings.csv",
+    "mechanism_scorecard.csv",
     "model_evaluation.json",
+    "monthly_churn.csv",
     "quality_report.json",
+    "reason_distribution.csv",
     "report.md",
     "segment_metrics.csv",
+}
+REQUIRED_EVIDENCE_COLUMNS = {
+    "monthly_churn.csv": {
+        "evidence_id",
+        "period_start",
+        "period_end",
+        "population",
+        "status",
+        "period_kind",
+        "dimension",
+        "segment",
+        "churn_rate",
+    },
+    "reason_distribution.csv": {
+        "evidence_id",
+        "period_start",
+        "period_end",
+        "population",
+        "reason_code",
+        "eligible_events",
+        "share",
+    },
+    "event_cohort_metrics.csv": {
+        "evidence_id",
+        "period_start",
+        "period_end",
+        "population",
+        "chronology",
+        "metric",
+        "cohort",
+        "relative_window_start",
+        "relative_window_end",
+        "value",
+    },
+    "mechanism_scorecard.csv": {
+        "evidence_id",
+        "period_start",
+        "period_end",
+        "population",
+        "status",
+        "mechanism_id",
+        "finding_id",
+        "evidence_level",
+        "temporal_support",
+        "comparison_support",
+        "sample_support",
+        "association_support",
+        "chronology_support",
+        "cross_table_support",
+    },
 }
 
 
@@ -154,8 +214,31 @@ def _json_default(value: object) -> object:
     raise TypeError(f"cannot serialize {type(value).__name__}")
 
 
+def _json_ready(value: object) -> object:
+    if isinstance(value, dict):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, np.ndarray, pd.Series)):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, (np.integer, np.floating)):
+        value = value.item()
+    if isinstance(value, (pd.Timestamp, datetime)):
+        return value.isoformat()
+    if value is pd.NA or value is pd.NaT:
+        return None
+    if isinstance(value, float) and not np.isfinite(value):
+        return None
+    return value
+
+
 def _json_text(value: object) -> str:
-    return json.dumps(value, default=_json_default, ensure_ascii=False, indent=2, sort_keys=True)
+    return json.dumps(
+        _json_ready(value),
+        default=_json_default,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+        allow_nan=False,
+    )
 
 
 def _accepted_findings(findings: pd.DataFrame) -> pd.DataFrame:
@@ -274,6 +357,424 @@ def _build_watchlist(result: AnalysisResult) -> pd.DataFrame:
     return watchlist.loc[:, columns].reset_index(drop=True)
 
 
+def _manifest_parameters(result: AnalysisResult) -> dict[str, object]:
+    return {
+        "chronology_modes": ["observed", "strict"],
+        "cutoffs": [str(DEFAULT_CUTOFFS.min().date()), str(DEFAULT_CUTOFFS.max().date())],
+        "scoring_cutoff": str(SCORING_CUTOFF.date()),
+        "windows_days": list(DEFAULT_WINDOWS),
+        "min_segment_accounts": MIN_SEGMENT_ACCOUNTS,
+        "min_segment_churns": MIN_SEGMENT_CHURNS,
+        "min_coverage": MIN_COVERAGE,
+        "observation_end": str(OBSERVATION_END.date()),
+        "label_policy": result.quality_report.get("label_policy"),
+    }
+
+
+def _analysis_payloads(
+    result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame
+) -> dict[str, object]:
+    return {
+        "account_panel.csv": result.panel,
+        "account_queue.csv": queue,
+        "account_watchlist.csv": watchlist,
+        "claim_checks.csv": result.claim_checks,
+        "findings.csv": rank_findings(result.findings),
+        "segment_metrics.csv": result.segment_metrics,
+        "monthly_churn.csv": result.monthly_churn,
+        "reason_distribution.csv": result.reason_distribution,
+        "event_cohort_metrics.csv": result.event_cohort_metrics,
+        "mechanism_scorecard.csv": result.mechanism_scorecard,
+        "quality_report.json": result.quality_report,
+        "model_evaluation.json": result.model_evaluation,
+    }
+
+
+def _payload_bytes(filename: str, payload: object) -> bytes:
+    if filename.endswith(".csv"):
+        return payload.to_csv(index=False, lineterminator="\n").encode("utf-8")  # type: ignore[union-attr]
+    return (_json_text(payload) + "\n").encode("utf-8")
+
+
+def _analysis_id(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame) -> str:
+    evidence_checksums = {
+        filename: sha256(_payload_bytes(filename, payload)).hexdigest()
+        for filename, payload in _analysis_payloads(result, queue, watchlist).items()
+    }
+    identity = {
+        "input_checksums": RAW_FILE_SHA256,
+        "parameters": _manifest_parameters(result),
+        "evidence_checksums": evidence_checksums,
+    }
+    canonical = json.dumps(_json_ready(identity), sort_keys=True, separators=(",", ":"))
+    return sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _iso_date(value: object) -> str | None:
+    if pd.isna(value):
+        return None
+    return str(pd.Timestamp(value).date())
+
+
+def _claim(
+    claim_id: str,
+    statement: str,
+    evidence_level: str | None,
+    status: str,
+    value: object,
+    unit: str,
+    population: str,
+    period_start: object,
+    period_end: object,
+    evidence_ids: list[str],
+    limitation: str,
+    *,
+    numerator: object = None,
+    denominator: object = None,
+    comparator_id: str | None = None,
+    uncertainty_method: str = "not_estimated",
+    uncertainty_level: object = None,
+    uncertainty_low: object = None,
+    uncertainty_high: object = None,
+    uncertainty_reason: str | None = None,
+    counterevidence: str | None = None,
+) -> dict[str, object]:
+    return {
+        "id": claim_id,
+        "statement": statement,
+        "evidence_level": evidence_level,
+        "status": status,
+        "value": value,
+        "unit": unit,
+        "numerator": numerator,
+        "denominator": denominator,
+        "population": population,
+        "period_start": _iso_date(period_start),
+        "period_end": _iso_date(period_end),
+        "comparator_id": comparator_id,
+        "uncertainty": {
+            "method": uncertainty_method,
+            "level": uncertainty_level,
+            "low": uncertainty_low,
+            "high": uncertainty_high,
+            "reason": uncertainty_reason,
+        },
+        "evidence_ids": evidence_ids,
+        "limitation": limitation,
+        "counterevidence": counterevidence,
+    }
+
+
+def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
+    queue = _build_queue(result)
+    watchlist = _build_watchlist(result)
+    analysis_id = _analysis_id(result, queue, watchlist)
+    evidence_refs: dict[str, dict[str, object]] = {}
+
+    def add_ref(
+        ref_id: str,
+        artifact: str,
+        row: pd.Series,
+        key_columns: tuple[str, ...],
+        columns: tuple[str, ...],
+    ) -> str:
+        evidence_refs[ref_id] = {
+            "artifact": artifact,
+            "row_key": {column: _json_ready(row[column]) for column in key_columns},
+            "columns": list(columns),
+            "calculation": row.get("calculation", "published_table"),
+            "source_tables": str(row.get("source_refs", artifact)).split("|"),
+            "period_start": _iso_date(row.get("period_start")),
+            "period_end": _iso_date(row.get("period_end")),
+            "population": str(row.get("population", "declared_population")),
+            "unit": str(row.get("rate_unit", row.get("unit", "declared_unit"))),
+        }
+        return ref_id
+
+    blocks: dict[str, dict[str, object]] = {
+        block_id: {"id": block_id, "title": title, "summary": summary, "claims": [], "actions": []}
+        for block_id, title, summary in (
+            ("what_changed", "O que mudou", "Mudança de churn no recorte histórico declarado."),
+            ("where", "Onde está concentrado", "Recortes descritivos, sem inferir causalidade."),
+            (
+                "strongest_mechanism",
+                "Mecanismo mais forte",
+                "Gates de evidência antes da prioridade.",
+            ),
+            (
+                "unknowns",
+                "O que ainda não sabemos",
+                "Cobertura e contradições limitam a conclusão.",
+            ),
+            ("next_actions", "Próximas ações", "Ações proporcionais à força da evidência."),
+        )
+    }
+
+    history = result.monthly_churn
+    overall = history.loc[
+        history.get("period_kind", pd.Series(index=history.index, dtype=str)).eq(
+            "comparison_period"
+        )
+        & history.get("dimension", pd.Series(index=history.index, dtype=str)).eq("all")
+        & history.get("segment", pd.Series(index=history.index, dtype=str)).eq("all")
+    ]
+    if not overall.empty:
+        recent = overall.sort_values("period_end").iloc[-1]
+        reference = overall.sort_values("period_end").iloc[0]
+        recent_ref = add_ref(
+            str(recent["evidence_id"]),
+            "monthly_churn.csv",
+            recent,
+            ("evidence_id",),
+            ("churn_rate", "rate_difference", "mrr_lost", "at_risk_accounts"),
+        )
+        reference_ref = add_ref(
+            str(reference["evidence_id"]),
+            "monthly_churn.csv",
+            reference,
+            ("evidence_id",),
+            ("churn_rate", "terminal_churns", "at_risk_accounts"),
+        )
+        difference = recent.get("rate_difference")
+        if pd.isna(difference):
+            difference = recent.get("churn_rate") - reference.get("churn_rate")
+        status = "up" if difference > 0 else "down" if difference < 0 else "flat"
+        statement = (
+            f"A taxa mensal ponderada de churn ficou em {recent['churn_rate']:.1%} no período "
+            f"recente, variação de {difference * 100:+.1f} pp versus a referência."
+        )
+        blocks["what_changed"]["claims"].append(
+            _claim(
+                "C-churn-change",
+                statement,
+                "confirmed_fact",
+                status,
+                difference,
+                "percentage_points_fraction",
+                str(recent.get("population", "registered_at_start")),
+                recent.get("period_start"),
+                recent.get("period_end"),
+                [recent_ref, reference_ref],
+                "Taxa de período ponderada por exposições conta-mês; não é probabilidade semestral.",
+                numerator=recent.get("terminal_churns"),
+                denominator=recent.get("at_risk_accounts"),
+                uncertainty_method=str(recent.get("ci_method", "cluster_bootstrap_account")),
+                uncertainty_level=recent.get("ci_level"),
+                uncertainty_low=recent.get("difference_ci_low"),
+                uncertainty_high=recent.get("difference_ci_high"),
+            )
+        )
+        blocks["what_changed"]["summary"] = statement
+
+    eligible = result.segment_metrics.loc[
+        result.segment_metrics.get(
+            "confidence", pd.Series("inconclusive", index=result.segment_metrics.index)
+        ).eq("eligible")
+    ]
+    if not eligible.empty:
+        top_segment = eligible.sort_values("relative_risk", ascending=False).iloc[0]
+        segment_ref = add_ref(
+            f"segment:{top_segment['dimension']}:{top_segment['segment']}",
+            "segment_metrics.csv",
+            top_segment,
+            ("dimension", "segment"),
+            ("churn_rate", "relative_risk", "mrr_lost", "confidence"),
+        )
+        segment_statement = (
+            f"{top_segment['dimension']} / {top_segment['segment']} teve risco relativo "
+            f"descritivo de {top_segment['relative_risk']:.2f}x."
+        )
+        blocks["where"]["claims"].append(
+            _claim(
+                "C-top-segment",
+                segment_statement,
+                "confirmed_fact",
+                "descriptive",
+                top_segment.get("relative_risk"),
+                "relative_risk",
+                "diagnostic_snapshot",
+                SCORING_CUTOFF - pd.Timedelta(days=31),
+                SCORING_CUTOFF - pd.Timedelta(days=1),
+                [segment_ref],
+                "Ranking descritivo restrito aos segmentos que passaram os limiares de amostra.",
+            )
+        )
+        blocks["where"]["summary"] = segment_statement
+
+    scorecard = result.mechanism_scorecard
+    supported = scorecard.loc[
+        scorecard.get("evidence_level", pd.Series(dtype=str)).eq("supported_mechanism")
+    ]
+    selected_mechanism_id = None
+    if len(supported) == 1:
+        mechanism_status = "supported"
+        selected_mechanism_id = str(supported.iloc[0]["mechanism_id"])
+    elif len(supported) > 1:
+        mechanism_status = "tied"
+    else:
+        mechanism_status = "inconclusive" if not scorecard.empty else "unavailable"
+    mechanism = (
+        supported.iloc[0]
+        if not supported.empty
+        else (scorecard.iloc[0] if not scorecard.empty else None)
+    )
+    mechanism_ref = None
+    if mechanism is not None:
+        mechanism_ref = add_ref(
+            str(mechanism["evidence_id"]),
+            "mechanism_scorecard.csv",
+            mechanism,
+            ("evidence_id",),
+            (
+                "evidence_level",
+                "temporal_support",
+                "comparison_support",
+                "sample_support",
+                "association_support",
+                "chronology_support",
+                "cross_table_support",
+            ),
+        )
+        mechanism_statement = f"{mechanism['claim']} Estado: {mechanism['evidence_level']}."
+        blocks["strongest_mechanism"]["claims"].append(
+            _claim(
+                "M-strongest",
+                mechanism_statement,
+                str(mechanism.get("evidence_level")),
+                str(mechanism.get("status", "inconclusive")),
+                mechanism.get("effect"),
+                str(mechanism.get("effect_unit", "adjusted_odds_ratio")),
+                str(mechanism.get("population", "diagnostic_horizon")),
+                mechanism.get("period_start"),
+                mechanism.get("period_end"),
+                [mechanism_ref],
+                str(
+                    mechanism.get(
+                        "limitation", "Associação observacional; causalidade não identificada."
+                    )
+                ),
+                uncertainty_method=str(mechanism.get("ci_method", "glm_hc3")),
+                uncertainty_level=mechanism.get("ci_level"),
+                uncertainty_low=mechanism.get("ci_low"),
+                uncertainty_high=mechanism.get("ci_high"),
+                counterevidence=mechanism.get("counterevidence"),
+            )
+        )
+        blocks["strongest_mechanism"]["summary"] = mechanism_statement
+
+    satisfaction = result.claim_checks.loc[
+        result.claim_checks["claim_id"].eq("C-satisfaction-ok")
+        & result.claim_checks["cohort"].eq("overall")
+    ]
+    unknown_ref = None
+    if not satisfaction.empty:
+        satisfaction_row = satisfaction.iloc[0]
+        unknown_ref = add_ref(
+            "claim:C-satisfaction-ok:overall",
+            "claim_checks.csv",
+            satisfaction_row,
+            ("claim_id", "cohort"),
+            ("start_value", "end_value", "coverage", "status"),
+        )
+        unknown_statement = (
+            "Satisfação representa apenas tickets respondidos e não pode ser generalizada para "
+            "toda a base sem cobertura suficiente."
+        )
+        blocks["unknowns"]["claims"].append(
+            _claim(
+                "C-satisfaction-coverage",
+                unknown_statement,
+                "confirmed_fact",
+                "limitation",
+                satisfaction_row.get("coverage"),
+                "covered_responses_share",
+                "support_ticket_respondents",
+                satisfaction_row.get("period_start", DEFAULT_CUTOFFS.min()),
+                satisfaction_row.get("period_end", DEFAULT_CUTOFFS.max()),
+                [unknown_ref],
+                unknown_statement,
+            )
+        )
+        blocks["unknowns"]["summary"] = unknown_statement
+
+    finding = (
+        result.findings.loc[result.findings["finding_id"].eq(selected_mechanism_id)].iloc[0]
+        if selected_mechanism_id is not None
+        else None
+    )
+    if mechanism_ref:
+        action_evidence = [mechanism_ref]
+    elif unknown_ref:
+        action_evidence = [unknown_ref]
+    else:
+        evidence_refs["quality:report"] = {
+            "artifact": "quality_report.json",
+            "row_key": {"scope": "quality_report"},
+            "columns": ["rows", "contradictions"],
+            "calculation": "build_quality_report",
+            "source_tables": list(result.quality_report.get("rows", {})),
+            "period_start": None,
+            "period_end": str(OBSERVATION_END.date()),
+            "population": "all_input_rows",
+            "unit": "data_quality_rules",
+        }
+        action_evidence = ["quality:report"]
+    action = {
+        "id": "A-intervene" if finding is not None else "A-validate",
+        "kind": "intervention_proposal" if finding is not None else "validation",
+        "description": (
+            str(finding["immediate_action"])
+            if finding is not None
+            else "Auditar cobertura e testar prospectivamente a hipótese mais plausível."
+        ),
+        "evidence_ids": action_evidence,
+        "owner_role": str(finding["owner"]) if finding is not None else "Head de Dados",
+        "deadline_days": 7,
+        "population": "contas expostas no snapshot diagnóstico",
+        "success_metric": (
+            str(finding.get("success_metric", "sinal e churn da coorte"))
+            if finding is not None
+            else "cobertura >=70% e sinal temporal consistente"
+        ),
+        "advance_if": "o sinal persistir com cobertura e comparação suficientes",
+        "stop_if": "a auditoria contradizer o sinal ou revelar viés de cobertura",
+        "limitation": "Proposta; nenhum contato ou automação foi autorizado.",
+    }
+    blocks["next_actions"]["actions"].append(action)
+    blocks["next_actions"]["summary"] = str(action["description"])
+
+    block_list = [
+        blocks[block_id]
+        for block_id in (
+            "what_changed",
+            "where",
+            "strongest_mechanism",
+            "unknowns",
+            "next_actions",
+        )
+    ]
+    headline_claim_ids = [
+        claim["id"]
+        for claim in block_list[0]["claims"]  # type: ignore[index]
+    ]
+    headline = str(block_list[0]["summary"])
+    if mechanism_status in {"inconclusive", "unavailable"}:
+        headline += " Nenhum mecanismo passou todos os gates."
+    elif mechanism_status == "tied":
+        headline += " Há mecanismos sustentados empatados; nenhum foi selecionado isoladamente."
+    return {
+        "schema_version": 1,
+        "analysis_id": analysis_id,
+        "parameters": _manifest_parameters(result),
+        "headline": headline,
+        "headline_claim_ids": headline_claim_ids,
+        "selected_mechanism_id": selected_mechanism_id,
+        "mechanism_status": mechanism_status,
+        "blocks": block_list,
+        "evidence_refs": evidence_refs,
+    }
+
+
 def _value(value: object) -> str:
     if pd.isna(value):
         return "n/d"
@@ -294,7 +795,9 @@ def _markdown_table(frame: pd.DataFrame, columns: tuple[str, ...]) -> list[str]:
     return lines
 
 
-def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame) -> str:
+def _build_legacy_report(
+    result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.DataFrame
+) -> str:
     accepted = _accepted_findings(result.findings)
     renewal_accounts = int(
         result.findings.set_index("finding_id").loc["F-commercial-renewal", "affected_accounts"]
@@ -316,7 +819,12 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
                 "**Leitura em uma frase:** uso "
                 f"{usage_overall.lower()} no agregado e {usage_churn.lower()} na coorte que "
                 "churnará em 30 dias; "
-                f"satisfação {satisfaction.lower()}, mas nenhuma hipótese causal passou todos os gates."
+                f"satisfação {satisfaction.lower()}; "
+                + (
+                    "há mecanismo observacional sustentado, sem prova causal."
+                    if not accepted.empty
+                    else "nenhuma hipótese passou todos os gates."
+                )
             ),
             "",
         ]
@@ -524,6 +1032,24 @@ def _build_report(result: AnalysisResult, queue: pd.DataFrame, watchlist: pd.Dat
     return "\n".join(lines)
 
 
+def _build_report(
+    result: AnalysisResult,
+    queue: pd.DataFrame,
+    watchlist: pd.DataFrame,
+    answer: dict[str, object],
+) -> str:
+    lines = ["# Resposta executiva canônica", "", str(answer["headline"]), ""]
+    for index, block in enumerate(answer["blocks"], start=1):  # type: ignore[union-attr]
+        lines.extend([f"## {index}. {block['title']}", "", str(block["summary"]), ""])
+        lines.extend(f"- **{claim['id']}:** {claim['statement']}" for claim in block["claims"])
+        lines.extend(
+            f"- **{action['id']}:** {action['description']}" for action in block["actions"]
+        )
+        lines.append("")
+    lines.extend(["---", "", _build_legacy_report(result, queue, watchlist)])
+    return "\n".join(lines)
+
+
 def _dependency_versions() -> dict[str, str]:
     dependencies = {}
     for package in ("numpy", "pandas", "scikit-learn", "scipy", "statsmodels", "streamlit"):
@@ -546,46 +1072,29 @@ def publish_artifacts(result: AnalysisResult, output_dir: Path) -> dict[str, Pat
     output_dir.mkdir(parents=True, exist_ok=True)
     queue = _build_queue(result)
     watchlist = _build_watchlist(result)
-    payloads: dict[str, tuple[str, object]] = {
-        "account_panel": ("csv", result.panel),
-        "account_queue": ("csv", queue),
-        "account_watchlist": ("csv", watchlist),
-        "claim_checks": ("csv", result.claim_checks),
-        "findings": ("csv", rank_findings(result.findings)),
-        "segment_metrics": ("csv", result.segment_metrics),
-        "quality_report": ("json", result.quality_report),
-        "model_evaluation": ("json", result.model_evaluation),
-        "report": ("md", _build_report(result, queue, watchlist)),
-    }
+    answer = _build_ceo_answer(result)
+    filename_payloads = _analysis_payloads(result, queue, watchlist)
+    filename_payloads["ceo_answer.json"] = answer
+    filename_payloads["report.md"] = _build_report(result, queue, watchlist, answer)
     paths: dict[str, Path] = {}
-    for key, (suffix, payload) in payloads.items():
-        path = output_dir / f"{key}.{suffix}"
+    for filename, payload in filename_payloads.items():
+        path = output_dir / filename
         temporary = path.with_suffix(path.suffix + ".tmp")
-        if suffix == "csv":
-            payload.to_csv(temporary, index=False)  # type: ignore[union-attr]
-        elif suffix == "json":
-            temporary.write_text(_json_text(payload) + "\n", encoding="utf-8")
+        if filename.endswith((".csv", ".json")):
+            temporary.write_bytes(_payload_bytes(filename, payload))
         else:
             temporary.write_text(str(payload), encoding="utf-8")
         temporary.replace(path)
-        paths[key] = path
+        paths[path.stem] = path
 
     manifest = {
+        "schema_version": 1,
+        "analysis_id": answer["analysis_id"],
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "source_git_sha": _git_sha(),
         "runtime": {"python": platform.python_version(), "dependencies": _dependency_versions()},
         "input_checksums": RAW_FILE_SHA256,
-        "parameters": {
-            "chronology_modes": ["observed", "strict"],
-            "cutoffs": [str(DEFAULT_CUTOFFS.min().date()), str(DEFAULT_CUTOFFS.max().date())],
-            "scoring_cutoff": str(SCORING_CUTOFF.date()),
-            "windows_days": list(DEFAULT_WINDOWS),
-            "min_segment_accounts": MIN_SEGMENT_ACCOUNTS,
-            "min_segment_churns": MIN_SEGMENT_CHURNS,
-            "min_coverage": MIN_COVERAGE,
-            "observation_end": str(OBSERVATION_END.date()),
-            "label_policy": result.quality_report.get("label_policy"),
-        },
+        "parameters": _manifest_parameters(result),
         "test_status": os.environ.get("RAVENSTACK_TEST_STATUS", "unknown"),
         "publish_model": bool(result.model_evaluation.get("publish_model")),
         "artifact_checksums": {path.name: sha256_file(path) for path in paths.values()},
@@ -603,7 +1112,15 @@ def validate_artifact_set(output_dir: Path) -> dict[str, object]:
     manifest_path = output_dir / "run_manifest.json"
     if not manifest_path.is_file():
         raise ArtifactConsistencyError("run_manifest.json missing")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    try:
+        manifest = json.loads(
+            manifest_path.read_text(encoding="utf-8"),
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"non-finite JSON number: {value}")
+            ),
+        )
+    except ValueError as error:
+        raise ArtifactConsistencyError(f"invalid manifest JSON: {error}") from error
     checksums = manifest.get("artifact_checksums", {})
     if not isinstance(checksums, dict):
         raise ArtifactConsistencyError("artifact_checksums must be an object")
@@ -615,6 +1132,101 @@ def validate_artifact_set(output_dir: Path) -> dict[str, object]:
             raise ArtifactConsistencyError(f"{filename} missing")
         if sha256_file(path) != expected:
             raise ArtifactConsistencyError(f"{filename} checksum mismatch")
+    for filename, required_columns in REQUIRED_EVIDENCE_COLUMNS.items():
+        frame = pd.read_csv(output_dir / filename)
+        missing = required_columns - set(frame.columns)
+        if missing:
+            raise ArtifactConsistencyError(f"{filename} schema missing columns: {sorted(missing)}")
+        if frame["evidence_id"].duplicated().any():
+            raise ArtifactConsistencyError(f"{filename} has duplicate evidence_id")
+        numeric = frame.select_dtypes(include="number")
+        if not numeric.empty and np.isinf(numeric.to_numpy(dtype=float)).any():
+            raise ArtifactConsistencyError(f"{filename} contains infinite numbers")
+    scorecard = pd.read_csv(output_dir / "mechanism_scorecard.csv")
+    gate_columns = [
+        "temporal_support",
+        "comparison_support",
+        "sample_support",
+        "association_support",
+        "chronology_support",
+        "cross_table_support",
+    ]
+    if not set(scorecard[gate_columns].stack()).issubset({"pass", "fail", "unavailable"}):
+        raise ArtifactConsistencyError("mechanism_scorecard.csv has invalid gate state")
+    try:
+        answer = json.loads(
+            (output_dir / "ceo_answer.json").read_text(encoding="utf-8"),
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"non-finite JSON number: {value}")
+            ),
+        )
+    except ValueError as error:
+        raise ArtifactConsistencyError(f"invalid ceo_answer.json: {error}") from error
+    if answer.get("schema_version") != 1:
+        raise ArtifactConsistencyError("ceo_answer.json schema_version must be 1")
+    if answer.get("analysis_id") != manifest.get("analysis_id"):
+        raise ArtifactConsistencyError("analysis_id mismatch")
+    if answer.get("parameters") != manifest.get("parameters"):
+        raise ArtifactConsistencyError("answer parameters mismatch")
+    expected_blocks = [
+        "what_changed",
+        "where",
+        "strongest_mechanism",
+        "unknowns",
+        "next_actions",
+    ]
+    blocks = answer.get("blocks")
+    if not isinstance(blocks, list) or [block.get("id") for block in blocks] != expected_blocks:
+        raise ArtifactConsistencyError("canonical block order is invalid")
+    evidence_refs = answer.get("evidence_refs")
+    if not isinstance(evidence_refs, dict):
+        raise ArtifactConsistencyError("evidence_refs must be an object")
+    allowed_artifacts = set(checksums) | set(RAW_FILE_SHA256)
+    for evidence_id, reference in evidence_refs.items():
+        artifact = reference.get("artifact")
+        if artifact not in allowed_artifacts:
+            raise ArtifactConsistencyError(f"{evidence_id} references unknown artifact")
+        if not str(artifact).endswith(".csv"):
+            continue
+        frame = pd.read_csv(output_dir / str(artifact))
+        row_key = reference.get("row_key")
+        columns = reference.get("columns")
+        if not isinstance(row_key, dict) or not row_key:
+            raise ArtifactConsistencyError(f"{evidence_id} row_key is invalid")
+        if not isinstance(columns, list) or not columns:
+            raise ArtifactConsistencyError(f"{evidence_id} columns are invalid")
+        missing_columns = (set(row_key) | set(columns)) - set(frame.columns)
+        if missing_columns:
+            raise ArtifactConsistencyError(
+                f"{evidence_id} references missing columns: {sorted(missing_columns)}"
+            )
+        selected = pd.Series(True, index=frame.index)
+        for column, value in row_key.items():
+            selected &= (
+                frame[column].isna() if value is None else frame[column].astype(str).eq(str(value))
+            )
+        if int(selected.sum()) != 1:
+            raise ArtifactConsistencyError(f"{evidence_id} row_key must resolve exactly one row")
+
+    claims = [claim for block in blocks for claim in block.get("claims", [])]
+    actions = [action for block in blocks for action in block.get("actions", [])]
+    claim_ids = [claim.get("id") for claim in claims]
+    if len(claim_ids) != len(set(claim_ids)):
+        raise ArtifactConsistencyError("duplicate claim id")
+    known_ids = set(evidence_refs) | set(claim_ids)
+    for item in [*claims, *actions]:
+        references = item.get("evidence_ids")
+        if not isinstance(references, list) or not references:
+            raise ArtifactConsistencyError(f"{item.get('id')} lacks evidence_ids")
+        if not set(references).issubset(evidence_refs):
+            raise ArtifactConsistencyError(f"{item.get('id')} has unresolved evidence_ids")
+        comparator_id = item.get("comparator_id")
+        if comparator_id is not None and comparator_id not in known_ids:
+            raise ArtifactConsistencyError(f"{item.get('id')} has unresolved comparator_id")
+    if any(action.get("kind") == "intervention_proposal" for action in actions) and not any(
+        claim.get("evidence_level") == "supported_mechanism" for claim in claims
+    ):
+        raise ArtifactConsistencyError("intervention proposal requires supported mechanism")
     return manifest
 
 

@@ -849,3 +849,19 @@ O Feedback Looping não substitui a SDD; ele governa sua execução. A SPEC cont
 **Bypass mantido:** por ordem explícita de Luis, nenhum Codespace, `make reproduce` ou `make check` foi executado nesta etapa. O resultado verde cobre somente testes locais direcionados e lint dos arquivos alterados. O preflight integral continua adiado e obrigatório antes de PR ou merge; não foi registrado como aprovado.
 
 **Estado:** implementação funcional da Task 4 validada no escopo local autorizado. Fase 1 possui os quatro DataFrames em memória; reprodução integral e artefatos canônicos permanecem pendentes do gate adiado.
+
+### Task 5 — resposta canônica e contrato de publicação
+
+**Pesquisa e planejamento:** pesquisamos no GitHub implementações de manifesto validado, JSON canônico e dashboards executivos com fonte única. A decisão foi reaproveitar `publish.py` e a biblioteca padrão: serialização JSON estrita com `allow_nan=False`, hashes SHA-256 e validação estrutural mais semântica, sem nova dependência.
+
+**RED:** quatro regressões foram escritas antes do código. A coleta falhou com `ImportError` para `_build_ceo_answer`, confirmando que o contrato canônico ainda não existia.
+
+**Execução:** `AnalysisResult` passou a exigir histórico, motivos, métricas relativas e scorecard. A publicação agora gera cinco novos payloads, totalizando 14 payloads mais manifesto; calcula `analysis_id` sem incluir relatório ou a própria resposta; constrói `ceo_answer.json` uma vez; e entrega o mesmo headline, claims e ações ao relatório. Os cinco blocos têm ordem fixa: o que mudou, onde, mecanismo, desconhecidos e próximas ações. A validação resolve referências até uma linha/colunas reais, rejeita IDs duplicados, gates inválidos, schema incompleto, números infinitos e intervenção sem mecanismo sustentado.
+
+**Feedback e refinamento:** o primeiro ciclo chegou a `13 passed`. A revisão acrescentou schema explícito para as quatro novas tabelas e uma evidência de qualidade de fallback no cenário sem dados. Novas regressões adulteraram referência, schema e número JSON, recalcularam o hash e confirmaram que a semântica continua bloqueando o conjunto. Resultado final: `15 passed` em publicação, `59 passed in 3.87s` na regressão analítica combinada e Ruff verde.
+
+**Compatibilidade observada:** 13 de 14 testes legados adicionais de app/contratos/modelo passaram. O único teste de app alterava apenas os parâmetros do manifesto; agora essa adulteração é corretamente rejeitada porque diverge de `ceo_answer.json`. A expectativa será migrada na Task 6, responsável por adaptar o dashboard ao novo contrato.
+
+**Bypass mantido:** nenhum `make reproduce`, Codespace ou preflight integral foi executado por ordem explícita de Luis. Os arquivos reais de `artifacts/` não foram regenerados nem editados manualmente nesta etapa. O gate completo permanece pendente antes de PR ou merge.
+
+**Estado:** Task 5 validada localmente e pronta para checkpoint; Task 6 deve fazer o dashboard consumir exclusivamente a resposta canônica já validada.
