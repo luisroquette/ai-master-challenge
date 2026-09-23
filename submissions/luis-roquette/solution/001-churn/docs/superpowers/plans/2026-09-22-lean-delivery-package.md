@@ -4,9 +4,9 @@
 
 **Goal:** entregar a resposta do Challenge 001 em menos de dois minutos de navegação inicial, preservando profundidade técnica sob demanda.
 
-**Architecture:** quatro links visíveis formam a entrega: Comece aqui, Veja funcionando, Entenda a construção e Audite. O vídeo obrigatório existente substitui qualquer Video Overview; o NotebookLM gera somente um infográfico. O relatório e o Process Log ficam como profundidade, não como porta de entrada.
+**Architecture:** cinco entradas visíveis formam a entrega: Comece aqui, Veja funcionando, Entenda a arquitetura, Veja a síntese e Audite. O vídeo obrigatório explica a arquitetura em primeira pessoa; o Video Overview do NotebookLM sintetiza método e evolução; o infográfico fixa a jornada visual. O relatório e o Process Log ficam como profundidade, não como porta de entrada.
 
-**Tech Stack:** Markdown, DOCX, NotebookLM Infographic, Arcade Interactive Demo, vídeo H.264 existente, Git/GitHub e Streamlit.
+**Tech Stack:** Markdown, DOCX, NotebookLM Video Overview e Infographic, Arcade Interactive Demo, vídeo H.264 existente, Git/GitHub e Streamlit.
 
 **Spec:** `.specs/tasks/todo/package-challenge-001-deliverables.feature.md`
 
@@ -16,15 +16,17 @@
 - O vídeo obrigatório tem 6min05s, 1920×1080, 60 fps, H.264/AAC e legendas queimadas.
 - O MP4 de 232.879.349 bytes não será commitado no Git.
 - Markdown é o formato para IA; DOCX é a cópia humana. Não produzir TXT redundante.
-- Não gerar segundo vídeo, mapa mental, slide deck ou landing page.
-- Publicação do vídeo, Arcade e PR upstream exige confirmação final de Luis.
+- Os dois vídeos têm funções distintas: arquitetura autoral versus síntese da construção.
+- Não gerar mapa mental, slide deck ou landing page.
+- Publicação dos vídeos, Arcade e PR upstream exige confirmação final de Luis.
 
 ## Review Focus
 
 - O primeiro bloco do README demora mais de 30 segundos para revelar resposta e decisão.
-- O vídeo obrigatório está inacessível sem login ou sem permissão pública adequada.
+- Um dos vídeos está inacessível sem login ou sem permissão pública adequada.
+- Os dois vídeos repetem o mesmo conteúdo em vez de cumprir funções distintas.
 - Arcade repete metodologia em vez de demonstrar o sistema.
-- Brief, vídeo ou infográfico introduzem números ou causalidade não sustentados.
+- Brief, vídeos ou infográfico introduzem números ou causalidade não sustentados.
 - A quantidade de links devolve ao avaliador o trabalho de decidir por onde começar.
 
 ---
@@ -39,7 +41,7 @@
 
 **Interfaces:**
 - Consumes: `artifacts/ceo_answer.json`, `docs/executive-answer-rubric.md` e `process-log/000-004`.
-- Produces: brief canônico de até 1.200 palavras e índice de quatro links.
+- Produces: brief canônico de até 1.200 palavras e índice de cinco entradas.
 
 - [ ] **Step 1: escrever a abertura de 30 segundos**
 
@@ -135,39 +137,46 @@ Usar screenshots do dashboard e no máximo um trecho de vídeo de interação. C
 
 Parar antes do compartilhamento público. Após confirmação de Luis, salvar URL, data e acesso anônimo no README do Arcade.
 
-### Task 4: Gerar somente um infográfico no NotebookLM
+### Task 4: Gerar Video Overview e infográfico no NotebookLM
 
 **Files:**
 - Create: `deliverables/notebooklm/source-pack.md`
-- Create: `deliverables/notebooklm/infographic-prompt.md`
+- Create: `deliverables/notebooklm/generation-prompts.md`
+- Create: `deliverables/notebooklm/README.md`
 - Receive: `deliverables/visuals/method-evolution-infographic.png`
 
 **Interfaces:**
 - Consumes: brief e diários públicos.
-- Produces: uma única peça visual sobre método e evolução.
+- Produces: Video Overview compartilhável e uma peça visual sobre método e evolução.
 
 - [ ] **Step 1: montar fonte curta e fechada**
 
 Incluir somente oito etapas metodológicas, quatro notas, três viradas humanas e seis fatos do diagnóstico. Excluir logs extensos, código e dados brutos.
 
-- [ ] **Step 2: usar o prompt editorial**
+- [ ] **Step 2: gerar o Video Overview com função própria**
+
+```text
+Crie um Video Overview em português brasileiro, com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Sintetize a evolução do trabalho: pergunta do CEO, método autoral, três decisões humanas que corrigiram o rumo, resposta final e próximos passos. Não faça walkthrough técnico da arquitetura, pois existe um vídeo autoral separado. Não invente causa, número ou nota externa.
+```
+
+- [ ] **Step 3: gerar o infográfico com o prompt editorial**
 
 ```text
 Crie um infográfico vertical em português brasileiro: “De uma pergunta confusa a uma decisão confiável”. Mostre oito etapas, a evolução 7,0 → 8,6 → 9,5 → 9,9 e três viradas humanas: separar agregados de coortes; recusar causalidade frágil; converter incerteza em validação. Use somente as fontes e não acrescente números.
 ```
 
-- [ ] **Step 3: revisar e exportar**
+- [ ] **Step 4: revisar e exportar os dois outputs**
 
-Conferir texto, notas, números, autoria e ausência de causa inventada. Se a primeira geração falhar, corrigir o prompt uma vez; depois, editar a fonte em vez de iterar indefinidamente.
+Assistir o Video Overview integralmente e conferir texto, notas, números, autoria e ausência de causa inventada no vídeo e no infográfico. Se a primeira geração falhar, corrigir o prompt uma vez; depois, editar a fonte em vez de iterar indefinidamente. Registrar links, duração, fontes e data no README do NotebookLM.
 
-- [ ] **Step 4: checkpoint**
+- [ ] **Step 5: checkpoint**
 
 ```bash
 git add -f deliverables/notebooklm deliverables/visuals
 git commit -m "docs(churn): add one-page methodology infographic"
 ```
 
-### Task 5: Fechar a entrega em quatro links
+### Task 5: Fechar a entrega em cinco entradas
 
 **Files:**
 - Modify: `deliverables/delivery-manifest.md`
@@ -175,20 +184,20 @@ git commit -m "docs(churn): add one-page methodology infographic"
 - Modify: `../../process-log/004-planejamento-entregaveis.md`
 
 **Interfaces:**
-- Consumes: brief, vídeo, Arcade, infográfico e evidências existentes.
+- Consumes: brief, vídeo obrigatório, Arcade, Video Overview, infográfico e evidências existentes.
 - Produces: entrada final do avaliador e PR pronto para revisão.
 
 - [ ] **Step 1: ordenar a abertura**
 
-Mostrar somente: `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Audite o processo`. Relatório e código ficam dentro de “Audite”.
+Mostrar somente: `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Veja a síntese do NotebookLM`; `Audite o processo`. O infográfico acompanha a síntese; relatório e código ficam dentro de “Audite”.
 
 - [ ] **Step 2: validar tudo como avaliador anônimo**
 
-Abrir cada link sem sessão; confirmar que nenhum exige permissão; assistir Arcade e vídeo; abrir DOCX; verificar o infográfico em mobile.
+Abrir cada link sem sessão; confirmar que nenhum exige permissão; assistir Arcade e os dois vídeos; abrir DOCX; verificar o infográfico em mobile.
 
 - [ ] **Step 3: reconciliar fatos e limites**
 
-Comparar as seis verdades em brief, Arcade, vídeo e infográfico. Qualquer divergência bloqueia a entrega; corrigir o derivado, nunca a fonte canônica.
+Comparar as seis verdades em brief, Arcade, vídeos e infográfico. Qualquer divergência bloqueia a entrega; corrigir o derivado, nunca a fonte canônica.
 
 - [ ] **Step 4: atualizar manifesto e diário**
 
@@ -196,12 +205,12 @@ Registrar URL, checksum, data, formato, status e limitação. Itens não produzi
 
 - [ ] **Step 5: preparar o PR sem submeter**
 
-Montar descrição com a resposta em seis linhas e os quatro links. Parar antes do envio ao upstream para confirmação final de Luis.
+Montar descrição com a resposta em seis linhas e as cinco entradas. Parar antes do envio ao upstream para confirmação final de Luis.
 
 ## Self-review
 
-- Escopo reduzido de onze artefatos destacados para quatro entradas visíveis.
-- Video Overview, mapa mental e TXT foram removidos por redundância.
+- Escopo reduzido para cinco entradas visíveis com funções distintas.
+- Mapa mental e TXT foram removidos por redundância; Video Overview e infográfico foram mantidos por decisão de Luis.
 - O vídeo obrigatório existente virou a peça central da construção.
-- Arcade demonstra o produto; vídeo explica arquitetura; brief responde; Process Log prova.
+- Arcade demonstra o produto; vídeo obrigatório explica arquitetura; NotebookLM sintetiza; brief responde; Process Log prova.
 - Nenhum binário de 222 MiB entra no Git.

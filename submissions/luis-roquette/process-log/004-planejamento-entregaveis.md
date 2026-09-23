@@ -60,3 +60,13 @@ Luis introduziu duas restrições decisivas: o avaliador provavelmente terá pou
 **Plano canônico revisado:** `solution/001-churn/docs/superpowers/plans/2026-09-22-lean-delivery-package.md`. O plano multimodal anterior permanece no histórico e está marcado como substituído.
 
 **Estado:** plano enxuto aguardando validação de Luis; nenhuma mídia foi publicada.
+
+## Ajuste final de escopo por decisão de Luis
+
+Luis decidiu manter quatro peças complementares: Video Overview do NotebookLM, infográfico do NotebookLM, Arcade no formato atual de oito passos e o vídeo obrigatório de arquitetura já gravado. A decisão substitui apenas o corte anterior do Video Overview; o mapa mental e o TXT continuam removidos.
+
+**Separação de funções:** o vídeo obrigatório apresenta Luis explicando a arquitetura em primeira pessoa; o Video Overview sintetiza a construção, as decisões humanas e a evolução do método; o Arcade demonstra o sistema; o infográfico oferece leitura visual instantânea. Essa separação evita que dois vídeos contem a mesma história.
+
+**Nova hierarquia:** `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Veja a síntese do NotebookLM`; `Audite o processo`. O infográfico acompanha a síntese do NotebookLM.
+
+**Estado:** SPEC e plano atualizados; implementação continua não iniciada.

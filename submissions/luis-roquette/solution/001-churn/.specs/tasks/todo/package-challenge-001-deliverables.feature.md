@@ -11,7 +11,8 @@ Transformar a solução técnica e o diário contemporâneo em uma entrega multi
 1. **Comece aqui:** README e brief de duas páginas com resposta, método e links.
 2. **Veja funcionando:** tour do sistema no Arcade em oito passos e até 90 segundos.
 3. **Entenda a construção:** vídeo obrigatório de arquitetura já gravado, com 6min05s e legendas.
-4. **Aprofunde se quiser:** relatório, código, Process Log e um infográfico metodológico.
+4. **Veja a síntese:** Video Overview e infográfico produzidos no NotebookLM.
+5. **Aprofunde se quiser:** relatório, código e Process Log.
 
 ## Público
 
@@ -28,7 +29,8 @@ O diferencial não é apenas o dashboard. É o método autoral de Luis para cheg
 - `deliverables/delivery-brief.md`
 - `deliverables/delivery-brief.docx`
 - `deliverables/notebooklm/source-pack.md`
-- `deliverables/notebooklm/infographic-prompt.md`
+- `deliverables/notebooklm/generation-prompts.md`
+- `deliverables/notebooklm/README.md`
 - `deliverables/visuals/method-evolution-infographic.png`
 - `deliverables/video/README.md`
 - `deliverables/video/poster.png`
@@ -64,7 +66,7 @@ A narrativa deve mostrar, em ordem:
 
 ## Regras
 
-- O texto escrito é a fonte; vídeo, infográfico e Arcade são derivados.
+- O texto escrito é a fonte; os dois vídeos, o infográfico e o Arcade são derivados.
 - Mostrar prompts decisivos e seus efeitos, não dumps integrais de conversa nem cadeia de pensamento privada.
 - Não inventar certeza causal, impacto recuperável, score externo ou mecanismo vencedor.
 - Não incluir segredos, dados pessoais, credenciais ou caminhos locais nas mídias públicas.
@@ -77,7 +79,7 @@ A narrativa deve mostrar, em ordem:
 2. `.md` e `.docx` têm o mesmo conteúdo substantivo; o brief não excede duas páginas ou 1.200 palavras.
 3. As seis verdades quantitativas são idênticas em todos os formatos.
 4. O Arcade possui oito passos, abre com valor, dura até 90 segundos e termina com decisão.
-5. O vídeo obrigatório é assistido integralmente; o infográfico do NotebookLM é revisado contra as fontes.
+5. O vídeo obrigatório e o Video Overview são assistidos integralmente; o infográfico é revisado contra as fontes.
 6. Cada link e arquivo do manifesto abre, possui tamanho maior que zero e identifica versão/data.
 7. O Process Log explica ferramentas, erros da IA, correções humanas, iterações e contribuição autoral.
 
@@ -86,11 +88,11 @@ A narrativa deve mostrar, em ordem:
 - Refazer a análise, o dashboard ou a identidade visual já aprovados.
 - Criar site de campanha, landing page ou hospedagem de produção.
 - Gerar novos números ou conclusões dentro do NotebookLM.
-- Gerar um segundo vídeo ou entregar mapa mental redundante.
+- Entregar mapa mental ou slide deck redundante.
 - Automatizar publicação externa sem revisão humana.
 
 ## Referências de formato
 
 - O guia do desafio exige solução e Process Log; aceita narrativa, screenshots, gravação, chat export e histórico Git combinados.
 - O benchmark do Arcade recomenda 9–12 passos, mas o contexto de avaliação rápida justifica oito passos e até 90 segundos.
-- NotebookLM será usado somente para o infográfico final; todo output de IA exige revisão factual.
+- NotebookLM será usado para Video Overview e infográfico; ambos exigem revisão factual.
