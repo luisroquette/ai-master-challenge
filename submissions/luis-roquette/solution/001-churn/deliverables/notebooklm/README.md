@@ -30,6 +30,8 @@ Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite di
 
 A cota foi consultada novamente em 23 de setembro de 2026 e a mesma mensagem permaneceu. O infográfico não é declarado como concluído.
 
+Às 09h18 BRT, uma tentativa completa chegou ao botão `Gerar` com português do Brasil, orientação retrato, estilo editorial, detalhamento padrão e o prompt versionado. O serviço recusou a geração com a mesma mensagem de limite; as gerações anteriores apareciam como realizadas havia 10 horas. A renovação pode, portanto, usar uma janela móvel. Esta é uma inferência da interface, não uma regra publicada pelo NotebookLM.
+
 ## Controle de qualidade do vídeo
 
 A primeira geração, “O Paradoxo do Churn e as Métricas Ilusórias”, foi rejeitada. Embora preservasse os números e a ausência de causa demonstrada, um quadro dizia “6 hipóteses rejeitadas”; o diagnóstico canônico diz que as seis hipóteses são inconclusivas. O prompt foi corrigido uma vez.
