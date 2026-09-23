@@ -282,10 +282,10 @@
     "semantic_hash": "3715fb717650a273a02649aca865772f"
   },
   "deliverables/delivery-manifest.md": {
-    "mtime": 1790169376.3963478,
-    "seen": 1790171519.632691,
-    "ast_hash": "4adc82f7091697467b448da2518cad5c",
-    "semantic_hash": "4adc82f7091697467b448da2518cad5c"
+    "mtime": 1790174679.710767,
+    "seen": 1790196238.622411,
+    "ast_hash": "d3ed2dddee83c2a83df4f3d13d01aa55",
+    "semantic_hash": "d3ed2dddee83c2a83df4f3d13d01aa55"
   },
   "deliverables/infographic-philosophy.md": {
     "mtime": 1790169376.3991454,
@@ -365,18 +365,6 @@
     "ast_hash": "35613e8e1f3dfc86e0da0eb64e587d68",
     "semantic_hash": "35613e8e1f3dfc86e0da0eb64e587d68"
   },
-  "graphify-out/transcripts/paradoxo-de-churn-do-ceo.txt": {
-    "mtime": 1790170260.8047094,
-    "seen": 1790171519.632695,
-    "ast_hash": "989729a6e16c76bb445cd13c45e746b3",
-    "semantic_hash": "989729a6e16c76bb445cd13c45e746b3"
-  },
-  "graphify-out/transcripts/architecture-overview.txt": {
-    "mtime": 1790170281.7494075,
-    "seen": 1790171519.632695,
-    "ast_hash": "af7fade7e7ee0b3b1807d17794157a0c",
-    "semantic_hash": "af7fade7e7ee0b3b1807d17794157a0c"
-  },
   "deliverables/infographic-challenge-001.pdf": {
     "mtime": 1790169376.3967226,
     "seen": 1790171519.6326962,
@@ -406,5 +394,17 @@
     "seen": 1790171519.632697,
     "ast_hash": "01d03d869a834b19abd03cfaa5eddd3c",
     "semantic_hash": "01d03d869a834b19abd03cfaa5eddd3c"
+  },
+  "SUBMISSION.md": {
+    "mtime": 1790195192.9037669,
+    "seen": 1790196238.62241,
+    "ast_hash": "d2426c5df8c6011d84e081afd1f2ad7c",
+    "semantic_hash": "d2426c5df8c6011d84e081afd1f2ad7c"
+  },
+  "deliverables/infographic-challenge-001.svg": {
+    "mtime": 1790169376.399092,
+    "seen": 1790196238.622411,
+    "ast_hash": "d7b7cdaf7fa99f9f79124dd57f430d20",
+    "semantic_hash": "d7b7cdaf7fa99f9f79124dd57f430d20"
   }
 }
