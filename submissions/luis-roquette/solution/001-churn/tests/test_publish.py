@@ -253,17 +253,21 @@ def test_ceo_answer_orders_quality_source_tables_deterministically(analysis_resu
 
 def test_ceo_answer_rounds_machine_precision_noise(analysis_result) -> None:
     monthly_churn = analysis_result.monthly_churn.copy()
-    recent_index = monthly_churn.loc[
-        monthly_churn["period_kind"].eq("comparison_period")
-        & monthly_churn["dimension"].eq("all")
-        & monthly_churn["segment"].eq("all")
-    ].sort_values("period_end").index[-1]
+    recent_index = (
+        monthly_churn.loc[
+            monthly_churn["period_kind"].eq("comparison_period")
+            & monthly_churn["dimension"].eq("all")
+            & monthly_churn["segment"].eq("all")
+        ]
+        .sort_values("period_end")
+        .index[-1]
+    )
     monthly_churn.loc[recent_index, "rate_difference"] += 4e-17
 
     original = _build_ceo_answer(analysis_result)["blocks"][0]["claims"][0]
-    perturbed = _build_ceo_answer(
-        replace(analysis_result, monthly_churn=monthly_churn)
-    )["blocks"][0]["claims"][0]
+    perturbed = _build_ceo_answer(replace(analysis_result, monthly_churn=monthly_churn))["blocks"][
+        0
+    ]["claims"][0]
 
     assert original["value"] == perturbed["value"]
 
