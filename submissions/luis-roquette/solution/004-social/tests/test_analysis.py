@@ -45,7 +45,7 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(frame["platform"].unique().tolist(), ["Instagram"])
 
-    def test_executive_answers_have_three_complete_unambiguous_decisions(self):
+    def test_executive_answers_have_four_complete_unambiguous_decisions(self):
         frame = frame_from_rows([
             make_post(id="text", content_id="text", content_type="text", likes=9, shares=0, comments_count=0),
             make_post(id="video", content_id="video", content_type="video", likes=3, shares=0, comments_count=0),
@@ -54,6 +54,7 @@ class CsvBoundaryTests(unittest.TestCase):
         answers = executive_answers(result)
         self.assertEqual([item["question"] for item in answers], [
             "O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?",
+            "Qual perfil de audiência mais engaja?",
         ])
         self.assertTrue(all(set(item) == {
             "question", "verdict", "kpi", "comparison", "sample", "action",
@@ -63,6 +64,7 @@ class CsvBoundaryTests(unittest.TestCase):
         self.assertIn("NÃO EXISTE VENCEDOR SUSTENTADO", answers[0]["verdict"])
         self.assertEqual(answers[1]["verdict"], "NÃO ESCALAR PATROCÍNIO AGORA")
         self.assertIn("COLETAR", answers[2]["verdict"])
+        self.assertIn("NÃO HÁ PERFIL GLOBAL COMPROVADO", answers[3]["verdict"])
 
     def test_load_csv_reports_missing_required_column_without_partial_frame(self):
         row = make_post()
@@ -905,7 +907,7 @@ class ContextEvidenceTests(unittest.TestCase):
 class ExecutiveAnswerTests(unittest.TestCase):
     def test_executive_answers_use_driver_ranking_and_disclose_decision_trigger(self):
         answers = executive_answers(result_with_stable_driver())
-        self.assertEqual(len(answers), 3)
+        self.assertEqual(len(answers), 4)
         self.assertTrue(all(set(answer) == {
             "question", "verdict", "kpi", "comparison", "sample", "action",
             "strength", "coverage", "stability", "evidence_id", "change_trigger",

@@ -2315,8 +2315,8 @@ def executive_summary(
         "<article><h3>" + html.escape(item["question"]) + "</h3><strong>" + html.escape(item["verdict"]) +
         "</strong><p><b>KPI:</b> " + html.escape(item["kpi"]) + "</p><p><b>Comparação:</b> " + html.escape(item["comparison"]) +
         "</p><p><b>Amostra:</b> " + html.escape(item["sample"]) + "</p><p><b>Ação:</b> " + html.escape(item["action"]) +
-        "</p><p>" + html.escape(item["strength"]) + "</p><p>" + html.escape(item["coverage"]) +
-        "</p><p>" + html.escape(item["stability"]) + "</p><details><summary>Critério de mudança e evidência</summary><p>" +
+        "</p><details><summary>Confiança, critério de mudança e evidência</summary><p>" + html.escape(item["strength"]) +
+        "</p><p>" + html.escape(item["coverage"]) + "</p><p>" + html.escape(item["stability"]) + "</p><p>" +
         html.escape(item["change_trigger"]) + "</p><small>" + html.escape(item["evidence_id"]) + "</small></details></article>"
         for item in executive_answers(result, financial_scenario)
     )
