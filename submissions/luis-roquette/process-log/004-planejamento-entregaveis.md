@@ -141,7 +141,7 @@ A abertura da submissão foi reorganizada em exatamente cinco escolhas. O DOCX p
 
 A consulta remota encontrou as PRs #140 e #141 fechadas e a PR #145 aberta para o Challenge 004. A PR aberta usa `submission/luis-roquette-004-social`, enquanto o guia exige a branch canônica `submission/luis-roquette`.
 
-Não alteramos branches, PRs ou conteúdo remoto. O gate final deverá consolidar os quatro desafios e resolver a PR #145 sem manter dois PRs abertos ao mesmo tempo. Até isso ocorrer, a submissão não pode ser declarada 100% aderente.
+Não alteramos branches, PRs ou conteúdo remoto naquela etapa. Esse plano de consolidação foi posteriormente substituído pela escolha exclusiva do Challenge 001 registrada abaixo.
 
 ## Decisão final — Challenge 001 como desafio principal
 
@@ -170,3 +170,9 @@ Uma nova consulta ao NotebookLM em 23 de setembro manteve a mensagem “Você at
 O diagnóstico da reprodução isolou a diferença em um único campo de `ceo_answer.json`: a lista de tabelas-fonte do relatório de qualidade herdava a ordem de inserção de um dicionário. O JSON de qualidade era canônico porque suas chaves eram ordenadas na serialização, mas a lista derivada podia mudar entre processos. Corrigimos a origem com ordenação explícita e adicionamos um teste que inverte a ordem de entrada e exige a mesma saída. A suíte passa a ter 85 testes.
 
 A passagem seguinte imprimiu o diff estrutural completo e revelou a causa restante: três números do JSON executivo variavam apenas na 16ª casa decimal entre processos, embora todos os CSVs, o relatório e as conclusões fossem idênticos. Canonizamos os campos numéricos das claims em 15 casas decimais e adicionamos regressão com perturbação de `4e-17`. A suíte passa a ter 86 testes; a precisão decisória e os valores exibidos permanecem inalterados.
+
+## Gate técnico final e nova verificação externa
+
+O gate remoto foi repetido no commit exato `de5f84429b1f648a448be6603527af2e2f2c8be4`, em Codespace limpo. Ruff, verificação de formatação e os 86 testes passaram; a reprodução independente terminou com `artifact_sets=equal`. O diff contra o `main` oficial permanece restrito a `submissions/luis-roquette/`, sem arquivo acima de 99 MB.
+
+Em 23 de setembro, uma nova verificação visual do NotebookLM manteve a mensagem “Você atingiu seu limite diário de infográficos. Volte mais tarde.” O infográfico é opcional pelas regras do G4, mas continua no escopo definido por Luis. Por isso, não houve upgrade, troca de conta, encerramento da PR #145 nem abertura da submissão final antes da renovação da cota.

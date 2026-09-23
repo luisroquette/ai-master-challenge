@@ -10,7 +10,7 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 | Veja funcionando em 90 segundos | Arcade | Tour público com oito passos revisado | Confirmar renderização anônima |
 | Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | MP4 comprimido, validado e incluído no repositório | Confirmar download após o push |
 | Veja a síntese do NotebookLM | Video Overview e infográfico | Vídeo de 6:00 aprovado e incluído; infográfico bloqueado pelo limite diário | Gerar e revisar o infográfico |
-| Audite o processo | Relatório, código e Process Log | Gate técnico em fechamento | Setup reproduzível, 86 testes e links válidos |
+| Audite o processo | Relatório, código e Process Log | Gate técnico validado | Setup reproduzível, 86 testes, artefatos idênticos e links válidos |
 
 ## Verdades que não podem divergir
 
