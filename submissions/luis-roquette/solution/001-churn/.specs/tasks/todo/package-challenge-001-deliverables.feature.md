@@ -82,6 +82,9 @@ A narrativa deve mostrar, em ordem:
 5. O vídeo obrigatório e o Video Overview são assistidos integralmente; o infográfico é revisado contra as fontes.
 6. Cada link e arquivo do manifesto abre, possui tamanho maior que zero e identifica versão/data.
 7. O Process Log explica ferramentas, erros da IA, correções humanas, iterações e contribuição autoral.
+8. Cada recomendação declara prioridade, impacto mensurável, impacto financeiro e confiança; ausência de estimativa causal é explícita, nunca substituída por receita inventada.
+9. O envio dos quatro desafios usa uma única branch `submission/luis-roquette`, um único PR por pessoa e o título `[Submission] Luis Fernando Roquette — Challenges 001–004`; nenhum arquivo fora de `submissions/luis-roquette/` entra no diff.
+10. A data, o link do histórico Git e todos os links externos refletem o estado final e abrem sem autenticação.
 
 ## Fora de escopo
 

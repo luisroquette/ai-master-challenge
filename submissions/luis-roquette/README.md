@@ -31,10 +31,14 @@ Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `obser
 
 ### Recomendações
 
-1. Em uma semana, auditar relógios, cadastro e vínculo assinatura–uso; suspender ranking causal automático até o gate ficar verde.
-2. Revisar manualmente uma amostra estratificada das 97 contas com renovação automática desligada, sem tratá-la como causa provada.
-3. Em 30–90 dias, corrigir instrumentação e medir uma coorte prospectiva com owner e critério de sucesso pré-definidos.
-4. Só publicar scores quando o modelo superar baseline fora do tempo; nesta execução, ele foi corretamente bloqueado.
+| Prioridade | Ação | Impacto estimado | Confiança |
+|---|---|---|---|
+| 1 semana | Sanear eventos fora do ciclo de vida e reproduzir as métricas. | Impedir dados temporalmente inválidos de sustentar decisões; impacto financeiro não estimável antes do saneamento. | Alta para o ganho de qualidade; não causal. |
+| 1 semana | Auditar uma amostra estratificada das 97 contas com renovação automática desligada. | Confirmar ou rejeitar o sinal antes de qualquer intervenção; não há receita recuperável estimável. | Baixa para efeito financeiro. |
+| 30 dias | Acompanhar uso e churn prospectivamente com cobertura mínima de 70%. | Produzir a primeira estimativa prospectiva comparável; impacto financeiro ainda não estimável. | Condicionada ao gate de cobertura. |
+| 30 dias | Medir satisfação fora dos tickets, com resposta mínima de 70% por estrato. | Remover o viés de respondentes e comparar coortes; impacto financeiro ainda não estimável. | Condicionada à representatividade. |
+
+O teto observado é US$ 1.622.337 de MRR perdido no período recente. Ele mede exposição histórica, não receita recuperável nem retorno prometido pelas ações.
 
 ### Limitações
 
@@ -59,6 +63,8 @@ Os dados são observacionais, contraditórios e aparentemente sintéticos. Não 
 4. Implementei cada fase em `Planejamento → Revisão → Execução → Teste`, repetindo quando um gate falhou.
 5. Mantive decisões, erros, correções e provas em diários contemporâneos.
 
+**Iterações registradas:** 5 ondas socráticas com 25 decisões, 20 passadas de otimização do primeiro plano, 9 fases de implementação, 3 rodadas de redundância e 5 rodadas de lapidação visual. A suíte final executa 42 testes.
+
 ### Onde a IA errou e como corrigi
 
 A IA inicialmente herdou um teste de caminho incompatível com a resolução real do `AppTest`; corrigi para caminho absoluto e preservei a prova pela raiz. Também tentou capturar exceções amplas no modelo estatístico e recebeu bloqueio do Ruff; restringi às falhas numéricas conhecidas. No painel, rejeitei um teste conceitualmente impossível que exigia cobertura histórica antes do cadastro. Finalmente, um smoke revelou `pd.NA` incompatível com sklearn, levando à normalização explícita das features aprovadas.
@@ -79,4 +85,4 @@ Defini documentação como parte principal da entrega — “ganha quem document
 
 ---
 
-_Submissão preparada em: 21 de setembro de 2026_
+_Submissão preparada em: 22 de setembro de 2026. A data final será confirmada no envio do PR._

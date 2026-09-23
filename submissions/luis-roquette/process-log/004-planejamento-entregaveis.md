@@ -70,3 +70,15 @@ Luis decidiu manter quatro peças complementares: Video Overview do NotebookLM, 
 **Nova hierarquia:** `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Veja a síntese do NotebookLM`; `Audite o processo`. O infográfico acompanha a síntese do NotebookLM.
 
 **Estado:** SPEC e plano atualizados; implementação continua não iniciada.
+
+## Auditoria final das regras oficiais de entrega
+
+Antes da implementação dos entregáveis, Luis exigiu uma nova conferência do README raiz, do Challenge 001, do Guia de Submissão, do `CONTRIBUTING.md` e do template oficial. A regra de parada foi endurecida: nenhum push final ou PR poderá ocorrer enquanto a aderência não estiver em 100%.
+
+A auditoria encontrou quatro lacunas. O relatório não explicitava impacto estimado por ação; a entrada não resumiria a quantidade de iterações; o plano ainda não transformava branch, PR único e título em gates; data, histórico Git e links externos precisavam de validação final. Todas foram incorporadas à SPEC e ao plano.
+
+**Decisão metodológica:** quando o impacto financeiro não puder ser estimado causalmente, a entrega dirá “não estimável” e mostrará somente o MRR perdido observado como teto histórico. Inventar receita recuperável para preencher o requisito seria menos aderente que explicitar a limitação.
+
+**Gate de submissão:** os quatro desafios serão consolidados na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenges 001–004`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
+
+**Estado:** correções locais em execução; nenhum push ou PR autorizado até a validação integral.

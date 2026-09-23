@@ -19,6 +19,8 @@
 - Os dois vídeos têm funções distintas: arquitetura autoral versus síntese da construção.
 - Não gerar mapa mental, slide deck ou landing page.
 - Publicação dos vídeos, Arcade e PR upstream exige confirmação final de Luis.
+- Nenhum push final ou PR ocorre antes de todos os gates abaixo estarem verdes.
+- Os quatro desafios serão consolidados na única branch `submission/luis-roquette` e no único PR permitido por pessoa.
 
 ## Review Focus
 
@@ -45,7 +47,7 @@
 
 - [ ] **Step 1: escrever a abertura de 30 segundos**
 
-Usar cinco blocos: resposta em seis linhas; decisão; três ações; método em oito etapas; links. A abertura deve conter 12,4%, +7,0 pp, US$ 1.622.337 e “Causa ainda não demonstrada”.
+Usar cinco blocos: resposta em seis linhas; decisão; ações; método em oito etapas; links. Cada ação deve declarar prioridade, impacto mensurável, impacto financeiro e confiança. Quando o efeito causal não for estimável, escrever isso explicitamente e tratar US$ 1.622.337 somente como exposição histórica. A abertura deve conter 12,4%, +7,0 pp, US$ 1.622.337 e “Causa ainda não demonstrada”.
 
 - [ ] **Step 2: mostrar a evolução sem contar toda a história**
 
@@ -61,7 +63,7 @@ Run:
 
 ```bash
 test "$(wc -w < deliverables/delivery-brief.md)" -le 1200
-rg -n "12,4%|7,0 pp|1\.622\.337|Causa ainda não demonstrada|7,0 → 8,6 → 9,5 → 9,9" deliverables/delivery-brief.md
+rg -n "12,4%|7,0 pp|1\.622\.337|Causa ainda não demonstrada|Impacto estimado|não estimável|7,0 → 8,6 → 9,5 → 9,9" deliverables/delivery-brief.md
 ```
 
 Expected: limite e cinco âncoras atendidos.
@@ -201,11 +203,21 @@ Comparar as seis verdades em brief, Arcade, vídeos e infográfico. Qualquer div
 
 - [ ] **Step 4: atualizar manifesto e diário**
 
-Registrar URL, checksum, data, formato, status e limitação. Itens não produzidos não aparecem como entrega.
+Registrar URL, checksum, data, formato, status e limitação. Resumir a quantidade de ondas, decisões, passadas, fases, rodadas e testes. Atualizar a data real da submissão e o link do histórico para a branch final. Itens não produzidos não aparecem como entrega.
 
-- [ ] **Step 5: preparar o PR sem submeter**
+- [ ] **Step 5: consolidar a branch final sem enviar**
 
-Montar descrição com a resposta em seis linhas e as cinco entradas. Parar antes do envio ao upstream para confirmação final de Luis.
+Fast-forward da branch local `submission/luis-roquette` para o commit integralmente validado e consolidar nela os Challenges 002, 003 e 004. O regulamento permite mais de um desafio, mas somente um PR por pessoa. Confirmar que `git diff --name-only upstream/main...submission/luis-roquette` contém exclusivamente `submissions/luis-roquette/`.
+
+- [ ] **Step 6: executar o gate formal do PR**
+
+Validar README contra `templates/submission-template.md`, instruções de setup, solução, Process Log, data final, histórico Git e todos os links em sessão anônima. Executar o setup e o gate canônico do Challenge 001 no Codespace a partir do SHA final. O único PR para `upstream/main` usará o título consolidado `[Submission] Luis Fernando Roquette — Challenges 001–004`.
+
+Conferir uma matriz final com: cinco tabelas cruzadas; causa ou abstenção justificada; segmentos e contas específicas; recomendações priorizadas com impacto estimado; correlação separada de causalidade; leitura executiva; solução funcional; Process Log com ferramentas, decomposição, erros, contribuição humana e contagem de iterações.
+
+- [ ] **Step 7: parar antes do push final e do PR**
+
+Somente declarar 100% quando conteúdo, mídia, branch, diff, setup e links estiverem verdes. Apresentar a prova a Luis e aguardar sua confirmação explícita antes de qualquer publicação externa ou abertura do PR.
 
 ## Self-review
 
