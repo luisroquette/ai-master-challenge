@@ -102,3 +102,23 @@ A revisão visual usou 366 amostras, uma por segundo, e OCR local das legendas. 
 Foram registrados onze capítulos e criado um poster sem tela privada. O vídeo cita notas e 99% de confiança como parte do prompt de autoavaliação; o README deixa explícito que não se trata de nota do G4 nem confiança estatística do diagnóstico.
 
 **Estado:** pacote local do vídeo pronto. Hospedagem e validação anônima permanecem bloqueadas até confirmação explícita de Luis e reprodução integral em tempo real.
+
+## Execução dos entregáveis — Task 3, roteiro do Arcade
+
+Antes de criar o tour, consultamos a documentação atual do Arcade. A plataforma já oferece hotspots, callouts, pan/zoom e fluxo linear; branching seria complexidade sem benefício para uma resposta executiva de 90 segundos.
+
+O roteiro foi reduzido a oito passos e 83 segundos estimados. Cada passo contém uma ideia e até 22 palavras: resposta curta, impacto, divergência de uso, limite da satisfação, ausência de concentração, abstenção causal, validações e rastreabilidade.
+
+Um rascunho privado foi criado e nomeado no Arcade, sem uso de geração paga. A captura não avançou porque o gravador desktop e a extensão oficial não estavam disponíveis na sessão automatizada. Não substituímos a interface real por imagens sintéticas.
+
+**Estado:** roteiro e rascunho privado concluídos. Captura, preview e publicação ainda não ocorreram.
+
+## Execução dos entregáveis — Task 4, fonte do NotebookLM
+
+Consultamos a documentação atual do NotebookLM antes da criação. Video Overviews aceitam foco, audiência e formato; como todo output generativo, continuam sujeitos a imprecisões e revisão humana.
+
+Para reduzir deriva, criamos uma única fonte fechada: oito etapas metodológicas, quatro notas internas, três viradas humanas e seis fatos do diagnóstico. Código, dados brutos, logs extensos e caminhos locais ficaram de fora.
+
+Os prompts separam funções: o Video Overview sintetiza a jornada para o avaliador; o infográfico mostra método e evolução. Ambos proíbem causa inventada, receita recuperável fictícia e confusão entre rubrica interna e avaliação do G4.
+
+**Estado:** fonte e prompts locais concluídos. Notebook e outputs ainda não foram criados ou publicados.

@@ -49,4 +49,3 @@ Antes da hospedagem, o vídeo ainda deve ser reproduzido integralmente em tempo 
 ## Hospedagem planejada
 
 Usar YouTube não listado para evitar download obrigatório de 222 MB. Título recomendado: `Como construí os quatro desafios de AI Master com SDD e feedback loops`. A descrição deve apontar para o brief e informar que o diagnóstico canônico está no repositório.
-

@@ -120,7 +120,7 @@ Depois da confirmação, abrir o link em sessão anônima, reproduzir início/me
 - Consumes: dashboard validado em `127.0.0.1:8503`.
 - Produces: demo interativa focada no produto, com oito passos.
 
-- [ ] **Step 1: roteirizar os oito passos**
+- [x] **Step 1: roteirizar os oito passos**
 
 1. A pergunta e a resposta curta.
 2. Churn e impacto econômico.
@@ -131,13 +131,17 @@ Depois da confirmação, abrir o link em sessão anônima, reproduzir início/me
 7. Três validações com donos e prazos.
 8. Evidência, `analysis_id` e chamada para o brief.
 
-- [ ] **Step 2: limitar a carga cognitiva**
+- [x] **Step 2: limitar a carga cognitiva**
 
 Cada instrução possui até 22 palavras; nenhum passo mostra mais de uma ideia; o tour completo deve caber em 60–90 segundos.
+
+Roteiro fechado em oito passos e 83 segundos estimados. O fluxo permanece linear porque branching acrescentaria escolha sem melhorar a resposta executiva.
 
 - [ ] **Step 3: capturar e revisar o rascunho**
 
 Usar screenshots do dashboard e no máximo um trecho de vídeo de interação. Conferir números, foco, desktop/mobile e ausência de caminhos locais.
+
+Rascunho privado `aIAtdPLJilhZOtM7ao5O` criado e nomeado. Captura pendente: o gravador desktop e a extensão não estavam disponíveis na sessão automatizada.
 
 - [ ] **Step 4: preparar publicação**
 
@@ -155,9 +159,11 @@ Parar antes do compartilhamento público. Após confirmação de Luis, salvar UR
 - Consumes: brief e diários públicos.
 - Produces: Video Overview compartilhável e uma peça visual sobre método e evolução.
 
-- [ ] **Step 1: montar fonte curta e fechada**
+- [x] **Step 1: montar fonte curta e fechada**
 
 Incluir somente oito etapas metodológicas, quatro notas, três viradas humanas e seis fatos do diagnóstico. Excluir logs extensos, código e dados brutos.
+
+Fonte fechada criada com as contagens exatas e limites causais explícitos.
 
 - [ ] **Step 2: gerar o Video Overview com função própria**
 
