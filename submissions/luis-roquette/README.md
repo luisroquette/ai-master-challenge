@@ -20,6 +20,14 @@ O Arcade foi validado sem autenticação. Vídeos e infográfico são entregues 
 
 Essas entregas são complementares. O **Challenge 001 permanece como resposta oficial, principal e mais importante** deste PR.
 
+### Challenge 002 — resposta executiva resumida
+
+- **Onde estamos perdendo tempo?** O diagnóstico separa histórico observado, desempenho medido e cenários projetados, sem atribuir causalidade onde os dados não sustentam.
+- **O que pode ser automatizado com IA?** Triagem e rascunhos somente quando os gates de evidência, confiança e segurança forem atendidos.
+- **Como isso funciona na prática?** O protótipo executável registra decisões, bloqueios e intervenção humana; veja a [Screenshot real da demonstração](solution/002-support/evidence/screenshot.png).
+- **Estado do CK-12:** zero consultas elegíveis; a validação humana permanece opcional e os rascunhos continuam bloqueados.
+- **Registro original do perfil no Challenge 002:** LinkedIn:** Não informado.
+
 ## Sobre mim
 
 - **Nome:** Luis Fernando Roquette
