@@ -92,3 +92,13 @@ O DOCX passou por duas renderizações. A primeira revelou uma borda indevida so
 **Validação:** 777 palavras; cinco números e quatro notas internas reconciliados; zero links locais quebrados; metadados pessoais removidos; nenhuma publicação externa realizada.
 
 **Estado:** Task 1 concluída localmente. Push permanece bloqueado.
+
+## Execução dos entregáveis — Task 2
+
+O vídeo obrigatório foi inspecionado sem colocá-lo no Git. Confirmamos 6min05s, H.264 em 1920×1080 a 60 fps, áudio AAC estéreo, legendas queimadas, 232.879.349 bytes e SHA-256 `a968a524dbe45443a066717e5d63523e5336f958fb3a6dcd50d0d0887dbbea4a`.
+
+A revisão visual usou 366 amostras, uma por segundo, e OCR local das legendas. Isso revelou uma correção de enquadramento: o vídeo explica a arquitetura do trabalho nos quatro desafios — SDD, Ponytail, método socrático, otimização de planos, feedback looping, segurança, UI/UX e revisão do output — e não apenas a arquitetura técnica do dashboard de churn.
+
+Foram registrados onze capítulos e criado um poster sem tela privada. O vídeo cita notas e 99% de confiança como parte do prompt de autoavaliação; o README deixa explícito que não se trata de nota do G4 nem confiança estatística do diagnóstico.
+
+**Estado:** pacote local do vídeo pronto. Hospedagem e validação anônima permanecem bloqueadas até confirmação explícita de Luis e reprodução integral em tempo real.

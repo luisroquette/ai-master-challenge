@@ -90,15 +90,19 @@ git commit -m "docs(churn): create lean delivery entrypoint"
 
 Marcar timestamps reais para: problema; arquitetura; metodologia; implementação; validação; conclusão. Não deduzir capítulos apenas pelo nome do arquivo.
 
+Pré-revisão concluída: 366 amostras visuais e OCR das legendas produziram os capítulos. Falta a reprodução integral em tempo real para fechar o passo.
+
 - [ ] **Step 2: validar mídia e legendas**
 
 Conferir áudio do início ao fim, legibilidade das legendas queimadas, ausência de segredo/tela privada e sincronia a 1,25×. Registrar duração exata `365,533 s`.
 
-- [ ] **Step 3: gerar poster e checksum**
+Metadados, legendas e trechos de áudio foram conferidos. Falta ouvir o áudio integral e verificar transições menores que um segundo.
+
+- [x] **Step 3: gerar poster e checksum**
 
 Extrair um quadro representativo sem informação privada e registrar `shasum -a 256` no README do vídeo.
 
-- [ ] **Step 4: preparar hospedagem externa**
+- [x] **Step 4: preparar hospedagem externa**
 
 Recomendação: YouTube não listado, por reprodução imediata sem download de 222 MiB. Parar antes do upload/publicação e solicitar confirmação de Luis.
 

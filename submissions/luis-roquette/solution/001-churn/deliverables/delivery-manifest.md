@@ -9,7 +9,7 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 | Leia em 2 minutos | `delivery-brief.md` | Pronto localmente | Limite de palavras, fatos e links locais |
 | Leia em 2 minutos | `delivery-brief.docx` | Pronto localmente | Duas páginas A4 inspecionadas integralmente |
 | Veja funcionando em 90 segundos | Arcade | Não publicado | Oito passos e acesso anônimo |
-| Entenda a arquitetura em 6 minutos | Vídeo obrigatório | Arquivo local validado; não publicado | Revisão integral, capítulos e acesso anônimo |
+| Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | Metadados, poster e capítulos prontos; não publicado | Reprodução integral em tempo real e acesso anônimo |
 | Veja a síntese | NotebookLM Video Overview e infográfico | Não produzidos | Revisão factual e acesso anônimo |
 | Audite o processo | Relatório, código e Process Log | Pronto localmente | Setup reproduzível e links válidos |
 
