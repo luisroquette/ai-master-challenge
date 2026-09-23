@@ -1018,3 +1018,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Correções de entrega:** o percurso executivo passou a durar aproximadamente quatro minutos — leitura e Arcade. O vídeo de arquitetura continua obrigatório como artefato, mas não bloqueia a compreensão do output em cinco minutos. O README agora explicita esforço, cadência, política/threshold de patrocínio, o que parar e o quick win da semana, além do LinkedIn confirmado publicamente.
 - **Validação:** dez testes focais passaram no Mac, incluindo o contrato de quatro respostas e o limite de impressão. No Codespace, o SHA `1080f8f` aprovou **146/146 testes** em 65,370 segundos; `py_compile` e `git diff --check` também passaram localmente. O gerenciador encerrou a sessão após a suíte antes de devolver um status combinado para `compileall` e árvore limpa, portanto esses dois sinais não foram inventados como prova remota terminal.
 - **Aderência do PR:** os PRs #140 e #141 foram encerrados com o motivo registrado, preservando somente o PR #145 e cumprindo a regra de um PR por pessoa. A atualização do #145 com o SHA final permanece como última ação de publicação.
+
+## I80 — Publicação final aderente — 2026-09-22
+
+- **Publicação:** o branch `submission/luis-roquette-004-social` foi enviado e o PR #145 atualizado com as quatro respostas executivas, o percurso rápido, os limites analíticos e as provas de validação.
+- **Provas externas:** o PR #145 é o único PR aberto de `luisroquette`, contém somente arquivos sob `submissions/luis-roquette/` e responde HTTP 200. O tour público do Arcade também responde HTTP 200.
+- **Integridade:** o commit executável validado e o commit publicado anterior diferiam apenas por duas linhas deste diário; nenhum código foi alterado após os 146/146 testes verdes. O branch remoto temporário de validação foi removido depois da publicação.
+- **Higiene:** os dois Codespaces criados para esta validação foram apagados após confirmação de árvore limpa e trabalho salvo no GitHub; um Codespace limpo com mais de três dias também foi removido conforme a política global de cota. Codespaces sujos de outras tarefas foram preservados.
