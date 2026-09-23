@@ -14,9 +14,10 @@ O Arcade foi validado sem autenticação. Vídeos e infográfico são entregues 
 
 ## Entregas complementares
 
-- [Challenge 002 — Redesign de Suporte](solution/002-support/README.md): diagnóstico operacional e copiloto funcional.
-- [Challenge 003 — Lead Scorer](solution/003-lead-scorer/README.md): priorização explicável e aplicação funcional.
-- [Challenge 004 — Estratégia Social Media](solution/004-social/README.md): cockpit de decisão, evidências e plano de execução.
+- [Challenge 001 — ficha completa da submissão](solution/001-churn/SUBMISSION.md): diagnóstico temporal de churn e resposta executiva.
+- [Challenge 002 — ficha completa da submissão](solution/002-support/SUBMISSION.md): diagnóstico operacional e copiloto funcional.
+- [Challenge 003 — ficha completa da submissão](solution/003-lead-scorer/SUBMISSION.md): priorização explicável e aplicação funcional.
+- [Challenge 004 — ficha completa da submissão](solution/004-social/SUBMISSION.md): cockpit de decisão, evidências e plano de execução.
 
 Essas entregas são complementares. O **Challenge 001 permanece como resposta oficial, principal e mais importante** deste PR.
 
@@ -104,6 +105,7 @@ Defini documentação como parte principal da entrega — “ganha quem document
 ## Evidências
 
 - [x] Narrativa escrita: [diário pré-início](process-log/000-pre-inicio.md), [descoberta socrática](process-log/001-descoberta-socratica.md), [otimização do plano](process-log/002-otimizacao-plano-loop.md), [implementação](process-log/003-implementacao-feedback-looping.md) e [entregáveis](process-log/004-planejamento-entregaveis.md).
+- [x] [Template oficial preenchido para as quatro soluções](process-log/005-template-quatro-solucoes.md).
 - [x] Git history: [evolução da branch canônica](https://github.com/luisroquette/ai-master-challenge/commits/submission/luis-roquette/).
 - [x] Vídeo autoral: arquitetura e construção documentadas em [metadados, capítulos e checksum](solution/001-churn/deliverables/video/README.md).
 
