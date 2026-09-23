@@ -33,7 +33,7 @@ A implementação seguiu SDD e ciclos de **Planejamento, Revisão, Execução e 
 | Linha de base | A resposta confirmava o churn, mas destacava sinais frágeis. | Exigir impacto econômico, população e limite causal no primeiro bloco. | 7,0 |
 | Veredito completo | Faltavam ausência de concentração e ação proporcional à evidência. | Separar fatos, associações e hipóteses; recusar um mecanismo vencedor. | 8,6 |
 | Abstenção e ações | A conclusão era correta, mas pouco acionável. | Converter incerteza em três validações com responsáveis, prazos e regras de parada. | 9,5 |
-| Entrega validada | Era preciso provar consistência entre superfícies. | Usar um JSON canônico, checksums, reprodução e 42 testes. | 9,9 |
+| Entrega validada | Era preciso provar consistência entre superfícies. | Usar um JSON canônico, checksums, reprodução e 86 testes. | 9,9 |
 
 As notas são uma rubrica interna de qualidade da resposta. Não representam avaliação do G4 nem 99% de certeza causal.
 

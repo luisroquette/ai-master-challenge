@@ -1,34 +1,26 @@
 # Submissão — Luis Fernando Roquette — Challenge 001
 
+> **Desafio principal:** Challenge 001 — Diagnóstico de Churn. Esta submissão escolhe e entrega exclusivamente o desafio 001, conforme a regra oficial de escolher um challenge.
+
 ## Comece aqui
 
-- [Leia o diagnóstico em 2 minutos](solution/001-churn/deliverables/delivery-brief.md)
-- [Baixe o diagnóstico em DOCX](solution/001-churn/deliverables/delivery-brief.docx)
-- [Percorra o tour executivo guiado](solution/001-churn/deliverables/tour/index.html)
-- [Veja o Video Overview do NotebookLM](solution/001-churn/deliverables/video-overview-notebooklm.mp4)
-- [Abra o infográfico executivo](solution/001-churn/deliverables/infografico-executivo-higgsfield.webp)
-- [Abra o relatório executivo completo](solution/001-churn/artifacts/report.md)
-- [Execute o dashboard local](solution/001-churn/README.md)
+1. [Leia em 2 minutos](solution/001-churn/deliverables/delivery-brief.md) — [versão DOCX](solution/001-churn/deliverables/delivery-brief.docx).
+2. [Veja funcionando em 90 segundos](https://app.arcade.software/share/aIAtdPLJilhZOtM7ao5O) — tour público; [roteiro e validação](solution/001-churn/deliverables/arcade/README.md).
+3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/architecture-overview.mp4) — vídeo autoral; [metadados e capítulos](solution/001-churn/deliverables/video/README.md).
+4. [Veja a síntese visual](solution/001-churn/deliverables/infographic-challenge-001.png) — [SVG editável](solution/001-churn/deliverables/infographic-challenge-001.svg), [PDF](solution/001-churn/deliverables/infographic-challenge-001.pdf) e [Video Overview do NotebookLM](solution/001-churn/deliverables/notebooklm/paradoxo-de-churn-do-ceo.mp4).
+5. [Audite o processo](solution/001-churn/deliverables/delivery-manifest.md) — relatório, código, testes e diários.
 
-O tour HTML autocontido substitui a dependência do Arcade. Video Overview e infográfico estão preservados como arquivos da entrega. O vídeo de arquitetura permanece apenas na cópia local por exceder o limite do GitHub.
-
-## Trabalhos complementares
-
-O **Challenge 001 é a submissão oficial**. Conforme o FAQ permite mais de um desafio, os demais permanecem como demonstrações complementares, sem competir com a leitura principal:
-
-- [Challenge 002 — Support Decision Copilot](solution/002-support/README.md) · [demo pública](https://support-decision-copilot-luis.streamlit.app/)
-- [Challenge 003 — Lead Scorer](solution/003-lead-scorer/README.md) · [experiência guiada local](delivery/index.html)
-- [Challenge 004 — Estratégia Social Media](solution/004-social/README.md) · [tour público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds)
+O Arcade foi validado sem autenticação. Vídeos e infográfico são entregues no próprio repositório; o SVG preserva texto e números exatos sem depender de uma geração externa.
 
 ## Sobre mim
 
 - **Nome:** Luis Fernando Roquette
 - **LinkedIn:** [linkedin.com/in/luisroquette](https://br.linkedin.com/in/luisroquette)
-- **Challenge oficial:** 001 — Diagnóstico de Churn
+- **Challenge principal e único desta submissão:** 001 — Diagnóstico de Churn
 
 ## Executive Summary
 
-Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `observed` e `strict`, para testar as alegações de uso, satisfação e seis possíveis causas de churn. O resultado principal é uma abstenção útil: nenhuma causa passou todos os gates de estabilidade, associação e confirmação entre fontes, enquanto as datas apresentam contradições materiais. O uso agregado cresce, mas satisfação não pode ser chamada de “ok”; o modelo opcional também foi recusado fora do tempo. Recomendo corrigir a medição e validar qualitativamente as hipóteses antes de direcionar uma intervenção — sem transformar correlação frágil em certeza executiva.
+Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `observed` e `strict`. O churn recente chegou a **12,4%**, alta de **7,0 pontos percentuais**, e o MRR perdido observado foi de **US$ 1.622.337**. O uso agregado subiu de **0,336 para 0,493**, mas caiu de **0,349 para 0,304** entre futuros churners. A satisfação descreve apenas respondentes de tickets; não houve causa nem concentração material demonstrada — o maior risco relativo elegível foi **1,08×**, abaixo do limiar de **1,25×**. Recomendo validar dados, uso e satisfação antes de intervir, sem transformar correlação frágil em certeza executiva.
 
 ## Solução
 
@@ -54,7 +46,6 @@ Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `obser
 | Prioridade | Ação | Impacto estimado | Confiança |
 |---|---|---|---|
 | 1 semana | Sanear eventos fora do ciclo de vida e reproduzir as métricas. | Impedir dados temporalmente inválidos de sustentar decisões; impacto financeiro não estimável antes do saneamento. | Alta para o ganho de qualidade; não causal. |
-| 1 semana | Auditar uma amostra estratificada das 97 contas com renovação automática desligada. | Confirmar ou rejeitar o sinal antes de qualquer intervenção; não há receita recuperável estimável. | Baixa para efeito financeiro. |
 | 30 dias | Acompanhar uso e churn prospectivamente com cobertura mínima de 70%. | Produzir a primeira estimativa prospectiva comparável; impacto financeiro ainda não estimável. | Condicionada ao gate de cobertura. |
 | 30 dias | Medir satisfação fora dos tickets, com resposta mínima de 70% por estrato. | Remover o viés de respondentes e comparar coortes; impacto financeiro ainda não estimável. | Condicionada à representatividade. |
 
@@ -83,7 +74,7 @@ Os dados são observacionais, contraditórios e aparentemente sintéticos. Não 
 4. Implementei cada fase em `Planejamento → Revisão → Execução → Teste`, repetindo quando um gate falhou.
 5. Mantive decisões, erros, correções e provas em diários contemporâneos.
 
-**Iterações registradas:** 5 ondas socráticas com 25 decisões, 20 passadas de otimização do primeiro plano, 9 fases de implementação, 3 rodadas de redundância e 5 rodadas de lapidação visual. A suíte final executa 42 testes.
+**Iterações registradas:** 5 ondas socráticas com 25 decisões, 20 passadas de otimização do primeiro plano, 9 fases de implementação, 3 rodadas de redundância e 5 rodadas de lapidação visual. A suíte final executa 86 testes.
 
 ### Onde a IA errou e como corrigi
 
@@ -95,14 +86,10 @@ Defini documentação como parte principal da entrega — “ganha quem document
 
 ## Evidências
 
-- [ ] Screenshots das conversas com IA — não necessários para reproduzir o trabalho
-- [ ] Screen recording do workflow — não produzido
-- [x] [Diário pré-início](process-log/000-pre-inicio.md)
-- [x] [Descoberta socrática](process-log/001-descoberta-socratica.md)
-- [x] [Otimização do plano](process-log/002-otimizacao-plano-loop.md)
-- [x] [Implementação em feedback looping](process-log/003-implementacao-feedback-looping.md)
-- [x] [Histórico Git da branch](https://github.com/luisroquette/ai-master-challenge/commits/submission/luis-roquette/)
+- [x] Narrativa escrita: [diário pré-início](process-log/000-pre-inicio.md), [descoberta socrática](process-log/001-descoberta-socratica.md), [otimização do plano](process-log/002-otimizacao-plano-loop.md), [implementação](process-log/003-implementacao-feedback-looping.md) e [entregáveis](process-log/004-planejamento-entregaveis.md).
+- [x] Git history: [evolução da branch canônica](https://github.com/luisroquette/ai-master-challenge/commits/submission/luis-roquette/).
+- [x] Vídeo autoral: arquitetura e construção documentadas em [metadados, capítulos e checksum](solution/001-churn/deliverables/video/README.md).
 
 ---
 
-_Submissão preparada em: 22 de setembro de 2026. A data final será confirmada no envio do PR._
+_Submissão preparada em: 23 de setembro de 2026._

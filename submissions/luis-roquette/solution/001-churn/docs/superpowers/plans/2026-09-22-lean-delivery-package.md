@@ -20,7 +20,7 @@
 - Não gerar mapa mental, slide deck ou landing page.
 - Publicação dos vídeos, Arcade e PR upstream exige confirmação final de Luis.
 - Nenhum push final ou PR ocorre antes de todos os gates abaixo estarem verdes.
-- Os quatro desafios serão consolidados na única branch `submission/luis-roquette` e no único PR permitido por pessoa.
+- O Challenge 001 é o desafio principal e único desta submissão; será publicado na branch `submission/luis-roquette` e no único PR permitido por pessoa.
 
 ## Review Focus
 
@@ -90,15 +90,19 @@ git commit -m "docs(churn): create lean delivery entrypoint"
 
 Marcar timestamps reais para: problema; arquitetura; metodologia; implementação; validação; conclusão. Não deduzir capítulos apenas pelo nome do arquivo.
 
+Pré-revisão concluída: 366 amostras visuais e OCR das legendas produziram os capítulos. Falta a reprodução integral em tempo real para fechar o passo.
+
 - [ ] **Step 2: validar mídia e legendas**
 
 Conferir áudio do início ao fim, legibilidade das legendas queimadas, ausência de segredo/tela privada e sincronia a 1,25×. Registrar duração exata `365,533 s`.
 
-- [ ] **Step 3: gerar poster e checksum**
+Metadados, legendas e trechos de áudio foram conferidos. Falta ouvir o áudio integral e verificar transições menores que um segundo.
+
+- [x] **Step 3: gerar poster e checksum**
 
 Extrair um quadro representativo sem informação privada e registrar `shasum -a 256` no README do vídeo.
 
-- [ ] **Step 4: preparar hospedagem externa**
+- [x] **Step 4: preparar hospedagem externa**
 
 Recomendação: YouTube não listado, por reprodução imediata sem download de 222 MiB. Parar antes do upload/publicação e solicitar confirmação de Luis.
 
@@ -116,7 +120,7 @@ Depois da confirmação, abrir o link em sessão anônima, reproduzir início/me
 - Consumes: dashboard validado em `127.0.0.1:8503`.
 - Produces: demo interativa focada no produto, com oito passos.
 
-- [ ] **Step 1: roteirizar os oito passos**
+- [x] **Step 1: roteirizar os oito passos**
 
 1. A pergunta e a resposta curta.
 2. Churn e impacto econômico.
@@ -127,17 +131,23 @@ Depois da confirmação, abrir o link em sessão anônima, reproduzir início/me
 7. Três validações com donos e prazos.
 8. Evidência, `analysis_id` e chamada para o brief.
 
-- [ ] **Step 2: limitar a carga cognitiva**
+- [x] **Step 2: limitar a carga cognitiva**
 
 Cada instrução possui até 22 palavras; nenhum passo mostra mais de uma ideia; o tour completo deve caber em 60–90 segundos.
 
-- [ ] **Step 3: capturar e revisar o rascunho**
+Roteiro fechado em oito passos e 83 segundos estimados. O fluxo permanece linear porque branching acrescentaria escolha sem melhorar a resposta executiva.
+
+- [x] **Step 3: capturar e revisar o rascunho**
 
 Usar screenshots do dashboard e no máximo um trecho de vídeo de interação. Conferir números, foco, desktop/mobile e ausência de caminhos locais.
 
-- [ ] **Step 4: preparar publicação**
+Rascunho privado `aIAtdPLJilhZOtM7ao5O` criado com oito screenshots reais e oito hotspots. Previews desktop e mobile revisados; nenhum caminho local aparece.
+
+- [x] **Step 4: preparar publicação**
 
 Parar antes do compartilhamento público. Após confirmação de Luis, salvar URL, data e acesso anônimo no README do Arcade.
+
+Publicação preparada e interrompida antes do Share. O CTA final será ligado ao brief somente quando a URL remota definitiva existir.
 
 ### Task 4: Gerar Video Overview e infográfico no NotebookLM
 
@@ -151,21 +161,27 @@ Parar antes do compartilhamento público. Após confirmação de Luis, salvar UR
 - Consumes: brief e diários públicos.
 - Produces: Video Overview compartilhável e uma peça visual sobre método e evolução.
 
-- [ ] **Step 1: montar fonte curta e fechada**
+- [x] **Step 1: montar fonte curta e fechada**
 
 Incluir somente oito etapas metodológicas, quatro notas, três viradas humanas e seis fatos do diagnóstico. Excluir logs extensos, código e dados brutos.
 
-- [ ] **Step 2: gerar o Video Overview com função própria**
+Fonte fechada criada com as contagens exatas e limites causais explícitos.
+
+- [x] **Step 2: gerar o Video Overview com função própria**
 
 ```text
 Crie um Video Overview em português brasileiro, com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Sintetize a evolução do trabalho: pergunta do CEO, método autoral, três decisões humanas que corrigiram o rumo, resposta final e próximos passos. Não faça walkthrough técnico da arquitetura, pois existe um vídeo autoral separado. Não invente causa, número ou nota externa.
 ```
+
+Notebook privado criado com uma fonte. A primeira geração foi rejeitada porque transformou seis hipóteses inconclusivas em “rejeitadas”. O prompt foi corrigido uma vez. A segunda geração explicativa, “Paradoxo de Churn do CEO”, foi aceita após decodificação integral, transcrição completa do áudio e OCR de 360 quadros.
 
 - [ ] **Step 3: gerar o infográfico com o prompt editorial**
 
 ```text
 Crie um infográfico vertical em português brasileiro: “De uma pergunta confusa a uma decisão confiável”. Mostre oito etapas, a evolução 7,0 → 8,6 → 9,5 → 9,9 e três viradas humanas: separar agregados de coortes; recusar causalidade frágil; converter incerteza em validação. Use somente as fontes e não acrescente números.
 ```
+
+Configuração validada em português brasileiro, orientação retrato e estilo editorial. O NotebookLM bloqueou a geração pelo limite diário de infográficos; nenhum upgrade foi contratado.
 
 - [ ] **Step 4: revisar e exportar os dois outputs**
 
@@ -189,9 +205,11 @@ git commit -m "docs(churn): add one-page methodology infographic"
 - Consumes: brief, vídeo obrigatório, Arcade, Video Overview, infográfico e evidências existentes.
 - Produces: entrada final do avaliador e PR pronto para revisão.
 
-- [ ] **Step 1: ordenar a abertura**
+- [x] **Step 1: ordenar a abertura**
 
 Mostrar somente: `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Veja a síntese do NotebookLM`; `Audite o processo`. O infográfico acompanha a síntese; relatório e código ficam dentro de “Audite”.
+
+README e manifesto agora apresentam exatamente as cinco entradas. O DOCX acompanha o brief, em vez de competir como uma sexta entrada.
 
 - [ ] **Step 2: validar tudo como avaliador anônimo**
 
@@ -201,6 +219,8 @@ Abrir cada link sem sessão; confirmar que nenhum exige permissão; assistir Arc
 
 Comparar as seis verdades em brief, Arcade, vídeos e infográfico. Qualquer divergência bloqueia a entrega; corrigir o derivado, nunca a fonte canônica.
 
+Brief, README, roteiro do Arcade e fonte fechada do NotebookLM passaram pela reconciliação automatizada. O gate permanece aberto até revisar os outputs gerados.
+
 - [ ] **Step 4: atualizar manifesto e diário**
 
 Registrar URL, checksum, data, formato, status e limitação. Resumir a quantidade de ondas, decisões, passadas, fases, rodadas e testes. Atualizar a data real da submissão e o link do histórico para a branch final. Itens não produzidos não aparecem como entrega.
@@ -209,15 +229,17 @@ Registrar URL, checksum, data, formato, status e limitação. Resumir a quantida
 
 Fast-forward da branch local `submission/luis-roquette` para o commit integralmente validado e consolidar nela os Challenges 002, 003 e 004. O regulamento permite mais de um desafio, mas somente um PR por pessoa. Confirmar que `git diff --name-only upstream/main...submission/luis-roquette` contém exclusivamente `submissions/luis-roquette/`.
 
+Auditoria remota de 22 de setembro de 2026: PRs #140 e #141 estão fechadas; a PR #145 está aberta na branch não canônica `submission/luis-roquette-004-social`. Antes do envio final, encerrar a PR #145 e publicar somente o Challenge 001 na branch canônica, sem manter dois PRs simultâneos.
+
 - [ ] **Step 6: executar o gate formal do PR**
 
-Validar README contra `templates/submission-template.md`, instruções de setup, solução, Process Log, data final, histórico Git e todos os links em sessão anônima. Executar o setup e o gate canônico do Challenge 001 no Codespace a partir do SHA final. O único PR para `upstream/main` usará o título consolidado `[Submission] Luis Fernando Roquette — Challenges 001–004`.
+Validar README contra `templates/submission-template.md`, instruções de setup, solução, Process Log, data final, histórico Git e todos os links em sessão anônima. Executar o setup e o gate canônico do Challenge 001 no Codespace a partir do SHA final. O único PR para `upstream/main` usará o título `[Submission] Luis Fernando Roquette — Challenge 001`.
 
 Conferir uma matriz final com: cinco tabelas cruzadas; causa ou abstenção justificada; segmentos e contas específicas; recomendações priorizadas com impacto estimado; correlação separada de causalidade; leitura executiva; solução funcional; Process Log com ferramentas, decomposição, erros, contribuição humana e contagem de iterações.
 
 - [ ] **Step 7: parar antes do push final e do PR**
 
-Somente declarar 100% quando conteúdo, mídia, branch, diff, setup e links estiverem verdes. Apresentar a prova a Luis e aguardar sua confirmação explícita antes de qualquer publicação externa ou abertura do PR.
+Somente declarar 100% quando conteúdo, mídia, branch, diff, setup e links estiverem verdes. Luis autorizou concluir e publicar após todos os gates objetivos passarem.
 
 ## Self-review
 

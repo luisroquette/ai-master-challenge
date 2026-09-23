@@ -6,14 +6,11 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 
 | Entrada | Artefato | Estado | Validação exigida |
 |---|---|---|---|
-| Leia em 2 minutos | `delivery-brief.md` | Pronto localmente | Limite de palavras, fatos e links locais |
-| Leia em 2 minutos | `delivery-brief.docx` | Pronto localmente | Duas páginas A4 inspecionadas integralmente |
-| Veja funcionando em 90 segundos | `tour/index.html` | Pronto localmente | Oito passos, teclado, responsividade e HTTP 200 |
-| Alternativa externa | Arcade | Substituído | O tour autocontido remove autenticação, assinatura e indisponibilidade externa |
-| Entenda a arquitetura em 6 minutos | Vídeo obrigatório | Arquivo local validado; não publicado | Revisão integral, capítulos e acesso anônimo |
-| Veja a síntese | `video-overview-notebooklm.mp4` | Pronto localmente | 75,79 segundos; MP4 baixado e SHA-256 registrado |
-| Veja a síntese | `infografico-executivo-higgsfield.webp` | Pronto localmente | 1744×2336; inspeção visual e reconciliação dos números |
-| Audite o processo | Relatório, código e Process Log | Pronto localmente | Setup reproduzível e links válidos |
+| Leia em 2 minutos | `delivery-brief.md` e `delivery-brief.docx` | Prontos localmente | Limite de palavras, fatos, links e duas páginas A4 |
+| Veja funcionando em 90 segundos | Arcade | Tour público com oito passos revisado | Confirmar renderização anônima |
+| Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | MP4 comprimido, validado e incluído no repositório | Confirmar download após o push |
+| Veja a síntese visual | Infográfico editorial e Video Overview | SVG, PNG e PDF revisados; vídeo de 6:00 aprovado e incluído | Conferência visual, factual e de renderização concluída |
+| Audite o processo | Relatório, código e Process Log | Gate técnico validado | Setup reproduzível, 86 testes, artefatos idênticos e links válidos |
 
 ## Verdades que não podem divergir
 
@@ -26,7 +23,5 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 
 ## Bloqueios ativos
 
-- Push, hospedagem externa e PR aguardam todos os gates verdes.
-- O Challenge 001 será o oficial; os Challenges 002–004 serão anexos complementares, conforme permitido pelo FAQ.
-- Os quatro desafios devem chegar à branch única `submission/luis-roquette` e a um único PR, respeitando a regra de um PR por pessoa.
+- O Challenge 001, principal e único nesta submissão, deve chegar à branch `submission/luis-roquette` e ao único PR permitido.
 - O diff final deve permanecer dentro de `submissions/luis-roquette/`.
