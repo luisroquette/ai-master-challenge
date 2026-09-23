@@ -9,7 +9,7 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 | Leia em 2 minutos | `delivery-brief.md` e `delivery-brief.docx` | Prontos localmente | Limite de palavras, fatos, links e duas páginas A4 |
 | Veja funcionando em 90 segundos | Arcade | Tour público com oito passos revisado | Confirmar renderização anônima |
 | Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | MP4 comprimido, validado e incluído no repositório | Confirmar download após o push |
-| Veja a síntese do NotebookLM | Video Overview e infográfico | Vídeo de 6:00 aprovado e incluído; infográfico bloqueado pelo limite diário | Gerar e revisar o infográfico |
+| Veja a síntese visual | Infográfico editorial e Video Overview | SVG, PNG e PDF revisados; vídeo de 6:00 aprovado e incluído | Conferência visual, factual e de renderização concluída |
 | Audite o processo | Relatório, código e Process Log | Gate técnico validado | Setup reproduzível, 86 testes, artefatos idênticos e links válidos |
 
 ## Verdades que não podem divergir
@@ -23,6 +23,5 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 
 ## Bloqueios ativos
 
-- O infográfico aguarda a renovação da cota diária do NotebookLM.
 - O Challenge 001, principal e único nesta submissão, deve chegar à branch `submission/luis-roquette` e ao único PR permitido.
 - O diff final deve permanecer dentro de `submissions/luis-roquette/`.

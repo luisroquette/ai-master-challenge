@@ -7,10 +7,10 @@
 1. [Leia em 2 minutos](solution/001-churn/deliverables/delivery-brief.md) — [versão DOCX](solution/001-churn/deliverables/delivery-brief.docx).
 2. [Veja funcionando em 90 segundos](https://app.arcade.software/share/aIAtdPLJilhZOtM7ao5O) — tour público; [roteiro e validação](solution/001-churn/deliverables/arcade/README.md).
 3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/architecture-overview.mp4) — vídeo autoral; [metadados e capítulos](solution/001-churn/deliverables/video/README.md).
-4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/paradoxo-de-churn-do-ceo.mp4) — vídeo aprovado; [auditoria e limite do infográfico](solution/001-churn/deliverables/notebooklm/README.md).
+4. [Veja a síntese visual](solution/001-churn/deliverables/infographic-challenge-001.png) — [SVG editável](solution/001-churn/deliverables/infographic-challenge-001.svg), [PDF](solution/001-churn/deliverables/infographic-challenge-001.pdf) e [Video Overview do NotebookLM](solution/001-churn/deliverables/notebooklm/paradoxo-de-churn-do-ceo.mp4).
 5. [Audite o processo](solution/001-churn/deliverables/delivery-manifest.md) — relatório, código, testes e diários.
 
-O Arcade foi validado sem autenticação. Os vídeos são entregues no próprio repositório; o infográfico permanece explicitamente bloqueado pela cota diária do NotebookLM.
+O Arcade foi validado sem autenticação. Vídeos e infográfico são entregues no próprio repositório; o SVG preserva texto e números exatos sem depender de uma geração externa.
 
 ## Sobre mim
 

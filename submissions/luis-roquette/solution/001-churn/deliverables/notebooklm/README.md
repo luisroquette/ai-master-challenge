@@ -6,8 +6,9 @@
 - **Prompts:** prontos para Video Overview e infográfico.
 - **Notebook:** criado de forma privada com uma fonte.
 - **Video Overview:** [segunda versão explicativa](paradoxo-de-churn-do-ceo.mp4) aceita após auditoria integral.
-- **Infográfico:** configuração pronta; geração bloqueada pelo limite diário da conta.
-- **Entrega:** vídeo incorporado ao repositório; o notebook-fonte permanece privado.
+- **Infográfico do NotebookLM:** geração recusada pelo limite diário da conta.
+- **Substituição aprovada:** [SVG editável](../infographic-challenge-001.svg), [PNG](../infographic-challenge-001.png) e [PDF](../infographic-challenge-001.pdf) determinísticos.
+- **Entrega:** vídeo e infográfico substituto incorporados ao repositório; o notebook-fonte permanece privado.
 
 Notebook autenticado: `https://notebook.google.com/notebook/af6c5d2b-bc39-42f9-b3a1-e4941e5576ce`.
 
@@ -24,13 +25,15 @@ O Video Overview terá função de síntese editorial, não de arquitetura técn
 
 ## Gate de publicação
 
-O notebook-fonte não precisa ser público: a fonte, os prompts, o vídeo aprovado e a futura exportação do infográfico são entregues diretamente no repositório.
+O notebook-fonte não precisa ser público: a fonte, os prompts e o vídeo aprovado são entregues diretamente no repositório. O infográfico final é reproduzível e independe da disponibilidade do NotebookLM.
 
-Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite diário de infográficos. Volte mais tarde.” Nenhum upgrade foi contratado. A geração deverá ser repetida após a renovação do limite.
+Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite diário de infográficos. Volte mais tarde.” Nenhum upgrade foi contratado. Naquele momento, a geração deveria ser repetida após a renovação do limite.
 
-A cota foi consultada novamente em 23 de setembro de 2026 e a mesma mensagem permaneceu. O infográfico não é declarado como concluído.
+A cota foi consultada novamente em 23 de setembro de 2026 e a mesma mensagem permaneceu. A saída do NotebookLM não foi concluída e acabou substituída pelo artefato determinístico descrito acima.
 
 Às 09h18 BRT, uma tentativa completa chegou ao botão `Gerar` com português do Brasil, orientação retrato, estilo editorial, detalhamento padrão e o prompt versionado. O serviço recusou a geração com a mesma mensagem de limite; as gerações anteriores apareciam como realizadas havia 10 horas. A renovação pode, portanto, usar uma janela móvel. Esta é uma inferência da interface, não uma regra publicada pelo NotebookLM.
+
+Após a terceira recusa, Luis decidiu seguir sem o NotebookLM. Higgsfield, Canva e Adobe Express foram avaliados; escolhemos SVG local porque o material exige fidelidade literal de texto e números. O resultado mantém a direção vertical e editorial prevista no prompt, mas acrescenta fonte versionada, exportação reprodutível e revisão visual direta.
 
 ## Controle de qualidade do vídeo
 

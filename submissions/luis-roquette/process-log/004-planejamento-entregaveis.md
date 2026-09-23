@@ -178,3 +178,13 @@ O gate remoto foi repetido no commit exato `de5f84429b1f648a448be6603527af2e2f2c
 Em 23 de setembro, uma nova verificação visual do NotebookLM manteve a mensagem “Você atingiu seu limite diário de infográficos. Volte mais tarde.” O infográfico é opcional pelas regras do G4, mas continua no escopo definido por Luis. Por isso, não houve upgrade, troca de conta, encerramento da PR #145 nem abertura da submissão final antes da renovação da cota.
 
 Às 09h18 BRT do mesmo dia, Luis pediu nova tentativa por já ter atravessado uma mudança de data. A configuração foi refeita e validada — português do Brasil, retrato, editorial, detalhamento padrão e prompt canônico —, mas o bloqueio reapareceu somente após clicar em `Gerar`. A interface mostrava as gerações anteriores como feitas havia 10 horas, evidência compatível com uma janela móvel, não com renovação automática à meia-noite. Nenhum upgrade ou contorno foi usado.
+
+## Substituição determinística do infográfico
+
+Diante da terceira recusa do NotebookLM, Luis decidiu concluir a entrega sem depender da plataforma e sugeriu avaliar Higgsfield. A pesquisa anterior à criação mostrou que Higgsfield Canvas é orientado a fluxos generativos de imagem e vídeo e consome créditos por geração; Canva e Adobe Express oferecem editores próprios para infográficos. Como este artefato exige texto, números e limites causais exatos, escolhemos a alternativa mais auditável: SVG local, sem API paga, com PNG e PDF derivados.
+
+A direção visual `Evidência Estratificada`, criada com a skill `canvas-design`, reutiliza a paleta do dashboard e organiza paradoxo, oito etapas, evolução interna, três viradas humanas e resposta ao CEO em uma página vertical. A primeira inspeção detectou sobreposição nas legendas das oito etapas. O layout foi corrigido na origem para duas linhas de quatro etapas; a segunda renderização confirmou hierarquia, margens, contraste e leitura móvel sem clipping.
+
+**Estado:** infográfico concluído em SVG editável, PNG 1400×2400 e PDF de uma página. O bloqueio do NotebookLM deixa de bloquear a submissão; a tentativa e a decisão de substituição permanecem registradas como parte da jornada.
+
+**Validação:** XML válido; PNG `1400×2400`; PDF de uma página com texto extraível; zero clipping na inspeção visual; links locais existentes; diff restrito à pasta permitida. SHA-256: SVG `9fece34377ed4f249ec0d96d31b75acf8c2534ee85e1a5df47541d75cb8534d0`, PNG `a9eca43943e8eb32c11f01ec1489cab429213d7d3e8ba2cd1bc4bfc5392e6c8a`, PDF `3700627491b69cc92d31329c33432f13a0613c895a9b401a0617a4ea16fc1972`.
