@@ -9,11 +9,19 @@
 
 Arcade, vídeo de arquitetura, Video Overview e infográfico só aparecerão aqui depois de publicados e validados sem autenticação.
 
+## Trabalhos complementares
+
+O **Challenge 001 é a submissão oficial**. Conforme o FAQ permite mais de um desafio, os demais permanecem como demonstrações complementares, sem competir com a leitura principal:
+
+- [Challenge 002 — Support Decision Copilot](solution/002-support/README.md) · [demo pública](https://support-decision-copilot-luis.streamlit.app/)
+- [Challenge 003 — Lead Scorer](solution/003-lead-scorer/README.md) · [experiência guiada local](delivery/index.html)
+- [Challenge 004 — Estratégia Social Media](solution/004-social/README.md) · [tour público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds)
+
 ## Sobre mim
 
 - **Nome:** Luis Fernando Roquette
 - **LinkedIn:** [linkedin.com/in/luisroquette](https://br.linkedin.com/in/luisroquette)
-- **Challenge escolhido:** 001 — Diagnóstico de Churn
+- **Challenge oficial:** 001 — Diagnóstico de Churn
 
 ## Executive Summary
 

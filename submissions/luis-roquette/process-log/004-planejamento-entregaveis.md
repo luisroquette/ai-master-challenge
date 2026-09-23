@@ -79,9 +79,19 @@ A auditoria encontrou quatro lacunas. O relatório não explicitava impacto esti
 
 **Decisão metodológica:** quando o impacto financeiro não puder ser estimado causalmente, a entrega dirá “não estimável” e mostrará somente o MRR perdido observado como teto histórico. Inventar receita recuperável para preencher o requisito seria menos aderente que explicitar a limitação.
 
-**Gate de submissão:** os quatro desafios serão consolidados na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenges 001–004`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
+**Gate de submissão:** o Challenge 001 será a entrega oficial. Os Challenges 002–004 permanecerão como trabalhos complementares, porque o FAQ permite mais de um desafio, mas recomenda priorizar profundidade. Tudo será consolidado na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenge 001`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
 
 **Estado:** correções locais em execução; nenhum push ou PR autorizado até a validação integral.
+
+## Consolidação final dos desafios
+
+Luis definiu o Challenge 001 como oficial e pediu que os demais permanecessem disponíveis. A decisão foi aplicada sem criar quatro submissões concorrentes: o README abre pelo diagnóstico de churn e apresenta os Challenges 002–004 somente depois, sob o rótulo de trabalhos complementares.
+
+**Justificativa:** esta arquitetura atende simultaneamente ao FAQ, que admite múltiplos desafios, à preferência por uma entrega principal profunda e à regra de um único PR por pessoa. O avaliador encontra primeiro a resposta oficial e pode explorar os demais trabalhos sem ambiguidade.
+
+**Estado:** os quatro desafios foram reunidos localmente na branch `submission/luis-roquette`; push e PR continuam bloqueados até os gates finais.
+
+**Situação do Challenge 003:** a branch remota `submission/luis-roquette-003-lead-scorer` está sincronizada no commit `5a7d3a8`. O PR `#140` foi aberto e depois fechado, sem merge, para respeitar a regra de um PR por pessoa. Portanto, o material existe no GitHub, mas não constitui uma submissão ativa.
 
 ## Execução dos entregáveis — Task 1
 

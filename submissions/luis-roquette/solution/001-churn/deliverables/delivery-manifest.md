@@ -25,5 +25,6 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 ## Bloqueios ativos
 
 - Push, hospedagem externa e PR aguardam todos os gates verdes.
-- Os quatro desafios devem chegar à branch única `submission/luis-roquette` e a um único PR.
+- O Challenge 001 será o oficial; os Challenges 002–004 serão anexos complementares, conforme permitido pelo FAQ.
+- Os quatro desafios devem chegar à branch única `submission/luis-roquette` e a um único PR, respeitando a regra de um PR por pessoa.
 - O diff final deve permanecer dentro de `submissions/luis-roquette/`.

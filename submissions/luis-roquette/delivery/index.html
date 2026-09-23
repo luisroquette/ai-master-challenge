@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lead Scorer — experiência guiada</title>
+  <style>
+    :root {
+      --ink: #f3f0e8;
+      --muted: #9ca7a3;
+      --night: #07110f;
+      --panel: #0d1b18;
+      --line: rgba(226, 239, 233, .16);
+      --mint: #c8f6df;
+      --green: #46d899;
+      --amber: #f6b84c;
+      --blue: #6da9ff;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--night); color: var(--ink); }
+    body {
+      font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(70,216,153,.12), transparent 28rem),
+        radial-gradient(circle at 12% 84%, rgba(109,169,255,.08), transparent 25rem),
+        var(--night);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+      z-index: 10;
+    }
+
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+    .topbar {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px clamp(22px, 4vw, 68px);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; }
+    .brand-mark { width: 11px; height: 11px; background: var(--green); transform: rotate(45deg); box-shadow: 0 0 24px rgba(70,216,153,.55); }
+    .status { display: flex; align-items: center; gap: 9px; color: var(--muted); font: 11px Menlo, monospace; letter-spacing: .08em; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px rgba(70,216,153,.8); }
+
+    main { position: relative; min-height: 700px; }
+    .slide {
+      display: none;
+      min-height: calc(100vh - 146px);
+      padding: clamp(40px, 6vw, 92px) clamp(22px, 7vw, 118px);
+      align-items: center;
+      animation: enter .58s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .slide.active { display: grid; }
+    @keyframes enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+    .hero { grid-template-columns: minmax(0, 1.1fr) minmax(340px, .9fr); gap: clamp(40px, 7vw, 120px); }
+    .eyebrow { color: var(--green); font: 12px Menlo, monospace; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 20px; }
+    h1, h2, h3 { margin: 0; font-family: "Iowan Old Style", Georgia, serif; letter-spacing: -.035em; }
+    h1 { font-size: clamp(58px, 8vw, 126px); line-height: .88; max-width: 10ch; }
+    h2 { font-size: clamp(44px, 5.7vw, 82px); line-height: .96; max-width: 12ch; }
+    h3 { font-size: clamp(24px, 2.8vw, 38px); line-height: 1; }
+    .lead { color: #ccd3cf; font-size: clamp(17px, 1.6vw, 23px); line-height: 1.55; max-width: 58ch; margin: 28px 0 0; }
+    .hero-line { width: 100%; height: 1px; background: linear-gradient(90deg, var(--green), transparent); margin: 36px 0; }
+
+    .answer {
+      padding: clamp(28px, 4vw, 54px);
+      border: 1px solid rgba(200,246,223,.24);
+      background: linear-gradient(145deg, rgba(200,246,223,.09), rgba(200,246,223,.02));
+      position: relative;
+    }
+    .answer::before { content: ""; position: absolute; width: 46px; height: 46px; border-top: 2px solid var(--green); border-left: 2px solid var(--green); top: -1px; left: -1px; }
+    .answer-label { color: var(--muted); font: 11px Menlo, monospace; letter-spacing: .13em; text-transform: uppercase; }
+    .answer strong { display: block; font: 500 clamp(28px, 3.2vw, 49px)/1.08 "Iowan Old Style", Georgia, serif; margin: 22px 0; }
+    .answer p { margin: 0; color: #c4cec9; line-height: 1.55; }
+    .start-button {
+      margin-top: 30px;
+      border: 0;
+      padding: 17px 22px;
+      color: #07110f;
+      background: var(--mint);
+      font: 700 12px Menlo, monospace;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 1px var(--mint), 0 14px 46px rgba(70,216,153,.2);
+      transition: transform .2s ease, box-shadow .2s ease;
+      animation: invite 2.2s ease-in-out infinite;
+    }
+    .start-button:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--mint), 0 18px 58px rgba(70,216,153,.34); }
+    .start-button span { margin-left: 28px; font-size: 18px; }
+    .navigation-hint { margin-top: 14px; color: var(--muted); font: 10px Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    @keyframes invite { 50% { box-shadow: 0 0 0 7px rgba(200,246,223,.09), 0 18px 58px rgba(70,216,153,.28); } }
+    .video-slide { grid-template-columns: minmax(280px, .62fr) minmax(520px, 1.38fr); gap: clamp(34px, 6vw, 90px); }
+    .video-frame { width: 100%; aspect-ratio: 16 / 9; background: #020605; border: 1px solid var(--line); box-shadow: 0 34px 100px rgba(0,0,0,.48); }
+
+    .split { grid-template-columns: minmax(270px, .7fr) minmax(500px, 1.3fr); gap: clamp(34px, 6vw, 90px); }
+    .copy { align-self: center; }
+    .big-number { font: 11px Menlo, monospace; color: var(--green); letter-spacing: .15em; margin-bottom: 18px; }
+    .statement { font: 500 clamp(34px, 5vw, 72px)/1.02 "Iowan Old Style", Georgia, serif; max-width: 13ch; }
+    .statement em { color: var(--green); font-style: normal; }
+
+    .screen {
+      position: relative;
+      background: #e9e8e2;
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 34px 100px rgba(0,0,0,.48);
+      overflow: hidden;
+      min-height: min(66vh, 690px);
+    }
+    .screen img { width: 100%; height: 100%; min-height: inherit; object-fit: cover; object-position: top; display: block; }
+    .screen::after { content: "Produto real · captura local"; position: absolute; left: 18px; bottom: 16px; padding: 8px 10px; color: var(--ink); background: rgba(7,17,15,.86); font: 10px Menlo, monospace; letter-spacing: .07em; }
+    .pin { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--amber); color: #10120f; display: grid; place-items: center; font: 700 12px Menlo, monospace; box-shadow: 0 0 0 8px rgba(246,184,76,.18); animation: pulse 2.4s infinite; }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 15px rgba(246,184,76,0); } }
+    .pin.one { top: 58%; left: 7%; }
+    .pin.two { top: 66%; left: 44%; }
+    .pin.three { top: 66%; left: 73%; }
+
+    .notes { margin-top: 36px; display: grid; gap: 18px; }
+    .note { display: grid; grid-template-columns: 32px 1fr; gap: 14px; align-items: start; }
+    .note b { display: grid; place-items: center; width: 26px; height: 26px; color: #10120f; background: var(--amber); border-radius: 50%; font: 11px Menlo, monospace; }
+    .note p { margin: 0; color: #c2cbc6; line-height: 1.5; }
+
+    .focus-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(36px, 6vw, 100px); align-items: center; }
+    .decision-stack { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .decision { background: var(--panel); padding: 25px 28px; display: grid; grid-template-columns: 48px 1fr; gap: 17px; align-items: center; transition: background .2s ease; }
+    .decision:hover { background: #12251f; }
+    .decision span { font: 11px Menlo, monospace; color: var(--green); }
+    .decision strong { font: 500 24px "Iowan Old Style", Georgia, serif; }
+    .decision small { color: var(--muted); display: block; margin-top: 5px; line-height: 1.4; }
+
+    .guardrails { grid-template-columns: minmax(300px, .8fr) minmax(500px, 1.2fr); gap: 7vw; }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--line); }
+    .metric { min-height: 170px; padding: 27px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .metric:nth-child(2n) { border-right: 0; }
+    .metric:nth-last-child(-n+2) { border-bottom: 0; }
+    .metric strong { display: block; font: 500 clamp(42px, 5vw, 72px)/1 "Iowan Old Style", Georgia, serif; }
+    .metric span { color: var(--muted); font-size: 13px; }
+    .metric.reject strong { color: var(--amber); }
+
+    .method { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 30px; }
+    .method-head { display: flex; align-items: end; justify-content: space-between; gap: 30px; }
+    .method-head p { max-width: 44ch; color: var(--muted); line-height: 1.5; margin: 0; }
+    .method-map { width: 100%; max-height: 56vh; object-fit: contain; object-position: center; border: 1px solid var(--line); background: #090e14; }
+    .visual-proof { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 24px; }
+    .visual-proof header { display: flex; align-items: end; justify-content: space-between; gap: 30px; }
+    .visual-proof header p { max-width: 46ch; margin: 0; color: var(--muted); line-height: 1.5; }
+    .visual-proof img { width: 100%; max-height: 60vh; object-fit: contain; border: 1px solid var(--line); background: #090e14; }
+    .visual-proof.tall img { max-height: 63vh; }
+
+    .prompt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 34px; }
+    .prompt { padding: 27px; min-height: 185px; background: var(--panel); }
+    .prompt span { font: 10px Menlo, monospace; color: var(--amber); letter-spacing: .12em; }
+    .prompt strong { display: block; font: 500 22px/1.15 "Iowan Old Style", Georgia, serif; margin: 14px 0; }
+    .prompt p { color: var(--muted); margin: 0; font-size: 14px; line-height: 1.48; }
+
+    .final { grid-template-columns: 1fr 1fr; gap: 8vw; }
+    .checklist { border-top: 1px solid var(--line); }
+    .check { display: grid; grid-template-columns: 28px 1fr; gap: 15px; padding: 18px 0; border-bottom: 1px solid var(--line); color: #cdd5d1; }
+    .check::before { content: "✓"; color: var(--green); font-family: Menlo, monospace; }
+    .actions { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .button { text-decoration: none; padding: 14px 18px; border: 1px solid var(--line); color: var(--ink); background: transparent; transition: .2s ease; }
+    .button:hover { border-color: var(--green); transform: translateY(-2px); }
+    .button.primary { background: var(--mint); color: #07110f; border-color: var(--mint); font-weight: 600; }
+
+    .controls {
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 26px;
+      padding: 18px clamp(22px, 4vw, 68px) 22px;
+      border-top: 1px solid var(--line);
+      background: rgba(7,17,15,.94);
+      backdrop-filter: blur(18px);
+    }
+    .nav-button { border: 0; background: none; color: var(--ink); padding: 9px 0; font: 11px Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .nav-button:disabled { opacity: .25; cursor: default; }
+    #next { padding: 13px 17px; color: #07110f; background: var(--mint); font-weight: 700; }
+    #next:not(:disabled) { box-shadow: 0 0 24px rgba(70,216,153,.18); }
+    .track { height: 2px; background: rgba(255,255,255,.12); position: relative; }
+    .track span { position: absolute; inset: 0 auto 0 0; width: 12.5%; background: var(--green); transition: width .4s ease; }
+    .counter { color: var(--muted); font: 11px Menlo, monospace; letter-spacing: .08em; min-width: 54px; text-align: center; }
+
+    @media (max-width: 900px) {
+      .slide { min-height: auto; padding-top: 55px; padding-bottom: 55px; }
+      .hero, .video-slide, .split, .focus-grid, .guardrails, .final { grid-template-columns: 1fr; }
+      .screen { min-height: 55vw; }
+      .prompt-grid { grid-template-columns: 1fr; }
+      .method-head, .visual-proof header { align-items: start; flex-direction: column; }
+      .status span:last-child { display: none; }
+      .controls { grid-template-columns: auto 1fr auto; gap: 14px; }
+      .track { display: none; }
+      .counter { order: 2; }
+      #next { order: 3; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark"></span> Lead Scorer 003</div>
+      <div class="status"><span class="status-dot"></span><span>EXPERIÊNCIA LOCAL · PRÉ-DEPLOY</span></div>
+    </header>
+
+    <main aria-live="polite">
+      <section class="slide hero active" data-title="A resposta">
+        <div>
+          <div class="eyebrow">Uma ferramenta para segunda-feira de manhã</div>
+          <h1>Abra. Veja. Foque.</h1>
+          <div class="hero-line"></div>
+          <p class="lead">O sistema transforma 2.089 oportunidades ativas em uma fila curta, explicável e acionável — sem pedir que o vendedor interprete uma planilha inteira.</p>
+        </div>
+        <div class="answer">
+          <div class="answer-label">A pergunta central</div>
+          <strong>“Onde devo focar agora?”</strong>
+          <p>A primeira dobra responde com o lead, o motivo, os sinais e a próxima ação.</p>
+          <button class="start-button" id="start" type="button">Começar experiência <span>→</span></button>
+          <div class="navigation-hint">12 etapas · avance pelos botões abaixo</div>
+        </div>
+      </section>
+
+      <section class="slide video-slide" data-title="Vídeo">
+        <div>
+          <div class="big-number">VÍDEO / 06:05 · LEGENDADO</div>
+          <h2>A construção, explicada.</h2>
+          <p class="lead">Produto primeiro. Depois, as decisões que impediram leakage, falsas probabilidades e um dashboard que exige interpretação demais.</p>
+        </div>
+        <video class="video-frame" controls preload="metadata" aria-label="Vídeo explicativo da construção do Lead Scorer">
+          <source src="assets/video-construcao-legendado.mp4" type="video/mp4">
+          Seu navegador não suporta vídeo HTML5.
+        </video>
+      </section>
+
+      <section class="slide split" data-title="O problema">
+        <div class="copy">
+          <div class="big-number">01 / O PROBLEMA</div>
+          <div class="statement">Muito tempo em deals que não fecham. Boas oportunidades <em>esfriam.</em></div>
+          <p class="lead">O critério de sucesso deixou de ser “ter um score” e passou a ser “reduzir a distância entre abrir o sistema e executar a ação certa”.</p>
+        </div>
+        <div class="decision-stack">
+          <div class="decision"><span>01</span><div><strong>Não é um notebook</strong><small>É uma ferramenta operacional que roda com dados reais.</small></div></div>
+          <div class="decision"><span>02</span><div><strong>Não é só valor</strong><small>Prioridade combina evidência, estágio e contexto comercial.</small></div></div>
+          <div class="decision"><span>03</span><div><strong>Não é uma caixa-preta</strong><small>A recomendação mostra por quê, sinais e ação.</small></div></div>
+        </div>
+      </section>
+
+      <section class="slide split" data-title="Vendedor">
+        <div class="copy">
+          <div class="big-number">02 / VISÃO DO VENDEDOR</div>
+          <h2>O trabalho começa pronto.</h2>
+          <div class="notes">
+            <div class="note"><b>1</b><p><strong>112 oportunidades</strong> resumidas antes da lista completa.</p></div>
+            <div class="note"><b>2</b><p><strong>Foque neste lead</strong> aponta o primeiro movimento sem filtro manual.</p></div>
+            <div class="note"><b>3</b><p><strong>Duas filas independentes</strong> evitam comparar escalas incompatíveis.</p></div>
+          </div>
+        </div>
+        <div class="screen">
+          <img src="assets/vendedor.png" alt="Aplicação Lead Scorer na visão do vendedor Anna Snelling">
+          <span class="pin one">1</span><span class="pin two">2</span><span class="pin three">3</span>
+        </div>
+      </section>
+
+      <section class="slide focus-grid" data-title="Explicação">
+        <div>
+          <div class="big-number">03 / A DECISÃO EXPLICADA</div>
+          <h2>Um score só vale quando termina em ação.</h2>
+          <p class="lead">A fila não força o vendedor a traduzir índice, modelo e faixa. Ela entrega quatro respostas, na ordem em que o trabalho acontece.</p>
+        </div>
+        <div class="decision-stack">
+          <div class="decision"><span>01</span><div><strong>Qual lead</strong><small>CFKXEPFN abre a sequência.</small></div></div>
+          <div class="decision"><span>02</span><div><strong>Por quê</strong><small>Prioridade relativa, faixa alta, evidência forte.</small></div></div>
+          <div class="decision"><span>03</span><div><strong>Quais sinais</strong><small>Série e produto associados ao histórico observado.</small></div></div>
+          <div class="decision"><span>04</span><div><strong>Qual ação</strong><small>Confirmar aderência e combinar o próximo passo comercial.</small></div></div>
+        </div>
+      </section>
+
+      <section class="slide split" data-title="Gestor">
+        <div class="copy">
+          <div class="big-number">04 / VISÃO DO GESTOR</div>
+          <h2>Orientar sem adulterar.</h2>
+          <p class="lead">O gestor navega por equipe, região e vendedor. A prioridade temporária não muda o score e gera um evento local encadeado para auditoria.</p>
+          <div class="notes">
+            <div class="note"><b>1</b><p>Escopo visível antes da ação.</p></div>
+            <div class="note"><b>2</b><p>Intervenção separada da evidência do modelo.</p></div>
+          </div>
+        </div>
+        <div class="screen"><img src="assets/gestor.png" alt="Aplicação Lead Scorer na visão do gestor Cara Losch"></div>
+      </section>
+
+      <section class="slide guardrails" data-title="Evidência">
+        <div>
+          <div class="big-number">05 / HONESTIDADE ESTATÍSTICA</div>
+          <h2>Quando a probabilidade falha, o produto se abstém.</h2>
+          <p class="lead">As quatro rotas superaram os baselines de erro, mas falharam no suporte das faixas. A interface suprimiu probabilidade e receita esperada em vez de transformar melhora marginal em promessa.</p>
+        </div>
+        <div class="metrics">
+          <div class="metric"><strong>8.800</strong><span>oportunidades reais</span></div>
+          <div class="metric"><strong>2.089</strong><span>oportunidades ativas</span></div>
+          <div class="metric reject"><strong>4/4</strong><span>rotas probabilísticas rejeitadas</span></div>
+          <div class="metric"><strong>0</strong><span>probabilidades indevidas publicadas</span></div>
+        </div>
+      </section>
+
+      <section class="slide method" data-title="Método">
+        <div class="method-head">
+          <div><div class="big-number">06 / MÉTODO AUTORAL</div><h2>Do prompt ao produto.</h2></div>
+          <p>Absorção redundante, seis ondas socráticas, SDD, feedback looping, lapidação e segurança — cada avanço condicionado à evidência.</p>
+        </div>
+        <img class="method-map" src="../docs/do-prompt-ao-produto.png" alt="Mapa do Método de Construção Cognitiva em Loops">
+      </section>
+
+      <section class="slide visual-proof" data-title="Infográfico">
+        <header>
+          <div><div class="big-number">07 / INFOGRÁFICO EXECUTIVO</div><h2>O processo em uma imagem.</h2></div>
+          <p>Oito movimentos conectam briefing, decisão, implementação e entrega — sem esconder os gates que impediram uma probabilidade enganosa.</p>
+        </header>
+        <img src="assets/infografico-notebooklm.png" alt="Infográfico do processo de construção do Lead Scorer">
+      </section>
+
+      <section class="slide visual-proof tall" data-title="Mapa mental">
+        <header>
+          <div><div class="big-number">08 / MAPA MENTAL</div><h2>Produto, método e limites conectados.</h2></div>
+          <p>O mapa expõe as relações entre fila de foco, dados, evidências, método MCCL e as limitações assumidas pelo protótipo.</p>
+        </header>
+        <img src="assets/mapa-mental-notebooklm.png" alt="Mapa mental expandido do Challenge 003 Lead Scorer">
+      </section>
+
+      <section class="slide" data-title="Julgamento">
+        <div class="big-number">09 / O QUE O JULGAMENTO HUMANO MUDOU</div>
+        <h2>Três intervenções mudaram o produto.</h2>
+        <div class="prompt-grid">
+          <article class="prompt"><span>PROMPT 01</span><strong>“Antes da SPEC, pergunte.”</strong><p>Seis ondas adaptativas substituíram arquitetura prematura por decisões aprovadas.</p></article>
+          <article class="prompt"><span>PROMPT 08</span><strong>“Menos intervenção humana.”</strong><p>O dashboard deixou de exigir exploração e ganhou foco automático.</p></article>
+          <article class="prompt"><span>PROMPT 10</span><strong>“Foque neste lead porque…”</strong><p>A recomendação passou a separar motivo, sinais e ação.</p></article>
+        </div>
+      </section>
+
+      <section class="slide final" data-title="Entrega">
+        <div>
+          <div class="big-number">10 / ENTREGA VERIFICÁVEL</div>
+          <h2>O software é a entrega. O método prova como chegou lá.</h2>
+          <p class="lead">A documentação completa permanece como evidência de bastidor. Esta experiência é a porta de entrada.</p>
+          <div class="actions">
+            <a class="button primary" href="http://127.0.0.1:50398/" target="_blank" rel="noreferrer">Abrir produto real</a>
+            <a class="button" href="assets/video-construcao-legendado.mp4">Ver vídeo</a>
+            <a class="button" href="../README.md">Ler resumo</a>
+          </div>
+        </div>
+        <div class="checklist">
+          <div class="check">Dados reais versionados e verificáveis</div>
+          <div class="check">Priorização além de ordenar por valor</div>
+          <div class="check">Explicação fiel à lógica publicada</div>
+          <div class="check">Fila acionável para vendedor e gestor</div>
+          <div class="check">Processo, erros e contribuição humana documentados</div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <button class="nav-button" id="prev" type="button" aria-label="Etapa anterior">← Anterior</button>
+      <div class="track" aria-hidden="true"><span id="progress"></span></div>
+      <div class="counter"><span id="current">01</span> / <span id="total">12</span></div>
+      <button class="nav-button" id="next" type="button" aria-label="Próxima etapa">Começar →</button>
+    </footer>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const current = document.getElementById('current');
+    const total = document.getElementById('total');
+    const progress = document.getElementById('progress');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const start = document.getElementById('start');
+    let index = 0;
+    total.textContent = String(slides.length).padStart(2, '0');
+
+    function show(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      current.textContent = String(index + 1).padStart(2, '0');
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+      next.textContent = index === 0 ? 'Começar →' : index === slides.length - 1 ? 'Fim' : 'Próxima etapa →';
+      document.title = `${slides[index].dataset.title} — Lead Scorer`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    prev.addEventListener('click', () => show(index - 1));
+    next.addEventListener('click', () => show(index + 1));
+    start.addEventListener('click', () => show(1));
+    document.addEventListener('keydown', event => {
+      if (event.key === 'ArrowRight' || event.key === ' ') show(index + 1);
+      if (event.key === 'ArrowLeft') show(index - 1);
+    });
+    show(0);
+  </script>
+</body>
+</html>
