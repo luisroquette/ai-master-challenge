@@ -3,7 +3,7 @@
 ## Estado
 
 - **Roteiro:** pronto e reconciliado com a resposta canônica.
-- **Rascunho no Arcade:** criado como privado; ainda sem mídia.
+- **Rascunho no Arcade:** oito screenshots reais e oito hotspots concluídos.
 - **Link público:** pendente de confirmação de Luis.
 - **Acesso anônimo:** não testado enquanto o link não existir.
 
@@ -28,4 +28,4 @@ O formato reutiliza recursos nativos documentados pelo Arcade: [hotspots e callo
 
 Antes de compartilhar, revisar números e enquadramento no preview. Após confirmação explícita de Luis, publicar, abrir em janela anônima e registrar aqui URL e data.
 
-O gravador desktop e a extensão do Arcade não estavam disponíveis na sessão automatizada. O próximo passo é capturar as oito telas pelo gravador oficial; não será substituído por imagens sintéticas.
+O gravador desktop e a extensão do Arcade não estavam disponíveis. A rota nativa mais simples funcionou: capturas reais do dashboard foram coladas diretamente no editor, sem imagens sintéticas e sem geração paga. Os previews desktop e mobile foram revisados; o último hotspot volta ao início. Falta publicar, ligar o CTA final ao brief remoto e testar o acesso anônimo.

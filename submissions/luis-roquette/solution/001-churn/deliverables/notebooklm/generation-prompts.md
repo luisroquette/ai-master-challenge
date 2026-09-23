@@ -3,11 +3,11 @@
 ## Video Overview
 
 ```text
-Crie um Video Overview em português brasileiro, no formato Brief e com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Use exclusivamente a fonte selecionada.
+Crie um Video Overview explicativo em português brasileiro, com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Use exclusivamente a fonte selecionada.
 
-Estruture a narrativa em cinco momentos: pergunta do CEO; método autoral; três decisões humanas que corrigiram o rumo; resposta final; próximos passos. Explique que agregados e coortes descrevem populações diferentes. Preserve todos os números e limites exatamente como escritos.
+Estruture em: pergunta do CEO; método autoral; três viradas humanas; resposta final; próximos passos. Preserve os números exatos e explique que agregados e coortes são populações diferentes.
 
-Não faça walkthrough técnico da arquitetura, pois existe um vídeo autoral separado. Não invente causa, impacto recuperável, confiança estatística ou nota externa. Diga explicitamente que 7,0 → 8,6 → 9,5 → 9,9 é uma rubrica interna de qualidade.
+Regra crítica: as seis hipóteses são INCONCLUSIVAS; jamais escreva ou diga “hipóteses rejeitadas”. Nenhuma causa foi demonstrada. US$ 1.622.337 é MRR perdido observado, não receita recuperável. As notas 7,0 → 8,6 → 9,5 → 9,9 são rubrica interna, não nota do G4 nem confiança estatística. Não faça walkthrough técnico da arquitetura e não invente causa, número ou promessa.
 ```
 
 ## Infográfico

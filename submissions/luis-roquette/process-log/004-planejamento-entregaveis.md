@@ -109,9 +109,11 @@ Antes de criar o tour, consultamos a documentação atual do Arcade. A plataform
 
 O roteiro foi reduzido a oito passos e 83 segundos estimados. Cada passo contém uma ideia e até 22 palavras: resposta curta, impacto, divergência de uso, limite da satisfação, ausência de concentração, abstenção causal, validações e rastreabilidade.
 
-Um rascunho privado foi criado e nomeado no Arcade, sem uso de geração paga. A captura não avançou porque o gravador desktop e a extensão oficial não estavam disponíveis na sessão automatizada. Não substituímos a interface real por imagens sintéticas.
+Um rascunho privado foi criado e nomeado no Arcade, sem uso de geração paga. O gravador desktop e a extensão oficial não estavam disponíveis. A alternativa nativa foi copiar capturas reais do dashboard pelo navegador e colá-las diretamente no editor; não usamos imagens sintéticas.
 
-**Estado:** roteiro e rascunho privado concluídos. Captura, preview e publicação ainda não ocorreram.
+O rascunho recebeu oito screenshots e oito hotspots, exatamente como o roteiro. A sequência e a legibilidade foram verificadas nos previews desktop e mobile. O último hotspot retorna ao primeiro passo; o CTA para o brief aguarda a URL remota definitiva.
+
+**Estado:** roteiro, captura e preview privado concluídos. Publicação e acesso anônimo ainda não ocorreram.
 
 ## Execução dos entregáveis — Task 4, fonte do NotebookLM
 
@@ -121,9 +123,13 @@ Para reduzir deriva, criamos uma única fonte fechada: oito etapas metodológica
 
 Os prompts separam funções: o Video Overview sintetiza a jornada para o avaliador; o infográfico mostra método e evolução. Ambos proíbem causa inventada, receita recuperável fictícia e confusão entre rubrica interna e avaliação do G4.
 
-O notebook privado foi criado com uma única fonte. A geração curta do Video Overview foi iniciada em português brasileiro e com foco personalizado. A configuração do infográfico chegou ao gate final em formato retrato e estilo editorial, mas o NotebookLM informou que o limite diário de infográficos havia sido atingido. Não contratamos upgrade nem contornamos o limite.
+O notebook privado foi criado com uma única fonte. A primeira geração do Video Overview, curta e em português brasileiro, preservou o diagnóstico central, mas exibiu “6 hipóteses rejeitadas”. Como o resultado correto é “seis hipóteses inconclusivas”, o vídeo foi rejeitado. O prompt foi corrigido uma única vez com essa regra explícita e uma segunda geração explicativa foi iniciada.
 
-**Estado:** fonte, prompts e notebook privado concluídos; vídeo em geração; infográfico bloqueado até a renovação do limite; nada publicado.
+A configuração do infográfico chegou ao gate final em formato retrato e estilo editorial, mas o NotebookLM informou que o limite diário de infográficos havia sido atingido. Não contratamos upgrade nem contornamos o limite.
+
+A segunda geração, “Paradoxo de Churn do CEO”, ficou pronta com 6:00. O arquivo foi decodificado integralmente; áudio e 360 quadros foram auditados por transcrição e OCR. A versão corrigida declara “hipóteses inconclusivas”, preserva os números canônicos e separa a rubrica interna de qualquer nota do G4 ou confiança estatística.
+
+**Estado:** fonte, prompts, notebook privado e Video Overview revisado concluídos; primeira versão rejeitada; infográfico bloqueado até a renovação do limite; nada publicado.
 
 ## Fechamento em cinco entradas — início da Task 5
 

@@ -137,15 +137,17 @@ Cada instrução possui até 22 palavras; nenhum passo mostra mais de uma ideia;
 
 Roteiro fechado em oito passos e 83 segundos estimados. O fluxo permanece linear porque branching acrescentaria escolha sem melhorar a resposta executiva.
 
-- [ ] **Step 3: capturar e revisar o rascunho**
+- [x] **Step 3: capturar e revisar o rascunho**
 
 Usar screenshots do dashboard e no máximo um trecho de vídeo de interação. Conferir números, foco, desktop/mobile e ausência de caminhos locais.
 
-Rascunho privado `aIAtdPLJilhZOtM7ao5O` criado e nomeado. Captura pendente: o gravador desktop e a extensão não estavam disponíveis na sessão automatizada.
+Rascunho privado `aIAtdPLJilhZOtM7ao5O` criado com oito screenshots reais e oito hotspots. Previews desktop e mobile revisados; nenhum caminho local aparece.
 
-- [ ] **Step 4: preparar publicação**
+- [x] **Step 4: preparar publicação**
 
 Parar antes do compartilhamento público. Após confirmação de Luis, salvar URL, data e acesso anônimo no README do Arcade.
+
+Publicação preparada e interrompida antes do Share. O CTA final será ligado ao brief somente quando a URL remota definitiva existir.
 
 ### Task 4: Gerar Video Overview e infográfico no NotebookLM
 
@@ -165,13 +167,13 @@ Incluir somente oito etapas metodológicas, quatro notas, três viradas humanas 
 
 Fonte fechada criada com as contagens exatas e limites causais explícitos.
 
-- [ ] **Step 2: gerar o Video Overview com função própria**
+- [x] **Step 2: gerar o Video Overview com função própria**
 
 ```text
 Crie um Video Overview em português brasileiro, com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Sintetize a evolução do trabalho: pergunta do CEO, método autoral, três decisões humanas que corrigiram o rumo, resposta final e próximos passos. Não faça walkthrough técnico da arquitetura, pois existe um vídeo autoral separado. Não invente causa, número ou nota externa.
 ```
 
-Notebook privado criado com uma fonte; geração curta em português brasileiro iniciada em 22 de setembro de 2026. A revisão integral ainda está pendente.
+Notebook privado criado com uma fonte. A primeira geração foi rejeitada porque transformou seis hipóteses inconclusivas em “rejeitadas”. O prompt foi corrigido uma vez. A segunda geração explicativa, “Paradoxo de Churn do CEO”, foi aceita após decodificação integral, transcrição completa do áudio e OCR de 360 quadros.
 
 - [ ] **Step 3: gerar o infográfico com o prompt editorial**
 

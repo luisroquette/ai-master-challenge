@@ -5,7 +5,7 @@
 - **Fonte fechada:** pronta e revisada.
 - **Prompts:** prontos para Video Overview e infográfico.
 - **Notebook:** criado de forma privada com uma fonte.
-- **Video Overview:** geração curta em português brasileiro iniciada.
+- **Video Overview:** segunda versão explicativa aceita após auditoria integral.
 - **Infográfico:** configuração pronta; geração bloqueada pelo limite diário da conta.
 - **Links públicos e acesso anônimo:** pendentes.
 
@@ -27,3 +27,9 @@ O Video Overview terá função de síntese editorial, não de arquitetura técn
 Após gerar, revisar os dois outputs integralmente. Só então, com confirmação explícita de Luis, habilitar compartilhamento, testar em janela anônima e registrar URL, duração, data e fonte selecionada.
 
 Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite diário de infográficos. Volte mais tarde.” Nenhum upgrade foi contratado. A geração deverá ser repetida após a renovação do limite.
+
+## Controle de qualidade do vídeo
+
+A primeira geração, “O Paradoxo do Churn e as Métricas Ilusórias”, foi rejeitada. Embora preservasse os números e a ausência de causa demonstrada, um quadro dizia “6 hipóteses rejeitadas”; o diagnóstico canônico diz que as seis hipóteses são inconclusivas. O prompt foi corrigido uma vez.
+
+A segunda geração, “Paradoxo de Churn do CEO”, foi aceita em 22 de setembro de 2026. O arquivo tem 6:00, H.264/AAC, 1280×720 e SHA-256 `ec3b3d52c234cd1d148eb8df6ef847f12bcb95f40bea0af9648021c6b923d49a`. A validação decodificou o arquivo inteiro, transcreveu o áudio completo e aplicou OCR a 360 quadros. Não há afirmação de causa demonstrada nem promessa de receita recuperável; o vídeo diz “hipóteses inconclusivas”, preserva os números canônicos e identifica as notas como rubrica interna.
