@@ -93,6 +93,12 @@ Luis definiu o Challenge 001 como oficial e pediu que os demais permanecessem di
 
 **Situação do Challenge 003:** a branch remota `submission/luis-roquette-003-lead-scorer` está sincronizada no commit `5a7d3a8`. O PR `#140` foi aberto e depois fechado, sem merge, para respeitar a regra de um PR por pessoa. Portanto, o material existe no GitHub, mas não constitui uma submissão ativa.
 
+## Cópia local completa e organizada
+
+Foi criada uma pasta-mestre em `Documents/AI-Master-Challenge/Entrega-Final-Completa-2026-09-23`. Ela preserva a réplica Git dos quatro desafios, os briefings e guias oficiais, o vídeo local de arquitetura do Challenge 001 e uma camada de verificação com inventário e hashes SHA-256.
+
+**Decisão:** manter uma única cópia canônica organizada, sem ambientes virtuais, caches ou arquivos temporários. O Challenge 001 aparece como oficial; os demais permanecem identificados como complementares. A cópia é local e não altera PRs nem publica conteúdo.
+
 ## Execução dos entregáveis — Task 1
 
 A primeira etapa produziu a porta de entrada em Markdown e DOCX a partir da resposta canônica. O brief tem 777 palavras e duas páginas A4. Ele começa pelo diagnóstico do CEO, explicita o conflito entre agregado e coorte, recusa causalidade não demonstrada e apresenta três ações com responsável, prazo, impacto estimado e confiança.
