@@ -4,10 +4,10 @@
 
 - **Roteiro:** pronto e reconciliado com a resposta canônica.
 - **Rascunho no Arcade:** oito screenshots reais e oito hotspots concluídos.
-- **Link público:** pendente de confirmação de Luis.
-- **Acesso anônimo:** não testado enquanto o link não existir.
+- **Link público:** [abrir tour](https://app.arcade.software/share/aIAtdPLJilhZOtM7ao5O).
+- **Acesso anônimo:** resposta HTTP pública validada em 22 de setembro de 2026.
 
-Rascunho autenticado: `https://app.arcade.software/flows/aIAtdPLJilhZOtM7ao5O/edit`.
+Editor autenticado: `https://app.arcade.software/flows/aIAtdPLJilhZOtM7ao5O/edit`.
 
 ## Escopo
 
@@ -26,6 +26,4 @@ O formato reutiliza recursos nativos documentados pelo Arcade: [hotspots e callo
 
 ## Gate de publicação
 
-Antes de compartilhar, revisar números e enquadramento no preview. Após confirmação explícita de Luis, publicar, abrir em janela anônima e registrar aqui URL e data.
-
-O gravador desktop e a extensão do Arcade não estavam disponíveis. A rota nativa mais simples funcionou: capturas reais do dashboard foram coladas diretamente no editor, sem imagens sintéticas e sem geração paga. Os previews desktop e mobile foram revisados; o último hotspot volta ao início. Falta publicar, ligar o CTA final ao brief remoto e testar o acesso anônimo.
+O gravador desktop e a extensão do Arcade não estavam disponíveis. A rota nativa mais simples funcionou: capturas reais do dashboard foram coladas diretamente no editor, sem imagens sintéticas e sem geração paga. Os previews desktop e mobile foram revisados; o último hotspot volta ao início. O link público redireciona para a rota de compartilhamento sem exigir sessão.

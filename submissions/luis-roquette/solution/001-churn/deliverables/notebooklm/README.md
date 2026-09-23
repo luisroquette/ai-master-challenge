@@ -5,9 +5,9 @@
 - **Fonte fechada:** pronta e revisada.
 - **Prompts:** prontos para Video Overview e infográfico.
 - **Notebook:** criado de forma privada com uma fonte.
-- **Video Overview:** segunda versão explicativa aceita após auditoria integral.
+- **Video Overview:** [segunda versão explicativa](paradoxo-de-churn-do-ceo.mp4) aceita após auditoria integral.
 - **Infográfico:** configuração pronta; geração bloqueada pelo limite diário da conta.
-- **Links públicos e acesso anônimo:** pendentes.
+- **Entrega:** vídeo incorporado ao repositório; o notebook-fonte permanece privado.
 
 Notebook autenticado: `https://notebook.google.com/notebook/af6c5d2b-bc39-42f9-b3a1-e4941e5576ce`.
 
@@ -24,7 +24,7 @@ O Video Overview terá função de síntese editorial, não de arquitetura técn
 
 ## Gate de publicação
 
-Após gerar, revisar os dois outputs integralmente. Só então, com confirmação explícita de Luis, habilitar compartilhamento, testar em janela anônima e registrar URL, duração, data e fonte selecionada.
+O notebook-fonte não precisa ser público: a fonte, os prompts, o vídeo aprovado e a futura exportação do infográfico são entregues diretamente no repositório.
 
 Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite diário de infográficos. Volte mais tarde.” Nenhum upgrade foi contratado. A geração deverá ser repetida após a renovação do limite.
 

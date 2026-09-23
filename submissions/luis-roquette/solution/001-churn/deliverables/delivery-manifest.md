@@ -7,9 +7,9 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 | Entrada | Artefato | Estado | Validação exigida |
 |---|---|---|---|
 | Leia em 2 minutos | `delivery-brief.md` e `delivery-brief.docx` | Prontos localmente | Limite de palavras, fatos, links e duas páginas A4 |
-| Veja funcionando em 90 segundos | Arcade | Rascunho privado com oito passos revisado; não publicado | CTA remoto e acesso anônimo |
-| Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | Metadados, poster e capítulos prontos; não publicado | Reprodução integral em tempo real e acesso anônimo |
-| Veja a síntese do NotebookLM | Video Overview e infográfico | Vídeo de 6:00 aprovado; infográfico bloqueado pelo limite diário | Gerar/revisar infográfico e validar acesso anônimo |
+| Veja funcionando em 90 segundos | Arcade | Tour público com oito passos revisado | Confirmar renderização anônima |
+| Entenda a arquitetura do trabalho em 6 minutos | Vídeo obrigatório | MP4 comprimido, validado e incluído no repositório | Confirmar download após o push |
+| Veja a síntese do NotebookLM | Video Overview e infográfico | Vídeo de 6:00 aprovado e incluído; infográfico bloqueado pelo limite diário | Gerar e revisar o infográfico |
 | Audite o processo | Relatório, código e Process Log | Pronto localmente | Setup reproduzível e links válidos |
 
 ## Verdades que não podem divergir

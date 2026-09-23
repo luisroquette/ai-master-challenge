@@ -142,3 +142,17 @@ A abertura da submissão foi reorganizada em exatamente cinco escolhas. O DOCX p
 A consulta remota encontrou as PRs #140 e #141 fechadas e a PR #145 aberta para o Challenge 004. A PR aberta usa `submission/luis-roquette-004-social`, enquanto o guia exige a branch canônica `submission/luis-roquette`.
 
 Não alteramos branches, PRs ou conteúdo remoto. O gate final deverá consolidar os quatro desafios e resolver a PR #145 sem manter dois PRs abertos ao mesmo tempo. Até isso ocorrer, a submissão não pode ser declarada 100% aderente.
+
+## Decisão final — Challenge 001 como desafio principal
+
+Luis definiu o Challenge 001 — Diagnóstico de Churn como o desafio principal. A releitura das regras oficiais confirmou que o candidato deve escolher um challenge, manter toda a mudança dentro de `submissions/luis-roquette/`, incluir solução e Process Log, usar a branch `submission/luis-roquette` e abrir um único PR no formato `[Submission] Nome — Challenge XXX`.
+
+A decisão elimina a consolidação dos quatro desafios no mesmo PR. A entrega final conterá exclusivamente o Challenge 001; as PRs anteriores dos Challenges 002 e 003 permanecem fechadas, e a PR aberta do Challenge 004 deverá ser encerrada antes da abertura do PR canônico do Challenge 001.
+
+**Gate:** publicar somente depois de validar setup, testes, reprodução determinística, links, acesso anônimo e ausência de mudanças fora da pasta permitida.
+
+## Fechamento dos vídeos sem hospedagem externa
+
+Para reduzir dependências e evitar links privados, os dois vídeos passaram a ser entregues diretamente no repositório. O vídeo autoral obrigatório foi comprimido de 232,9 MB para 58,2 MB, sem cortes, em H.264 720p/30 fps com áudio AAC. A duração foi preservada, o arquivo foi decodificado integralmente e nove pontos da faixa visual foram inspecionados após a compressão. O Video Overview aprovado do NotebookLM ocupa 16,1 MB e também foi incluído.
+
+O Arcade já expõe uma rota pública que responde sem cookie ou sessão. O NotebookLM permanece privado porque fonte, prompt e exportação aprovada são entregues no próprio Git. O infográfico continua bloqueado pelo limite diário informado pela plataforma; não houve compra de upgrade nem tentativa de contornar a cota.

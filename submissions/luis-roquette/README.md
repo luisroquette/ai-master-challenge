@@ -1,11 +1,13 @@
 # Submissão — Luis Fernando Roquette — Challenge 001
 
+> **Desafio principal:** Challenge 001 — Diagnóstico de Churn. Esta submissão escolhe e entrega exclusivamente o desafio 001, conforme a regra oficial de escolher um challenge.
+
 ## Comece aqui
 
 1. [Leia em 2 minutos](solution/001-churn/deliverables/delivery-brief.md) — [versão DOCX](solution/001-churn/deliverables/delivery-brief.docx).
-2. [Veja funcionando em 90 segundos](solution/001-churn/deliverables/arcade/README.md) — Arcade em preparação.
-3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/README.md) — vídeo obrigatório em preparação.
-4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/README.md) — outputs em geração.
+2. [Veja funcionando em 90 segundos](solution/001-churn/deliverables/arcade/README.md) — tour privado revisado; publicação pendente.
+3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/README.md) — arquivo revisado; hospedagem pendente.
+4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/README.md) — vídeo aprovado; infográfico bloqueado pela cota diária.
 5. [Audite o processo](solution/001-churn/deliverables/delivery-manifest.md) — relatório, código, testes e diários.
 
 Itens externos só serão apresentados como prontos depois de publicados e validados sem autenticação.
@@ -14,7 +16,7 @@ Itens externos só serão apresentados como prontos depois de publicados e valid
 
 - **Nome:** Luis Fernando Roquette
 - **LinkedIn:** [linkedin.com/in/luisroquette](https://br.linkedin.com/in/luisroquette)
-- **Challenge escolhido:** 001 — Diagnóstico de Churn
+- **Challenge principal e único desta submissão:** 001 — Diagnóstico de Churn
 
 ## Executive Summary
 
@@ -84,13 +86,9 @@ Defini documentação como parte principal da entrega — “ganha quem document
 
 ## Evidências
 
-- [ ] Screenshots das conversas com IA — não necessários para reproduzir o trabalho
-- [ ] Screen recording do workflow — não produzido
-- [x] [Diário pré-início](process-log/000-pre-inicio.md)
-- [x] [Descoberta socrática](process-log/001-descoberta-socratica.md)
-- [x] [Otimização do plano](process-log/002-otimizacao-plano-loop.md)
-- [x] [Implementação em feedback looping](process-log/003-implementacao-feedback-looping.md)
-- [x] [Histórico Git da branch](https://github.com/luisroquette/ai-master-challenge/commits/submission/luis-roquette/)
+- [x] Narrativa escrita: [diário pré-início](process-log/000-pre-inicio.md), [descoberta socrática](process-log/001-descoberta-socratica.md), [otimização do plano](process-log/002-otimizacao-plano-loop.md), [implementação](process-log/003-implementacao-feedback-looping.md) e [entregáveis](process-log/004-planejamento-entregaveis.md).
+- [x] Git history: [evolução da branch canônica](https://github.com/luisroquette/ai-master-challenge/commits/submission/luis-roquette/).
+- [x] Vídeo autoral: arquitetura e construção documentadas em [metadados, capítulos e checksum](solution/001-churn/deliverables/video/README.md).
 
 ---
 
