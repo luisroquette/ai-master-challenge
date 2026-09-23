@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Elevar para pelo menos `9,5/10` a capacidade média do cockpit de responder às três perguntas do Head de Marketing, acrescentando profundidade multivariada, decisão financeira condicional e estratégia executável de 30 dias sem inventar causalidade ou ROI.
+**Goal:** Elevar para pelo menos `9,5/10` a capacidade média do cockpit de responder às três perguntas do Head de Marketing e à pergunta obrigatória sobre audiência, acrescentando profundidade multivariada, decisão financeira condicional e estratégia executável de 30 dias sem inventar causalidade ou ROI.
 
 **Architecture:** O processo local existente continua com Streamlit, funções puras Pandas e SQLite padrão. `analysis.py` recebe ranking contextual, cenário financeiro puro e estratégia relativa de 30 dias; o mesmo resultado determinístico alimenta UI e exports. Nenhum serviço, dependência ou segundo motor é criado.
 
@@ -14,8 +14,8 @@
 
 - Tasks 1–10 e a execução técnica da Task 11 foram implementadas e validadas; os checkboxes abaixo registram o estado executado sem apagar o plano original. A nota humana final e HR-01 permanecem pendentes.
 - A comparação de patrocínio controla também `calendar_month`; a frequência usa somente semanas ISO completas dentro do mesmo mês/contexto. O histórico CSV conserva proveniência por evento; a barreira final `export_field` cobre qualquer célula extensa antes de `analysis_field` e `history_field`.
-- Refinamento publicado localmente em `METHOD_VERSION = "2.5.0"`: 146 testes catalogados, gate focal final **45/45**, matriz técnica **15/15** e preflight completo não repetido por bypass explícito. O CSV contém seis recomendações e 6.830 registros. Artefatos correntes: `evidence.csv` SHA-256 `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`, `analysis.md` SHA-256 `d4e5ee40430d97f1430db7c95e54eb83a818eddc8e1692b63f66e5347f2b8537` e HTML reproduzido SHA-256 `0284af6d3e1a602e057feb720a1d22fc54de71aab7e5739b45332b4c78ac011f`.
-- A avaliação preliminar da IA é `9,62/10`, sem dimensão abaixo de `9,5`; a nota final permanece `PENDING` até leitura humana, sem transformar 15/15 técnico em aprovação subjetiva automática.
+- Refinamento publicado localmente em `METHOD_VERSION = "2.5.0"`: 146 testes catalogados, gate focal anterior **45/45** e matriz executiva ampliada para **20/20** na auditoria final. O CSV contém seis recomendações e 6.830 registros. Artefatos correntes: `evidence.csv` SHA-256 `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a` e `analysis.md` SHA-256 `f2e8f4929bf1bbe9e8e7395f9ab5e7b09f093919a6cfe0af364710fb0b65db54`.
+- A avaliação preliminar da IA é `9,62/10`, sem dimensão abaixo de `9,5`; a nota final permanece `PENDING` até leitura humana, sem transformar 20/20 técnico em aprovação subjetiva automática.
 - **HR-01 continua pendente**; push, PR, merge e deploy continuam não autorizados. A branch atual difere da branch exigida e só será reconciliada no gate de publicação.
 
 ## Global Constraints

@@ -3,25 +3,51 @@
 ## Sobre mim
 
 - **Nome:** Luis Roquette
-- **LinkedIn:** Não informado
+- **LinkedIn:** [linkedin.com/in/luisroquette](https://www.linkedin.com/in/luisroquette)
 - **Challenge escolhido:** 004 — Estratégia Social Media
 
 ---
 
-## As três respostas em 30 segundos
+## As quatro respostas obrigatórias em 60 segundos
 
 | Pergunta do Head de Marketing | Resposta do método 2.5 |
 |---|---|
 | **O que gera engajamento de verdade?** | **Não existe vencedor sustentado.** Nenhum dos 20 contextos avaliados passou simultaneamente amostra, materialidade, estabilidade e força. Manter o mix e testar antes de redistribuir esforço. |
 | **Vale patrocinar influenciadores?** | **Não escalar agora.** A cobertura comparável é 1,56%, a melhor força é 0,280 e não existem custos ou conversões para provar ROI. |
 | **Qual deve ser a estratégia?** | **Executar um programa controlado de 30 dias.** Validar YouTube, vídeo, estilo de vida e creators de 100.000–499.999 seguidores, preservando o mix fora do teste. |
+| **Qual perfil de audiência mais engaja?** | **Não é possível eleger um perfil.** Idade, gênero e localização tiveram 0% de cobertura em comparações controladas; inferir uma persona seria opinião, não evidência. |
 
 Analisei **52.214 posts de cinco plataformas** e construí um cockpit local que converte evidência em decisão auditável. As respostas acima são operacionais, mas não ultrapassam os dados: associação não vira causalidade e engajamento não vira ROI.
 
-## Escolha seu percurso
+## Decisões para começar na segunda-feira
 
-1. **Ver a solução:** percorra o [tour guiado de três minutos](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds), siga o [roteiro de cinco minutos](./solution/004-social/README.md#roteiro-de-cinco-minutos), leia a [análise executiva](./solution/004-social/analysis.md) e consulte as [evidências reproduzíveis](./solution/004-social/evidence.csv).
-2. **Entender a construção:** leia o [estudo de caso](./docs/004-social/CONSTRUCTION-STORY.md), assista ao [vídeo explicativo](./docs/004-social/assets/notebooklm-video.mp4), veja a [evolução dos prompts](./docs/004-social/assets/methodology-evolution.png), o [mapa mental](./docs/004-social/assets/notebooklm-mind-map.png) e o [infográfico executivo](./docs/004-social/assets/notebooklm-infographic.png), ou abra as versões [DOCX](./docs/004-social/CONSTRUCTION-STORY.docx) e [texto simples](./docs/004-social/CONSTRUCTION-STORY.txt). O [manifesto](./docs/004-social/DELIVERY-MANIFEST.md) registra hashes e estado dos links; o [diário integral](./process-log/004-social.md) conserva todas as decisões.
+- **Concentrar esforço:** validar YouTube / vídeo / estilo de vida / creators de 100.000–499.999 durante 30 dias, sem alterar o restante do mix.
+- **Cadência:** testar a mediana observada de um post por creator por semana completa; tratar como hipótese, não frequência ótima.
+- **Patrocínio:** não escalar; exigir custo, conversão, três meses estáveis, força ≥0,40 e cenário abaixo do ponto de equilíbrio. Nenhum threshold de seguidores justifica investimento sozinho.
+- **Parar agora:** interromper a escala irrestrita de patrocínio e decisões baseadas em médias globais; não cancelar contratos por um único sinal fraco.
+- **Quick win:** preparar o brief do contexto prioritário, registrar o baseline e iniciar a primeira janela de sete dias.
+
+## Percurso executivo — menos de cinco minutos
+
+1. Leia as quatro respostas e decisões acima — **1 minuto**.
+2. Percorra o [tour do produto no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds) — **3 minutos**.
+
+## Construção — artefatos obrigatórios da entrega
+
+- [Vídeo de arquitetura apresentado pelo autor](./docs/004-social/assets/architecture-walkthrough-captioned.mp4) — **6min06s**, fora do percurso executivo de cinco minutos
+
+### Síntese visual do NotebookLM
+
+- [Vídeo-síntese](./docs/004-social/assets/notebooklm-video.mp4)
+- [Mapa mental](./docs/004-social/assets/notebooklm-mind-map.png)
+- [Infográfico executivo](./docs/004-social/assets/notebooklm-infographic.png)
+
+### Auditoria e anexos
+
+- [Estudo de caso em Markdown](./docs/004-social/CONSTRUCTION-STORY.md) e [DOCX](./docs/004-social/CONSTRUCTION-STORY.docx)
+- [Evolução prompt → produto](./docs/004-social/assets/methodology-evolution.png)
+- [Análise executiva](./solution/004-social/analysis.md) e [evidências reproduzíveis](./solution/004-social/evidence.csv)
+- [Diário integral](./process-log/004-social.md) e [manifesto da entrega](./docs/004-social/DELIVERY-MANIFEST.md)
 
 ---
 
@@ -102,29 +128,13 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ---
 
-## Evidências
+## Auditoria completa
 
-- [x] [Estudo de caso da construção](./docs/004-social/CONSTRUCTION-STORY.md)
-- [x] [Estudo de caso em DOCX](./docs/004-social/CONSTRUCTION-STORY.docx)
-- [x] [Linha do tempo prompt → produto](./docs/004-social/assets/methodology-evolution.png)
-- [x] [Mapa mental da construção](./docs/004-social/assets/notebooklm-mind-map.png)
-- [x] [Infográfico executivo](./docs/004-social/assets/notebooklm-infographic.png)
-- [x] [Vídeo explicativo do NotebookLM](./docs/004-social/assets/notebooklm-video.mp4)
-- [x] [Manifesto com hashes e estado dos links](./docs/004-social/DELIVERY-MANIFEST.md)
-- [x] [Tour guiado público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds)
-- [x] [Fonte, método e qualidade](./process-log/evidence/004/cockpit-source-quality-proof.png)
-- [x] [Fila integral, quarta ação e componentes](./process-log/evidence/004/cockpit-audience-priority-proof.png)
-- [x] [Alvo, benchmark e amostra](./process-log/evidence/004/cockpit-priority-context-proof.png)
-- [x] [Snapshot histórico e contrato de reenvio pelo mesmo hash](./process-log/evidence/004/cockpit-history-snapshot-proof.png)
-- [x] [SIMULAÇÃO retrospectiva e futuro pendente](./process-log/evidence/004/cockpit-outcomes-proof.png)
-- [x] [Diário completo, incluindo as 24 ondas e correções](./process-log/004-social.md)
-- [x] [Pesquisa anterior ao framework](./research/004-social.md)
-- [x] [Análise executiva](./solution/004-social/analysis.md)
-- [x] [Evidências exportadas](./solution/004-social/evidence.csv)
-- [x] [Setup e demonstração](./solution/004-social/README.md)
-- [x] Git history local; PR depende dos gates finais de links e preflight
-- [x] Tour Arcade de sete etapas publicado e verificado sem sessão
-- [ ] HR-01 humano cronometrado
+- [x] **Produto:** [tour público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds), [setup e roteiro](./solution/004-social/README.md) e [vídeo obrigatório de arquitetura](./docs/004-social/assets/architecture-walkthrough-captioned.mp4), preservado fora da rota executiva de cinco minutos
+- [x] **NotebookLM:** [vídeo](./docs/004-social/assets/notebooklm-video.mp4), [mapa mental](./docs/004-social/assets/notebooklm-mind-map.png) e [infográfico](./docs/004-social/assets/notebooklm-infographic.png), entregues como arquivos sem acesso à conta proprietária
+- [x] **Construção:** [estudo de caso](./docs/004-social/CONSTRUCTION-STORY.md), [DOCX](./docs/004-social/CONSTRUCTION-STORY.docx), [linha do tempo](./docs/004-social/assets/methodology-evolution.png), [pesquisa](./research/004-social.md) e [diário](./process-log/004-social.md)
+- [x] **Resultados:** [análise](./solution/004-social/analysis.md), [evidence.csv](./solution/004-social/evidence.csv), [provas visuais](./process-log/evidence/004/) e [manifesto com hashes](./docs/004-social/DELIVERY-MANIFEST.md)
+- [ ] **Validação humana:** HR-01 cronometrado permanece pendente
 
 ---
 

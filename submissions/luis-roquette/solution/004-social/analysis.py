@@ -2097,13 +2097,18 @@ def content_strategy_30d(result: dict[str, object]) -> dict[str, object]:
 def executive_answers(
     result: dict[str, object], financial_scenario: dict[str, object] | None = None
 ) -> list[dict[str, str]]:
-    """Answer the Head's three questions from deterministic observed evidence."""
+    """Answer every mandatory challenge question from deterministic evidence."""
     metrics = result.get("metrics", {})
     posts = int(metrics.get("posts", 0))
     count = lambda value: f"{int(value):,}".replace(",", ".")
     decimal = lambda value, digits: f"{float(value):.{digits}f}".replace(".", ",")
     signed = lambda value, digits: f"{float(value):+.{digits}f}".replace(".", ",")
-    questions = ("O que gera engajamento?", "Vale patrocinar influenciadores?", "Qual deve ser a estratégia?")
+    questions = (
+        "O que gera engajamento?",
+        "Vale patrocinar influenciadores?",
+        "Qual deve ser a estratégia?",
+        "Qual perfil de audiência mais engaja?",
+    )
     if not result.get("analysis_state", {}).get("has_observations", posts > 0):
         return [
             {
@@ -2229,7 +2234,54 @@ def executive_answers(
         "evidence_id": str(program["evidence_id"]),
         "change_trigger": "A decisão mudaria na semana 4 conforme força, materialidade, concordância temporal e guards de volume.",
     }
-    return [engagement, sponsorship_answer, strategy]
+
+    audience_overviews = list(result.get("audience", []))
+    audience_pairs = [
+        pair
+        for overview in audience_overviews
+        for pair in overview.get("comparisons", [])
+    ]
+    max_coverage = max((float(item.get("coverage", 0)) for item in audience_overviews), default=0.0)
+    total_eligible = sum(int(item.get("eligible_strata", 0)) for item in audience_overviews)
+    total_strata = sum(int(item.get("total_strata", 0)) for item in audience_overviews)
+    max_cell = max((int(item.get("max_cell_defined_rates", 0)) for item in audience_overviews), default=0)
+    if audience_pairs:
+        strongest = max(audience_pairs, key=lambda item: abs(float(item.get("delta_erv_pp", 0))))
+        context = strongest["context"]
+        audience = {
+            "question": questions[3],
+            "verdict": "NÃO HÁ PERFIL GLOBAL COMPROVADO; EXISTEM APENAS SINAIS CONTEXTUAIS",
+            "kpi": f"Maior diferença contextual observada: {signed(strongest['delta_erv_pp'], 3)} p.p.",
+            "comparison": (
+                f"{context['target_label']} vs. {context['comparator_label']} em "
+                f"{_executive_context(context)}; comparação observacional, não persona vencedora."
+            ),
+            "sample": (
+                f"{count(strongest['target']['posts'])} vs. {count(strongest['comparator']['posts'])} posts; "
+                f"{total_eligible}/{total_strata} estratos elegíveis."
+            ),
+            "action": "Usar o sinal somente como hipótese no mesmo contexto; não segmentar verba por persona global.",
+            "strength": f"Força heurística C={decimal(strongest.get('strength', 0), 3)}.",
+            "coverage": f"Cobertura controlada máxima por dimensão: {decimal(100 * max_coverage, 2)}%.",
+            "stability": "Estabilidade: não mensurável entre meses no contrato atual.",
+            "evidence_id": str(strongest["evidence_id"]),
+            "change_trigger": "A decisão mudaria com pares elegíveis recorrentes no mesmo contexto e estabilidade temporal suficiente.",
+        }
+    else:
+        audience = {
+            "question": questions[3],
+            "verdict": "NÃO HÁ PERFIL GLOBAL COMPROVADO; DADOS INSUFICIENTES PARA ELEGER UMA AUDIÊNCIA",
+            "kpi": f"Cobertura controlada máxima por dimensão: {decimal(100 * max_coverage, 2)}%.",
+            "comparison": "Idade, gênero e localização não formaram pares elegíveis dentro do mesmo contexto comparável.",
+            "sample": f"{total_eligible}/{total_strata} estratos elegíveis; maior célula com {count(max_cell)} taxas definidas.",
+            "action": "Coletar pares de audiência comparáveis; não inventar persona nem redistribuir verba por rótulo marginal.",
+            "strength": "Força: não mensurável.",
+            "coverage": f"Cobertura controlada máxima por dimensão: {decimal(100 * max_coverage, 2)}%.",
+            "stability": "Estabilidade: não mensurável.",
+            "evidence_id": str(audience_overviews[0].get("evidence_id", "sem-evidência")) if audience_overviews else "sem-evidência",
+            "change_trigger": "A decisão mudaria quando dois rótulos no mesmo contexto tiverem ao menos 30 taxas e cinco creators por braço.",
+        }
+    return [engagement, sponsorship_answer, strategy, audience]
 
 
 def executive_summary(
@@ -2282,7 +2334,7 @@ def executive_summary(
                 f"<b>{int(metrics.get('interactions', 0))} interações</b>")
     else:
         kpis = f"<b>{html.escape(str(state.get('message', 'Nenhum registro corresponde ao recorte.')))}</b>"
-    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}h3{{margin:.2em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}.answers{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}.answers article{{border:1px solid #9aa;padding:12px}}.answers strong{{display:block}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #9aa;padding:6px;text-align:left;vertical-align:top}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\">{kpis}</div><h2>Três respostas para o Head de Marketing</h2><section class=\"answers\">{answers_html}</section><h2>Estratégia de conteúdo — 30 dias</h2><table><thead><tr><th>Semana</th><th>Janela</th><th>Responsável</th><th>Ação</th><th>Métrica</th><th>Cadência</th><th>Gate</th></tr></thead><tbody>{strategy_html}</tbody></table><p><b>Regra:</b> preservar o mix fora dos testes; nenhuma publicação ou verba é executada automaticamente.</p><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
+    return f"""<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Resumo executivo social</title><style>@page{{size:A4;margin:12mm}}body{{font:14px system-ui;max-width:900px;margin:auto;color:#17202a;overflow-wrap:anywhere}}h1,h2{{margin:.5em 0}}h3{{margin:.2em 0}}small{{color:#566}}.kpi{{display:flex;gap:2rem}}.answers{{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}}.answers article{{border:1px solid #9aa;padding:12px}}.answers strong{{display:block}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #9aa;padding:6px;text-align:left;vertical-align:top}}li{{margin:.25em 0}}@media print{{body{{font-size:10px}}h1{{font-size:20px}}h2{{font-size:14px}}details{{display:none}}}}</style></head><body><h1>Resumo executivo social</h1><p>Fonte {html.escape(str(source.get('source_hash', '')))} · {int(source.get('rows', 0))} linhas</p><p>{html.escape(_short(_scope_text(result), 650))}</p><div class=\"kpi\">{kpis}</div><h2>Quatro respostas obrigatórias do challenge</h2><section class=\"answers\">{answers_html}</section><h2>Estratégia de conteúdo — 30 dias</h2><table><thead><tr><th>Semana</th><th>Janela</th><th>Responsável</th><th>Ação</th><th>Métrica</th><th>Cadência</th><th>Gate</th></tr></thead><tbody>{strategy_html}</tbody></table><p><b>Regra:</b> preservar o mix fora dos testes; nenhuma publicação ou verba é executada automaticamente.</p><h2>Prioridades</h2><ol>{priorities}</ol><p><small>Atualidade = 2^(−idade em dias/7); o histórico completo pode gerar scores muito pequenos, não oportunidades atuais. Ordem e componentes completos no CSV.</small></p><h2>Evidências e cobertura</h2><ul>{findings}</ul><p>{html.escape(_coverage_text(result))} {html.escape(warnings)}</p><h2>Decisões recentes desta fonte</h2><ul>{decisions_html}</ul><p>Textos longos abreviados com …; detalhes integrais no CSV. <b>Limite:</b> associação observacional; sem investimento, receita ou conversão não há ROI financeiro nem causalidade.</p></body></html>"""
 
 
 def analysis_report(
@@ -2318,7 +2370,7 @@ def analysis_report(
             f"Métricas de performance não definidas para este recorte. Evidência: `{summary_id}`."
         )
 
-    lines = ["# Estratégia Social Media — Challenge 004", "", "## Três respostas para o Head de Marketing", ""]
+    lines = ["# Estratégia Social Media — Challenge 004", "", "## Quatro respostas obrigatórias do challenge", ""]
     for item in executive_answers(result, financial_scenario):
         lines += [f"### {text(item['question'])}", "", f"**{text(item['verdict'])}**", "",
                   f"- KPI: {text(item['kpi'])}", f"- Comparação: {text(item['comparison'])}",

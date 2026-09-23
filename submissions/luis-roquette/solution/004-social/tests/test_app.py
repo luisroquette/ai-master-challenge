@@ -355,8 +355,8 @@ class AppTests(unittest.TestCase):
             app.file_uploader[0].set_value(("mixed.csv", raw, "text/csv")).run()
             self.assertEqual((validate.call_count, provenance.call_count, engine.call_count), (1, 1, 2))
             head_answers = app.session_state["head_answers"]
-            self.assertEqual(len(head_answers), 3)
-            self.assertIn("Três respostas para o Head de Marketing", [item.value for item in app.subheader])
+            self.assertEqual(len(head_answers), 4)
+            self.assertIn("Quatro respostas obrigatórias do challenge", [item.value for item in app.subheader])
             rendered = "\n".join(item.value for item in app.markdown)
             self.assertTrue(all(item["verdict"] in rendered for item in head_answers))
 

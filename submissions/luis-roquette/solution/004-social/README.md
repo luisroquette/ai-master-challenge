@@ -1,6 +1,6 @@
 # Cockpit de Social Media — Challenge 004
 
-Aplicação local que valida o CSV do desafio, responde na abertura às três perguntas do Head de Marketing com base no histórico completo, produz análise contextual reproduzível, prioriza ações, registra decisões humanas em SQLite e exporta o mesmo resultado em HTML e CSV.
+Aplicação local que valida o CSV do desafio, responde na abertura às quatro perguntas obrigatórias com base no histórico completo, produz análise contextual reproduzível, prioriza ações, registra decisões humanas em SQLite e exporta o mesmo resultado em HTML e CSV.
 
 ## Instalação
 
@@ -33,11 +33,11 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-O refinamento 2.5 catalogou **146 testes**; o gate focal final aprovou **45/45**. O preflight completo não foi repetido por bypass explícito e continua obrigatório antes de PR. A CLI real foi regenerada e repetida byte a byte: `evidence.csv` SHA-256 `e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`, `analysis.md` `d4e5ee40430d97f1430db7c95e54eb83a818eddc8e1692b63f66e5347f2b8537` e HTML `0284af6d3e1a602e057feb720a1d22fc54de71aab7e5739b45332b4c78ac011f`. O CSV contém seis recomendações e 6.830 registros; a última prova A4 completa permanece a da Passada 7.
+O refinamento 2.5 catalogou **146 testes**; o gate focal anterior aprovou **45/45** e a auditoria final ampliou a matriz executiva para **20/20**. O preflight completo do SHA final continua obrigatório. O CSV permanece byte a byte idêntico (`e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`); o Markdown aderente às quatro respostas tem SHA-256 `f2e8f4929bf1bbe9e8e7395f9ab5e7b09f093919a6cfe0af364710fb0b65db54`. O CSV contém seis recomendações e 6.830 registros; a última prova A4 completa permanece a da Passada 7.
 
 As três prioridades executivas do método 2.5.0 são `sponsorship-fec1a70afd70ad88`, `sponsorship-0d364864017b2146` e `sponsorship-aae70c7cbea56355`. O CSV preserva ainda `sponsorship-580416ff6bbd90ab`, `sponsorship-90ca1125d3824a6d` e `sponsorship-9332c8416ba393aa`.
 
-As respostas executivas atuais são inequívocas: não existe vencedor orgânico sustentado para redistribuir o mix; patrocínio não deve ser escalado sem dados financeiros e evidência mais forte; e o melhor candidato elegível deve passar por um programa de validação de 30 dias. A matriz técnica cobre 15/15 itens. A avaliação preliminar da IA é `9,62/10`; a nota final permanece `PENDING` até leitura humana de Luis ou avaliador designado.
+As respostas executivas atuais são inequívocas: não existe vencedor orgânico sustentado para redistribuir o mix; patrocínio não deve ser escalado sem dados financeiros e evidência mais forte; o melhor candidato elegível deve passar por um programa de validação de 30 dias; e não existe cobertura controlada suficiente para eleger um perfil de audiência. A matriz técnica cobre 20/20 itens. A avaliação preliminar da IA é `9,62/10`; a nota final permanece `PENDING` até leitura humana de Luis ou avaliador designado.
 
 ## Executar o cockpit
 

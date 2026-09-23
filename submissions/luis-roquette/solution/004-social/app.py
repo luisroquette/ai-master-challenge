@@ -121,7 +121,7 @@ def _render_design_system() -> None:
 
         .head-answers {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 1rem;
           margin: 1rem 0 2rem;
         }
@@ -320,7 +320,7 @@ def _render_head_answers(answers: list[dict[str, str]]) -> None:
         </article>"""
         for item in answers
     )
-    st.subheader("Três respostas para o Head de Marketing")
+    st.subheader("Quatro respostas obrigatórias do challenge")
     st.markdown(f'<section class="head-answers">{cards}</section>', unsafe_allow_html=True)
 
 
@@ -511,7 +511,7 @@ else:
 
     head_answer_key = (str(metadata["source_hash"]), METHOD_VERSION)
     if st.session_state.get("head_answer_key") != head_answer_key:
-        with st.spinner("Consolidando as três respostas no histórico completo…"):
+        with st.spinner("Consolidando as quatro respostas no histórico completo…"):
             history_scope = {
                 "target_start": min(active_frame["post_date"]).isoformat(),
                 "target_end": max(active_frame["post_date"]).isoformat(),

@@ -1001,3 +1001,19 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Correção do executor:** a primeira chamada continha um SHA digitado incorretamente na asserção do próprio comando. O produto não foi executado nessa tentativa; o SHA foi conferido no Git e a chamada foi corrigida.
 - **Evidência confirmada:** `pip check` retornou `No broken requirements found`; a descoberta integral executou **146 testes em 68,762 segundos**, todos aprovados (`OK`).
 - **Integridade do relato:** o shell remoto não devolveu um status terminal inequívoco depois da suíte. Portanto, esta passagem não é declarada como preflight completo; `compileall`, `git diff --check`, árvore limpa e saída zero serão novamente exigidos no SHA documental final antes do PR.
+
+## I78 — Enxugamento da jornada e vídeo obrigatório de arquitetura — 2026-09-22
+
+- **Decisão de Luis:** otimizar a entrega para um avaliador humano com pouco tempo, sem descartar os materiais já criados no NotebookLM, e tornar obrigatório o vídeo em que o próprio autor explica a arquitetura.
+- **Hierarquia final:** o README funciona como porta de entrada; o avaliador lê as três respostas, percorre o Arcade e assiste ao vídeo de arquitetura. Vídeo-síntese, mapa mental e infográfico do NotebookLM permanecem entregues em uma rota visual secundária. Estudo de caso, DOCX, linha do tempo, análise, evidências e diário ficam agrupados como auditoria e anexos.
+- **Tratamento do vídeo:** a fonte aprovada tinha 232.879.349 bytes, acima do limite normal de 100 MB do GitHub. Foi criada uma cópia H.264/AAC de 1.280 × 720 px e 46.065.676 bytes, sem cortes, preservando a duração de 6min05s e as legendas incorporadas. Hash da fonte: `a968a524dbe45443a066717e5d63523e5336f958fb3a6dcd50d0d0887dbbea4a`; hash entregue: `3bd2642074715c082212388c9672aa3afcd8a1037351f071736661e33125f907`.
+- **Validação:** o MP4 otimizado decodificou integralmente; duração, codecs e cinco pares de quadros distribuídos foram comparados com o original. As legendas permaneceram legíveis e não foi encontrada perda material de conteúdo.
+- **Gate humano:** README, manifesto e vídeo serão apresentados a Luis antes de qualquer commit, push ou atualização do PR. A aprovação explícita continua obrigatória para a entrega.
+
+## I79 — Auditoria final de aderência às regras — 2026-09-22
+
+- **Decisão de Luis:** a submissão deve atingir aderência integral ao challenge, ao guia de submissão, ao template e às regras de PR; qualquer requisito esquecido deve ser corrigido antes da entrega.
+- **Achados:** a auditoria encontrou quatro lacunas de apresentação ou submissão: resposta obrigatória de audiência escondida, percurso recomendado superior a cinco minutos, decisões de frequência/threshold/parada/quick win dispersas e LinkedIn não preenchido. Também identificou conflito externo com a regra de um PR por pessoa.
+- **Correções de conteúdo:** o contrato executivo passou a responder também qual perfil de audiência mais engaja. Para o dataset real, o veredicto é não eleger uma persona: idade, gênero e localização tiveram 0% de cobertura em comparações controladas. README, dashboard, HTML e Markdown compartilham a mesma quarta resposta.
+- **Correções de entrega:** o percurso executivo passou a durar aproximadamente quatro minutos — leitura e Arcade. O vídeo de arquitetura continua obrigatório como artefato, mas não bloqueia a compreensão do output em cinco minutos. O README agora explicita esforço, cadência, política/threshold de patrocínio, o que parar e o quick win da semana, além do LinkedIn confirmado publicamente.
+- **Gate de publicação:** testes focais, regeneração dos artefatos, preflight remoto, atualização do PR #145 e retirada dos PRs conflitantes serão registrados após execução. Nenhuma dessas etapas é declarada concluída antecipadamente.

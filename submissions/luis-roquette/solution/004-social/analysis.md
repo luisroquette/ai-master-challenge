@@ -1,6 +1,6 @@
 # Estratégia Social Media — Challenge 004
 
-## Três respostas para o Head de Marketing
+## Quatro respostas obrigatórias do challenge
 
 ### O que gera engajamento?
 
@@ -43,6 +43,20 @@
 - Estabilidade herdada: 100,0%.
 - Muda se: A decisão mudaria na semana 4 conforme força, materialidade, concordância temporal e guards de volume.
 - Evidência: `strategy-1c37897aa175be7d`
+
+### Qual perfil de audiência mais engaja?
+
+**NÃO HÁ PERFIL GLOBAL COMPROVADO; DADOS INSUFICIENTES PARA ELEGER UMA AUDIÊNCIA**
+
+- KPI: Cobertura controlada máxima por dimensão: 0,00%.
+- Comparação: Idade, gênero e localização não formaram pares elegíveis dentro do mesmo contexto comparável.
+- Amostra: 0/26.247 estratos elegíveis; maior célula com 23 taxas definidas.
+- Ação: Coletar pares de audiência comparáveis; não inventar persona nem redistribuir verba por rótulo marginal.
+- Força: não mensurável.
+- Cobertura controlada máxima por dimensão: 0,00%.
+- Estabilidade: não mensurável.
+- Muda se: A decisão mudaria quando dois rótulos no mesmo contexto tiverem ao menos 30 taxas e cinco creators por braço.
+- Evidência: `audience-overview-17f51703b8f049dc`
 
 ## Estratégia de conteúdo — 30 dias
 

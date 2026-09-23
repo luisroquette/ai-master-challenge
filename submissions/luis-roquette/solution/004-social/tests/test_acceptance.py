@@ -26,10 +26,10 @@ def result_with_full_executive_evidence() -> dict[str, object]:
 
 
 class PublishedAnalysisAcceptanceTests(unittest.TestCase):
-    def test_three_executive_answers_cover_the_fifteen_item_matrix(self):
+    def test_four_executive_answers_cover_the_required_matrix(self):
         result = result_with_full_executive_evidence()
         answers = executive_answers(result)
-        self.assertEqual(len(answers), 3)
+        self.assertEqual(len(answers), 4)
         for answer in answers:
             self.assertTrue(answer["verdict"])
             self.assertTrue(answer["comparison"] and answer["evidence_id"])
@@ -95,7 +95,7 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
             with self.subTest(term=term):
                 self.assertIn(term, report)
 
-    def test_report_answers_the_heads_three_questions_with_kpis_and_actions(self):
+    def test_report_answers_all_mandatory_questions_with_kpis_and_actions(self):
         report = (ROOT / "analysis.md").read_text(encoding="utf-8")
         required = {
             "O que gera engajamento?": (
@@ -110,15 +110,19 @@ class PublishedAnalysisAcceptanceTests(unittest.TestCase):
                 "EXECUTAR PROGRAMA DE 30 DIAS PARA VALIDAR YOUTUBE / VÍDEO / ESTILO DE VIDA / 100.000–499.999",
                 "4 semanas", "C=0,950", "3 meses elegíveis", "Ação:",
             ),
+            "Qual perfil de audiência mais engaja?": (
+                "NÃO HÁ PERFIL GLOBAL COMPROVADO", "Cobertura controlada",
+                "Ação:",
+            ),
         }
         executive = report.split("## Decisão para segunda-feira", 1)[0]
-        self.assertEqual(executive.count("- KPI:"), 3)
-        self.assertEqual(executive.count("- Comparação:"), 3)
-        self.assertEqual(executive.count("- Amostra:"), 3)
-        self.assertEqual(executive.count("- Ação:"), 3)
-        self.assertEqual(executive.count("- Estabilidade"), 3)
-        self.assertEqual(executive.count("- Muda se:"), 3)
-        self.assertEqual(executive.count("- Evidência:"), 3)
+        self.assertEqual(executive.count("- KPI:"), 4)
+        self.assertEqual(executive.count("- Comparação:"), 4)
+        self.assertEqual(executive.count("- Amostra:"), 4)
+        self.assertEqual(executive.count("- Ação:"), 4)
+        self.assertEqual(executive.count("- Estabilidade"), 4)
+        self.assertEqual(executive.count("- Muda se:"), 4)
+        self.assertEqual(executive.count("- Evidência:"), 4)
         for question, evidence in required.items():
             section = executive.split(f"### {question}", 1)[1].split("### ", 1)[0]
             for expected in evidence:
