@@ -20,7 +20,7 @@
 - Não gerar mapa mental, slide deck ou landing page.
 - Publicação dos vídeos, Arcade e PR upstream exige confirmação final de Luis.
 - Nenhum push final ou PR ocorre antes de todos os gates abaixo estarem verdes.
-- Os quatro desafios serão consolidados na única branch `submission/luis-roquette` e no único PR permitido por pessoa.
+- O Challenge 001 é o desafio principal e único desta submissão; será publicado na branch `submission/luis-roquette` e no único PR permitido por pessoa.
 
 ## Review Focus
 
@@ -229,17 +229,17 @@ Registrar URL, checksum, data, formato, status e limitação. Resumir a quantida
 
 Fast-forward da branch local `submission/luis-roquette` para o commit integralmente validado e consolidar nela os Challenges 002, 003 e 004. O regulamento permite mais de um desafio, mas somente um PR por pessoa. Confirmar que `git diff --name-only upstream/main...submission/luis-roquette` contém exclusivamente `submissions/luis-roquette/`.
 
-Auditoria remota de 22 de setembro de 2026: PRs #140 e #141 estão fechadas; a PR #145 está aberta na branch não canônica `submission/luis-roquette-004-social`. Antes do envio final, decidir a migração para a branch canônica sem abrir dois PRs simultâneos.
+Auditoria remota de 22 de setembro de 2026: PRs #140 e #141 estão fechadas; a PR #145 está aberta na branch não canônica `submission/luis-roquette-004-social`. Antes do envio final, encerrar a PR #145 e publicar somente o Challenge 001 na branch canônica, sem manter dois PRs simultâneos.
 
 - [ ] **Step 6: executar o gate formal do PR**
 
-Validar README contra `templates/submission-template.md`, instruções de setup, solução, Process Log, data final, histórico Git e todos os links em sessão anônima. Executar o setup e o gate canônico do Challenge 001 no Codespace a partir do SHA final. O único PR para `upstream/main` usará o título consolidado `[Submission] Luis Fernando Roquette — Challenges 001–004`.
+Validar README contra `templates/submission-template.md`, instruções de setup, solução, Process Log, data final, histórico Git e todos os links em sessão anônima. Executar o setup e o gate canônico do Challenge 001 no Codespace a partir do SHA final. O único PR para `upstream/main` usará o título `[Submission] Luis Fernando Roquette — Challenge 001`.
 
 Conferir uma matriz final com: cinco tabelas cruzadas; causa ou abstenção justificada; segmentos e contas específicas; recomendações priorizadas com impacto estimado; correlação separada de causalidade; leitura executiva; solução funcional; Process Log com ferramentas, decomposição, erros, contribuição humana e contagem de iterações.
 
 - [ ] **Step 7: parar antes do push final e do PR**
 
-Somente declarar 100% quando conteúdo, mídia, branch, diff, setup e links estiverem verdes. Apresentar a prova a Luis e aguardar sua confirmação explícita antes de qualquer publicação externa ou abertura do PR.
+Somente declarar 100% quando conteúdo, mídia, branch, diff, setup e links estiverem verdes. Luis autorizou concluir e publicar após todos os gates objetivos passarem.
 
 ## Self-review
 

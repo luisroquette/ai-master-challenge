@@ -5,12 +5,12 @@
 ## Comece aqui
 
 1. [Leia em 2 minutos](solution/001-churn/deliverables/delivery-brief.md) — [versão DOCX](solution/001-churn/deliverables/delivery-brief.docx).
-2. [Veja funcionando em 90 segundos](solution/001-churn/deliverables/arcade/README.md) — tour privado revisado; publicação pendente.
-3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/README.md) — arquivo revisado; hospedagem pendente.
-4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/README.md) — vídeo aprovado; infográfico bloqueado pela cota diária.
+2. [Veja funcionando em 90 segundos](https://app.arcade.software/share/aIAtdPLJilhZOtM7ao5O) — tour público; [roteiro e validação](solution/001-churn/deliverables/arcade/README.md).
+3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/architecture-overview.mp4) — vídeo autoral; [metadados e capítulos](solution/001-churn/deliverables/video/README.md).
+4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/paradoxo-de-churn-do-ceo.mp4) — vídeo aprovado; [auditoria e limite do infográfico](solution/001-churn/deliverables/notebooklm/README.md).
 5. [Audite o processo](solution/001-churn/deliverables/delivery-manifest.md) — relatório, código, testes e diários.
 
-Itens externos só serão apresentados como prontos depois de publicados e validados sem autenticação.
+O Arcade foi validado sem autenticação. Os vídeos são entregues no próprio repositório; o infográfico permanece explicitamente bloqueado pela cota diária do NotebookLM.
 
 ## Sobre mim
 
@@ -74,7 +74,7 @@ Os dados são observacionais, contraditórios e aparentemente sintéticos. Não 
 4. Implementei cada fase em `Planejamento → Revisão → Execução → Teste`, repetindo quando um gate falhou.
 5. Mantive decisões, erros, correções e provas em diários contemporâneos.
 
-**Iterações registradas:** 5 ondas socráticas com 25 decisões, 20 passadas de otimização do primeiro plano, 9 fases de implementação, 3 rodadas de redundância e 5 rodadas de lapidação visual. A suíte final executa 42 testes.
+**Iterações registradas:** 5 ondas socráticas com 25 decisões, 20 passadas de otimização do primeiro plano, 9 fases de implementação, 3 rodadas de redundância e 5 rodadas de lapidação visual. A suíte final executa 86 testes.
 
 ### Onde a IA errou e como corrigi
 
@@ -92,4 +92,4 @@ Defini documentação como parte principal da entrega — “ganha quem document
 
 ---
 
-_Submissão preparada em: 22 de setembro de 2026. A data final será confirmada no envio do PR._
+_Submissão preparada em: 23 de setembro de 2026._

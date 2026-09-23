@@ -428,6 +428,14 @@ def _iso_date(value: object) -> str | None:
     return str(pd.Timestamp(value).date())
 
 
+def _stable_number(value: object) -> object:
+    if isinstance(value, (np.integer, np.floating)):
+        value = value.item()
+    if isinstance(value, float) and np.isfinite(value):
+        return round(value, 15)
+    return value
+
+
 def _claim(
     claim_id: str,
     statement: str,
@@ -457,19 +465,19 @@ def _claim(
         "evidence_level": evidence_level,
         "confidence_label": EVIDENCE_CONFIDENCE_LABELS.get(str(evidence_level), "Baixa confiança"),
         "status": status,
-        "value": value,
+        "value": _stable_number(value),
         "unit": unit,
-        "numerator": numerator,
-        "denominator": denominator,
+        "numerator": _stable_number(numerator),
+        "denominator": _stable_number(denominator),
         "population": population,
         "period_start": _iso_date(period_start),
         "period_end": _iso_date(period_end),
         "comparator_id": comparator_id,
         "uncertainty": {
             "method": uncertainty_method,
-            "level": uncertainty_level,
-            "low": uncertainty_low,
-            "high": uncertainty_high,
+            "level": _stable_number(uncertainty_level),
+            "low": _stable_number(uncertainty_low),
+            "high": _stable_number(uncertainty_high),
             "reason": uncertainty_reason,
         },
         "evidence_ids": evidence_ids,
@@ -527,7 +535,7 @@ def _build_ceo_answer(result: AnalysisResult) -> dict[str, object]:
         "row_key": {"scope": "quality_report"},
         "columns": ["rows", "contradictions"],
         "calculation": "build_quality_report",
-        "source_tables": list(result.quality_report.get("rows", {})),
+        "source_tables": sorted(result.quality_report.get("rows", {})),
         "period_start": None,
         "period_end": str(OBSERVATION_END.date()),
         "population": "all_input_rows",

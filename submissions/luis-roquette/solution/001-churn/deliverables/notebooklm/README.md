@@ -28,6 +28,8 @@ O notebook-fonte não precisa ser público: a fonte, os prompts, o vídeo aprova
 
 Em 22 de setembro de 2026, o NotebookLM informou: “Você atingiu seu limite diário de infográficos. Volte mais tarde.” Nenhum upgrade foi contratado. A geração deverá ser repetida após a renovação do limite.
 
+A cota foi consultada novamente em 23 de setembro de 2026 e a mesma mensagem permaneceu. O infográfico não é declarado como concluído.
+
 ## Controle de qualidade do vídeo
 
 A primeira geração, “O Paradoxo do Churn e as Métricas Ilusórias”, foi rejeitada. Embora preservasse os números e a ausência de causa demonstrada, um quadro dizia “6 hipóteses rejeitadas”; o diagnóstico canônico diz que as seis hipóteses são inconclusivas. O prompt foi corrigido uma vez.

@@ -235,6 +235,39 @@ def test_analysis_id_is_stable_and_non_recursive(analysis_result, tmp_path) -> N
     )
 
 
+def test_ceo_answer_orders_quality_source_tables_deterministically(analysis_result) -> None:
+    rows = analysis_result.quality_report["rows"]
+    reordered_result = replace(
+        analysis_result,
+        quality_report={
+            **analysis_result.quality_report,
+            "rows": dict(reversed(list(rows.items()))),
+        },
+    )
+
+    first = _build_ceo_answer(analysis_result)["evidence_refs"]["quality:report"]
+    reordered = _build_ceo_answer(reordered_result)["evidence_refs"]["quality:report"]
+
+    assert first["source_tables"] == reordered["source_tables"] == sorted(rows)
+
+
+def test_ceo_answer_rounds_machine_precision_noise(analysis_result) -> None:
+    monthly_churn = analysis_result.monthly_churn.copy()
+    recent_index = monthly_churn.loc[
+        monthly_churn["period_kind"].eq("comparison_period")
+        & monthly_churn["dimension"].eq("all")
+        & monthly_churn["segment"].eq("all")
+    ].sort_values("period_end").index[-1]
+    monthly_churn.loc[recent_index, "rate_difference"] += 4e-17
+
+    original = _build_ceo_answer(analysis_result)["blocks"][0]["claims"][0]
+    perturbed = _build_ceo_answer(
+        replace(analysis_result, monthly_churn=monthly_churn)
+    )["blocks"][0]["claims"][0]
+
+    assert original["value"] == perturbed["value"]
+
+
 def test_queue_and_report_use_same_finding_ids(analysis_result, tmp_path) -> None:
     paths = publish_artifacts(analysis_result, tmp_path)
     findings = pd.read_csv(paths["findings"])

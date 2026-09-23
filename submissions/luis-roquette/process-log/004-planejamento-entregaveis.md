@@ -79,7 +79,7 @@ A auditoria encontrou quatro lacunas. O relatório não explicitava impacto esti
 
 **Decisão metodológica:** quando o impacto financeiro não puder ser estimado causalmente, a entrega dirá “não estimável” e mostrará somente o MRR perdido observado como teto histórico. Inventar receita recuperável para preencher o requisito seria menos aderente que explicitar a limitação.
 
-**Gate de submissão:** os quatro desafios serão consolidados na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenges 001–004`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
+**Decisão naquele momento — posteriormente substituída pela escolha final do Challenge 001:** os quatro desafios seriam consolidados na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenges 001–004`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
 
 **Estado:** correções locais em execução; nenhum push ou PR autorizado até a validação integral.
 
@@ -156,3 +156,17 @@ A decisão elimina a consolidação dos quatro desafios no mesmo PR. A entrega f
 Para reduzir dependências e evitar links privados, os dois vídeos passaram a ser entregues diretamente no repositório. O vídeo autoral obrigatório foi comprimido de 232,9 MB para 58,2 MB, sem cortes, em H.264 720p/30 fps com áudio AAC. A duração foi preservada, o arquivo foi decodificado integralmente e nove pontos da faixa visual foram inspecionados após a compressão. O Video Overview aprovado do NotebookLM ocupa 16,1 MB e também foi incluído.
 
 O Arcade já expõe uma rota pública que responde sem cookie ou sessão. O NotebookLM permanece privado porque fonte, prompt e exportação aprovada são entregues no próprio Git. O infográfico continua bloqueado pelo limite diário informado pela plataforma; não houve compra de upgrade nem tentativa de contornar a cota.
+
+## Fechamento oficial do Challenge 001
+
+Luis reafirmou o Challenge 001 como desafio principal e autorizou concluir todo o escopo necessário para a entrega. Reauditamos o README do desafio, o README raiz, o Guia de Submissão, o `CONTRIBUTING.md` e o template oficial. O pacote atende a escolha de um único desafio, mantém solução e Process Log em `submissions/luis-roquette/`, documenta setup reproduzível e prepara branch, pasta e título exigidos para o PR único.
+
+O gate remoto passou Ruff, formatação e 84 testes. A primeira comparação reproduzível acusou diferença entre conjuntos de artefatos; a investigação mostrou que a tentativa de regeneração sobre a pasta canônica não produziu mudança versionada. O próximo passo do feedback loop foi isolar a diferença do manifesto em uma reprodução limpa, sem alterar conclusões ou inventar causalidade.
+
+**Estado:** Challenge 001 confirmado como principal e único. Arcade público e vídeos incorporados estão prontos; o infográfico continua como único bloqueio externo declarado até a renovação da cota do NotebookLM.
+
+Uma nova consulta ao NotebookLM em 23 de setembro manteve a mensagem “Você atingiu seu limite diário de infográficos. Volte mais tarde.” O bloqueio foi preservado com transparência; não houve upgrade, automação paralela nem tentativa de contornar a restrição da conta.
+
+O diagnóstico da reprodução isolou a diferença em um único campo de `ceo_answer.json`: a lista de tabelas-fonte do relatório de qualidade herdava a ordem de inserção de um dicionário. O JSON de qualidade era canônico porque suas chaves eram ordenadas na serialização, mas a lista derivada podia mudar entre processos. Corrigimos a origem com ordenação explícita e adicionamos um teste que inverte a ordem de entrada e exige a mesma saída. A suíte passa a ter 85 testes.
+
+A passagem seguinte imprimiu o diff estrutural completo e revelou a causa restante: três números do JSON executivo variavam apenas na 16ª casa decimal entre processos, embora todos os CSVs, o relatório e as conclusões fossem idênticos. Canonizamos os campos numéricos das claims em 15 casas decimais e adicionamos regressão com perturbação de `4e-17`. A suíte passa a ter 86 testes; a precisão decisória e os valores exibidos permanecem inalterados.

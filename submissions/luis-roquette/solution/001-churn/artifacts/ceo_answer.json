@@ -23,14 +23,14 @@
           "statement": "A taxa mensal ponderada de churn ficou em 12.4% no período recente, variação de +7.0 pp versus a referência.",
           "status": "up",
           "uncertainty": {
-            "high": 0.0954520304893509,
+            "high": 0.095452030489351,
             "level": 0.95,
-            "low": 0.0457992991429853,
+            "low": 0.045799299142985,
             "method": "cluster_bootstrap_account",
             "reason": null
           },
           "unit": "percentage_points_fraction",
-          "value": 0.0704583846961603
+          "value": 0.07045838469616
         },
         {
           "comparator_id": null,
@@ -84,7 +84,7 @@
             "reason": null
           },
           "unit": "usage_events/account/day",
-          "value": 0.1576047904191617
+          "value": 0.157604790419162
         },
         {
           "comparator_id": null,
@@ -111,7 +111,7 @@
             "reason": null
           },
           "unit": "usage_events/account/day",
-          "value": -0.044956140350877305
+          "value": -0.044956140350877
         }
       ],
       "confidence_label": "Alta confiança",
@@ -218,7 +218,7 @@
             "reason": null
           },
           "unit": "satisfaction_points/response",
-          "value": 3.6666666666666665
+          "value": 3.666666666666667
         },
         {
           "comparator_id": null,
