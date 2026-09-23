@@ -1,6 +1,6 @@
 # Submissão — Luis Fernando Roquette — Challenge 001
 
-> **Desafio principal:** Challenge 001 — Diagnóstico de Churn. Esta submissão escolhe e entrega exclusivamente o desafio 001, conforme a regra oficial de escolher um challenge.
+> **Entrega principal e prioritária:** Challenge 001 — Diagnóstico de Churn. Os Challenges 002, 003 e 004 seguem como trabalhos complementares para demonstrar amplitude; a avaliação deve priorizar o Challenge 001.
 
 ## Comece aqui
 
@@ -12,11 +12,20 @@
 
 O Arcade foi validado sem autenticação. Vídeos e infográfico são entregues no próprio repositório; o SVG preserva texto e números exatos sem depender de uma geração externa.
 
+## Entregas complementares
+
+- [Challenge 002 — Redesign de Suporte](solution/002-support/README.md): diagnóstico operacional e copiloto funcional.
+- [Challenge 003 — Lead Scorer](solution/003-lead-scorer/README.md): priorização explicável e aplicação funcional.
+- [Challenge 004 — Estratégia Social Media](solution/004-social/README.md): cockpit de decisão, evidências e plano de execução.
+
+Essas entregas são complementares. O **Challenge 001 permanece como resposta oficial, principal e mais importante** deste PR.
+
 ## Sobre mim
 
 - **Nome:** Luis Fernando Roquette
 - **LinkedIn:** [linkedin.com/in/luisroquette](https://br.linkedin.com/in/luisroquette)
-- **Challenge principal e único desta submissão:** 001 — Diagnóstico de Churn
+- **Challenge principal e prioritário:** 001 — Diagnóstico de Churn
+- **Challenges complementares:** 002, 003 e 004
 
 ## Executive Summary
 

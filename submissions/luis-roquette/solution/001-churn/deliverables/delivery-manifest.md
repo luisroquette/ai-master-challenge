@@ -23,5 +23,5 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 
 ## Bloqueios ativos
 
-- O Challenge 001, principal e único nesta submissão, deve chegar à branch `submission/luis-roquette` e ao único PR permitido.
+- O Challenge 001 deve permanecer destacado como entrega principal e prioritária; os Challenges 002–004 são complementares no mesmo PR.
 - O diff final deve permanecer dentro de `submissions/luis-roquette/`.

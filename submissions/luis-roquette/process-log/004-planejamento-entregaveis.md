@@ -165,6 +165,10 @@ O gate remoto passou Ruff, formatação e 84 testes. A primeira comparação rep
 
 **Estado:** Challenge 001 confirmado como principal e único. Arcade público e vídeos incorporados estão prontos; o infográfico continua como único bloqueio externo declarado até a renovação da cota do NotebookLM.
 
+## Decisão final — portfólio completo com prioridade explícita — 2026-09-23
+
+Após o envio inicial do Challenge 001, Luis decidiu manter o mesmo PR e acrescentar os Challenges 002, 003 e 004 como entregas complementares. O Challenge 001 continua sendo a resposta oficial, principal e mais importante; os demais demonstram amplitude sem disputar sua prioridade. A decisão preserva a regra de PR único e a FAQ, que permite mais de um desafio.
+
 Uma nova consulta ao NotebookLM em 23 de setembro manteve a mensagem “Você atingiu seu limite diário de infográficos. Volte mais tarde.” O bloqueio foi preservado com transparência; não houve upgrade, automação paralela nem tentativa de contornar a restrição da conta.
 
 O diagnóstico da reprodução isolou a diferença em um único campo de `ceo_answer.json`: a lista de tabelas-fonte do relatório de qualidade herdava a ordem de inserção de um dicionário. O JSON de qualidade era canônico porque suas chaves eram ordenadas na serialização, mas a lista derivada podia mudar entre processos. Corrigimos a origem com ordenação explícita e adicionamos um teste que inverte a ordem de entrada e exige a mesma saída. A suíte passa a ter 85 testes.
