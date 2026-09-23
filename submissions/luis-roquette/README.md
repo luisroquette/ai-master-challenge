@@ -2,12 +2,13 @@
 
 ## Comece aqui
 
-- [Leia o diagnóstico em 2 minutos](solution/001-churn/deliverables/delivery-brief.md)
-- [Baixe o diagnóstico em DOCX](solution/001-churn/deliverables/delivery-brief.docx)
-- [Abra o relatório executivo completo](solution/001-churn/artifacts/report.md)
-- [Execute o dashboard local](solution/001-churn/README.md)
+1. [Leia em 2 minutos](solution/001-churn/deliverables/delivery-brief.md) — [versão DOCX](solution/001-churn/deliverables/delivery-brief.docx).
+2. [Veja funcionando em 90 segundos](solution/001-churn/deliverables/arcade/README.md) — Arcade em preparação.
+3. [Entenda a arquitetura do trabalho em 6 minutos](solution/001-churn/deliverables/video/README.md) — vídeo obrigatório em preparação.
+4. [Veja a síntese do NotebookLM](solution/001-churn/deliverables/notebooklm/README.md) — outputs em geração.
+5. [Audite o processo](solution/001-churn/deliverables/delivery-manifest.md) — relatório, código, testes e diários.
 
-Arcade, vídeo de arquitetura, Video Overview e infográfico só aparecerão aqui depois de publicados e validados sem autenticação.
+Itens externos só serão apresentados como prontos depois de publicados e validados sem autenticação.
 
 ## Sobre mim
 
@@ -17,7 +18,7 @@ Arcade, vídeo de arquitetura, Video Overview e infográfico só aparecerão aqu
 
 ## Executive Summary
 
-Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `observed` e `strict`, para testar as alegações de uso, satisfação e seis possíveis causas de churn. O resultado principal é uma abstenção útil: nenhuma causa passou todos os gates de estabilidade, associação e confirmação entre fontes, enquanto as datas apresentam contradições materiais. O uso agregado cresce, mas satisfação não pode ser chamada de “ok”; o modelo opcional também foi recusado fora do tempo. Recomendo corrigir a medição e validar qualitativamente as hipóteses antes de direcionar uma intervenção — sem transformar correlação frágil em certeza executiva.
+Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `observed` e `strict`. O churn recente chegou a **12,4%**, alta de **7,0 pontos percentuais**, e o MRR perdido observado foi de **US$ 1.622.337**. O uso agregado subiu de **0,336 para 0,493**, mas caiu de **0,349 para 0,304** entre futuros churners. A satisfação descreve apenas respondentes de tickets; não houve causa nem concentração material demonstrada — o maior risco relativo elegível foi **1,08×**, abaixo do limiar de **1,25×**. Recomendo validar dados, uso e satisfação antes de intervir, sem transformar correlação frágil em certeza executiva.
 
 ## Solução
 
@@ -43,7 +44,6 @@ Cruzei as cinco tabelas em um painel temporal reproduzível, com leituras `obser
 | Prioridade | Ação | Impacto estimado | Confiança |
 |---|---|---|---|
 | 1 semana | Sanear eventos fora do ciclo de vida e reproduzir as métricas. | Impedir dados temporalmente inválidos de sustentar decisões; impacto financeiro não estimável antes do saneamento. | Alta para o ganho de qualidade; não causal. |
-| 1 semana | Auditar uma amostra estratificada das 97 contas com renovação automática desligada. | Confirmar ou rejeitar o sinal antes de qualquer intervenção; não há receita recuperável estimável. | Baixa para efeito financeiro. |
 | 30 dias | Acompanhar uso e churn prospectivamente com cobertura mínima de 70%. | Produzir a primeira estimativa prospectiva comparável; impacto financeiro ainda não estimável. | Condicionada ao gate de cobertura. |
 | 30 dias | Medir satisfação fora dos tickets, com resposta mínima de 70% por estrato. | Remover o viés de respondentes e comparar coortes; impacto financeiro ainda não estimável. | Condicionada à representatividade. |
 

@@ -171,11 +171,15 @@ Fonte fechada criada com as contagens exatas e limites causais explícitos.
 Crie um Video Overview em português brasileiro, com duração alvo de 3–5 minutos, para avaliadores de um processo seletivo de AI Master. Sintetize a evolução do trabalho: pergunta do CEO, método autoral, três decisões humanas que corrigiram o rumo, resposta final e próximos passos. Não faça walkthrough técnico da arquitetura, pois existe um vídeo autoral separado. Não invente causa, número ou nota externa.
 ```
 
+Notebook privado criado com uma fonte; geração curta em português brasileiro iniciada em 22 de setembro de 2026. A revisão integral ainda está pendente.
+
 - [ ] **Step 3: gerar o infográfico com o prompt editorial**
 
 ```text
 Crie um infográfico vertical em português brasileiro: “De uma pergunta confusa a uma decisão confiável”. Mostre oito etapas, a evolução 7,0 → 8,6 → 9,5 → 9,9 e três viradas humanas: separar agregados de coortes; recusar causalidade frágil; converter incerteza em validação. Use somente as fontes e não acrescente números.
 ```
+
+Configuração validada em português brasileiro, orientação retrato e estilo editorial. O NotebookLM bloqueou a geração pelo limite diário de infográficos; nenhum upgrade foi contratado.
 
 - [ ] **Step 4: revisar e exportar os dois outputs**
 
@@ -199,9 +203,11 @@ git commit -m "docs(churn): add one-page methodology infographic"
 - Consumes: brief, vídeo obrigatório, Arcade, Video Overview, infográfico e evidências existentes.
 - Produces: entrada final do avaliador e PR pronto para revisão.
 
-- [ ] **Step 1: ordenar a abertura**
+- [x] **Step 1: ordenar a abertura**
 
 Mostrar somente: `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Veja a síntese do NotebookLM`; `Audite o processo`. O infográfico acompanha a síntese; relatório e código ficam dentro de “Audite”.
+
+README e manifesto agora apresentam exatamente as cinco entradas. O DOCX acompanha o brief, em vez de competir como uma sexta entrada.
 
 - [ ] **Step 2: validar tudo como avaliador anônimo**
 
@@ -211,6 +217,8 @@ Abrir cada link sem sessão; confirmar que nenhum exige permissão; assistir Arc
 
 Comparar as seis verdades em brief, Arcade, vídeos e infográfico. Qualquer divergência bloqueia a entrega; corrigir o derivado, nunca a fonte canônica.
 
+Brief, README, roteiro do Arcade e fonte fechada do NotebookLM passaram pela reconciliação automatizada. O gate permanece aberto até revisar os outputs gerados.
+
 - [ ] **Step 4: atualizar manifesto e diário**
 
 Registrar URL, checksum, data, formato, status e limitação. Resumir a quantidade de ondas, decisões, passadas, fases, rodadas e testes. Atualizar a data real da submissão e o link do histórico para a branch final. Itens não produzidos não aparecem como entrega.
@@ -218,6 +226,8 @@ Registrar URL, checksum, data, formato, status e limitação. Resumir a quantida
 - [ ] **Step 5: consolidar a branch final sem enviar**
 
 Fast-forward da branch local `submission/luis-roquette` para o commit integralmente validado e consolidar nela os Challenges 002, 003 e 004. O regulamento permite mais de um desafio, mas somente um PR por pessoa. Confirmar que `git diff --name-only upstream/main...submission/luis-roquette` contém exclusivamente `submissions/luis-roquette/`.
+
+Auditoria remota de 22 de setembro de 2026: PRs #140 e #141 estão fechadas; a PR #145 está aberta na branch não canônica `submission/luis-roquette-004-social`. Antes do envio final, decidir a migração para a branch canônica sem abrir dois PRs simultâneos.
 
 - [ ] **Step 6: executar o gate formal do PR**
 

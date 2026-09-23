@@ -121,4 +121,18 @@ Para reduzir deriva, criamos uma única fonte fechada: oito etapas metodológica
 
 Os prompts separam funções: o Video Overview sintetiza a jornada para o avaliador; o infográfico mostra método e evolução. Ambos proíbem causa inventada, receita recuperável fictícia e confusão entre rubrica interna e avaliação do G4.
 
-**Estado:** fonte e prompts locais concluídos. Notebook e outputs ainda não foram criados ou publicados.
+O notebook privado foi criado com uma única fonte. A geração curta do Video Overview foi iniciada em português brasileiro e com foco personalizado. A configuração do infográfico chegou ao gate final em formato retrato e estilo editorial, mas o NotebookLM informou que o limite diário de infográficos havia sido atingido. Não contratamos upgrade nem contornamos o limite.
+
+**Estado:** fonte, prompts e notebook privado concluídos; vídeo em geração; infográfico bloqueado até a renovação do limite; nada publicado.
+
+## Fechamento em cinco entradas — início da Task 5
+
+A abertura da submissão foi reorganizada em exatamente cinco escolhas. O DOCX passou a acompanhar o brief; relatório, dashboard, código e diários ficaram agrupados em “Audite o processo”. Também removemos da abertura uma quarta recomendação que não fazia parte da resposta canônica final, preservando as três validações aprovadas.
+
+**Estado:** hierarquia da entrega reconciliada localmente. Links externos e gate anônimo continuam pendentes.
+
+## Auditoria da regra de PR único
+
+A consulta remota encontrou as PRs #140 e #141 fechadas e a PR #145 aberta para o Challenge 004. A PR aberta usa `submission/luis-roquette-004-social`, enquanto o guia exige a branch canônica `submission/luis-roquette`.
+
+Não alteramos branches, PRs ou conteúdo remoto. O gate final deverá consolidar os quatro desafios e resolver a PR #145 sem manter dois PRs abertos ao mesmo tempo. Até isso ocorrer, a submissão não pode ser declarada 100% aderente.

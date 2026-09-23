@@ -11,7 +11,7 @@
 
 | # | Tela e foco | Texto do hotspot | Tempo |
 |---:|---|---|---:|
-| 1 | Hero: resposta curta e status | O churn chegou a 12,4%; agregados escondem coortes opostas. Como nenhuma causa passou os gates, a decisão é validar antes de intervir. | 12 s |
+| 1 | Hero: resposta curta e status | O churn chegou a 12,4%, alta de 7,0 pontos. Agregados escondem coortes opostas; sem causa demonstrada, valide antes de intervir. | 12 s |
 | 2 | Bloco “O que mudou”: churn e MRR | O impacto observado é US$ 1.622.337 em MRR perdido; é exposição associada aos churns, não receita prometida como recuperável. | 10 s |
 | 3 | Claims de uso agregado e coorte | Uso por conta subiu de 0,336 para 0,493 no agregado, mas caiu de 0,349 para 0,304 entre futuros churners. | 10 s |
 | 4 | Bloco “O que ainda não sabemos” | Satisfação geral dos respondentes subiu; entre futuros churners caiu. Cobertura perto de 65% descreve tickets respondidos, não toda a base. | 11 s |
