@@ -33,7 +33,7 @@ python submissions/luis-roquette/solution/004-social/analysis.py \
   --report /tmp/analysis.md
 ```
 
-O refinamento 2.5 catalogou **146 testes**; o gate focal anterior aprovou **45/45** e a auditoria final ampliou a matriz executiva para **20/20**. O preflight completo do SHA final continua obrigatório. O CSV permanece byte a byte idêntico (`e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`); o Markdown aderente às quatro respostas tem SHA-256 `f2e8f4929bf1bbe9e8e7395f9ab5e7b09f093919a6cfe0af364710fb0b65db54`. O CSV contém seis recomendações e 6.830 registros; a última prova A4 completa permanece a da Passada 7.
+O refinamento 2.5 catalogou **146 testes**; a suíte completa passou no estado executável final e a auditoria ampliou a matriz executiva para **20/20**. Os commits posteriores alteraram somente documentação. O CSV permanece byte a byte idêntico (`e982cd2fcc346951d4c6ab5d9a3af4443858548a1786fe0424d4f71d84c2f30a`); o Markdown aderente às quatro respostas tem SHA-256 `f2e8f4929bf1bbe9e8e7395f9ab5e7b09f093919a6cfe0af364710fb0b65db54`. O CSV contém seis recomendações e 6.830 registros; a última prova A4 completa permanece a da Passada 7.
 
 As três prioridades executivas do método 2.5.0 são `sponsorship-fec1a70afd70ad88`, `sponsorship-0d364864017b2146` e `sponsorship-aae70c7cbea56355`. O CSV preserva ainda `sponsorship-580416ff6bbd90ab`, `sponsorship-90ca1125d3824a6d` e `sponsorship-9332c8416ba393aa`.
 

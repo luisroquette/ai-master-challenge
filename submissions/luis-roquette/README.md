@@ -8,7 +8,9 @@
 
 ---
 
-## As quatro respostas obrigatórias em 60 segundos
+## Executive Summary
+
+### As quatro respostas obrigatórias em 60 segundos
 
 | Pergunta do Head de Marketing | Resposta do método 2.5 |
 |---|---|
@@ -128,7 +130,16 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ---
 
-## Auditoria completa
+## Evidências
+
+Formatos escolhidos para o process log: narrativa escrita, screenshots, gravações de tela e histórico Git.
+
+- [x] [Screenshots da aplicação e da validação](./process-log/evidence/004/)
+- [x] [Gravação do workflow e arquitetura](./docs/004-social/assets/architecture-walkthrough-captioned.mp4)
+- [x] [Histórico Git do PR](https://github.com/Gestao-Quatro-Ponto-Zero/ai-master-challenge/pull/145/commits)
+- [x] [Narrativa integral do processo](./process-log/004-social.md)
+
+### Auditoria completa
 
 - [x] **Produto:** [tour público no Arcade](https://app.arcade.software/share/VHx5b51f94IAFSr6pmds), [setup e roteiro](./solution/004-social/README.md) e [vídeo obrigatório de arquitetura](./docs/004-social/assets/architecture-walkthrough-captioned.mp4), preservado fora da rota executiva de cinco minutos
 - [x] **NotebookLM:** [vídeo](./docs/004-social/assets/notebooklm-video.mp4), [mapa mental](./docs/004-social/assets/notebooklm-mind-map.png) e [infográfico](./docs/004-social/assets/notebooklm-infographic.png), entregues como arquivos sem acesso à conta proprietária
@@ -138,4 +149,4 @@ Defini a documentação como parte central da entrega: registrar como o arquitet
 
 ---
 
-_Submissão preparada localmente em: 22/09/2026_
+_Submissão enviada em: 22/09/2026_

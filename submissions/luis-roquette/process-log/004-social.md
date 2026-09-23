@@ -1025,3 +1025,10 @@ Este ledger registra todas as perguntas, respostas, correções e decisões da d
 - **Provas externas:** o PR #145 é o único PR aberto de `luisroquette`, contém somente arquivos sob `submissions/luis-roquette/` e responde HTTP 200. O tour público do Arcade também responde HTTP 200.
 - **Integridade:** o commit executável validado e o commit publicado anterior diferiam apenas por duas linhas deste diário; nenhum código foi alterado após os 146/146 testes verdes. O branch remoto temporário de validação foi removido depois da publicação.
 - **Higiene:** os dois Codespaces criados para esta validação foram apagados após confirmação de árvore limpa e trabalho salvo no GitHub; um Codespace limpo com mais de três dias também foi removido conforme a política global de cota. Codespaces sujos de outras tarefas foram preservados.
+
+## I81 — Auditoria independente das regras de entrega — 2026-09-22
+
+- **Escopo:** challenge 004, guia de submissão, README raiz, CONTRIBUTING, índice de challenges e template foram relidos integralmente no mesmo SHA de `origin/main` e `upstream/main` (`4aed364`).
+- **Achados:** solução, process log, setup, PR único, título e escopo já estavam conformes. Restavam duas lacunas de apresentação: títulos explícitos `Executive Summary` e `Evidências` ausentes no README e uma frase obsoleta que ainda tratava o preflight como pendente.
+- **Correções:** o README passou a espelhar os campos do template e a nomear os quatro formatos de evidência escolhidos; o setup agora registra que 146 testes passaram no estado executável final e que os commits seguintes foram apenas documentais.
+- **Limite preservado:** custo implícito e ROI não foram inventados porque o dataset não contém custos, receita ou conversões; o cockpit oferece cenário manual de ponto de equilíbrio. A branch mantém o prefixo exigido `submission/`, e a regra de um único PR continua atendida pelo #145.
