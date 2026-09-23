@@ -1,5 +1,14 @@
 # Submissão — Luis Fernando Roquette — Challenge 001
 
+## Comece aqui
+
+- [Leia o diagnóstico em 2 minutos](solution/001-churn/deliverables/delivery-brief.md)
+- [Baixe o diagnóstico em DOCX](solution/001-churn/deliverables/delivery-brief.docx)
+- [Abra o relatório executivo completo](solution/001-churn/artifacts/report.md)
+- [Execute o dashboard local](solution/001-churn/README.md)
+
+Arcade, vídeo de arquitetura, Video Overview e infográfico só aparecerão aqui depois de publicados e validados sem autenticação.
+
 ## Sobre mim
 
 - **Nome:** Luis Fernando Roquette

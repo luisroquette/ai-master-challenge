@@ -45,19 +45,19 @@
 - Consumes: `artifacts/ceo_answer.json`, `docs/executive-answer-rubric.md` e `process-log/000-004`.
 - Produces: brief canônico de até 1.200 palavras e índice de cinco entradas.
 
-- [ ] **Step 1: escrever a abertura de 30 segundos**
+- [x] **Step 1: escrever a abertura de 30 segundos**
 
 Usar cinco blocos: resposta em seis linhas; decisão; ações; método em oito etapas; links. Cada ação deve declarar prioridade, impacto mensurável, impacto financeiro e confiança. Quando o efeito causal não for estimável, escrever isso explicitamente e tratar US$ 1.622.337 somente como exposição histórica. A abertura deve conter 12,4%, +7,0 pp, US$ 1.622.337 e “Causa ainda não demonstrada”.
 
-- [ ] **Step 2: mostrar a evolução sem contar toda a história**
+- [x] **Step 2: mostrar a evolução sem contar toda a história**
 
 Incluir uma única tabela `Momento | Problema encontrado | Decisão humana | Nota`, com `7,0 → 8,6 → 9,5 → 9,9`. Limitar prompts a quatro fragmentos decisivos.
 
-- [ ] **Step 3: gerar o DOCX a partir do Markdown**
+- [x] **Step 3: gerar o DOCX a partir do Markdown**
 
 Usar a skill `documents`; o Markdown permanece a fonte editável. O DOCX deve caber em duas páginas A4, com links clicáveis e sem anexos incorporados.
 
-- [ ] **Step 4: validar o brief**
+- [x] **Step 4: validar o brief**
 
 Run:
 
@@ -68,7 +68,7 @@ rg -n "12,4%|7,0 pp|1\.622\.337|Causa ainda não demonstrada|Impacto estimado|n�
 
 Expected: limite e cinco âncoras atendidos.
 
-- [ ] **Step 5: checkpoint**
+- [x] **Step 5: checkpoint**
 
 ```bash
 git add -f deliverables/delivery-brief.md deliverables/delivery-brief.docx deliverables/delivery-manifest.md ../../README.md

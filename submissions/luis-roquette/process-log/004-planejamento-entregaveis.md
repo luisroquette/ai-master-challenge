@@ -82,3 +82,13 @@ A auditoria encontrou quatro lacunas. O relatório não explicitava impacto esti
 **Gate de submissão:** os quatro desafios serão consolidados na branch única `submission/luis-roquette` e no PR único `[Submission] Luis Fernando Roquette — Challenges 001–004`; diff limitado a `submissions/luis-roquette/`; README baseado no template; setup reproduzível; links anônimos; data e histórico finais; confirmação explícita de Luis antes do envio.
 
 **Estado:** correções locais em execução; nenhum push ou PR autorizado até a validação integral.
+
+## Execução dos entregáveis — Task 1
+
+A primeira etapa produziu a porta de entrada em Markdown e DOCX a partir da resposta canônica. O brief tem 777 palavras e duas páginas A4. Ele começa pelo diagnóstico do CEO, explicita o conflito entre agregado e coorte, recusa causalidade não demonstrada e apresenta três ações com responsável, prazo, impacto estimado e confiança.
+
+O DOCX passou por duas renderizações. A primeira revelou uma borda indevida sob o título e excesso de espaço na página inicial. A quebra de página foi deslocada para a evolução da resposta e a borda do estilo foi removida. A segunda inspeção confirmou duas páginas legíveis, tabelas sem clipping, hierarquia clara e links visíveis.
+
+**Validação:** 777 palavras; cinco números e quatro notas internas reconciliados; zero links locais quebrados; metadados pessoais removidos; nenhuma publicação externa realizada.
+
+**Estado:** Task 1 concluída localmente. Push permanece bloqueado.
