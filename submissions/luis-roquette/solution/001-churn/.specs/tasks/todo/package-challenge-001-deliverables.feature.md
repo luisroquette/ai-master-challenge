@@ -8,10 +8,10 @@ Transformar a solução técnica e o diário contemporâneo em uma entrega multi
 
 ## Arquitetura da entrega
 
-1. **Núcleo autoritativo:** README, `ceo_answer.json`, relatório, código e process log no Pull Request.
-2. **Narrativa portátil:** a mesma história em `.md`, `.txt` e `.docx`.
-3. **Síntese visual:** infográfico e mapa mental gerados no NotebookLM a partir das fontes aprovadas.
-4. **Demonstração:** vídeo de construção no NotebookLM e tour interativo do sistema no Arcade.
+1. **Comece aqui:** README e brief de duas páginas com resposta, método e links.
+2. **Veja funcionando:** tour do sistema no Arcade em oito passos e até 90 segundos.
+3. **Entenda a construção:** vídeo obrigatório de arquitetura já gravado, com 6min05s e legendas.
+4. **Aprofunde se quiser:** relatório, código, Process Log e um infográfico metodológico.
 
 ## Público
 
@@ -25,19 +25,18 @@ O diferencial não é apenas o dashboard. É o método autoral de Luis para cheg
 
 ## Entregáveis
 
-- `deliverables/construction-story.md`
-- `deliverables/construction-story.txt`
-- `deliverables/construction-story.docx`
+- `deliverables/delivery-brief.md`
+- `deliverables/delivery-brief.docx`
 - `deliverables/notebooklm/source-pack.md`
-- `deliverables/notebooklm/generation-prompts.md`
-- `deliverables/visuals/method-mind-map.png`
+- `deliverables/notebooklm/infographic-prompt.md`
 - `deliverables/visuals/method-evolution-infographic.png`
-- `deliverables/video/construction-overview.mp4`
+- `deliverables/video/README.md`
+- `deliverables/video/poster.png`
 - `deliverables/arcade/arcade-script.md`
 - `deliverables/arcade/README.md`
 - `deliverables/delivery-manifest.md`
 
-Se o NotebookLM exportar outro formato nativo, o manifesto deve registrar o nome real; não criar arquivos fictícios ou vazios.
+O vídeo original não entra no Git: possui 232.879.349 bytes, acima do limite comum do GitHub. O repositório guarda poster, metadados, checksum e URL de reprodução. Se o NotebookLM exportar outro formato de imagem, o manifesto registra o nome real; nenhum arquivo fictício será criado.
 
 ## Contrato narrativo
 
@@ -65,7 +64,7 @@ A narrativa deve mostrar, em ordem:
 
 ## Regras
 
-- O texto escrito é a fonte; vídeo, mapa, infográfico e Arcade são derivados.
+- O texto escrito é a fonte; vídeo, infográfico e Arcade são derivados.
 - Mostrar prompts decisivos e seus efeitos, não dumps integrais de conversa nem cadeia de pensamento privada.
 - Não inventar certeza causal, impacto recuperável, score externo ou mecanismo vencedor.
 - Não incluir segredos, dados pessoais, credenciais ou caminhos locais nas mídias públicas.
@@ -75,10 +74,10 @@ A narrativa deve mostrar, em ordem:
 ## Critérios de aceitação
 
 1. O pacote principal pode ser avaliado apenas pelo PR e pelo Markdown.
-2. `.md`, `.txt` e `.docx` têm o mesmo conteúdo substantivo.
+2. `.md` e `.docx` têm o mesmo conteúdo substantivo; o brief não excede duas páginas ou 1.200 palavras.
 3. As seis verdades quantitativas são idênticas em todos os formatos.
-4. O Arcade possui 9–12 passos, abre com valor e termina com decisão, não com lista de features.
-5. O vídeo, o mapa e o infográfico do NotebookLM são revisados contra as fontes antes de serem aceitos.
+4. O Arcade possui oito passos, abre com valor, dura até 90 segundos e termina com decisão.
+5. O vídeo obrigatório é assistido integralmente; o infográfico do NotebookLM é revisado contra as fontes.
 6. Cada link e arquivo do manifesto abre, possui tamanho maior que zero e identifica versão/data.
 7. O Process Log explica ferramentas, erros da IA, correções humanas, iterações e contribuição autoral.
 
@@ -87,10 +86,11 @@ A narrativa deve mostrar, em ordem:
 - Refazer a análise, o dashboard ou a identidade visual já aprovados.
 - Criar site de campanha, landing page ou hospedagem de produção.
 - Gerar novos números ou conclusões dentro do NotebookLM.
+- Gerar um segundo vídeo ou entregar mapa mental redundante.
 - Automatizar publicação externa sem revisão humana.
 
 ## Referências de formato
 
 - O guia do desafio exige solução e Process Log; aceita narrativa, screenshots, gravação, chat export e histórico Git combinados.
-- Benchmarks do Arcade recomendam 9–12 passos, texto curto, valor antecipado e vídeo somente onde movimento agrega.
-- NotebookLM gera Video Overviews, Mind Maps e Infographics a partir das fontes, mas todo output de IA exige revisão factual.
+- O benchmark do Arcade recomenda 9–12 passos, mas o contexto de avaliação rápida justifica oito passos e até 90 segundos.
+- NotebookLM será usado somente para o infográfico final; todo output de IA exige revisão factual.

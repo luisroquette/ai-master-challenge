@@ -46,3 +46,17 @@ Nenhum derivado pode inventar causa, número, impacto recuperável ou score exte
 - Plano: `solution/001-churn/docs/superpowers/plans/2026-09-22-challenge-001-delivery-package.md`
 
 **Estado:** planejamento concluído; implementação ainda não iniciada.
+
+## Enxugamento para o avaliador com pouco tempo
+
+Luis introduziu duas restrições decisivas: o avaliador provavelmente terá pouco tempo e baixa disposição para navegar muitos materiais; além disso, já existe um vídeo obrigatório em que Luis explica a arquitetura.
+
+**Evidência do vídeo:** arquivo MP4 de 232.879.349 bytes, duração de 365,533 segundos (6min05s), 1920×1080, 60 fps, H.264 com áudio AAC estéreo e SHA-256 `a968a524dbe45443a066717e5d63523e5336f958fb3a6dcd50d0d0887dbbea4a`. A inspeção visual confirmou captura de tela, facecam e legendas queimadas. Não há stream separado de legenda.
+
+**Corte Ponytail:** removemos o Video Overview do NotebookLM, o mapa mental e o TXT. O vídeo existente substitui qualquer segundo vídeo; Markdown já atende leitura por IA; DOCX atende leitura humana; um único infográfico comunica a evolução visual. O MP4 não será commitado, evitando 222 MiB no histórico; o Git guardará link, poster, capítulos, metadados e checksum.
+
+**Nova hierarquia:** quatro entradas visíveis: `Leia em 2 minutos`; `Veja funcionando em 90 segundos`; `Entenda a arquitetura em 6 minutos`; `Audite o processo`. Arcade foi reduzido a oito passos e demonstrará apenas o sistema. Relatório, código, segurança e Process Log permanecem disponíveis dentro da camada de auditoria.
+
+**Plano canônico revisado:** `solution/001-churn/docs/superpowers/plans/2026-09-22-lean-delivery-package.md`. O plano multimodal anterior permanece no histórico e está marcado como substituído.
+
+**Estado:** plano enxuto aguardando validação de Luis; nenhuma mídia foi publicada.

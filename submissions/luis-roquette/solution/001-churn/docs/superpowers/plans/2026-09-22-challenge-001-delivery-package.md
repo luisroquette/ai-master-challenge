@@ -1,5 +1,7 @@
 # Challenge 001 Delivery Package Implementation Plan
 
+> **Status:** substituído pelo plano enxuto `2026-09-22-lean-delivery-package.md` após a incorporação do vídeo obrigatório de arquitetura.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** produzir uma entrega multimodal do Challenge 001 que preserve uma única verdade verificável e evidencie o método autoral de construção.
