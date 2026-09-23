@@ -4,10 +4,13 @@
 
 - [Leia o diagnóstico em 2 minutos](solution/001-churn/deliverables/delivery-brief.md)
 - [Baixe o diagnóstico em DOCX](solution/001-churn/deliverables/delivery-brief.docx)
+- [Percorra o tour executivo guiado](solution/001-churn/deliverables/tour/index.html)
+- [Veja o Video Overview do NotebookLM](solution/001-churn/deliverables/video-overview-notebooklm.mp4)
+- [Abra o infográfico executivo](solution/001-churn/deliverables/infografico-executivo-higgsfield.webp)
 - [Abra o relatório executivo completo](solution/001-churn/artifacts/report.md)
 - [Execute o dashboard local](solution/001-churn/README.md)
 
-Arcade, vídeo de arquitetura, Video Overview e infográfico só aparecerão aqui depois de publicados e validados sem autenticação.
+O tour HTML autocontido substitui a dependência do Arcade. Video Overview e infográfico estão preservados como arquivos da entrega. O vídeo de arquitetura permanece apenas na cópia local por exceder o limite do GitHub.
 
 ## Trabalhos complementares
 

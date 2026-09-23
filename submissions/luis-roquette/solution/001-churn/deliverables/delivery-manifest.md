@@ -8,9 +8,11 @@ Nenhum item externo será apresentado como pronto antes de abrir sem autenticaç
 |---|---|---|---|
 | Leia em 2 minutos | `delivery-brief.md` | Pronto localmente | Limite de palavras, fatos e links locais |
 | Leia em 2 minutos | `delivery-brief.docx` | Pronto localmente | Duas páginas A4 inspecionadas integralmente |
-| Veja funcionando em 90 segundos | Arcade | Não publicado | Oito passos e acesso anônimo |
+| Veja funcionando em 90 segundos | `tour/index.html` | Pronto localmente | Oito passos, teclado, responsividade e HTTP 200 |
+| Alternativa externa | Arcade | Substituído | O tour autocontido remove autenticação, assinatura e indisponibilidade externa |
 | Entenda a arquitetura em 6 minutos | Vídeo obrigatório | Arquivo local validado; não publicado | Revisão integral, capítulos e acesso anônimo |
-| Veja a síntese | NotebookLM Video Overview e infográfico | Não produzidos | Revisão factual e acesso anônimo |
+| Veja a síntese | `video-overview-notebooklm.mp4` | Pronto localmente | 75,79 segundos; MP4 baixado e SHA-256 registrado |
+| Veja a síntese | `infografico-executivo-higgsfield.webp` | Pronto localmente | 1744×2336; inspeção visual e reconciliação dos números |
 | Audite o processo | Relatório, código e Process Log | Pronto localmente | Setup reproduzível e links válidos |
 
 ## Verdades que não podem divergir

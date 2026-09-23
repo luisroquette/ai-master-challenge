@@ -99,6 +99,14 @@ Foi criada uma pasta-mestre em `Documents/AI-Master-Challenge/Entrega-Final-Comp
 
 **Decisão:** manter uma única cópia canônica organizada, sem ambientes virtuais, caches ou arquivos temporários. O Challenge 001 aparece como oficial; os demais permanecem identificados como complementares. A cópia é local e não altera PRs nem publica conteúdo.
 
+## Substitutos autocontidos para Arcade e NotebookLM
+
+Luis autorizou escolher livremente a solução. Foi criado um tour HTML guiado de oito etapas, autocontido, acessível por teclado e fundamentado na resposta canônica. Ele substitui o Arcade sem exigir conta, assinatura ou serviço externo e conduz o avaliador da pergunta do CEO à prova funcional.
+
+Para a síntese visual, o preset Higgsfield `Editorial Motion Graphics` foi selecionado. O pipeline completo de vídeo foi interrompido antes de gerar clipes porque o montador oficial `explainer_video` não estava disponível no catálogo atual; gastar créditos em seis clipes soltos violaria o gate de entrega completa. A alternativa adotada foi gerar um infográfico executivo no Higgsfield e manter o Video Overview já existente no NotebookLM como material de avaliação, sem reivindicá-lo como arquivo entregue até o download e a validação.
+
+**Resultado:** o Video Overview do NotebookLM foi baixado em MP4, com 75,79 segundos e SHA-256 `34c16ea5453eedb74039440d836b308d8abdaf0a36c616c71af0eac7c59c4675`. O infográfico Higgsfield foi preservado em WebP com 1744×2336 pixels e SHA-256 `7d1e7ee343dc8dc4570ab72b355b171d8c14cb47895b2cbd76f88a37ce405766`. A inspeção visual confirmou os nove números canônicos, o veredito de causa não demonstrada e as três ações com prazo, sem achados factuais novos.
+
 ## Execução dos entregáveis — Task 1
 
 A primeira etapa produziu a porta de entrada em Markdown e DOCX a partir da resposta canônica. O brief tem 777 palavras e duas páginas A4. Ele começa pelo diagnóstico do CEO, explicita o conflito entre agregado e coorte, recusa causalidade não demonstrada e apresenta três ações com responsável, prazo, impacto estimado e confiança.
